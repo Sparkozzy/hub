@@ -1,0 +1,24 @@
+# Environment
+.env
+.env.local
+.env.production
+
+# Dependencies
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sensitive data — não versionar com dados reais
+users.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

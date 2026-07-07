@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MindFlow — Hub Interno</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0&display=swap"
+    rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --blue: #2E4FFF;
+      --teal: #00B5A0;
+      --blue2: #7B9AFF;
+      --bg: #04060E;
+      --muted: #8E8FA2;
+      --motion-open-dur: 480ms;
+      --motion-close-dur: 380ms;
+      --motion-open-ease: cubic-bezier(0.32, 0.72, 0, 1);
+      --motion-close-ease: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @property --ba {
+      syntax: '<angle>';
+      initial-value: 0deg;
+      inherits: false;
+    }
+
+    #neural-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── V13 logo keyframes ── */
+    @keyframes v13-trace-fwd {
+
+      0%,
+      1.9% {
+        stroke-dashoffset: 1000;
+        stroke-opacity: 0;
+      }
+
+      2% {
+        stroke-dashoffset: 1000;
+        stroke-opacity: 1;
+      }
+
+      25% {
+        stroke-dashoffset: 500;
+        stroke-opacity: 1;
+      }
+
+      29% {
+        stroke-dashoffset: 500;
+        stroke-opacity: 0.4;
+      }
+
+      33%,
+      100% {
+        stroke-dashoffset: 500;
+        stroke-opacity: 0;
+      }
+    }
+
+    @keyframes v13-glow-fwd {
+
+      0%,
+      1.9% {
+        stroke-dashoffset: 1000;
+        stroke-opacity: 0;
+      }
+
+      2% {
+        stroke-dashoffset: 1000;
+        stroke-opacity: 0.8;
+      }
+
+      25% {
+        stroke-dashoffset: 500;
+        stroke-opacity: 0.8;
+      }
+
+      28%,
+      100% {
+        stroke-dashoffset: 500;
+        stroke-opacity: 0;
+      }
+    }
+
+    @keyframes v13-trace-rev {
+
+      0%,
+      1.9% {
+        stroke-dasharray: 0 1000 0;
+        stroke-opacity: 0;
+      }
+
+      2% {
+        stroke-dasharray: 0 1000 0;
+        stroke-opacity: 1;
+      }
+
+      25% {
+        stroke-dasharray: 0 500 500;
+        stroke-opacity: 1;
+      }
+
+      29% {
+        stroke-dasharray: 0 500 500;
+        stroke-opacity: 0.4;
+      }
+
+      33%,
+      100% {
+        stroke-dasharray: 0 500 500;
+        stroke-opacity: 0;
+      }
+    }
+
+    @keyframes v13-glow-rev {
+
+      0%,
+      1.9% {
+        stroke-dasharray: 0 1000 0;
+        stroke-opacity: 0;
+      }
+
+      2% {
+        stroke-dasharray: 0 1000 0;
+        stroke-opacity: 0.8;
+      }
+
+      25% {
+        stroke-dasharray: 0 500 500;
+        stroke-opacity: 0.8;
+      }
+
+      28%,
+      100% {
+        stroke-dasharray: 0 500 500;
+        stroke-opacity: 0;
+      }
+    }
+
+    @keyframes v13-charge {
+
+      0%,
+      2% {
+        opacity: 0;
+      }
+
+      25% {
+        opacity: 0.07;
+      }
+
+      26%,
+      100% {
+        opacity: 0;
+      }
+    }
+
+    @keyframes v13-flash {
+
+      0%,
+      24% {
+        opacity: 0;
+        filter: none;
+      }
+
+      25.5% {
+        opacity: 1;
+        filter: brightness(5) blur(5px);
+      }
+
+      26.9% {
+        opacity: 0.1;
+        filter: brightness(1) blur(1px);
+      }
+
+      28.4% {
+        opacity: 0.75;
+        filter: brightness(4) blur(4px);
+      }
+
+      29.8% {
+        opacity: 0.06;
+        filter: brightness(1) blur(0);
+      }
+
+      31.3% {
+        opacity: 0.45;
+        filter: brightness(3) blur(3px);
+      }
+
+      33%,
+      100% {
+        opacity: 0;
+        filter: none;
+      }
+    }
+
+    @keyframes v13-flash-bloom {
+
+      0%,
+      24% {
+        opacity: 0;
+      }
+
+      26% {
+        opacity: 0.7;
+      }
+
+      32% {
+        opacity: 0.35;
+      }
+
+      35%,
+      100% {
+        opacity: 0;
+      }
+    }
+
+    @keyframes v13-fill {
+
+      0%,
+      25% {
+        opacity: 0;
+        filter: brightness(1);
+      }
+
+      30% {
+        opacity: 1;
+        filter: brightness(2.8);
+      }
+
+      33% {
+        opacity: 1;
+        filter: brightness(1);
+      }
+
+      70% {
+        opacity: 1;
+        filter: brightness(1);
+      }
+
+      84% {
+        opacity: 0;
+        filter: brightness(1);
+      }
+
+      100% {
+        opacity: 0;
+      }
+    }
+
+    @keyframes v13-aura {
+
+      0%,
+      2% {
+        opacity: 0;
+      }
+
+      25% {
+        opacity: 0.04;
+      }
+
+      26% {
+        opacity: 0.75;
+      }
+
+      30% {
+        opacity: 0.22;
+      }
+
+      37.5% {
+        opacity: 0.28;
+      }
+
+      43.75% {
+        opacity: 0.16;
+      }
+
+      50% {
+        opacity: 0.26;
+      }
+
+      70% {
+        opacity: 0.18;
+      }
+
+      84%,
+      100% {
+        opacity: 0;
+      }
+    }
+
+    @keyframes v13-mid {
+
+      0%,
+      2% {
+        opacity: 0;
+      }
+
+      25% {
+        opacity: 0.06;
+      }
+
+      26% {
+        opacity: 0.9;
+      }
+
+      30% {
+        opacity: 0.4;
+      }
+
+      50% {
+        opacity: 0.47;
+      }
+
+      70% {
+        opacity: 0.32;
+      }
+
+      84%,
+      100% {
+        opacity: 0;
+      }
+    }
+
+    @keyframes v13-edge {
+
+      0%,
+      2% {
+        opacity: 0;
+      }
+
+      25% {
+        opacity: 0.09;
+      }
+
+      26% {
+        opacity: 1.0;
+      }
+
+      30% {
+        opacity: 0.55;
+      }
+
+      50% {
+        opacity: 0.62;
+      }
+
+      70% {
+        opacity: 0.45;
+      }
+
+      84%,
+      100% {
+        opacity: 0;
+      }
+    }
+
+    @keyframes v13-exit {
+
+      0%,
+      75% {
+        opacity: 0;
+      }
+
+      77.5% {
+        opacity: 0.3;
+      }
+
+      84%,
+      100% {
+        opacity: 0;
+      }
+    }
+
+    .v13-trace-fwd {
+      stroke-dasharray: 1000;
+      stroke-dashoffset: 1000;
+      animation: v13-trace-fwd 8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    .v13-glow-fwd {
+      stroke-dasharray: 1000;
+      stroke-dashoffset: 1000;
+      animation: v13-glow-fwd 8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    .v13-trace-rev {
+      stroke-dashoffset: 0;
+      stroke-dasharray: 0 1000 0;
+      animation: v13-trace-rev 8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    .v13-glow-rev {
+      stroke-dashoffset: 0;
+      stroke-dasharray: 0 1000 0;
+      animation: v13-glow-rev 8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    .v13-charge {
+      animation: v13-charge 8s ease-in-out infinite;
+    }
+
+    .v13-flash {
+      animation: v13-flash 8s ease-in-out infinite;
+    }
+
+    .v13-flash-bloom {
+      filter: blur(30px) brightness(3);
+      animation: v13-flash-bloom 8s ease-in-out infinite;
+    }
+
+    .v13-fill {
+      animation: v13-fill 8s ease-in-out infinite;
+    }
+
+    .v13-aura {
+      filter: blur(22px);
+      animation: v13-aura 8s ease-in-out infinite;
+    }
+
+    .v13-mid {
+      filter: blur(7px);
+      animation: v13-mid 8s ease-in-out infinite;
+    }
+
+    .v13-edge {
+      filter: blur(2.5px);
+      animation: v13-edge 8s ease-in-out infinite;
+    }
+
+    .v13-exit {
+      animation: v13-exit 8s ease-in-out infinite;
+    }
+
+    body {
+      background: var(--bg);
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+    }
+
+    /* ========== Navbar ========== */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 50;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      background: rgba(4, 6, 14, 0.65);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .nav-logo .mark {
+      width: 28px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+
+    .nav-logo .wordmark {
+      height: 22px;
+      opacity: 0.9;
+    }
+
+    /* ========== Main ========== */
+    main {
+      position: relative;
+      z-index: 1;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 76px 16px 24px;
+      width: 100%;
+    }
+
+    /* ========== Card ========== */
+    .card {
+      width: 100%;
+      max-width: 440px;
+      padding: 44px 44px 40px;
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(rgba(8, 12, 24, 0.72), rgba(8, 12, 24, 0.72)) padding-box,
+        conic-gradient(from var(--ba),
+          rgba(46, 79, 255, 0) 0%,
+          rgba(46, 79, 255, .75) 15%,
+          rgba(0, 181, 160, .75) 38%,
+          rgba(46, 79, 255, .75) 62%,
+          rgba(0, 181, 160, .55) 80%,
+          rgba(46, 79, 255, 0) 100%) border-box;
+      border: 1px solid transparent;
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      box-shadow: 0 32px 64px rgba(0, 0, 0, .55);
+      animation: spin-border 9s linear infinite, cardIn .65s cubic-bezier(.16, 1, .3, 1) both;
+    }
+
+    @keyframes spin-border {
+      to {
+        --ba: 360deg;
+      }
+    }
+
+    @keyframes cardIn {
+      from {
+        opacity: 0;
+        transform: translateY(24px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .card-header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    .card-header svg.logo-anim {
+      width: 160px;
+      height: auto;
+      margin-bottom: 20px;
+      display: block;
+      margin-inline: auto;
+    }
+
+    .card-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      margin-bottom: 6px;
+    }
+
+    .card-sub {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    /* ========== Form ========== */
+    .form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field-label {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-wrap .material-symbols-outlined {
+      position: absolute;
+      left: 14px;
+      font-size: 20px;
+      color: #444656;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .input-wrap input {
+      width: 100%;
+      height: 46px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 10px;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      padding: 0 14px 0 42px;
+      outline: none;
+      caret-color: rgba(255, 255, 255, 0.8);
+      transition: border-color .15s, box-shadow .15s;
+    }
+
+    .input-wrap input::placeholder {
+      color: #9BA0B0;
+    }
+
+    .input-wrap input:hover:not(:focus) {
+      border-color: rgba(46, 79, 255, .3);
+    }
+
+    .input-wrap input:focus {
+      border-color: rgba(46, 79, 255, .75);
+      box-shadow: 0 0 0 3px rgba(46, 79, 255, .14);
+    }
+
+    .input-wrap input.error {
+      border-color: #FF4D4D !important;
+      box-shadow: 0 0 0 2px rgba(255, 77, 77, 0.2) !important;
+    }
+
+    .alert {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: rgba(255, 78, 106, 0.08);
+      border: 1px solid rgba(255, 78, 106, 0.15);
+      font-size: 12px;
+      font-weight: 500;
+      color: #ff4e6a;
+      letter-spacing: 0.02em;
+      animation: fadeInSubtle .3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .alert.show {
+      display: flex;
+    }
+
+    .alert .material-symbols-outlined {
+      font-size: 18px;
+    }
+
+    @keyframes fadeInSubtle {
+      from {
+        opacity: 0;
+        transform: translateY(-4px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ========== Button ========== */
+    .btn {
+      width: 100%;
+      height: 52px;
+      background: linear-gradient(135deg, var(--blue) 0%, var(--teal) 100%);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 8px;
+      transition: box-shadow .2s, transform .15s;
+    }
+
+    .btn:hover {
+      box-shadow: 0 0 28px rgba(46, 79, 255, .4);
+    }
+
+    .btn:active {
+      transform: scale(.985);
+    }
+
+    .btn:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn .spinner {
+      display: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .btn.loading .btn-text {
+      display: none;
+    }
+
+    .btn.loading .material-symbols-outlined {
+      display: none;
+    }
+
+    .btn.loading .spinner {
+      display: block;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* ========== Footer ========== */
+    .footer {
+      text-align: center;
+      padding: 16px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.25);
+      font-family: 'Space Grotesk', sans-serif;
+      letter-spacing: 0.05em;
+    }
+
+    /* ========== Responsive ========== */
+    @media (max-width: 600px) {
+      .card {
+        padding: 32px 16px 28px;
+        max-width: calc(100vw - 32px);
+      }
+
+      .card-title {
+        font-size: 24px;
+      }
+
+      .card-header svg.logo-anim {
+        width: 120px;
+      }
+
+      .navbar {
+        padding: 0 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <canvas id="neural-canvas"></canvas>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <a class="nav-logo" href="/">
+      <svg class="mark" width="28" height="28" viewBox="1255 225 485 450" fill="none" xmlns="http://www.w3.org/2000/svg"
+        style="display:block;flex-shrink:0">
+        <path fill="white" transform="translate(0 -1604)"
+          d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z" />
+      </svg>
+      <svg class="wordmark" height="22" viewBox="530 745 1945 360" fill="none" xmlns="http://www.w3.org/2000/svg"
+        style="display:block;flex-shrink:0">
+        <path fill="white" transform="translate(0 -1604)"
+          d="M1479.61 2368.25L1517.74 2368.25L1517.51 2687.85L1479.48 2687.89C1479.52 2678.56 1479.38 2672.65 1478.94 2663.35C1476.02 2658.69 1456.89 2675.85 1451.6 2678.72C1406.96 2702.97 1363.56 2697.62 1320.38 2667.34C1192.38 2557.43 1355.7 2366.92 1479.31 2485.3L1479.61 2368.25ZM1409.55 2656.67C1430.48 2653.41 1457.64 2642.26 1471.86 2613.07C1487.34 2581.3 1481.19 2539.66 1462.79 2516.65C1443.01 2491.9 1414.8 2481.8 1391.08 2485.73C1277.23 2502.82 1296.53 2664.41 1409.55 2656.67Z" />
+        <path fill="white" transform="translate(0 -1604)"
+          d="M1945.14 2449.24C1982.13 2445.92 2019.48 2455.23 2050.21 2491.51C2099.37 2550.97 2081.5 2632.36 2033.13 2668.24C2012.12 2683.83 1999.15 2687.68 1976.32 2692.86C1935.29 2694.67 1898.43 2691.03 1863.2 2648.74C1828.03 2606.27 1827 2537.01 1862.85 2494.41C1889.41 2462.84 1913.93 2454.83 1945.14 2449.24ZM1874.49 2573.05C1885.2 2649 1930.75 2657.77 1968.13 2656.51C1981.97 2653.64 1991.4 2651.59 2004.13 2643.2C2055.51 2609.35 2049.08 2526.6 2000.07 2497.62C1981.5 2486.63 1969.43 2484.68 1949.73 2485.82C1915.94 2493.17 1884.01 2507.18 1874.49 2573.05Z" />
+        <path fill="white" transform="translate(0 -1604)"
+          d="M730.789 2495.2C755.41 2462.12 780.94 2449.08 811.813 2448.86C833.954 2448.71 863.277 2456.99 879.134 2486.8C884.658 2497.21 888.528 2510.04 890.347 2523.98C894.054 2551.21 892.549 2653.03 892.457 2687.4L853.587 2687.34C853.378 2650.23 857.517 2524.89 846.818 2510.14C810.708 2460.38 744.823 2484.77 739.735 2576.07L739.65 2687.57L700.73 2687.59C700.595 2649.75 705.869 2530.84 691.58 2505.44C669.808 2469.53 616.642 2485.38 598.393 2520.89C581.653 2553.46 586.828 2643.28 587.016 2687.87L548.265 2687.82L548.298 2454.53C559.842 2454.48 573.861 2452.16 584.977 2454.83C588.228 2459.91 587.568 2468.01 587.96 2477.32C593.241 2476.98 611.801 2461.92 620.155 2457.97C633.29 2451.77 638.111 2451.09 651.988 2449.4C687.529 2449.75 711.068 2458.86 730.789 2495.2Z" />
+        <path fill="white" transform="translate(0 -1604)"
+          d="M2233.04 2454.18L2275.59 2454.41C2297.41 2501.54 2323.75 2562.63 2344.02 2612.01C2359.46 2569.82 2392.75 2497.11 2410.98 2454.75L2451.22 2454.66L2438.73 2483.54L2382.65 2612.99C2374.07 2632.79 2359.3 2669.41 2349.95 2684.69C2348.27 2685.54 2339.54 2687.64 2338.37 2685.32C2314.41 2637.47 2292.36 2584.76 2270.02 2534.24C2255.79 2565.84 2241.69 2597.62 2227.72 2629.58C2220.34 2646.29 2210.14 2671.07 2201.81 2685.46C2196.22 2687.53 2195.73 2687.05 2189.96 2685.3C2182.06 2672.43 2093.67 2463.46 2092.21 2454.58L2130.13 2454.31C2150.82 2505.59 2174.46 2559.35 2195.92 2610.11C2213.28 2572.89 2232.72 2526.44 2249.02 2487.93C2244.56 2477.56 2237.92 2464.39 2233.04 2454.18Z" />
+        <path fill="white" transform="translate(0 -1604)"
+          d="M1137.48 2449.32C1138.71 2449.21 1139.94 2449.13 1141.18 2449.08C1245.93 2445.24 1232.36 2547.5 1232.88 2687.81L1193.94 2687.82C1193.67 2640.44 1195.92 2586.08 1192.76 2539.84C1188.36 2475.33 1137.74 2480.06 1112.16 2490.45C1053.77 2511.38 1066.09 2605.6 1066.3 2687.4L1027.87 2687.59L1027.72 2454.68L1066.3 2454.87L1066.74 2485.84C1092.98 2459.2 1107.46 2453.49 1137.48 2449.32Z" />
+        <path fill="white" transform="translate(0 -1604)"
+          d="M1627.7 2363.2C1645.85 2360.21 1674.85 2369.68 1692.72 2376.64L1692.75 2413.88C1677.23 2407.41 1641.9 2385.52 1629.43 2407.45C1623.1 2418.58 1624.91 2439.83 1625.39 2454.67C1653.23 2455.64 1681.46 2455.58 1709.33 2455.96L1709.4 2489.45C1681.39 2489.4 1653.39 2489.09 1625.38 2488.49L1625.32 2520.5L1625.28 2687.71L1587.02 2687.71L1586.95 2489.39L1557.24 2489.25L1557.1 2454.6L1586.81 2454.72C1586.34 2390.05 1587.97 2371.7 1627.7 2363.2Z" />
+        <path fill="white" transform="translate(0 -1604)"
+          d="M1758.55 2369.67L1797.02 2369.51L1796.72 2687.47L1758.6 2687.36L1758.55 2369.67Z" />
+        <path fill="white" transform="translate(0 -1604)"
+          d="M939.123 2454.44L977.913 2454.48L977.762 2687.61L939.08 2687.62C938.324 2611.78 938.775 2530.28 939.123 2454.44Z" />
+        <path fill="white" transform="translate(0 -1604)"
+          d="M952.952 2363.16C986.762 2360.45 1003.1 2404.64 964.268 2419.56C928.358 2422.49 915.136 2374.36 952.952 2363.16Z" />
+      </svg>
+    </a>
+  </nav>
+
+  <!-- Main -->
+  <main>
+    <div class="card">
+      <div class="card-header">
+        <div style="margin-bottom:24px">
+          <svg width="196" viewBox="530 220 1945 890" fill="none" xmlns="http://www.w3.org/2000/svg"
+            style="display:block;margin:0 auto;overflow:visible">
+            <defs>
+              <clipPath id="m-clip-hub">
+                <path transform="translate(0 -1604)"
+                  d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z" />
+              </clipPath>
+            </defs>
+            <path id="v13-aura-path" class="v13-aura" fill="white" transform="translate(0 -1604)"
+              d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z" />
+            <path id="v13-flash-bloom-path" class="v13-flash-bloom" fill="white" transform="translate(0 -1604)"
+              d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z" />
+            <path id="v13-mid-path" class="v13-mid" fill="white" transform="translate(0 -1604)"
+              d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z" />
+            <path id="v13-edge-path" class="v13-edge" fill="white" transform="translate(0 -1604)"
+              d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z" />
+            <path id="v13-charge-path" class="v13-charge" fill="white" transform="translate(0 -1604)"
+              d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z" />
+            <path id="v13-fill-path" class="v13-fill" fill="white" transform="translate(0 -1604)"
+              d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z" />
+            <path id="v13-exit-path" class="v13-exit" fill="none" stroke="white" stroke-width="2"
+              transform="translate(0 -1604)"
+              d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z" />
+            <path id="v13-flash-path" class="v13-flash" fill="white" transform="translate(0 -1604)"
+              d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z" />
+            <path id="v13-glow-fwd-path" class="v13-glow-fwd" pathLength="1000" fill="none" stroke="white"
+              stroke-width="10" stroke-linecap="round" stroke-linejoin="round" style="filter:blur(5px)"
+              transform="translate(0 -1604)"
+              d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z" />
+            <path id="v13-glow-rev-path" class="v13-glow-rev" pathLength="1000" fill="none" stroke="white"
+              stroke-width="10" stroke-linecap="round" stroke-linejoin="round" style="filter:blur(5px)"
+              transform="translate(0 -1604)"
+              d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z" />
+            <path id="v13-trace-fwd-path" class="v13-trace-fwd" pathLength="1000" fill="none" stroke="white"
+              stroke-width="3" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -1604)"
+              d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z" />
+            <path id="v13-trace-rev-path" class="v13-trace-rev" pathLength="1000" fill="none" stroke="white"
+              stroke-width="3" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -1604)"
+              d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z" />
+            <!-- WORDMARK -->
+            <path fill="white" transform="translate(0 -1604)"
+              d="M1479.61 2368.25L1517.74 2368.25L1517.51 2687.85L1479.48 2687.89C1479.52 2678.56 1479.38 2672.65 1478.94 2663.35C1476.02 2658.69 1456.89 2675.85 1451.6 2678.72C1406.96 2702.97 1363.56 2697.62 1320.38 2667.34C1192.38 2557.43 1355.7 2366.92 1479.31 2485.3L1479.61 2368.25ZM1409.55 2656.67C1430.48 2653.41 1457.64 2642.26 1471.86 2613.07C1487.34 2581.3 1481.19 2539.66 1462.79 2516.65C1443.01 2491.9 1414.8 2481.8 1391.08 2485.73C1277.23 2502.82 1296.53 2664.41 1409.55 2656.67Z" />
+            <path fill="white" transform="translate(0 -1604)"
+              d="M1945.14 2449.24C1982.13 2445.92 2019.48 2455.23 2050.21 2491.51C2099.37 2550.97 2081.5 2632.36 2033.13 2668.24C2012.12 2683.83 1999.15 2687.68 1976.32 2692.86C1935.29 2694.67 1898.43 2691.03 1863.2 2648.74C1828.03 2606.27 1827 2537.01 1862.85 2494.41C1889.41 2462.84 1913.93 2454.83 1945.14 2449.24ZM1874.49 2573.05C1885.2 2649 1930.75 2657.77 1968.13 2656.51C1981.97 2653.64 1991.4 2651.59 2004.13 2643.2C2055.51 2609.35 2049.08 2526.6 2000.07 2497.62C1981.5 2486.63 1969.43 2484.68 1949.73 2485.82C1915.94 2493.17 1884.01 2507.18 1874.49 2573.05Z" />
+            <path fill="white" transform="translate(0 -1604)"
+              d="M730.789 2495.2C755.41 2462.12 780.94 2449.08 811.813 2448.86C833.954 2448.71 863.277 2456.99 879.134 2486.8C884.658 2497.21 888.528 2510.04 890.347 2523.98C894.054 2551.21 892.549 2653.03 892.457 2687.4L853.587 2687.34C853.378 2650.23 857.517 2524.89 846.818 2510.14C810.708 2460.38 744.823 2484.77 739.735 2576.07L739.65 2687.57L700.73 2687.59C700.595 2649.75 705.869 2530.84 691.58 2505.44C669.808 2469.53 616.642 2485.38 598.393 2520.89C581.653 2553.46 586.828 2643.28 587.016 2687.87L548.265 2687.82L548.298 2454.53C559.842 2454.48 573.861 2452.16 584.977 2454.83C588.228 2459.91 587.568 2468.01 587.96 2477.32C593.241 2476.98 611.801 2461.92 620.155 2457.97C633.29 2451.77 638.111 2451.09 651.988 2449.4C687.529 2449.75 711.068 2458.86 730.789 2495.2Z" />
+            <path fill="white" transform="translate(0 -1604)"
+              d="M2233.04 2454.18L2275.59 2454.41C2297.41 2501.54 2323.75 2562.63 2344.02 2612.01C2359.46 2569.82 2392.75 2497.11 2410.98 2454.75L2451.22 2454.66L2438.73 2483.54L2382.65 2612.99C2374.07 2632.79 2359.3 2669.41 2349.95 2684.69C2348.27 2685.54 2339.54 2687.64 2338.37 2685.32C2314.41 2637.47 2292.36 2584.76 2270.02 2534.24C2255.79 2565.84 2241.69 2597.62 2227.72 2629.58C2220.34 2646.29 2210.14 2671.07 2201.81 2685.46C2196.22 2687.53 2195.73 2687.05 2189.96 2685.3C2182.06 2672.43 2093.67 2463.46 2092.21 2454.58L2130.13 2454.31C2150.82 2505.59 2174.46 2559.35 2195.92 2610.11C2213.28 2572.89 2232.72 2526.44 2249.02 2487.93C2244.56 2477.56 2237.92 2464.39 2233.04 2454.18Z" />
+            <path fill="white" transform="translate(0 -1604)"
+              d="M1137.48 2449.32C1138.71 2449.21 1139.94 2449.13 1141.18 2449.08C1245.93 2445.24 1232.36 2547.5 1232.88 2687.81L1193.94 2687.82C1193.67 2640.44 1195.92 2586.08 1192.76 2539.84C1188.36 2475.33 1137.74 2480.06 1112.16 2490.45C1053.77 2511.38 1066.09 2605.6 1066.3 2687.4L1027.87 2687.59L1027.72 2454.68L1066.3 2454.87L1066.74 2485.84C1092.98 2459.2 1107.46 2453.49 1137.48 2449.32Z" />
+            <path fill="white" transform="translate(0 -1604)"
+              d="M1627.7 2363.2C1645.85 2360.21 1674.85 2369.68 1692.72 2376.64L1692.75 2413.88C1677.23 2407.41 1641.9 2385.52 1629.43 2407.45C1623.1 2418.58 1624.91 2439.83 1625.39 2454.67C1653.23 2455.64 1681.46 2455.58 1709.33 2455.96L1709.4 2489.45C1681.39 2489.4 1653.39 2489.09 1625.38 2488.49L1625.32 2520.5L1625.28 2687.71L1587.02 2687.71L1586.95 2489.39L1557.24 2489.25L1557.1 2454.6L1586.81 2454.72C1586.34 2390.05 1587.97 2371.7 1627.7 2363.2Z" />
+            <path fill="white" transform="translate(0 -1604)"
+              d="M1758.55 2369.67L1797.02 2369.51L1796.72 2687.47L1758.6 2687.36L1758.55 2369.67Z" />
+            <path fill="white" transform="translate(0 -1604)"
+              d="M939.123 2454.44L977.913 2454.48L977.762 2687.61L939.08 2687.62C938.324 2611.78 938.775 2530.28 939.123 2454.44Z" />
+            <path fill="white" transform="translate(0 -1604)"
+              d="M952.952 2363.16C986.762 2360.45 1003.1 2404.64 964.268 2419.56C928.358 2422.49 915.136 2374.36 952.952 2363.16Z" />
+          </svg>
+        </div>
+        <h1 class="card-title">Hub Interno</h1>
+        <p class="card-sub">Acesse as plataformas da MindFlow</p>
+      </div>
+
+      <form class="form" id="loginForm">
+        <div class="alert" id="alert">
+          <span class="material-symbols-outlined">error</span>
+          <span id="alertMsg"></span>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="username">E-mail</label>
+          <div class="input-wrap">
+            <span class="material-symbols-outlined">mail</span>
+            <input type="email" id="username" placeholder="seu@email.com" autocomplete="email" required>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="password">Senha</label>
+          <div class="input-wrap">
+            <span class="material-symbols-outlined">lock</span>
+            <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" required>
+          </div>
+        </div>
+
+        <button type="submit" class="btn" id="loginBtn">
+          <span class="material-symbols-outlined">login</span>
+          <span class="btn-text">Entrar</span>
+          <span class="spinner"></span>
+        </button>
+
+        <p style="text-align:center;margin-top:16px;">
+          <a href="/redefinir-senha" style="font-size:13px;color:var(--muted);text-decoration:none;transition:color .15s;"
+             onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--muted)'">
+            Esqueci minha senha
+          </a>
+        </p>
+      </form>
+    </div>
+  </main>
+
+  <footer class="footer">MindFlow &copy; 2026 — Hub Interno</footer>
+
+  <script>
+    const form = document.getElementById('loginForm');
+    const alert = document.getElementById('alert');
+    const alertMsg = document.getElementById('alertMsg');
+    const btn = document.getElementById('loginBtn');
+    const username = document.getElementById('username');
+    const password = document.getElementById('password');
+
+    function showError(msg) {
+      alertMsg.textContent = msg;
+      alert.classList.add('show');
+    }
+    function hideError() {
+      alert.classList.remove('show');
+    }
+    function markError(el) {
+      el.classList.add('error');
+      el.addEventListener('input', () => el.classList.remove('error'), { once: true });
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideError();
+
+      if (!username.value.trim()) { showError('Informe seu e-mail.'); markError(username); return; }
+      if (!password.value) { showError('Informe sua senha.'); markError(password); return; }
+
+      btn.classList.add('loading');
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: username.value.trim(), password: password.value }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          showError(data.error || 'Erro ao autenticar.');
+          markError(username); markError(password);
+        } else {
+          window.location.href = '/hub';
+        }
+      } catch {
+        showError('Erro de conexão. Tente novamente.');
+      } finally {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+      }
+    });
+  </script>
+
+  <!-- Neural Dot Grid -->
+  <script>
+    (function () {
+      const cv = document.getElementById('neural-canvas');
+      const ctx = cv.getContext('2d');
+      let W, H, t = 0, dots = [], mouse = { x: -9999, y: -9999 };
+      const PS = 0.75, BLUE = [46, 79, 255], TEAL = [0, 181, 160], GAP = 38;
+      function rgba(rgb, a) { return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a.toFixed(3)})` }
+      function resize() { const rW = window.innerWidth, rH = window.innerHeight; W = Math.min(rW, 2560); H = Math.min(rH, 1440); cv.width = rW * PS; cv.height = rH * PS; buildGrid(); }
+      function buildGrid() { dots = []; const cols = Math.ceil(W / GAP) + 2, rows = Math.ceil(H / GAP) + 2; for (let r = 0; r < rows; r++)for (let c = 0; c < cols; c++)dots.push({ bx: c * GAP - GAP, by: r * GAP - GAP, phase: (c * .35 + r * .55) + Math.random() * .4, colorPhase: Math.random() * Math.PI * 2 }); }
+      function waveAt(wx, wy, dx, dy) { const d = Math.sqrt(dx * dx + dy * dy); return Math.sin(d * .022 - t * .045 + wx * .01 + wy * .01) * Math.exp(-d / (Math.min(W, H) * .55)); }
+      function frame() { const rW = window.innerWidth, rH = window.innerHeight; ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#04060E'; ctx.fillRect(0, 0, cv.width, cv.height); ctx.scale((rW / W) * PS, (rH / H) * PS); dots.forEach(d => { let inf = 0;[{ nx: .18, ny: .72, s: .00018, o: 0 }, { nx: .82, ny: .28, s: .00014, o: 2.1 }, { nx: .5, ny: .15, s: .0002, o: 4.2 }].forEach(wv => { const wx = (wv.nx + Math.sin(t * wv.s + wv.o) * .18) * W, wy = (.5 + Math.cos(t * wv.s + wv.o) * .22) * H; inf += waveAt(wx, wy, d.bx - wx, d.by - wy); }); inf /= 3; const x = d.bx + Math.sin(d.phase + t * .018) * 3.5 * inf * 4, y = d.by + Math.cos(d.phase + t * .014) * 3.5 * inf * 4, r = .9 + inf * 2.2; if (r <= 0) return; const mix = Math.sin(d.colorPhase + t * .008 + inf * 3) * .5 + .5, rgb = [Math.round(BLUE[0] + (TEAL[0] - BLUE[0]) * mix), Math.round(BLUE[1] + (TEAL[1] - BLUE[1]) * mix), Math.round(BLUE[2] + (TEAL[2] - BLUE[2]) * mix)], mdx = d.bx - (mouse.x * (W / rW)), mdy = d.by - (mouse.y * (H / rH)), mGlow = Math.max(0, 1 - Math.sqrt(mdx * mdx + mdy * mdy) / 140), br = .06 + Math.max(0, inf) * .55 + mGlow * .6, g = ctx.createRadialGradient(x, y, 0, x, y, r * 5); g.addColorStop(0, rgba(rgb, br * .5)); g.addColorStop(.4, rgba(rgb, br * .12)); g.addColorStop(1, rgba(rgb, 0)); ctx.beginPath(); ctx.arc(x, y, r * 5, 0, Math.PI * 2); ctx.fillStyle = g; ctx.fill(); ctx.beginPath(); ctx.arc(x, y, Math.max(.3, r), 0, Math.PI * 2); ctx.fillStyle = rgba(rgb, .18 + Math.max(0, inf) * .65 + mGlow * .8); ctx.fill(); }); t++; requestAnimationFrame(frame); }
+      resize(); window.addEventListener('resize', resize); window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; }); window.addEventListener('mouseleave', () => { mouse.x = -9999; mouse.y = -9999; }); frame();
+    })();
+  </script>
+
+  <!-- V13 Logo Ignition Cycle -->
+  <script>
+    const V13_VERTICES = [
+      { type: 'M', x: 1273.39, y: 1843.81 }, { type: 'L', x: 1479.89, y: 1843.8 }, { type: 'L', x: 1479.96, y: 2020.86 },
+      { type: 'L', x: 1519.99, y: 2021.08 }, { type: 'L', x: 1519.9, y: 1843.92 }, { type: 'L', x: 1726.14, y: 1843.94 },
+      { type: 'L', x: 1726.39, y: 2259.94 }, { type: 'L', x: 1591.01, y: 2259.86 }, { type: 'L', x: 1590.99, y: 2189.94 },
+      { type: 'L', x: 1656.73, y: 2190.08 }, { type: 'L', x: 1656.65, y: 2030.85 }, { type: 'L', x: 1656.4, y: 1913.62 },
+      { type: 'L', x: 1590.24, y: 1913.46 }, { type: 'L', x: 1590.39, y: 2090.8 },
+      { type: 'C', x: 1409.36, y: 2090.13, c1x: 1530.05, c1y: 2090, c2x: 1469.71, c2y: 2089.78 },
+      { type: 'L', x: 1409.33, y: 1914.44 }, { type: 'L', x: 1343.81, y: 1914.31 },
+      { type: 'C', x: 1343.81, y: 2189.58, c1x: 1342.74, c1y: 2003.67, c2x: 1343.78, c2y: 2099.69 },
+      { type: 'L', x: 1409.13, y: 2189.73 }, { type: 'L', x: 1409.18, y: 2259.87 }, { type: 'L', x: 1273.37, y: 2259.7 }
+    ];
+    const V13_IDS = ['v13-aura-path', 'v13-flash-bloom-path', 'v13-mid-path', 'v13-edge-path', 'v13-charge-path', 'v13-fill-path', 'v13-exit-path', 'v13-flash-path', 'v13-glow-fwd-path', 'v13-glow-rev-path', 'v13-trace-fwd-path', 'v13-trace-rev-path'];
+    function genPath(si) { const rot = [...V13_VERTICES.slice(si), ...V13_VERTICES.slice(0, si)]; let d = `M ${rot[0].x} ${rot[0].y} `; for (let i = 1; i < rot.length; i++) { const p = rot[i]; d += p.type === 'C' ? `C ${p.c1x} ${p.c1y}, ${p.c2x} ${p.c2y}, ${p.x} ${p.y} ` : `L ${p.x} ${p.y} `; } return d + 'Z'; }
+    function v13Cycle() { const si = Math.floor(Math.random() * V13_VERTICES.length), np = genPath(si); V13_IDS.forEach(id => { const el = document.getElementById(id); if (!el) return; el.setAttribute('d', np); const cls = el.className.baseVal.trim().split(/\s+/)[0]; el.classList.remove(cls); void el.getBoundingClientRect(); el.classList.add(cls); }); }
+    v13Cycle(); setInterval(v13Cycle, 8000);
+  </script>
+</body>
+
+</html>
