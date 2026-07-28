@@ -16,9 +16,11 @@ npm-debug.log*
 
 # Sensitive data — não versionar com dados reais
 users.json
+.test_login.json
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+users.json

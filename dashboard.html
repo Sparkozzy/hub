@@ -60,58 +60,96 @@
     .btn-logout:hover { background: rgba(255,77,77,0.12); border-color: rgba(255,77,77,0.2); color: #FF4D4D; }
     .btn-logout .material-symbols-outlined { font-size: 16px; }
 
-    /* ── Sidebar Retrátil (EXATAMENTE igual ao hub) ── */
-    .retractable-sidebar {
-      position: fixed; top: 0; left: 0; bottom: 0; width: 68px;
-      background: rgba(8, 12, 24, 0.75);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-right: 1px solid rgba(255, 255, 255, 0.06);
+    /* ── In-page Client Selector ── */
+    .title-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .client-selector { position: relative; }
+    .client-selector-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(46, 79, 255, 0.08);
+      border: 1px solid rgba(46, 79, 255, 0.15);
+      border-radius: 6px;
+      color: #7B9AFF;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 4px 10px 4px 12px;
+      cursor: pointer;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+    .client-selector-btn:hover {
+      background: rgba(46, 79, 255, 0.15);
+      border-color: rgba(46, 79, 255, 0.25);
+    }
+    .client-selector-btn .material-symbols-outlined { font-size: 16px; }
+    .client-selector .client-dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      min-width: 160px;
+      background: rgba(8, 12, 24, 0.95);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 4px;
+      display: none;
       z-index: 100;
-      display: flex; flex-direction: column; align-items: flex-start;
-      padding: 24px 0;
-      overflow: hidden;
-      transition: width 0.35s cubic-bezier(0.32, 0.72, 0, 1), background-color 0.3s;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
     }
-    .retractable-sidebar:hover {
-      width: 240px;
-      background: rgba(4, 6, 14, 0.98);
-      box-shadow: 10px 0 40px rgba(0,0,0,0.6);
+    .client-selector .client-dropdown.open { display: block; }
+    .client-selector .client-option {
+      display: flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.7);
+      transition: all .15s;
     }
-    .sidebar-brand {
-      display: flex; align-items: center; gap: 12px;
-      padding: 0 20px; margin-bottom: 40px; width: 240px; text-decoration: none;
+    .client-selector .client-option:hover {
+      background: rgba(46, 79, 255, 0.1);
+      color: #fff;
     }
-    .sidebar-brand svg { width: 28px; height: 28px; flex-shrink: 0; }
-    .sidebar-brand-text {
-      font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 700;
-      color: #fff; opacity: 0; transition: opacity 0.2s ease; white-space: nowrap;
+    .client-selector .client-option.active {
+      background: rgba(46, 79, 255, 0.15);
+      color: #7B9AFF;
     }
-    .retractable-sidebar:hover .sidebar-brand-text { opacity: 1; }
-    .sidebar-menu {
-      display: flex; flex-direction: column; gap: 8px; width: 100%; flex: 1;
+
+    /* ── Dock lateral (igual ao hub) ── */
+    .dock {
+      position: fixed; left: 16px; top: 50%; transform: translateY(-50%);
+      z-index: 999999; display: flex; flex-direction: column; align-items: center;
+      gap: 4px; padding: 10px 6px;
+      background: rgba(8,12,24,0.55); backdrop-filter: blur(12px) saturate(1.3);
+      -webkit-backdrop-filter: blur(12px) saturate(1.3);
+      border: 1px solid rgba(255,255,255,0.06); border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.45);
     }
-    .sidebar-link {
-      display: flex; align-items: center; gap: 16px;
-      height: 48px; width: 240px; padding: 0 20px;
-      color: var(--muted); text-decoration: none;
-      font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 500;
-      transition: color 0.2s, background-color 0.2s; position: relative;
+    .dock-item {
+will-change: transform;
+      display: flex; align-items: center; justify-content: center;
+      width: 44px; height: 44px; border-radius: 50%;
+      color: rgba(255,255,255,0.5); text-decoration: none;
+      transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1); position: relative;
     }
-    .sidebar-link .material-symbols-outlined { font-size: 24px; flex-shrink: 0; }
-    .sidebar-link span.link-text {
-      opacity: 0; transition: opacity 0.2s ease; white-space: nowrap;
+    .dock-item .material-symbols-outlined { font-size: 24px; }
+    .dock-item:hover { color: #fff; background: rgba(255,255,255,0.08); transform: scale(1.25); }
+    .dock-item.active { color: #7B9AFF; background: rgba(46,79,255,0.15); }
+    .dock-item.active::after {
+      content: ''; position: absolute; right: -6px; top: 50%;
+      transform: translateY(-50%);
+      width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
     }
-    .retractable-sidebar:hover .sidebar-link span.link-text { opacity: 1; }
-    .sidebar-link:hover { color: #fff; background: rgba(255,255,255,0.05); }
-    .sidebar-link.active {
-      color: #7B9AFF; background: rgba(46,79,255,0.1);
-    }
-    .sidebar-link.active::after {
-      content: ''; position: absolute; left: 0; top: 10px; bottom: 10px;
-      width: 4px; background: #2E4FFF; border-radius: 0 4px 4px 0;
-    }
-    .sidebar-footer { width: 100%; margin-top: auto; }
+    .dock-sep { width: 28px; height: 1px; background: rgba(255,255,255,0.08); margin: 4px 0; }
+    @media (min-width: 769px) { body { padding-left: 76px; } .navbar { padding-left: 28px !important; } }
 
     /* ── Dashboard Pills (abas internas) ── */
     .dash-tabs {
@@ -163,6 +201,159 @@
       .nav-left .brand { display: none; }
     }
 
+    /* ── Custom Select (igual ao disparo) ── */
+    .custom-select { position: relative; width: 100%; }
+    .custom-select.open { z-index: 999; }
+    .custom-select-trigger {
+      width: 100%; height: 36px;
+      display: flex; align-items: center; gap: 6px;
+      padding: 0 10px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 8px;
+      color: rgba(255,255,255,0.6);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+      text-align: left;
+      position: relative;
+      user-select: none;
+      min-width: 160px;
+    }
+    .custom-select-trigger .cs-ico {
+      font-size: 16px; color: #444656; flex-shrink: 0; line-height: 1;
+    }
+    .custom-select-trigger .cs-value {
+      flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
+    }
+    .custom-select-trigger .cs-arrow {
+      font-size: 16px; color: #444656;
+      transition: transform .25s cubic-bezier(.34,1.56,.64,1);
+      flex-shrink: 0; line-height: 1;
+    }
+    .custom-select.open .custom-select-trigger .cs-arrow { transform: rotate(180deg); }
+    .custom-select-trigger:hover { border-color: rgba(255,255,255,.18); }
+    .custom-select.open .custom-select-trigger {
+      border-color: rgba(46,79,255,.75);
+      box-shadow: 0 0 0 3px rgba(46,79,255,.14);
+    }
+    .custom-select.has-value .custom-select-trigger { color: #fff; }
+    .custom-select-dropdown {
+      position: absolute;
+      top: calc(100% + 4px); left: 0; right: 0;
+      z-index: 100;
+      background: rgba(10, 14, 26, 0.96);
+      backdrop-filter: blur(20px) saturate(1.4);
+      -webkit-backdrop-filter: blur(20px) saturate(1.4);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 8px;
+      box-shadow: 0 16px 48px rgba(0,0,0,.6);
+      padding: 4px;
+      max-height: 200px;
+      overflow-y: auto; overflow-x: hidden;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .custom-select.open .custom-select-dropdown {
+      opacity: 1; pointer-events: auto;
+    }
+
+    /* ── Período (calendário igual ao do disparo) ── */
+    .period-toggle {
+      display: flex; align-items: center; gap: 8px; padding: 0 14px; height: 36px;
+      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 10px;
+      cursor: pointer; user-select: none; transition: all .2s; min-width: 150px;
+    }
+    .period-toggle:hover { background: rgba(46,79,255,.08); border-color: rgba(46,79,255,.3); }
+    .period-toggle.open { border-color: rgba(46,79,255,.5); background: rgba(46,79,255,.05); }
+    .period-ico { font-size: 18px; color: #7B9AFF; flex-shrink: 0; line-height: 1; }
+    .period-text { flex: 1; font-size: 12px; color: #8e8fa2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+    .period-text.active { color: #fff; }
+    .period-arrow { font-size: 18px; color: #4d5570; flex-shrink: 0; line-height: 1; transition: transform .3s ease; }
+    .period-toggle.open .period-arrow { transform: rotate(180deg); }
+    .period-panel {
+      position: absolute; top: calc(100% + 6px); right: 0; left: auto; z-index: 99999;
+      background: rgba(10,14,26,.96); backdrop-filter: blur(20px) saturate(1.4);
+      -webkit-backdrop-filter: blur(20px) saturate(1.4);
+      border: 1px solid rgba(255,255,255,.08); border-radius: 12px;
+      box-shadow: 0 16px 48px rgba(0,0,0,.6); padding: 16px;
+      display: none; width: 300px;
+    }
+    .period-panel.open { display: block; }
+    .period-presets { display: flex; gap: 4px; margin-bottom: 12px; }
+    .period-fields { display: flex; gap: 12px; margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,.06); }
+    .period-field { flex: 1; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); border-radius: 8px; padding: 8px 12px; display: flex; flex-direction: column; gap: 2px; transition: border-color .15s; }
+    .period-field.highlight { border-color: rgba(46,79,255,.4); background: rgba(46,79,255,.05); }
+    .period-label { font-size: 9px; font-weight: 700; color: #4d5570; text-transform: uppercase; letter-spacing: .06em; }
+    .period-value { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 600; color: #fff; }
+    .period-value.hint { color: #3a3d52; font-weight: 400; font-size: 14px; }
+    .period-actions { display: flex; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.06); }
+    .period-btn { flex: 1; padding: 7px 0; border-radius: 8px; font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 500; cursor: pointer; text-align: center; transition: all .15s; border: none; }
+    .period-btn-clear { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); color: #8E8FA2; }
+    .period-btn-clear:hover { background: rgba(255,77,77,.1); border-color: rgba(255,77,77,.2); color: #FF4D4D; }
+    .period-btn-apply { background: linear-gradient(135deg,#2E4FFF,#00B5A0); color: #fff; }
+    .period-btn-apply:hover { filter: brightness(1.1); }
+    .period-btn-apply:disabled { opacity: .4; cursor: default; filter: none; }
+    .period-status { text-align: center; font-size: 11px; color: #8E8FA2; margin-top: 8px; }
+    .period-preset {
+      flex: 1; padding: 5px 0; border-radius: 6px; font-family: 'Space Grotesk', sans-serif;
+      font-size: 10px; font-weight: 500; color: #7B9AFF; text-align: center;
+      background: rgba(46,79,255,.08); border: 1px solid rgba(46,79,255,.12);
+      cursor: pointer; transition: all .15s;
+    }
+    .period-preset:hover { background: rgba(46,79,255,.16); border-color: rgba(46,79,255,.25); }
+    .period-preset.active { background: rgba(46,79,255,.25); border-color: #2E4FFF; color: #fff; }
+    .period-cal-header {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
+    }
+    .period-cal-title { font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 600; color: #e0e2ef; }
+    .period-cal-nav {
+      background: none; border: none; cursor: pointer; color: #4d5570;
+      font-size: 18px; padding: 4px; border-radius: 6px;
+      transition: color .15s, background .15s; line-height: 1;
+    }
+    .period-cal-nav:hover { color: #e0e2ef; background: rgba(255,255,255,.06); }
+    .period-cal-grid {
+      display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-bottom: 8px;
+    }
+    .period-cal-weekday {
+      font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 500; color: #4d5570; text-align: center; padding: 4px 0;
+    }
+    .period-cal-day {
+      aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+      font-family: 'Inter', sans-serif; font-size: 12px; color: rgba(255,255,255,.7);
+      border-radius: 6px; cursor: pointer; transition: all .12s; border: 1px solid transparent;
+    }
+    .period-cal-day:hover:not(.empty):not(.past) { background: rgba(46,79,255,.15); color: #e0e2ef; border-color: rgba(46,79,255,.3); }
+    .period-cal-day.today { color: #7B9AFF; font-weight: 600; border-color: rgba(123,154,255,.3); }
+    .period-cal-day.selected { background: linear-gradient(135deg,#2E4FFF,#00B5A0); color: #fff; font-weight: 600; border-color: transparent; }
+    .period-cal-day.in-range { background: rgba(46,79,255,.15); border-color: transparent; border-radius: 0; }
+    .period-cal-day.range-start { border-radius: 6px 0 0 6px; background: linear-gradient(135deg,#2E4FFF,#00B5A0); color: #fff; font-weight: 600; }
+    .period-cal-day.range-end { border-radius: 0 6px 6px 0; background: linear-gradient(135deg,#2E4FFF,#00B5A0); color: #fff; font-weight: 600; }
+    .period-cal-day.past { color: #2a2d3a; cursor: default; }
+    .period-cal-day.empty { cursor: default; }
+    .period-status { text-align: center; font-size: 11px; color: #8E8FA2; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.06); margin-top: 4px; }
+    .custom-select-dropdown::-webkit-scrollbar { width: 4px; }
+    .custom-select-dropdown::-webkit-scrollbar-track { background: transparent; }
+    .custom-select-dropdown::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 2px; }
+    .cs-option {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 10px;
+      border-radius: 6px;
+      color: rgba(255,255,255,0.55);
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background .12s, color .12s;
+    }
+    .cs-option:hover { background: rgba(46,79,255,.12); color: #fff; }
+    .cs-option.selected { color: #7B9AFF; background: rgba(46,79,255,.08); }
+    .cs-option .cs-opt-check { font-size: 14px; opacity: 0; }
+    .cs-option.selected .cs-opt-check { opacity: 1; }
+    .cs-option .cs-opt-label { flex: 1; }
+    .cs-no-options { padding: 12px; text-align: center; color: rgba(255,255,255,0.3); font-size: 12px; }
+
     /* Anular estilos de sidebar fixa do dashboard-style.css */
     .sidebar, .brand, .brand-text, .brand-name, .brand-sub,
     .nav-links, .nav-item, .sidebar-footer { all: unset; }
@@ -199,35 +390,25 @@
     </div>
   </nav>
 
-  <!-- ── Sidebar Retrátil (idêntica ao hub) ── -->
-  <aside class="retractable-sidebar">
-    <a href="/dashboard" class="sidebar-brand">
-      <svg class="mark" width="28" height="28" viewBox="1255 225 485 450" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path fill="white" transform="translate(0 -1604)" d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z" />
-      </svg>
-      <span class="sidebar-brand-text">MINDFLOW IA</span>
+  <!-- ── Dock lateral ── -->
+  <nav class="dock">
+    <a href="/hub" class="dock-item">
+      <span class="material-symbols-outlined">grid_view</span>
     </a>
-    <div class="sidebar-menu">
-      <a href="/hub" class="sidebar-link">
-        <span class="material-symbols-outlined">grid_view</span>
-        <span class="link-text">Plataformas Hub</span>
-      </a>
-      <a href="/disparo" class="sidebar-link">
-        <span class="material-symbols-outlined">smart_toy</span>
-        <span class="link-text">Disparo de Ligação</span>
-      </a>
-      <a href="/dashboard" class="sidebar-link active">
-        <span class="material-symbols-outlined">bar_chart</span>
-        <span class="link-text">Dashboard</span>
-      </a>
-    </div>
-    <div class="sidebar-footer">
-      <a href="#" onclick="logout(); return false;" class="sidebar-link">
-        <span class="material-symbols-outlined">logout</span>
-        <span class="link-text">Sair</span>
-      </a>
-    </div>
-  </aside>
+    <a href="/disparo" class="dock-item">
+      <span class="material-symbols-outlined">smart_toy</span>
+    </a>
+    <a href="/dashboard" class="dock-item active">
+      <span class="material-symbols-outlined">bar_chart</span>
+    </a>
+    <a href="/atendimento" class="dock-item">
+      <span class="material-symbols-outlined">headset_mic</span>
+    </a>
+    <div class="dock-sep"></div>
+    <a href="#" onclick="logout(); return false;" class="dock-item" style="color:rgba(255,77,77,0.5)">
+      <span class="material-symbols-outlined">logout</span>
+    </a>
+  </nav>
 
   <main>
     <!-- ── Dashboard Pills (abas internas) ── -->
@@ -248,7 +429,16 @@
       <!-- Top Header -->
       <header class="top-header">
         <div class="header-title">
-          <h2>Dashboard de Ligações</h2>
+          <div class="title-row">
+            <h2>Dashboard de Ligações</h2>
+            <div class="client-selector" id="clientSelector" style="display:none">
+              <button class="client-selector-btn" id="clientBtn">
+                <span id="clientBtnLabel">MindFlow</span>
+                <span class="material-symbols-outlined">expand_more</span>
+              </button>
+              <div class="client-dropdown" id="clientDropdown"></div>
+            </div>
+          </div>
           <p>Mapeamento de funil, produtividade dos agentes e auditoria em tempo real.</p>
         </div>
         <div class="filters-panel">
@@ -257,18 +447,52 @@
               <span class="material-symbols-outlined">manage_accounts</span>
               Agente
             </label>
-            <select id="filter-agent">
-              <option value="">Todos os Agentes</option>
-            </select>
+            <div class="custom-select" id="csDashboardAgent">
+              <div class="custom-select-trigger" role="button" tabindex="0">
+                <span class="material-symbols-outlined cs-ico">smart_toy</span>
+                <span class="cs-value">Todos os Agentes</span>
+                <span class="material-symbols-outlined cs-arrow">expand_more</span>
+              </div>
+              <div class="custom-select-dropdown" id="csDashboardAgentDropdown"></div>
+            </div>
           </div>
-          <div class="filter-group date-picker-group">
-            <label for="filter-date-range">
+          <div class="filter-group date-picker-group" style="position:relative">
+            <label>
               <span class="material-symbols-outlined">calendar_month</span>
               Período
             </label>
-            <div class="date-range-container">
-              <input type="text" id="filter-date-range" placeholder="Selecione o período..." readonly>
-              <span class="material-symbols-outlined range-arrow">expand_more</span>
+            <div class="period-toggle" id="periodToggle" role="button" tabindex="0">
+              <span class="material-symbols-outlined period-ico">date_range</span>
+              <span class="period-text" id="periodText">Selecionar período</span>
+              <span class="material-symbols-outlined period-arrow">expand_more</span>
+            </div>
+            <div class="period-panel" id="periodPanel">
+              <div class="period-presets">
+                <button type="button" class="period-preset" data-range="today">Hoje</button>
+                <button type="button" class="period-preset" data-range="7d">7 dias</button>
+                <button type="button" class="period-preset" data-range="30d">30 dias</button>
+                <button type="button" class="period-preset" data-range="all">Tudo</button>
+              </div>
+              <div class="period-fields">
+                <div class="period-field">
+                  <span class="period-label">De</span>
+                  <span class="period-value" id="periodStartDisplay">—</span>
+                </div>
+                <div class="period-field">
+                  <span class="period-label">Até</span>
+                  <span class="period-value" id="periodEndDisplay">—</span>
+                </div>
+              </div>
+              <div class="period-cal-header">
+                <button type="button" class="period-cal-nav" id="periodCalPrev"><span class="material-symbols-outlined" style="font-size:18px">chevron_left</span></button>
+                <span class="period-cal-title" id="periodCalTitle">—</span>
+                <button type="button" class="period-cal-nav" id="periodCalNext"><span class="material-symbols-outlined" style="font-size:18px">chevron_right</span></button>
+              </div>
+              <div class="period-cal-grid" id="periodCalGrid"></div>
+              <div class="period-actions">
+                <button type="button" class="period-btn period-btn-clear" id="periodClear">Limpar</button>
+                <button type="button" class="period-btn period-btn-apply" id="periodApply">Aplicar</button>
+              </div>
             </div>
           </div>
           <button id="btn-clear-filters" class="btn-secondary" title="Limpar Filtros">
@@ -512,14 +736,19 @@
 
   <!-- Scripts do dashboard nativo -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
   <script src="dashboard-app.js"></script>
 
   <!-- Session check & logout -->
   <script>
     const userName = document.getElementById('userName');
     const btnLogout = document.getElementById('btnLogout');
+    const clientBtn = document.getElementById('clientBtn');
+    const clientBtnLabel = document.getElementById('clientBtnLabel');
+    const clientDropdown = document.getElementById('clientDropdown');
+    const clientSelector = document.getElementById('clientSelector');
+
+    let currentClients = [];
+    let activeClientId = null;
 
     async function checkSession() {
       try {
@@ -527,7 +756,63 @@
         if (!res.ok) throw new Error('unauthorized');
         const data = await res.json();
         userName.textContent = data.name;
+        initClientSelector(data);
       } catch { window.location.href = '/'; }
+    }
+
+    function initClientSelector(data) {
+      currentClients = data.client_access || [];
+      activeClientId = data.active_client;
+
+      if (currentClients.length <= 1) return;
+
+      clientSelector.style.display = 'block';
+      renderClientDropdown(data.active_client, data.active_client_name);
+
+      clientBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        clientDropdown.classList.toggle('open');
+      });
+      document.addEventListener('click', () => clientDropdown.classList.remove('open'));
+    }
+
+    function renderClientDropdown(activeId, activeName) {
+      clientBtnLabel.textContent = activeName || 'Selecionar';
+      clientDropdown.innerHTML = currentClients.map(c => {
+        const isActive = c.client_id === activeId;
+        return `<div class="client-option ${isActive ? 'active' : ''}" data-client-id="${c.client_id}">
+          <span>${esc(c.client_name)}</span>
+        </div>`;
+      }).join('');
+
+      clientDropdown.querySelectorAll('.client-option').forEach(el => {
+        el.addEventListener('click', async () => {
+          const clientId = el.dataset.clientId;
+          const res = await fetch('/api/switch-client', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ client_id: clientId })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            activeClientId = data.active_client;
+            renderClientDropdown(data.active_client, data.active_client_name);
+            if (typeof refreshDashboard === 'function') {
+              Object.values(state?.charts || {}).forEach(ch => { if (ch) ch.destroy(); });
+              loadAgents();
+              refreshDashboard();
+            } else {
+              window.location.reload();
+            }
+          }
+        });
+      });
+    }
+
+    function esc(s) {
+      const d = document.createElement('div');
+      d.textContent = s || '';
+      return d.innerHTML;
     }
 
     async function logout() {
@@ -537,6 +822,98 @@
 
     btnLogout.addEventListener('click', logout);
     checkSession();
+
+    /* ── Custom Dropdown do Dashboard ── */
+    function initDashCustomSelect(containerId, onChange) {
+      const container = document.getElementById(containerId);
+      const trigger = container.querySelector('.custom-select-trigger');
+      const dropdown = container.querySelector('.custom-select-dropdown');
+      const valueEl = trigger.querySelector('.cs-value');
+      let selectedValue = '';
+      let isOpen = false;
+
+      function reposition() {
+        if (!isOpen) return;
+        const rect = trigger.getBoundingClientRect();
+        const ds = dropdown.style;
+        ds.left = rect.left + 'px';
+        ds.width = rect.width + 'px';
+        ds.top = (rect.bottom + 4) + 'px';
+      }
+      function openPortal() {
+        if (isOpen) return;
+        isOpen = true;
+        container.classList.add('open');
+        document.body.appendChild(dropdown);
+        const ds = dropdown.style;
+        ds.position = 'fixed';
+        ds.zIndex = '999999';
+        ds.opacity = '1';
+        ds.pointerEvents = 'auto';
+        reposition();
+        window.addEventListener('scroll', reposition, true);
+      }
+      function closePortal() {
+        if (!isOpen) return;
+        isOpen = false;
+        window.removeEventListener('scroll', reposition, true);
+        container.classList.remove('open');
+        container.appendChild(dropdown);
+        dropdown.style.position = '';
+        dropdown.style.left = ''; dropdown.style.width = '';
+        dropdown.style.top = ''; dropdown.style.zIndex = '';
+        dropdown.style.opacity = ''; dropdown.style.pointerEvents = '';
+      }
+      function selectOpt(val, label) {
+        selectedValue = val;
+        valueEl.textContent = label;
+        container.classList.toggle('has-value', !!val);
+        dropdown.querySelectorAll('.cs-option').forEach(el => el.classList.toggle('selected', el.dataset.value === val));
+        if (onChange) onChange(val);
+        closePortal();
+      }
+
+      trigger.addEventListener('click', () => { if (isOpen) closePortal(); else openPortal(); });
+      document.addEventListener('click', (e) => {
+        if (!container.contains(e.target) && !dropdown.contains(e.target)) closePortal();
+      });
+
+      return {
+        setOptions(opts) {
+          dropdown.innerHTML = '';
+          if (!opts || opts.length === 0) {
+            dropdown.innerHTML = '<div class="cs-no-options">Nenhum agente</div>';
+            return;
+          }
+          opts.forEach(opt => {
+            const div = document.createElement('div');
+            div.className = 'cs-option' + (opt.value === selectedValue ? ' selected' : '');
+            div.dataset.value = opt.value;
+            div.innerHTML = '<span class="material-symbols-outlined cs-opt-check">check</span><span class="cs-opt-label">' + opt.label + '</span>';
+            div.addEventListener('click', (e) => { e.stopPropagation(); selectOpt(opt.value, opt.label); });
+            dropdown.appendChild(div);
+          });
+        },
+        setValue(val, label) { selectOpt(val, label); },
+      };
+    }
+
+    // Custom dropdown do dashboard — popula direto
+    (async function initDashAgentSelect() {
+      const dashAgentSelect = initDashCustomSelect('csDashboardAgent', (val) => {
+        if (typeof state !== 'undefined' && state.filters) {
+          state.filters.agent = val || '';
+          if (typeof refreshDashboard === 'function') refreshDashboard();
+        }
+      });
+      try {
+        const res = await fetch('/agents');
+        const agents = await res.json();
+        const opts = [{ value: '', label: 'Todos os Agentes' }];
+        agents.forEach(a => opts.push({ value: a, label: a }));
+        dashAgentSelect.setOptions(opts);
+      } catch (err) { console.error('Erro ao buscar agentes:', err); }
+    })();
   </script>
 
   <!-- Neural Canvas -->
@@ -544,7 +921,7 @@
     (function () {
       const cv = document.getElementById('neural-canvas');
       const ctx = cv.getContext('2d');
-      let W, H, t = 0, dots = [], mouse = { x: -9999, y: -9999 };
+      let W, H, t = 0, _fc=0, dots = [], mouse = { x: -9999, y: -9999 };
       const PS = 0.75, BLUE = [46, 79, 255], TEAL = [0, 181, 160], GAP = 44;
 
       function rgba(rgb, a) { return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a.toFixed(3)})`; }

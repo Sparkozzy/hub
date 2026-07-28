@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Atendimento — MindFlow</title>
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%221225 1800 545 510%22><path fill=%22%23FFFFFF%22 d=%22M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z%22/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue: #2E4FFF;
+      --teal: #00B5A0;
+      --blue2: #7B9AFF;
+      --bg: #04060E;
+      --muted: #8E8FA2;
+    }
+
+    body {
+      background: var(--bg);
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    #neural-canvas {
+      position: fixed; inset: 0; width: 100%; height: 100%;
+      z-index: 0; pointer-events: none;
+    }
+
+    /* ── Navbar ── */
+    .navbar {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 50; height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 32px;
+      background: rgba(4, 6, 14, 0.6);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .nav-left { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #fff; }
+    .nav-left svg.mark { width: 28px; height: 28px; flex-shrink: 0; }
+    .nav-left .brand { height: 22px; opacity: 0.92; }
+    .nav-right { display: flex; align-items: center; gap: 16px; }
+    .nav-user { font-size: 13px; color: rgba(255, 255, 255, 0.6); }
+    .btn-logout {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.5); padding: 6px 14px 6px 10px; border-radius: 8px;
+      cursor: pointer; font-family: 'Space Grotesk', sans-serif;
+      font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-logout:hover { background: rgba(255,77,77,0.12); border-color: rgba(255,77,77,0.2); color: #FF4D4D; }
+    .btn-logout .material-symbols-outlined { font-size: 16px; }
+
+    /* ── Dock lateral ── */
+    .dock {
+      position: fixed; left: 16px; top: 50%; transform: translateY(-50%);
+      z-index: 999999; display: flex; flex-direction: column; align-items: center;
+      gap: 4px; padding: 10px 6px;
+      background: rgba(8,12,24,0.55); backdrop-filter: blur(12px) saturate(1.3);
+      -webkit-backdrop-filter: blur(12px) saturate(1.3);
+      border: 1px solid rgba(255,255,255,0.06); border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+    }
+    .dock-item {
+      will-change: transform;
+      display: flex; align-items: center; justify-content: center;
+      width: 44px; height: 44px; border-radius: 50%;
+      color: rgba(255,255,255,0.5); text-decoration: none;
+      transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1); position: relative;
+    }
+    .dock-item .material-symbols-outlined { font-size: 24px; }
+    .dock-item:hover { color: #fff; background: rgba(255,255,255,0.08); transform: scale(1.25); }
+    .dock-item.active { color: #7B9AFF; background: rgba(46,79,255,0.15); }
+    .dock-item.active::after {
+      content: ''; position: absolute; right: -6px; top: 50%;
+      transform: translateY(-50%);
+      width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
+    }
+    .dock-sep { width: 28px; height: 1px; background: rgba(255,255,255,0.08); margin: 4px 0; }
+
+    /* ── CRM Container ── */
+    .crm-wrapper {
+      position: fixed;
+      top: 56px;
+      left: 68px;
+      right: 0;
+      bottom: 0;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .crm-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: rgba(8,12,24,0.3);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .crm-iframe.loaded {
+      opacity: 1;
+    }
+
+    /* ── Loading state ── */
+    .loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      color: var(--muted);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 14px;
+      position: absolute;
+      z-index: 0;
+    }
+
+    .loading-state .spinner {
+      width: 32px; height: 32px;
+      border: 2px solid rgba(46,79,255,0.2);
+      border-top-color: #2E4FFF;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Error state ── */
+    .error-state {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      color: #FF4D4D;
+      text-align: center;
+      position: absolute;
+      z-index: 1;
+    }
+
+    @media (max-width: 768px) {
+      .dock { display: none; }
+      .crm-wrapper { left: 0; }
+      .navbar { padding: 0 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="neural-canvas"></canvas>
+
+  <!-- ── Navbar ── -->
+  <nav class="navbar">
+    <a class="nav-left" href="/dashboard">
+      <svg class="mark" width="28" height="28" viewBox="1255 225 485 450" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path fill="white" transform="translate(0 -1604)" d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z" />
+      </svg>
+      <svg class="brand" height="22" viewBox="530 745 1945 360" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;flex-shrink:0">
+        <path fill="white" transform="translate(0 -1604)" d="M1479.61 2368.25L1517.74 2368.25L1517.51 2687.85L1479.48 2687.89C1479.52 2678.56 1479.38 2672.65 1478.94 2663.35C1476.02 2658.69 1456.89 2675.85 1451.6 2678.72C1406.96 2702.97 1363.56 2697.62 1320.38 2667.34C1192.38 2557.43 1355.7 2366.92 1479.31 2485.3L1479.61 2368.25Z" />
+        <path fill="white" transform="translate(0 -1604)" d="M1945.14 2449.24C1982.13 2445.92 2019.48 2455.23 2050.21 2491.51C2099.37 2550.97 2081.5 2632.36 2033.13 2668.24C2012.12 2683.83 1999.15 2687.68 1976.32 2692.86C1935.29 2694.67 1898.43 2691.03 1863.2 2648.74C1828.03 2606.27 1827 2537.01 1862.85 2494.41C1889.41 2462.84 1913.93 2454.83 1945.14 2449.24Z" />
+        <path fill="white" transform="translate(0 -1604)" d="M730.789 2495.2C755.41 2462.12 780.94 2449.08 811.813 2448.86C833.954 2448.71 863.277 2456.99 879.134 2486.8C884.658 2497.21 888.528 2510.04 890.347 2523.98C894.054 2551.21 892.549 2653.03 892.457 2687.4L853.587 2687.34C853.378 2650.23 857.517 2524.89 846.818 2510.14C810.708 2460.38 744.823 2484.77 739.735 2576.07L739.65 2687.57L700.73 2687.59C700.595 2649.75 705.869 2530.84 691.58 2505.44C669.808 2469.53 616.642 2485.38 598.393 2520.89C581.653 2553.46 586.828 2643.28 587.016 2687.87L548.265 2687.82L548.298 2454.53C559.842 2454.48 573.861 2452.16 584.977 2454.83C588.228 2459.91 587.568 2468.01 587.96 2477.32C593.241 2476.98 611.801 2461.92 620.155 2457.97C633.29 2451.77 638.111 2451.09 651.988 2449.4C687.529 2449.75 711.068 2458.86 730.789 2495.2Z" />
+        <path fill="white" transform="translate(0 -1604)" d="M2233.04 2454.18L2275.59 2454.41C2297.41 2501.54 2323.75 2562.63 2344.02 2612.01C2359.46 2569.82 2392.75 2497.11 2410.98 2454.75L2451.22 2454.66L2438.73 2483.54L2382.65 2612.99C2374.07 2632.79 2359.3 2669.41 2349.95 2684.69C2348.27 2685.54 2339.54 2687.64 2338.37 2685.32C2314.41 2637.47 2292.36 2584.76 2270.02 2534.24C2255.79 2565.84 2241.69 2597.62 2227.72 2629.58C2220.34 2646.29 2210.14 2671.07 2201.81 2685.46C2196.22 2687.53 2195.73 2687.05 2189.96 2685.3C2182.06 2672.43 2093.67 2463.46 2092.21 2454.58L2130.13 2454.31C2150.82 2505.59 2174.46 2559.35 2195.92 2610.11C2213.28 2572.89 2232.72 2526.44 2249.02 2487.93C2244.56 2477.56 2237.92 2464.39 2233.04 2454.18Z" />
+        <path fill="white" transform="translate(0 -1604)" d="M1137.48 2449.32C1138.71 2449.21 1139.94 2449.13 1141.18 2449.08C1245.93 2445.24 1232.36 2547.5 1232.88 2687.81L1193.94 2687.82C1193.67 2640.44 1195.92 2586.08 1192.76 2539.84C1188.36 2475.33 1137.74 2480.06 1112.16 2490.45C1053.77 2511.38 1066.09 2605.6 1066.3 2687.4L1027.87 2687.59L1027.72 2454.68L1066.3 2454.87L1066.74 2485.84C1092.98 2459.2 1107.46 2453.49 1137.48 2449.32Z" />
+        <path fill="white" transform="translate(0 -1604)" d="M1627.7 2363.2C1645.85 2360.21 1674.85 2369.68 1692.72 2376.64L1692.75 2413.88C1677.23 2407.41 1641.9 2385.52 1629.43 2407.45C1623.1 2418.58 1624.91 2439.83 1625.39 2454.67C1653.23 2455.64 1681.46 2455.58 1709.33 2455.96L1709.4 2489.45C1681.39 2489.4 1653.39 2489.09 1625.38 2488.49L1625.32 2520.5L1625.28 2687.71L1587.02 2687.71L1586.95 2489.39L1557.24 2489.25L1557.1 2454.6L1586.81 2454.72C1586.34 2390.05 1587.97 2371.7 1627.7 2363.2Z" />
+        <path fill="white" transform="translate(0 -1604)" d="M1758.55 2369.67L1797.02 2369.51L1796.72 2687.47L1758.6 2687.36L1758.55 2369.67Z" />
+        <path fill="white" transform="translate(0 -1604)" d="M939.123 2454.44L977.913 2454.48L977.762 2687.61L939.08 2687.62C938.324 2611.78 938.775 2530.28 939.123 2454.44Z" />
+        <path fill="white" transform="translate(0 -1604)" d="M952.952 2363.16C986.762 2360.45 1003.1 2404.64 964.268 2419.56C928.358 2422.49 915.136 2374.36 952.952 2363.16Z" />
+      </svg>
+    </a>
+    <div class="nav-right">
+      <span class="nav-user" id="userDisplay">Olá, <strong id="userName">—</strong></span>
+      <button class="btn-logout" id="btnLogout">
+        <span class="material-symbols-outlined">logout</span>
+        Sair
+      </button>
+    </div>
+  </nav>
+
+  <!-- ── Dock lateral ── -->
+  <nav class="dock">
+    <a href="/hub" class="dock-item">
+      <span class="material-symbols-outlined">grid_view</span>
+    </a>
+    <a href="/disparo" class="dock-item">
+      <span class="material-symbols-outlined">smart_toy</span>
+    </a>
+    <a href="/dashboard" class="dock-item">
+      <span class="material-symbols-outlined">bar_chart</span>
+    </a>
+    <a href="/atendimento" class="dock-item active">
+      <span class="material-symbols-outlined">headset_mic</span>
+    </a>
+    <div class="dock-sep"></div>
+    <a href="#" onclick="logout(); return false;" class="dock-item" style="color:rgba(255,77,77,0.5)">
+      <span class="material-symbols-outlined">logout</span>
+    </a>
+  </nav>
+
+  <!-- ── CRM Container ── -->
+  <div class="crm-wrapper" id="crmWrapper">
+    <div class="loading-state" id="loadingState">
+      <div class="spinner"></div>
+      <span>Carregando atendimento...</span>
+    </div>
+    <div class="error-state" id="errorState">
+      <span class="material-symbols-outlined" style="font-size:32px;">error_outline</span>
+      <span id="errorMessage">Erro ao carregar o CRM.</span>
+      <button onclick="location.reload()" style="margin-top:8px;padding:8px 20px;background:linear-gradient(135deg,#2E4FFF,#00B5A0);border:none;border-radius:8px;color:#fff;font-family:'Space Grotesk',sans-serif;font-size:13px;cursor:pointer;">Tentar novamente</button>
+    </div>
+    <iframe id="crmIframe" class="crm-iframe" allow="microphone; camera" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"></iframe>
+  </div>
+
+  <!-- Session check & JWT loader -->
+  <script>
+    const crmIframe = document.getElementById('crmIframe');
+    const loadingState = document.getElementById('loadingState');
+    const errorState = document.getElementById('errorState');
+    const errorMessage = document.getElementById('errorMessage');
+    const userName = document.getElementById('userName');
+
+    async function checkSession() {
+      try {
+        const res = await fetch('/api/check');
+        if (!res.ok) throw new Error('unauthorized');
+        const data = await res.json();
+        userName.textContent = data.name;
+        loadCRM();
+      } catch { window.location.href = '/'; }
+    }
+
+    async function loadCRM() {
+      try {
+        // Busca o JWT de SSO
+        const jwtRes = await fetch('/api/helena/jwt');
+        if (!jwtRes.ok) throw new Error('Erro ao gerar token de acesso ao CRM.');
+
+        const { token, crmUrl } = await jwtRes.json();
+
+        // Constrói a URL do CRM com o token
+        // Formato esperado pelo Helena: https://chat.mindflow.com.br/?jwt=TOKEN
+        const url = new URL(crmUrl);
+        url.searchParams.set('jwt', token);
+
+        crmIframe.src = url.toString();
+
+        crmIframe.onload = () => {
+          loadingState.style.display = 'none';
+          crmIframe.classList.add('loaded');
+        };
+
+        crmIframe.onerror = () => {
+          showError('Erro ao carregar o CRM. O servidor pode estar indisponível.');
+        };
+
+      } catch (err) {
+        console.error('[Atendimento] Erro:', err);
+        showError(err.message || 'Erro ao conectar com o CRM.');
+      }
+    }
+
+    function showError(msg) {
+      loadingState.style.display = 'none';
+      errorState.style.display = 'flex';
+      errorMessage.textContent = msg;
+    }
+
+    async function logout() {
+      await fetch('/api/logout', { method: 'POST' });
+      window.location.href = '/';
+    }
+
+    document.getElementById('btnLogout').addEventListener('click', logout);
+    checkSession();
+  </script>
+
+  <!-- Neural Canvas -->
+  <script>
+    (function () {
+      const cv = document.getElementById('neural-canvas');
+      if (!cv) return;
+      const ctx = cv.getContext('2d');
+      let W, H, t = 0, _fc=0, dots = [], mouse = { x: -9999, y: -9999 };
+      const PS = 0.75, BLUE = [46, 79, 255], TEAL = [0, 181, 160], GAP = 44;
+
+      function rgba(rgb, a) { return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a.toFixed(3)})`; }
+
+      function resize() {
+        const rW = window.innerWidth, rH = window.innerHeight;
+        W = Math.min(rW, 2560); H = Math.min(rH, 1440);
+        cv.width = rW * PS; cv.height = rH * PS;
+        buildGrid();
+      }
+
+      function buildGrid() {
+        dots = [];
+        const cols = Math.ceil(W / GAP) + 2, rows = Math.ceil(H / GAP) + 2;
+        for (let r = 0; r < rows; r++)
+          for (let c = 0; c < cols; c++)
+            dots.push({ bx: c * GAP - GAP, by: r * GAP - GAP, phase: (c * .35 + r * .55) + Math.random() * .4, colorPhase: Math.random() * Math.PI * 2 });
+      }
+
+      function waveAt(wx, wy, dx, dy) {
+        const d = Math.sqrt(dx * dx + dy * dy);
+        return Math.sin(d * .022 - t * .045 + wx * .01 + wy * .01) * Math.exp(-d / (Math.min(W, H) * .55));
+      }
+
+      function frame() {
+        const rW = window.innerWidth, rH = window.innerHeight;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.fillStyle = '#04060E';
+        ctx.fillRect(0, 0, cv.width, cv.height);
+        ctx.scale((rW / W) * PS, (rH / H) * PS);
+        dots.forEach(d => {
+          let inf = 0;
+          [{ nx: .18, ny: .72, s: .00018, o: 0 }, { nx: .82, ny: .28, s: .00014, o: 2.1 }, { nx: .5, ny: .15, s: .0002, o: 4.2 }].forEach(wv => {
+            const wx = (wv.nx + Math.sin(t * wv.s + wv.o) * .18) * W;
+            const wy = (.5 + Math.cos(t * wv.s + wv.o) * .22) * H;
+            inf += waveAt(wx, wy, d.bx - wx, d.by - wy);
+          });
+          inf /= 3;
+          const x = d.bx + Math.sin(d.phase + t * .018) * 3.5 * inf * 4;
+          const y = d.by + Math.cos(d.phase + t * .014) * 3.5 * inf * 4;
+          const r = .9 + inf * 2.2;
+          if (r <= 0) return;
+          const mix = Math.sin(d.colorPhase + t * .008 + inf * 3) * .5 + .5;
+          const rgb = [Math.round(BLUE[0] + (TEAL[0] - BLUE[0]) * mix), Math.round(BLUE[1] + (TEAL[1] - BLUE[1]) * mix), Math.round(BLUE[2] + (TEAL[2] - BLUE[2]) * mix)];
+          const mdx = d.bx - (mouse.x * (W / rW));
+          const mdy = d.by - (mouse.y * (H / rH));
+          const mGlow = Math.max(0, 1 - Math.sqrt(mdx * mdx + mdy * mdy) / 160);
+          const br = .05 + Math.max(0, inf) * .5 + mGlow * .55;
+          const g = ctx.createRadialGradient(x, y, 0, x, y, r * 5);
+          g.addColorStop(0, rgba(rgb, br * .5));
+          g.addColorStop(.4, rgba(rgb, br * .12));
+          g.addColorStop(1, rgba(rgb, 0));
+          ctx.beginPath(); ctx.arc(x, y, r * 5, 0, Math.PI * 2);
+          ctx.fillStyle = g; ctx.fill();
+          ctx.beginPath(); ctx.arc(x, y, Math.max(.3, r), 0, Math.PI * 2);
+          ctx.fillStyle = rgba(rgb, .15 + Math.max(0, inf) * .6 + mGlow * .75);
+          ctx.fill();
+        });
+        t++;
+        requestAnimationFrame(frame);
+      }
+      resize();
+      window.addEventListener('resize', resize);
+      window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+      window.addEventListener('mouseleave', () => { mouse.x = -9999; mouse.y = -9999; });
+      frame();
+    })();
+  </script>
+
+</body>
+</html>

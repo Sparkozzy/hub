@@ -81,116 +81,160 @@ function initTabs() {
 }
 
 // 2. Dynamic Filter Dropdowns & Observers
-let datePickerInstance;
 
 function initFilters() {
-    const agentSelect = document.getElementById('filter-agent');
     const clearBtn = document.getElementById('btn-clear-filters');
-    
-    agentSelect.addEventListener('change', (e) => {
-        state.filters.agent = e.target.value;
-        refreshDashboard();
-    });
-    
-    // Initialize premium Flatpickr date range picker with dual calendar & sidebar presets
-    try {
-        datePickerInstance = flatpickr("#filter-date-range", {
-            mode: "range",
-            dateFormat: "Y-m-d",
-            altInput: true,
-            altFormat: "d/m/Y",
-            locale: (typeof flatpickr !== 'undefined' && flatpickr.l10ns && flatpickr.l10ns.pt) ? "pt" : "default",
-            theme: "dark",
-            showMonths: 2,
-            onReady: function(selectedDates, dateStr, instance) {
-                const container = instance.calendarContainer;
-                if (!container) return;
-                
-                // Add layout modifier class
-                container.classList.add("has-presets");
-                
-                const presetsDiv = document.createElement("div");
-                presetsDiv.className = "flatpickr-presets";
-                
-                const presets = [
-                    { text: "Hoje", special: 'today' },
-                    { text: "Últimos 7 dias", special: '7days' },
-                    { text: "Últimas 4 semanas", special: '28days' },
-                    { text: "Últimos 3 meses", special: '90days' },
-                    { text: "Este Mês", special: 'this_month' },
-                    { text: "Histórico Completo", special: 'all' }
-                ];
-                
-                presets.forEach(p => {
-                    const btn = document.createElement("button");
-                    btn.type = "button";
-                    btn.className = "preset-btn";
-                    btn.textContent = p.text;
-                    
-                    btn.addEventListener("click", () => {
-                        const now = new Date();
-                        let start, end;
-                        
-                        if (p.special === 'all') {
-                            instance.clear();
-                            state.filters.startDate = '';
-                            state.filters.endDate = '';
-                            instance.close();
-                            refreshDashboard();
-                            return;
-                        }
-                        
-                        end = now;
-                        if (p.special === 'today') {
-                            start = now;
-                        } else if (p.special === '7days') {
-                            start = new Date();
-                            start.setDate(now.getDate() - 6);
-                        } else if (p.special === '28days') {
-                            start = new Date();
-                            start.setDate(now.getDate() - 27);
-                        } else if (p.special === '90days') {
-                            start = new Date();
-                            start.setDate(now.getDate() - 89);
-                        } else if (p.special === 'this_month') {
-                            start = new Date(now.getFullYear(), now.getMonth(), 1);
-                        }
-                        
-                        instance.setDate([start, end], true);
-                        instance.close();
-                    });
-                    
-                    presetsDiv.appendChild(btn);
-                });
-                
-                container.insertBefore(presetsDiv, container.firstChild);
-            },
-            onChange: function(selectedDates, dateStr, instance) {
-                if (selectedDates.length === 2) {
-                    const formatDate = (d) => {
-                        const yyyy = d.getFullYear();
-                        const mm = String(d.getMonth() + 1).padStart(2, '0');
-                        const dd = String(d.getDate()).padStart(2, '0');
-                        return `${yyyy}-${mm}-${dd}`;
-                    };
-                    state.filters.startDate = formatDate(selectedDates[0]);
-                    state.filters.endDate = formatDate(selectedDates[1]);
-                    refreshDashboard();
-                }
-            }
-        });
-    } catch (flatpickrErr) {
-        console.warn("Falha ao carregar componente Flatpickr de data:", flatpickrErr);
+
+    // ── Período ──
+    const toggle = document.getElementById('periodToggle');
+    const panel = document.getElementById('periodPanel');
+    const text = document.getElementById('periodText');
+    const calTitle = document.getElementById('periodCalTitle');
+    const calGrid = document.getElementById('periodCalGrid');
+    const startDisplay = document.getElementById('periodStartDisplay');
+    const endDisplay = document.getElementById('periodEndDisplay');
+    const applyBtn = document.getElementById('periodApply');
+    const clearPeriodBtn = document.getElementById('periodClear');
+    let calDate = new Date();
+    let selStart = null, selEnd = null;
+
+    function pad(n) { return String(n).padStart(2, '0'); }
+    function toStr(d) { return d ? d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()) : ''; }
+    function sameDay(a, b) { return a && b && a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+
+    function fmtBr(d) { return d ? d.toLocaleDateString('pt-BR') : '—'; }
+
+    function updateToggle() {
+        if (state.filters.startDate && state.filters.endDate) {
+            const s = state.filters.startDate.split('-').reverse().join('/');
+            const e = state.filters.endDate.split('-').reverse().join('/');
+            text.textContent = s+' — '+e;
+            text.classList.add('active');
+        } else { text.textContent = 'Período'; text.classList.remove('active'); }
     }
-    
-    clearBtn.addEventListener('click', () => {
-        agentSelect.value = '';
-        if (datePickerInstance) datePickerInstance.clear();
-        state.filters.agent = '';
-        state.filters.startDate = '';
-        state.filters.endDate = '';
+
+    function updateFields() {
+        startDisplay.textContent = fmtBr(selStart);
+        startDisplay.classList.toggle('hint', !selStart);
+        endDisplay.textContent = fmtBr(selEnd);
+        endDisplay.classList.toggle('hint', !selEnd);
+        startDisplay.closest('.period-field').classList.toggle('highlight', !!selStart && !selEnd);
+        endDisplay.closest('.period-field').classList.toggle('highlight', !!selEnd);
+        applyBtn.disabled = !selStart || !selEnd;
+    }
+
+    function renderCalendar() {
+        const year = calDate.getFullYear(), month = calDate.getMonth();
+        calTitle.textContent = new Date(year, month).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const today = new Date();
+        const todayNorm = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+        let html = '<div class="period-cal-weekday">Dom</div><div class="period-cal-weekday">Seg</div><div class="period-cal-weekday">Ter</div><div class="period-cal-weekday">Qua</div><div class="period-cal-weekday">Qui</div><div class="period-cal-weekday">Sex</div><div class="period-cal-weekday">Sáb</div>';
+        for (let i = 0; i < firstDay; i++) html += '<div class="period-cal-day empty"></div>';
+
+        for (let d = 1; d <= daysInMonth; d++) {
+            const date = new Date(year, month, d);
+            const isPast = date < todayNorm;
+            const isToday = sameDay(date, today);
+            const isStart = sameDay(date, selStart);
+            const isEnd = sameDay(date, selEnd);
+            const inRange = selStart && selEnd && date >= selStart && date <= selEnd;
+            let cls = 'period-cal-day';
+            if (isPast) cls += ' past';
+            if (isToday) cls += ' today';
+            if (isStart && isEnd && sameDay(selStart, selEnd)) cls += ' selected';
+            else if (isStart) cls += ' range-start';
+            else if (isEnd) cls += ' range-end';
+            else if (inRange) cls += ' in-range';
+            html += `<div class="${cls}" data-date="${year}-${pad(month+1)}-${pad(d)}">${d}</div>`;
+        }
+        calGrid.innerHTML = html;
+
+        calGrid.querySelectorAll('.period-cal-day:not(.empty):not(.past)').forEach(el => {
+            el.addEventListener('click', (e) => { e.stopPropagation();
+                const [y, m, day] = el.dataset.date.split('-').map(Number);
+                const clicked = new Date(y, m - 1, day);
+
+                // Se clicou no mesmo que já tá selecionado como início, desmarca
+                if (sameDay(clicked, selStart) && !selEnd) { selStart = null; updateFields(); renderCalendar(); return; }
+
+                if (!selStart || (selStart && selEnd)) {
+                    selStart = clicked; selEnd = null;
+                } else {
+                    if (clicked < selStart) { selEnd = selStart; selStart = clicked; }
+                    else { selEnd = clicked; }
+                }
+                updateFields();
+                renderCalendar();
+            });
+        });
+    }
+
+    // Apply
+    applyBtn.addEventListener('click', (e) => { e.stopPropagation();
+        if (!selStart || !selEnd) return;
+        state.filters.startDate = toStr(selStart);
+        state.filters.endDate = toStr(selEnd);
+        updateToggle();
+        panel.classList.remove('open'); toggle.classList.remove('open');
         refreshDashboard();
     });
+
+    // Clear (dentro do painel)
+    clearPeriodBtn.addEventListener('click', (e) => { e.stopPropagation(); selStart = null; selEnd = null; updateFields(); renderCalendar(); });
+
+    document.getElementById('periodCalPrev').addEventListener('click', (e) => { e.stopPropagation(); calDate.setMonth(calDate.getMonth() - 1); renderCalendar(); });
+    document.getElementById('periodCalNext').addEventListener('click', (e) => { e.stopPropagation(); calDate.setMonth(calDate.getMonth() + 1); renderCalendar(); });
+
+    toggle.addEventListener('click', () => {
+        console.log('[Period] toggle click');
+        if (!panel) { console.error('[Period] panel is null'); return; }
+        const willOpen = !panel.classList.contains('open');
+        panel.classList.toggle('open');
+        toggle.classList.toggle('open');
+        if (willOpen) {
+            console.log('[Period] opening panel');
+            const sd = state.filters.startDate ? new Date(state.filters.startDate+'T12:00:00') : null;
+            const ed = state.filters.endDate ? new Date(state.filters.endDate+'T12:00:00') : null;
+            selStart = sd; selEnd = ed;
+            try { updateFields(); renderCalendar(); } catch(e) { console.error('[Period] render error:', e); }
+        }
+    });
+    document.addEventListener('click', (e) => {
+        if (!toggle.contains(e.target) && !panel.contains(e.target)) { panel.classList.remove('open'); toggle.classList.remove('open'); }
+    });
+
+    // Presets
+    document.querySelectorAll('.period-preset').forEach(btn => {
+        btn.addEventListener('click', (e) => { e.stopPropagation();
+            const now = new Date();
+            let d1, d2;
+            if (btn.dataset.range === 'today') { d1=now; d2=now; }
+            else if (btn.dataset.range === '7d') { d1=new Date(); d1.setDate(now.getDate()-6); d2=now; }
+            else if (btn.dataset.range === '30d') { d1=new Date(); d1.setDate(now.getDate()-29); d2=now; }
+            else if (btn.dataset.range === 'all') {
+                state.filters.startDate=''; state.filters.endDate='';
+                selStart=null; selEnd=null; updateToggle();
+                panel.classList.remove('open'); toggle.classList.remove('open');
+                refreshDashboard(); return;
+            }
+            selStart=d1; selEnd=d2;
+            state.filters.startDate=toStr(d1); state.filters.endDate=toStr(d2);
+            updateToggle();
+            panel.classList.remove('open'); toggle.classList.remove('open');
+            refreshDashboard();
+        });
+    });
+
+    clearBtn.addEventListener('click', () => {
+        state.filters.agent=''; state.filters.startDate=''; state.filters.endDate='';
+        selStart=null; selEnd=null; updateToggle();
+        panel.classList.remove('open'); toggle.classList.remove('open');
+        refreshDashboard();
+    });
+    updateToggle();
     
     // Disconnection reasons breakdown view toggler
     const toggleBtn = document.getElementById('btn-toggle-disconnections');
@@ -227,15 +271,16 @@ async function loadAgents() {
         const res = await fetch('/agents');
         const agents = await res.json();
         const select = document.getElementById('filter-agent');
-        
-        // Remove existing items except "Todos"
-        select.innerHTML = '<option value="">Todos os Agentes</option>';
-        agents.forEach(agent => {
-            const opt = document.createElement('option');
-            opt.value = agent;
-            opt.textContent = agent;
-            select.appendChild(opt);
-        });
+
+        if (select) {
+            select.innerHTML = '<option value="">Todos os Agentes</option>';
+            agents.forEach(agent => {
+                const opt = document.createElement('option');
+                opt.value = agent;
+                opt.textContent = agent;
+                select.appendChild(opt);
+            });
+        }
     } catch (err) {
         console.error('Erro ao buscar agentes:', err);
     }

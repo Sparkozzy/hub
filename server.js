@@ -23,15 +23,35 @@ if (IS_PRODUCTION && (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.
 }
 
 // ============================================================
-// SUPABASE CLIENT
+// SUPABASE CLIENT (principal)
 // ============================================================
+const jwt = require('jsonwebtoken');
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+
+/**
+ * Retorna as credenciais de um cliente para uso no frontend (anon key)
+ */
+async function getClientAnonConfig(clientId) {
+  if (!clientId || clientId === '2') {
+    return { supabaseUrl: process.env.SUPABASE_URL, supabaseKey: process.env.SUPABASE_KEY };
+  }
+  const { data } = await supabase
+    .from('client_configurations')
+    .select('supabase_url, supabase_anon_key')
+    .eq('client_id', clientId)
+    .maybeSingle();
+  if (!data) return { supabaseUrl: process.env.SUPABASE_URL, supabaseKey: process.env.SUPABASE_KEY };
+  return { supabaseUrl: data.supabase_url, supabaseKey: data.supabase_anon_key };
+}
 
 // ============================================================
 // APP & MIDDLEWARE
 // ============================================================
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Trust proxy — necessário para Easypanel/Traefik
+app.set('trust proxy', 1);
 
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
@@ -87,11 +107,60 @@ app.get('/redefinir-senha', (req, res) => {
 
 // Dev login — cria sessão sem senha (apenas em desenvolvimento)
 if (!IS_PRODUCTION) {
-  app.get('/dev-login', (req, res) => {
+  app.get('/dev-login', async (req, res) => {
+    // Busca todos os clientes disponíveis para o dev
+    let clientAccess = [];
+    try {
+      const { data: clients } = await supabase
+        .from('client_configurations')
+        .select('client_id, client_name, supabase_url, supabase_service_key');
+
+      clientAccess = (clients || []).map(c => ({
+        client_id: c.client_id,
+        client_name: c.client_name,
+        role: 'admin',
+        supabase_url: c.supabase_url,
+        service_key: c.supabase_service_key,
+      }));
+    } catch (err) {
+      console.error('[DevLogin] Erro:', err.message);
+    }
+
+    // Busca dados reais de um usuario do Auth para o dev
+    let devUserId = 'dev-user';
+    let devEmail = 'dev@mindflow.ia';
+    let devName = 'Dev MindFlow';
+    let devPhone = '';
+    try {
+      const { data: cfg } = await supabase
+        .from('client_configurations')
+        .select('supabase_service_key')
+        .eq('client_id', '2')
+        .single();
+      if (cfg) {
+        const adminClient = createClient(process.env.SUPABASE_URL, cfg.supabase_service_key);
+        const { data: authData } = await adminClient.auth.admin.listUsers();
+        // Tenta achar o Pedro primeiro (dev principal), senao pega o primeiro
+        const targetEmail = 'pedroernestozimmermann@gmail.com';
+        const targetUser = authData?.users?.find(u => u.email === targetEmail)
+          || authData?.users?.[0];
+        if (targetUser) {
+          devUserId = targetUser.id;
+          devEmail = targetUser.email;
+          const um = targetUser.user_metadata || {};
+          devName = um.full_name || targetUser.email;
+          devPhone = um.phone || '';
+        }
+      }
+    } catch {}
+
     req.session.user = {
-      id: 'dev-user',
-      email: 'dev@mindflow.ia',
-      name: 'Dev MindFlow',
+      id: devUserId,
+      email: devEmail,
+      name: devName,
+      phone: devPhone,
+      client_access: clientAccess,
+      active_client: '2', // Mindflow como padrao
     };
     req.session.save(() => res.redirect('/dashboard'));
   });
@@ -122,6 +191,236 @@ app.get('/disparo', (req, res) => {
   res.sendFile(path.join(__dirname, 'disparo.html'));
 });
 
+app.get('/atendimento', (req, res) => {
+  if (!req.session?.user) return res.redirect('/');
+  res.sendFile(path.join(__dirname, 'atendimento.html'));
+});
+
+// ============================================================
+// HELENA CRM — CONFIG
+// ============================================================
+const HELENA_CONFIG = {
+  // URL base do CRM white label (domínio customizado MindFlow)
+  crmUrl: process.env.HELENA_CRM_URL || 'https://chat.mindflow.com.br',
+  // URL base da API do Helena (provisionamento de contas, etc.)
+  apiUrl: process.env.HELENA_API_URL || 'https://api.helena.app/v1',
+  // Token de parceiro (gerado na aba Integração do painel Super Admin)
+  partnerToken: process.env.HELENA_PARTNER_TOKEN || '',
+  // Chave secreta para assinar JWT de SSO (compartilhada com o Helena)
+  jwtSecret: process.env.HELENA_JWT_SECRET || process.env.SESSION_SECRET || '',
+  // TTL do JWT em horas
+  jwtTtlHours: 8,
+};
+
+// ============================================================
+// API: HELENA JWT (SSO — Single Sign-On)
+// ============================================================
+app.get('/api/helena/jwt', (req, res) => {
+  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
+
+  if (!HELENA_CONFIG.jwtSecret) {
+    return res.status(500).json({ error: 'JWT secret não configurado. Defina HELENA_JWT_SECRET.' });
+  }
+
+  const user = req.session.user;
+  const now = Math.floor(Date.now() / 1000);
+
+  // Busca a role do Helena baseada no client_access
+  const activeAccess = user.client_access?.find(c => c.client_id === user.active_client);
+  const helenaRole = activeAccess?.role === 'admin' ? 'Admin' : 'Atendente';
+
+  const payload = {
+    iss: process.env.APP_URL || 'https://hub.mindflow.com.br',
+    sub: user.id,
+    aud: 'helena-crm-embed',
+    iat: now,
+    exp: now + (HELENA_CONFIG.jwtTtlHours * 3600),
+    user_metadata: {
+      full_name: user.name,
+      email: user.email,
+      phone: user.phone || '',
+    },
+    app_metadata: {
+      tenant_id: user.active_client || 'mindflow_default',
+      helena_role: helenaRole,
+      allowed_queues: ['vendas', 'suporte'],
+      channels_access: ['whatsapp_main'],
+    },
+  };
+
+  const token = jwt.sign(payload, HELENA_CONFIG.jwtSecret, { algorithm: 'HS256' });
+
+  res.json({
+    token,
+    crmUrl: HELENA_CONFIG.crmUrl,
+    expiresIn: HELENA_CONFIG.jwtTtlHours * 3600,
+  });
+});
+
+// ============================================================
+// API: HELENA CONFIG (expoe config pra debug/admin)
+// ============================================================
+app.get('/api/helena/config', (req, res) => {
+  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
+  res.json({
+    crmUrl: HELENA_CONFIG.crmUrl,
+    apiUrl: HELENA_CONFIG.apiUrl,
+    hasPartnerToken: !!HELENA_CONFIG.partnerToken,
+    jwtTtlHours: HELENA_CONFIG.jwtTtlHours,
+  });
+});
+
+// ============================================================
+// API: HELENA WEBHOOK (recebe eventos do CRM → processa com IA)
+// ============================================================
+app.post('/api/helena/webhook', async (req, res) => {
+  const { event, tenant_id, data } = req.body;
+
+  if (!event || !tenant_id) {
+    return res.status(400).json({ error: 'Event e tenant_id são obrigatórios.' });
+  }
+
+  console.log(`[Helena Webhook] Evento: ${event} | Tenant: ${tenant_id}`);
+
+  // Responde imediatamente (ack) — processamento é assíncrono
+  res.status(200).json({ received: true });
+
+  try {
+    switch (event) {
+      case 'message.created': {
+        // Nova mensagem recebida → processar com IA da MindFlow
+        await handleIncomingMessage(tenant_id, data);
+        break;
+      }
+      case 'ticket.closed': {
+        // Ticket encerrado → atualizar estado no Supabase
+        if (data?.ticket_id) {
+          await supabase
+            .from('mindflow_engine.chat_sessions')
+            .update({ bot_status: 'CLOSED', updated_at: new Date().toISOString() })
+            .eq('helena_ticket_id', data.ticket_id);
+        }
+        break;
+      }
+      case 'ticket.assigned': {
+        // Atendente humano assumiu
+        if (data?.ticket_id) {
+          await supabase
+            .from('mindflow_engine.chat_sessions')
+            .update({ bot_status: 'HUMAN_ACTIVE', updated_at: new Date().toISOString() })
+            .eq('helena_ticket_id', data.ticket_id);
+        }
+        break;
+      }
+      default:
+        console.log(`[Helena Webhook] Evento não tratado: ${event}`);
+    }
+  } catch (err) {
+    console.error('[Helena Webhook] Erro no processamento:', err.message);
+  }
+});
+
+/**
+ * Processa mensagem recebida do Helena com IA da MindFlow
+ */
+async function handleIncomingMessage(tenantId, data) {
+  const { ticket_id, chat_id, sender, message } = data || {};
+  if (!ticket_id || !message?.body) return;
+
+  // 1. Busca ou cria sessão no Supabase
+  const { data: session } = await supabase
+    .from('mindflow_engine.chat_sessions')
+    .select('*')
+    .eq('helena_ticket_id', ticket_id)
+    .maybeSingle();
+
+  if (!session) {
+    // Busca tenant_id interno
+    const { data: tenant } = await supabase
+      .from('mindflow_engine.tenants')
+      .select('id')
+      .eq('helena_tenant_id', tenantId)
+      .maybeSingle();
+
+    if (!tenant) {
+      console.warn(`[Helena] Tenant não encontrado: ${tenantId}`);
+      return;
+    }
+
+    await supabase.from('mindflow_engine.chat_sessions').insert({
+      tenant_id: tenant.id,
+      helena_ticket_id: ticket_id,
+      customer_phone: sender?.phone || chat_id,
+      bot_status: 'BOT_ACTIVE',
+      conversation_context: { messages: [] },
+    });
+  } else if (session.bot_status !== 'BOT_ACTIVE') {
+    // Se não está em modo bot, ignora (humano está atendendo)
+    console.log(`[Helena] Ticket ${ticket_id} em modo ${session.bot_status}, ignorando.`);
+    return;
+  }
+
+  // 2. Processa com IA
+  const startTime = Date.now();
+  let aiResponse = null;
+  let tokensUsed = 0;
+
+  try {
+    // TODO: Integrar com o motor de IA real (OpenAI / Anthropic / n8n)
+    // Por enquanto, placeholder que responde via API do Helena
+    aiResponse = `[MindFlow IA] Mensagem recebida: "${message.body.substring(0, 100)}". Resposta automática em desenvolvimento.`;
+
+    // 3. Envia resposta via API do Helena
+    if (HELENA_CONFIG.partnerToken) {
+      await fetch(`${HELENA_CONFIG.apiUrl}/tickets/${ticket_id}/messages`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${HELENA_CONFIG.partnerToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'text',
+          body: aiResponse,
+          from_bot: true,
+        }),
+        signal: AbortSignal.timeout(10000),
+      });
+    } else {
+      console.log('[Helena] PARTNER_TOKEN não configurado — resposta não enviada.');
+    }
+  } catch (err) {
+    console.error('[Helena] Erro ao processar IA:', err.message);
+  }
+
+  // 4. Log de execução
+  const execTime = Date.now() - startTime;
+  const { data: sess } = await supabase
+    .from('mindflow_engine.chat_sessions')
+    .select('id')
+    .eq('helena_ticket_id', ticket_id)
+    .maybeSingle();
+
+  if (sess) {
+    await supabase.from('mindflow_engine.ai_execution_logs').insert({
+      session_id: sess.id,
+      incoming_prompt: message.body,
+      ai_response: aiResponse,
+      tokens_used: tokensUsed,
+      model_name: 'pending-integration',
+      execution_time_ms: execTime,
+    });
+  }
+
+  // 5. Atualiza contexto da sessão
+  await supabase
+    .from('mindflow_engine.chat_sessions')
+    .update({
+      last_interaction_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('helena_ticket_id', ticket_id);
+}
+
 // ============================================================
 // API: LOGIN (com Supabase Auth)
 // ============================================================
@@ -142,15 +441,69 @@ app.post('/api/login', loginLimiter, async (req, res) => {
     return res.status(401).json({ error: 'E-mail ou senha inválidos.' });
   }
 
-  // Login OK — salva na sessão Express
-  const displayName = data.user.user_metadata?.full_name || data.user.email;
+  // Login OK — busca vínculos com clientes
+  const meta = data.user.user_metadata || {};
+  const displayName = meta.full_name || data.user.email;
+  const userEmail = data.user.email.toLowerCase().trim();
+  const userPhone = meta.phone || '';
+
+  let clientAccess = [];
+  let activeClient = null;
+
+  try {
+    // Nova tabela: uma linha por user, client_ids em array
+    const { data: accessRow } = await supabase
+      .from('user_client_access')
+      .select('client_ids, role')
+      .eq('user_email', userEmail)
+      .maybeSingle();
+
+    if (accessRow && accessRow.client_ids && accessRow.client_ids.length > 0) {
+      // Buscar detalhes de cada cliente
+      const clientIdTexts = accessRow.client_ids.map(String);
+      const { data: clients } = await supabase
+        .from('client_configurations')
+        .select('client_id, client_name, supabase_url, supabase_service_key')
+        .in('client_id', clientIdTexts);
+
+      const clientMap = new Map((clients || []).map(c => [String(c.client_id), c]));
+
+      clientAccess = accessRow.client_ids.map(cid => {
+        const id = String(cid);
+        const cfg = clientMap.get(id);
+        return {
+          client_id: id,
+          client_name: cfg?.client_name || id,
+          role: accessRow.role,
+          supabase_url: cfg?.supabase_url || process.env.SUPABASE_URL,
+          service_key: cfg?.supabase_service_key || process.env.SUPABASE_KEY,
+        };
+      });
+
+      // Cliente ativo: Mindflow (client_id='2') se disponível, senão o primeiro
+      activeClient = clientAccess.find(c => c.client_id === '2')?.client_id
+        || clientAccess[0]?.client_id || null;
+    }
+  } catch (err) {
+    console.error('[Login] Erro ao buscar user_client_access:', err.message);
+  }
+
   req.session.user = {
     id: data.user.id,
-    email: data.user.email,
+    email: userEmail,
     name: displayName,
+    phone: userPhone,
+    client_access: clientAccess,
+    active_client: activeClient,
   };
 
-  return res.json({ ok: true, name: displayName });
+  req.session.save((err) => {
+    if (err) {
+      console.error('[Login] Erro ao salvar sessão:', err.message);
+      return res.status(500).json({ error: 'Erro ao criar sessão.' });
+    }
+    return res.json({ ok: true, name: displayName, active_client: activeClient });
+  });
 });
 
 // ============================================================
@@ -159,8 +512,175 @@ app.post('/api/login', loginLimiter, async (req, res) => {
 app.get('/api/config', (req, res) => {
   res.json({
     supabaseUrl: process.env.SUPABASE_URL,
-    supabaseKey: process.env.SUPABASE_KEY
+    supabaseKey: process.env.SUPABASE_KEY,
+    appUrl: process.env.APP_URL || `http://localhost:${PORT}`
   });
+});
+
+// ============================================================
+// SYNC: AGENTES — Retell API → Supabase (retell_agents)
+// ============================================================
+const RETELL_API_KEY = process.env.RETELL_API_KEY;
+let RETELL_AGENTS_CACHE = []; // fallback em memória
+
+async function syncRetellAgents() {
+  if (!RETELL_API_KEY) {
+    console.warn('[SyncAgents] RETELL_API_KEY ausente, pulando sync.');
+    return;
+  }
+  try {
+    console.log('[SyncAgents] Buscando agentes da Retell API...');
+    const retellRes = await fetch('https://api.retellai.com/list-agents', {
+      headers: { Authorization: `Bearer ${RETELL_API_KEY}` },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!retellRes.ok) throw new Error(`Retell API: ${retellRes.status}`);
+
+    const agentsRaw = await retellRes.json();
+
+    // Dedup por agent_id
+    const seen = new Map();
+    (agentsRaw || []).forEach(a => {
+      if (a.agent_id && a.agent_name && !seen.has(a.agent_id)) {
+        seen.set(a.agent_id, { agent_id: a.agent_id, agent_name: a.agent_name.trim(), updated_at: new Date().toISOString() });
+      }
+    });
+    const agents = Array.from(seen.values());
+
+    // Preserva prompt_id existente (mapeamento manual não pode ser sobrescrito)
+    try {
+      const { data: existing } = await supabase
+        .from('retell_agents')
+        .select('agent_id, prompt_id')
+        .not('prompt_id', 'is', null);
+      if (existing) {
+        const promptMap = new Map(existing.map(r => [r.agent_id, r.prompt_id]));
+        agents.forEach(a => {
+          if (promptMap.has(a.agent_id)) a.prompt_id = promptMap.get(a.agent_id);
+        });
+      }
+    } catch {}
+
+    // Upsert no Supabase
+    const { error } = await supabase.from('retell_agents').upsert(agents, { onConflict: 'agent_id' });
+    if (error) {
+      // Tabela pode não existir ainda — mantém cache em memória como fallback
+      console.warn('[SyncAgents] Upsert falhou (tabela retell_agents existe?):', error.message);
+    } else {
+      console.log(`[SyncAgents] ${agents.length} agentes upsertados.`);
+    }
+
+    // Remove agentes que não existem mais na Retell
+    const retellIdSet = new Set(agents.map(a => a.agent_id));
+    if (retellIdSet.size > 0) {
+      const { data: allInDb } = await supabase.from('retell_agents').select('agent_id');
+      const orphanIds = (allInDb || []).filter(r => !retellIdSet.has(r.agent_id)).map(r => r.agent_id);
+      if (orphanIds.length > 0) {
+        const { error: delErr } = await supabase.from('retell_agents').delete().in('agent_id', orphanIds);
+        if (delErr) {
+          console.warn('[SyncAgents] Erro ao remover agentes órfãos:', delErr.message);
+        } else {
+          console.log(`[SyncAgents] ${orphanIds.length} agentes órfãos removidos.`);
+        }
+      }
+    }
+
+    // Cache em memória como fallback rápido
+    RETELL_AGENTS_CACHE = agents.map(a => ({ id: a.agent_id, name: a.agent_name }));
+  } catch (err) {
+    console.error('[SyncAgents] Erro:', err.message);
+  }
+}
+
+// ============================================================
+// API: AGENTES (lê do Supabase, com fallback para cache local)
+// ============================================================
+app.get('/api/agents', async (req, res) => {
+  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    // Lê da tabela retell_agents no Supabase
+    const { data, error } = await supabase
+      .from('retell_agents')
+      .select('agent_id, agent_name, prompt_id')
+      .order('agent_name', { ascending: true });
+
+    if (!error && data && data.length > 0) {
+      return res.json(data.map(a => ({ id: a.agent_id, name: a.agent_name, prompt_id: a.prompt_id || null })));
+    }
+
+    // Fallback: cache em memória (tabela vazia ou inexistente)
+    if (RETELL_AGENTS_CACHE.length > 0) {
+      return res.json(RETELL_AGENTS_CACHE);
+    }
+
+    // Último recurso: busca direto da Retell
+    await syncRetellAgents();
+    if (RETELL_AGENTS_CACHE.length > 0) {
+      return res.json(RETELL_AGENTS_CACHE);
+    }
+
+    res.status(500).json({ error: 'Nenhum agente disponível.' });
+  } catch (err) {
+    console.error('[Agents] Erro:', err.message);
+    if (RETELL_AGENTS_CACHE.length > 0) return res.json(RETELL_AGENTS_CACHE);
+    res.status(500).json({ error: 'Erro ao buscar agentes.' });
+  }
+});
+
+// Refresh manual
+app.post('/api/agents/refresh', async (req, res) => {
+  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
+  await syncRetellAgents();
+  res.json({ ok: true, count: RETELL_AGENTS_CACHE.length });
+});
+
+// Sync inicial + a cada 6 horas
+syncRetellAgents();
+setInterval(syncRetellAgents, 6 * 60 * 60 * 1000);
+
+// ============================================================
+// API: PROMPTS (lista de prompts da tabela Prompts)
+// ============================================================
+const PROMPTS_CACHE = { data: null, timestamp: 0 };
+const PROMPTS_CACHE_TTL = 600_000; // 10 minutos
+
+app.get('/api/prompts', async (req, res) => {
+  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const now = Date.now();
+    if (PROMPTS_CACHE.data && now - PROMPTS_CACHE.timestamp < PROMPTS_CACHE_TTL) {
+      return res.json(PROMPTS_CACHE.data);
+    }
+
+    // Usa service key pra burlar RLS
+    const serviceKey = process.env.SUPABASE_SERVICE_KEY;
+    const adminClient = serviceKey
+      ? createClient(process.env.SUPABASE_URL, serviceKey)
+      : supabase;
+
+    const { data, error } = await adminClient
+      .from('Prompts')
+      .select('id, "Nome do cliente"')
+      .order('id', { ascending: true });
+
+    if (error) throw error;
+
+    const prompts = (data || []).map(p => ({
+      id: p.id,
+      'Nome do cliente': (p['Nome do cliente'] || '').trim() || `Prompt #${p.id}`,
+    }));
+
+    PROMPTS_CACHE.data = prompts;
+    PROMPTS_CACHE.timestamp = now;
+
+    res.json(prompts);
+  } catch (err) {
+    console.error('[Prompts] Erro:', err.message);
+    if (PROMPTS_CACHE.data) {
+      return res.json(PROMPTS_CACHE.data);
+    }
+    res.status(500).json({ error: 'Erro ao buscar prompts.' });
+  }
 });
 
 // ============================================================
@@ -168,7 +688,65 @@ app.get('/api/config', (req, res) => {
 // ============================================================
 app.get('/api/check', (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
-  res.json({ name: req.session.user.name });
+  const user = req.session.user;
+  const activeClient = user.client_access?.find(c => c.client_id === user.active_client);
+  res.json({
+    name: user.name,
+    email: user.email,
+    phone: user.phone || '',
+    client_access: (user.client_access || []).map(c => ({
+      client_id: c.client_id,
+      client_name: c.client_name,
+      role: c.role,
+    })),
+    active_client: user.active_client,
+    active_client_name: activeClient?.client_name || null,
+  });
+});
+
+// ============================================================
+// API: SWITCH CLIENT (troca o cliente ativo na sessão)
+// ============================================================
+app.post('/api/switch-client', (req, res) => {
+  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
+  const { client_id } = req.body;
+  if (!client_id) return res.status(400).json({ error: 'client_id é obrigatório.' });
+
+  // Verifica se o usuário tem acesso a este cliente
+  const access = req.session.user.client_access?.find(c => c.client_id === client_id);
+  if (!access) return res.status(403).json({ error: 'Sem acesso a este cliente.' });
+
+  req.session.user.active_client = client_id;
+  req.session.save(() => res.json({
+    ok: true,
+    active_client: client_id,
+    active_client_name: access.client_name,
+  }));
+});
+
+// ============================================================
+// API: CLIENT CONFIG (retorna config do cliente ativo para o frontend)
+// ============================================================
+app.get('/api/client-config', async (req, res) => {
+  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
+  const activeClientId = req.session.user.active_client;
+  const access = req.session.user.client_access?.find(c => c.client_id === activeClientId);
+
+  if (!access) {
+    return res.json({
+      supabaseUrl: process.env.SUPABASE_URL,
+      supabaseKey: process.env.SUPABASE_KEY,
+    });
+  }
+
+  res.json({
+    supabaseUrl: access.supabase_url,
+    supabaseKey: access.service_key,
+    appUrl: process.env.APP_URL || `http://localhost:${PORT}`,
+    client_id: access.client_id,
+    client_name: access.client_name,
+    role: access.role,
+  });
 });
 
 // ============================================================
@@ -312,7 +890,8 @@ app.get('/api/call-status/:executionId', async (req, res) => {
 app.get('/api/calls', async (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
   try {
-    const { data, error } = await supabase
+    const clientDb = getActiveClientDb(req);
+    const { data, error } = await clientDb
       .from('Retell_calls_Mindflow')
       .select('*')
       .order('created_at', { ascending: false })
@@ -329,11 +908,12 @@ app.get('/api/calls', async (req, res) => {
 app.get('/api/stats', async (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
   try {
-    const { count, error: countError } = await supabase
+    const clientDb = getActiveClientDb(req);
+    const { count, error: countError } = await clientDb
       .from('Retell_calls_Mindflow')
       .select('*', { count: 'exact', head: true });
 
-    const { data: recent, error: recentError } = await supabase
+    const { data: recent, error: recentError } = await clientDb
       .from('Retell_calls_Mindflow')
       .select('status, Duracao, Marcada, disconnection_reason')
       .order('created_at', { ascending: false })
@@ -389,8 +969,8 @@ app.get('/api/stats', async (req, res) => {
 // HELPERS DO DASHBOARD
 // ============================================================
 
-/** Cache em memória para dados processados (evita N chamadas concorrentes ao Supabase) */
-let callsCache = { data: null, timestamp: 0 };
+/** Cache em memória para dados processados (multicliente — chaveado por URL do Supabase) */
+let callsCache = {};
 const CACHE_TTL = 30_000; // 30 segundos
 
 /** Mapeia disconnection_reason para categoria */
@@ -412,13 +992,22 @@ function mapDisconnectionCategory(reason, durationSec) {
   return durationSec > 15.0 ? 'Conversa Normal' : 'Não Atendeu';
 }
 
-/** Busca e processa todas as calls do Supabase com cache */
-async function fetchProcessedCalls(agent, startDate, endDate) {
+/** Busca e processa todas as calls do Supabase com cache (multicliente) */
+async function fetchProcessedCalls(agent, startDate, endDate, clientSupabase) {
   const now = Date.now();
+  const db = clientSupabase || supabase;
+
+  // Cache key = client supabase URL (diferencia cache por cliente)
+  const cacheKey = db === supabase ? '__main__' : (db._cacheKey || '__custom__');
+
+  if (!callsCache[cacheKey]) {
+    callsCache[cacheKey] = { data: null, timestamp: 0 };
+  }
+  const cache = callsCache[cacheKey];
 
   // Refresh cache se expirou
-  if (!callsCache.data || now - callsCache.timestamp > CACHE_TTL) {
-    console.log('[Cache] Atualizando cache de calls do Supabase...');
+  if (!cache.data || now - cache.timestamp > CACHE_TTL) {
+    console.log(`[Cache] Atualizando cache (${cacheKey})...`);
 
     // Usar paginação para não sobrecarregar
     let allData = [];
@@ -426,7 +1015,7 @@ async function fetchProcessedCalls(agent, startDate, endDate) {
     const batchSize = 5000;
 
     while (true) {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('Retell_calls_Mindflow')
         .select('call_id,to_number,Nome,Email,agent_name,created_at,recording_url,combined_cost,Duracao,disconnection_reason')
         .range(start, start + batchSize - 1)
@@ -486,13 +1075,13 @@ async function fetchProcessedCalls(agent, startDate, endDate) {
     // Sort descendente para retorno
     calls.sort((a, b) => b.created_at - a.created_at);
 
-    callsCache.data = calls;
-    callsCache.timestamp = now;
-    console.log(`[Cache] Cache atualizado: ${calls.length} calls processadas`);
+    cache.data = calls;
+    cache.timestamp = now;
+    console.log(`[Cache] Cache atualizado (${cacheKey}): ${calls.length} calls`);
   }
 
   // Aplicar filtros em cima do cache
-  let filtered = callsCache.data;
+  let filtered = cache.data;
 
   if (agent) {
     filtered = filtered.filter(c => c.agent_name === agent);
@@ -507,6 +1096,20 @@ async function fetchProcessedCalls(agent, startDate, endDate) {
   }
 
   return filtered;
+}
+
+/**
+ * Cria uma instância Supabase para o cliente ativo na sessão do usuário.
+ * Usa as credenciais armazenadas no session.client_access.
+ */
+function getActiveClientDb(req) {
+  const user = req.session?.user;
+  if (!user || !user.active_client || !user.client_access) return supabase;
+  const access = user.client_access.find(c => c.client_id === user.active_client);
+  if (!access) return supabase;
+  const client = createClient(access.supabase_url, access.service_key);
+  client._cacheKey = access.supabase_url;
+  return client;
 }
 
 function buildFilterParams(agent, startDate, endDate) {
@@ -524,7 +1127,8 @@ function buildFilterParams(agent, startDate, endDate) {
 app.get('/metrics', async (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
   try {
-    const calls = await fetchProcessedCalls(req.query.agent, req.query.start_date, req.query.end_date);
+    const clientDb = getActiveClientDb(req);
+    const calls = await fetchProcessedCalls(req.query.agent, req.query.start_date, req.query.end_date, clientDb);
     if (!calls.length) {
       return res.json({
         total_calls: 0, unique_leads: 0, total_hooks: 0, total_conversas: 0, total_interesse: 0,
@@ -564,7 +1168,8 @@ app.get('/metrics', async (req, res) => {
 app.get('/funnel', async (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
   try {
-    const calls = await fetchProcessedCalls(req.query.agent, req.query.start_date, req.query.end_date);
+    const clientDb = getActiveClientDb(req);
+    const calls = await fetchProcessedCalls(req.query.agent, req.query.start_date, req.query.end_date, clientDb);
     if (!calls.length) {
       return res.json({ leads_totais: 0, leads_iniciados: 0, hook_15s: 0, conversa_45s: 0, interesse_90s: 0, total_calls_volume: 0 });
     }
@@ -601,7 +1206,8 @@ app.get('/funnel', async (req, res) => {
 app.get('/disconnections', async (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
   try {
-    const calls = await fetchProcessedCalls(req.query.agent, req.query.start_date, req.query.end_date);
+    const clientDb = getActiveClientDb(req);
+    const calls = await fetchProcessedCalls(req.query.agent, req.query.start_date, req.query.end_date, clientDb);
     const isDetailed = req.query.detailed === 'true';
 
     if (isDetailed) {
@@ -634,7 +1240,8 @@ app.get('/disconnections', async (req, res) => {
 app.get('/hours', async (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
   try {
-    const calls = await fetchProcessedCalls(req.query.agent, req.query.start_date, req.query.end_date);
+    const clientDb = getActiveClientDb(req);
+    const calls = await fetchProcessedCalls(req.query.agent, req.query.start_date, req.query.end_date, clientDb);
     const hourMap = new Map();
 
     calls.forEach(c => {
@@ -660,7 +1267,8 @@ app.get('/hours', async (req, res) => {
 app.get('/fatigue', async (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
   try {
-    const calls = await fetchProcessedCalls(req.query.agent, req.query.start_date, req.query.end_date);
+    const clientDb = getActiveClientDb(req);
+    const calls = await fetchProcessedCalls(req.query.agent, req.query.start_date, req.query.end_date, clientDb);
 
     const buckets = new Map();
     calls.forEach(c => {
@@ -703,7 +1311,8 @@ app.get('/fatigue', async (req, res) => {
 app.get('/agents', async (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
   try {
-    const { data } = await supabase.from('Retell_calls_Mindflow').select('agent_name');
+    const clientDb = getActiveClientDb(req);
+    const { data } = await clientDb.from('Retell_calls_Mindflow').select('agent_name');
     const agents = [...new Set(data.map(d => d.agent_name).filter(Boolean))].sort();
     res.json(agents);
   } catch (err) {
@@ -715,7 +1324,8 @@ app.get('/agents', async (req, res) => {
 app.get('/calls', async (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
   try {
-    const calls = await fetchProcessedCalls(req.query.agent, req.query.start_date, req.query.end_date);
+    const clientDb = getActiveClientDb(req);
+    const calls = await fetchProcessedCalls(req.query.agent, req.query.start_date, req.query.end_date, clientDb);
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const minDuration = parseFloat(req.query.min_duration);
@@ -758,7 +1368,30 @@ app.get('/calls', async (req, res) => {
 // ============================================================
 app.get('/api/platforms', (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
-  res.json(PLATFORMS);
+
+  // Plataformas globais
+  const platforms = [...PLATFORMS];
+
+  // Adicionar plataformas específicas do cliente ativo
+  const user = req.session.user;
+  if (user.active_client && user.client_access) {
+    const access = user.client_access.find(c => c.client_id === user.active_client);
+    if (access) {
+      // Cliente tem Supabase próprio
+      if (access.supabase_url !== process.env.SUPABASE_URL) {
+        platforms.unshift({
+          id: `client-supabase-${access.client_id}`,
+          name: `Supabase (${access.client_name})`,
+          description: `Banco de dados do cliente ${access.client_name}`,
+          url: `https://supabase.com/dashboard/project/${access.supabase_url.replace('https://', '').replace('.supabase.co', '')}`,
+          icon: 'database',
+          client_specific: true,
+        });
+      }
+    }
+  }
+
+  res.json(platforms);
 });
 
 // ============================================================

@@ -157,6 +157,7 @@
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
     const cfg = await fetch('/api/config').then(r => r.json());
+    const APP_URL = cfg.appUrl;
     const supabase = createClient(cfg.supabaseUrl, cfg.supabaseKey);
 
     // Detecta token de recovery no hash da URL
@@ -209,7 +210,7 @@
       const btn = document.getElementById('reqBtn');
       loading(btn, true);
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${location.origin}/redefinir-senha`,
+        redirectTo: `${APP_URL}/redefinir-senha`,
       });
       loading(btn, false);
       if (error) return showErr('reqAlert', 'reqAlertMsg', 'Erro ao enviar. Verifique o e-mail informado.');
