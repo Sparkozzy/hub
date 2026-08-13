@@ -392,7 +392,7 @@ will-change: transform;
 
   <!-- ── Dock lateral ── -->
   <nav class="dock">
-    <a href="/hub" class="dock-item">
+    <a href="/hub" class="dock-item" style="display:none" id="dockHub">
       <span class="material-symbols-outlined">grid_view</span>
     </a>
     <a href="/disparo" class="dock-item">
@@ -401,7 +401,7 @@ will-change: transform;
     <a href="/dashboard" class="dock-item active">
       <span class="material-symbols-outlined">bar_chart</span>
     </a>
-    <a href="/atendimento" class="dock-item">
+    <a href="/atendimento" class="dock-item" id="dockAtendimento">
       <span class="material-symbols-outlined">headset_mic</span>
     </a>
     <div class="dock-sep"></div>
@@ -409,6 +409,51 @@ will-change: transform;
       <span class="material-symbols-outlined">logout</span>
     </a>
   </nav>
+  <script>
+    (function() {
+      var dock = document.querySelector('.dock');
+      if (!dock) return;
+      var isClient = window.location.pathname === '/cliente' || sessionStorage.getItem('isClient') === '1';
+      var headset = document.getElementById('dockAtendimento');
+
+      // Headset SEMPRE abre o CRM em nova aba (admin e cliente)
+      if (headset) {
+        headset.href = '#';
+        headset.setAttribute('target', '_blank');
+        headset.setAttribute('rel', 'noopener');
+        headset.onclick = function(e) {
+          e.preventDefault();
+          fetch('/api/helena/config').then(function(r){return r.json()}).then(function(c){
+            window.open(c.crmUrl, '_blank');
+          }).catch(function(){});
+          return false;
+        };
+      }
+
+      if (isClient) {
+        // Esconde hub
+        var hub = document.getElementById('dockHub');
+        if (hub) hub.parentNode.removeChild(hub);
+
+        // Reordena dock: Dashboard, Disparo, Atendimento, [sep], Logout
+        var dash = dock.querySelector('a[href="/dashboard"], a[href="/cliente"]');
+        var disp = dock.querySelector('a[href="/disparo"]');
+        var logout = dock.querySelector('a[onclick*="logout"]');
+        var sep = dock.querySelector('.dock-sep');
+
+        while (dock.firstChild) dock.removeChild(dock.firstChild);
+        if (dash) dock.appendChild(dash);
+        if (disp) dock.appendChild(disp);
+        if (headset) dock.appendChild(headset);
+        if (sep) dock.appendChild(sep);
+        if (logout) dock.appendChild(logout);
+      } else {
+        // Admin: mostra o hub
+        var dh = document.getElementById('dockHub');
+        if (dh) dh.style.display = '';
+      }
+    })();
+  </script>
 
   <main>
     <!-- ── Dashboard Pills (abas internas) ── -->
@@ -424,6 +469,10 @@ will-change: transform;
       <a href="#audit" class="dash-tab" data-tab="audit">
         <span class="material-symbols-outlined">headset_mic</span>
         Auditoria de Ligações
+      </a>
+      <a href="#whatsapp" class="dash-tab" data-tab="whatsapp">
+        <span class="material-symbols-outlined">chat</span>
+        WhatsApp
       </a>
     </div>
       <!-- Top Header -->
@@ -732,6 +781,121 @@ will-change: transform;
           </div>
         </div>
       </section>
+
+      <section id="tab-whatsapp" class="tab-content">
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <span class="kpi-title">Leads Totais</span>
+              <div class="kpi-icon icon-teal"><span class="material-symbols-outlined">chat</span></div>
+            </div>
+            <div class="kpi-body">
+              <h3 id="wa-kpi-total-leads">-</h3>
+              <span class="kpi-subtitle">Contatos no WhatsApp</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <span class="kpi-title">Leads Novos (24h)</span>
+              <div class="kpi-icon icon-blue"><span class="material-symbols-outlined">person_add</span></div>
+            </div>
+            <div class="kpi-body">
+              <h3 id="wa-kpi-new-leads">-</h3>
+              <span class="kpi-subtitle">Últimas 24 horas</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <span class="kpi-title">Leads Ativos (24h)</span>
+              <div class="kpi-icon icon-blue2"><span class="material-symbols-outlined">bolt</span></div>
+            </div>
+            <div class="kpi-body">
+              <h3 id="wa-kpi-active-leads">-</h3>
+              <span class="kpi-subtitle">Interagiram em 24h</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <span class="kpi-title">Taxa de Resposta</span>
+              <div class="kpi-icon icon-green"><span class="material-symbols-outlined">trending_up</span></div>
+            </div>
+            <div class="kpi-body">
+              <h3 id="wa-kpi-resp-rate">-</h3>
+              <span class="kpi-subtitle">% leads que responderam</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <span class="kpi-title">Total de Mensagens</span>
+              <div class="kpi-icon icon-amber"><span class="material-symbols-outlined">mark_chat_unread</span></div>
+            </div>
+            <div class="kpi-body">
+              <h3 id="wa-kpi-total-msgs">-</h3>
+              <span class="kpi-subtitle"><strong id="wa-kpi-avg-msgs">-</strong> msgs por lead</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <span class="kpi-title">Tempo Médio Atendimento</span>
+              <div class="kpi-icon icon-rose"><span class="material-symbols-outlined">timer</span></div>
+            </div>
+            <div class="kpi-body">
+              <h3 id="wa-kpi-tma">-</h3>
+              <span class="kpi-subtitle">minutos por lead</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="charts-row">
+          <div class="chart-card span-6">
+            <div class="chart-header">
+              <h3><span class="material-symbols-outlined">filter_alt</span> Funil de Engajamento WhatsApp</h3>
+              <span class="chart-desc">Leads → Resposta → Engajamento</span>
+            </div>
+            <div class="chart-container-funnel"><canvas id="chart-wa-funnel"></canvas></div>
+          </div>
+          <div class="chart-card span-6">
+            <div class="chart-header">
+              <h3><span class="material-symbols-outlined">schedule</span> Mensagens por Hora</h3>
+              <span class="chart-desc">Distribuição de mensagens no dia (fuso BRT)</span>
+            </div>
+            <div class="chart-container-hourly"><canvas id="chart-wa-hours"></canvas></div>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3><span class="material-symbols-outlined">forum</span> Conversas do WhatsApp</h3>
+            <span class="chart-desc">Auditoria de conversas — clique para ver o histórico</span>
+          </div>
+          <div class="table-responsive">
+            <table class="audit-table">
+              <thead>
+                <tr>
+                  <th>Lead / Contato</th>
+                  <th>Última Mensagem</th>
+                  <th>Etapa CRM</th>
+                  <th>Reunião</th>
+                  <th>Atendimento</th>
+                  <th>Ação</th>
+                </tr>
+              </thead>
+              <tbody id="wa-chats-body">
+                <tr><td colspan="6" class="loading-td">Carregando conversas...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination-panel">
+            <button id="wa-btn-prev" class="btn-pagination" disabled>
+              <span class="material-symbols-outlined">chevron_left</span> Anterior
+            </button>
+            <span class="pagination-info">Página <strong id="wa-current-page">1</strong> de <strong id="wa-total-pages">1</strong></span>
+            <button id="wa-btn-next" class="btn-pagination" disabled>
+              Próxima <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+          </div>
+        </div>
+      </section>
     </main>
 
   <!-- Scripts do dashboard nativo -->
@@ -990,6 +1154,46 @@ will-change: transform;
       frame();
     })();
   </script>
+
+  <!-- ── Client Mode Adaptations ── -->
+  <script>
+    (function() {
+      if (window.location.pathname !== '/cliente') return;
+
+      // ── Marca sessão como cliente (persiste entre páginas) ──
+      sessionStorage.setItem('isClient', '1');
+
+      // ── Esconder client selector (cliente só vê os próprios dados) ──
+      const cs = document.getElementById('clientSelector');
+      if (cs) cs.style.display = 'none';
+
+      // ── Logo link → /cliente ──
+      const logoLink = document.querySelector('.nav-left');
+      if (logoLink) logoLink.href = '/cliente';
+
+      // ── Dashboard dock item → /cliente ──
+      const dashDock = document.querySelector('.dock-item[href="/dashboard"]');
+      if (dashDock) dashDock.href = '/cliente';
+
+      // ── Ajustar título ──
+      const title = document.querySelector('.header-title h2');
+      if (title) title.textContent = 'Dashboard';
+
+    })();
+  </script>
+
+  <!-- ── WhatsApp: Modal de histórico de mensagens ── -->
+  <div id="wa-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:24px;">
+    <div style="width:100%;max-width:560px;max-height:80vh;display:flex;flex-direction:column;background:rgba(10,14,26,.98);border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.06);">
+        <h3 style="font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:600;margin:0;">Conversa</h3>
+        <button onclick="closeWaModal()" style="background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:20px;line-height:1;">&times;</button>
+      </div>
+      <div id="wa-modal-body" style="flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:10px;min-height:200px;">
+        <p style="color:rgba(255,255,255,.4);font-size:13px;text-align:center;">Carregando mensagens...</p>
+      </div>
+    </div>
+  </div>
 
 </body>
 </html>

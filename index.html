@@ -967,7 +967,7 @@
           showError(data.error || 'Erro ao autenticar.');
           markError(username); markError(password);
         } else {
-          window.location.href = '/hub';
+          window.location.href = data.is_client ? '/cliente' : '/hub';
         }
       } catch {
         showError('Erro de conexão. Tente novamente.');

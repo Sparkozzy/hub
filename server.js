@@ -51,7 +51,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Trust proxy — necessário para Easypanel/Traefik
-app.set('trust proxy', 1);
+app.set('trust proxy', true);
 
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
@@ -65,7 +65,7 @@ app.use(session({
   cookie: {
     httpOnly: true,
     secure: IS_PRODUCTION,        // HTTPS obrigatório em produção
-    sameSite: IS_PRODUCTION ? 'strict' : 'lax',
+    sameSite: 'lax',
     maxAge: 8 * 60 * 60 * 1000,  // 8 horas
   },
 }));
@@ -85,7 +85,7 @@ const loginLimiter = rateLimit({
 // ============================================================
 function requireAuth(req, res, next) {
   if (req.session?.user) return next();
-  const publicPaths = ['/', '/api/', '/redefinir-senha', '/dev-login', '/hub', '/dashboard', '/disparo', '/dashboard-style.css', '/dashboard-app.js'];
+  const publicPaths = ['/', '/api/', '/redefinir-senha', '/dev-login', '/dev-client-login', '/hub', '/dashboard', '/disparo', '/cliente', '/dashboard-style.css', '/dashboard-app.js'];
   if (publicPaths.some(p => req.path === p || req.path.startsWith('/api/'))) return next();
   if (/\.(html|css|js)$/.test(req.path)) return res.redirect('/');
   res.status(401).json({ error: 'Unauthorized' });
@@ -94,10 +94,76 @@ function requireAuth(req, res, next) {
 app.use(requireAuth);
 
 // ============================================================
+// DIAGNÓSTICO DO DASHBOARD
+// ============================================================
+app.get('/api/dashboard/status', async (req, res) => {
+  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const clientDb = getActiveClientDb(req);
+    const { count, error: countError } = await clientDb
+      .from('Retell_calls_Mindflow')
+      .select('*', { count: 'exact', head: true });
+    if (countError) {
+      return res.json({ ok: false, error: countError.message, code: countError.code, count: null });
+    }
+    const { data: latest } = await clientDb
+      .from('Retell_calls_Mindflow')
+      .select('created_at')
+      .order('created_at', { ascending: false })
+      .limit(1);
+    res.json({
+      ok: true,
+      totalRows: count,
+      latestRecord: latest?.[0]?.created_at || null,
+      clientDb: clientDb === supabase ? 'default' : 'custom',
+    });
+  } catch (err) {
+    res.json({ ok: false, error: err.message, count: null });
+  }
+});
+
+// ============================================================
+// DEBUG (remover depois que o login funcionar)
+// ============================================================
+app.get('/api/debug', (req, res) => {
+  res.json({
+    hasSession: !!req.session,
+    hasUser: !!req.session?.user,
+    sessionID: req.sessionID || null,
+    user: req.session?.user ? { id: req.session.user.id, email: req.session.user.email, name: req.session.user.name, active_client: req.session.user.active_client } : null,
+    cookies: req.headers.cookie || null,
+    protocol: req.protocol,
+    secure: req.secure,
+    host: req.get('host'),
+    xForwardedProto: req.get('x-forwarded-proto'),
+    xForwardedFor: req.get('x-forwarded-for'),
+  });
+});
+
+app.get('/api/debug/login-test', async (req, res) => {
+  // Cria sessão fake sem Supabase — testa se cookie funciona
+  req.session.user = { id: 'debug', email: 'debug@test.com', name: 'Debug User', phone: '', client_access: [], active_client: null };
+  req.session.save((err) => {
+    if (err) {
+      console.error('[Debug] Erro ao salvar sessão:', err.message);
+      return res.status(500).json({ error: 'Falha ao salvar sessão: ' + err.message });
+    }
+    console.log('[Debug] Sessão salva com sucesso. ID:', req.sessionID);
+    res.json({ ok: true, sessionID: req.sessionID, message: 'Sessão criada. Agora acesse /api/debug para verificar.' });
+  });
+});
+
+// ============================================================
 // ROTAS DE PÁGINAS
 // ============================================================
 app.get('/', (req, res) => {
-  if (req.session?.user) return res.redirect('/dashboard');
+  if (req.session?.user) {
+    // Usuário interno (MindFlow ou multi-cliente) → dashboard admin
+    // Cliente externo (só tem o próprio tenant) → /cliente
+    const isClient = req.session.user.client_access?.length === 1
+      && req.session.user.client_access[0].client_id !== '2';
+    return res.redirect(isClient ? '/cliente' : '/dashboard');
+  }
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
@@ -164,9 +230,53 @@ if (!IS_PRODUCTION) {
     };
     req.session.save(() => res.redirect('/dashboard'));
   });
+
+  // Dev client login — simula sessão de cliente externo
+  app.get('/dev-client-login', async (req, res) => {
+    let clientAccess = [];
+    let activeClient = null;
+    let clientName = 'Cliente Teste';
+    try {
+      const { data: clients } = await supabase
+        .from('client_configurations')
+        .select('client_id, client_name, supabase_url, supabase_service_key')
+        .neq('client_id', '2')
+        .limit(1);
+
+      if (clients && clients.length > 0) {
+        const c = clients[0];
+        clientAccess = [{
+          client_id: c.client_id,
+          client_name: c.client_name,
+          role: 'admin',
+          supabase_url: c.supabase_url,
+          service_key: c.supabase_service_key,
+        }];
+        activeClient = c.client_id;
+        clientName = c.client_name;
+      }
+    } catch (err) {
+      console.error('[DevClientLogin] Erro:', err.message);
+    }
+
+    if (!activeClient) {
+      return res.send('<h1>Nenhum cliente encontrado na tabela client_configurations (client_id != 2).</h1>');
+    }
+
+    req.session.user = {
+      id: 'dev-client-user',
+      email: 'cliente@teste.com',
+      name: clientName,
+      phone: '',
+      client_access: clientAccess,
+      active_client: activeClient,
+    };
+    req.session.save(() => res.redirect('/cliente'));
+  });
 }
 
 app.get('/hub', (req, res) => {
+  console.log('[Hub] Acessou /hub | hasUser:', !!req.session?.user, '| cookies:', req.headers.cookie ? 'present' : 'absent');
   if (!req.session?.user) return res.redirect('/');
   res.sendFile(path.join(__dirname, 'hub.html'));
 });
@@ -191,9 +301,10 @@ app.get('/disparo', (req, res) => {
   res.sendFile(path.join(__dirname, 'disparo.html'));
 });
 
-app.get('/atendimento', (req, res) => {
+app.get('/cliente', (req, res) => {
   if (!req.session?.user) return res.redirect('/');
-  res.sendFile(path.join(__dirname, 'atendimento.html'));
+  // Serve o mesmo dashboard, o frontend adapta via JS (pathname === '/cliente')
+  res.sendFile(path.join(__dirname, 'dashboard.html'));
 });
 
 // ============================================================
@@ -211,6 +322,34 @@ const HELENA_CONFIG = {
   // TTL do JWT em horas
   jwtTtlHours: 8,
 };
+
+// ============================================================
+// DASHBOARD ANALYTICS BACKEND (hub_backend — Python FastAPI)
+// ============================================================
+const DASHBOARD_API_URL = process.env.DASHBOARD_API_URL || 'https://hub-backend.bkpxmb.easypanel.host';
+
+/**
+ * Proxy transparente para o hub_backend (analytics + WhatsApp).
+ * Repassa o client_id ativo da sessão via header X-Client-ID.
+ */
+async function proxyToDashboardBackend(req, res, path) {
+  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
+  const clientId = req.session.user.active_client || '2';
+  const qs = new URLSearchParams(req.query).toString();
+  const url = `${DASHBOARD_API_URL}${path}${qs ? '?' + qs : ''}`;
+
+  try {
+    const response = await fetch(url, {
+      headers: { 'X-Client-ID': clientId },
+      signal: AbortSignal.timeout(20000),
+    });
+    const data = await response.json().catch(() => ({}));
+    return res.status(response.status).json(data);
+  } catch (err) {
+    console.error(`[Proxy] Erro ao consultar hub_backend (${path}):`, err.message);
+    return res.status(502).json({ error: 'Falha ao consultar o backend analítico.' });
+  }
+}
 
 // ============================================================
 // API: HELENA JWT (SSO — Single Sign-On)
@@ -254,6 +393,37 @@ app.get('/api/helena/jwt', (req, res) => {
     token,
     crmUrl: HELENA_CONFIG.crmUrl,
     expiresIn: HELENA_CONFIG.jwtTtlHours * 3600,
+  });
+});
+
+// ============================================================
+// API: CLIENT DISPATCH CONFIG (agente + prompt do cliente)
+// ============================================================
+app.get('/api/client/dispatch-config', (req, res) => {
+  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
+  const user = req.session.user;
+  const activeClientId = user.active_client;
+
+  // Valores padrão (fallback)
+  let agentId = 'agent_1e4cfa23e3910c557d82167949';
+  let promptId = '24';
+
+  // Mapeamento fixo de agent_id + prompt_id por cliente
+  const CLIENT_DISPATCH_MAP = {
+    '3': { agent_id: 'agent_4f1dba5e5432cd193d324754bf', prompt_id: '33' }, // ATS
+    '4': { agent_id: 'agent_f1603ca4baa2d88297d1ae9c40', prompt_id: '34' }, // MyGain
+    '5': { agent_id: 'agent_7b9e7d53c933c83f73155662b9', prompt_id: '30' }, // Kravi
+  };
+
+  if (activeClientId && CLIENT_DISPATCH_MAP[activeClientId]) {
+    agentId = CLIENT_DISPATCH_MAP[activeClientId].agent_id;
+    promptId = CLIENT_DISPATCH_MAP[activeClientId].prompt_id;
+  }
+
+  res.json({
+    client_id: activeClientId,
+    agent_id: agentId,
+    prompt_id: promptId,
   });
 });
 
@@ -497,12 +667,16 @@ app.post('/api/login', loginLimiter, async (req, res) => {
     active_client: activeClient,
   };
 
+  console.log('[Login] Salvando sessão para:', userEmail, '| sessionID:', req.sessionID);
+
   req.session.save((err) => {
     if (err) {
       console.error('[Login] Erro ao salvar sessão:', err.message);
       return res.status(500).json({ error: 'Erro ao criar sessão.' });
     }
-    return res.json({ ok: true, name: displayName, active_client: activeClient });
+    console.log('[Login] Sessão salva com sucesso. Cookie secure:', IS_PRODUCTION, '| sameSite: lax');
+    const isClient = clientAccess.length === 1 && clientAccess[0].client_id !== '2';
+    return res.json({ ok: true, name: displayName, active_client: activeClient, is_client: isClient });
   });
 });
 
@@ -653,22 +827,31 @@ app.get('/api/prompts', async (req, res) => {
     }
 
     // Usa service key pra burlar RLS
-    const serviceKey = process.env.SUPABASE_SERVICE_KEY;
+    const serviceKey = process.env.SUPABASE_SERVICE_KEY || process.env.MASTER_SUPABASE_SERVICE_KEY;
     const adminClient = serviceKey
       ? createClient(process.env.SUPABASE_URL, serviceKey)
       : supabase;
 
-    const { data, error } = await adminClient
+    // Tenta primeiro com o nome exato da coluna
+    let { data, error } = await adminClient
       .from('Prompts')
-      .select('id, "Nome do cliente"')
-      .order('id', { ascending: true });
+      .select('*')
+      .order('id', { ascending: true })
+      .limit(200);
 
-    if (error) throw error;
+    if (error) {
+      console.error('[Prompts] Erro na query:', error.message, error.code, error.details);
+      return res.json({ _error: error.message, _code: error.code });
+    }
 
-    const prompts = (data || []).map(p => ({
-      id: p.id,
-      'Nome do cliente': (p['Nome do cliente'] || '').trim() || `Prompt #${p.id}`,
-    }));
+    const prompts = (data || []).map(p => {
+      // Tenta achar o nome do cliente em várias colunas possíveis
+      const nome = p['Nome do cliente'] || p.nome_cliente || p.nome || p.name || p.client_name || '';
+      return {
+        id: p.id,
+        'Nome do cliente': (nome || '').trim() || `Prompt #${p.id}`,
+      };
+    });
 
     PROMPTS_CACHE.data = prompts;
     PROMPTS_CACHE.timestamp = now;
@@ -676,10 +859,8 @@ app.get('/api/prompts', async (req, res) => {
     res.json(prompts);
   } catch (err) {
     console.error('[Prompts] Erro:', err.message);
-    if (PROMPTS_CACHE.data) {
-      return res.json(PROMPTS_CACHE.data);
-    }
-    res.status(500).json({ error: 'Erro ao buscar prompts.' });
+    // Retorna array vazio como fallback
+    res.json([]);
   }
 });
 
@@ -973,6 +1154,9 @@ app.get('/api/stats', async (req, res) => {
 let callsCache = {};
 const CACHE_TTL = 30_000; // 30 segundos
 
+/** Lock para evitar múltiplos fetches paralelos do mesmo cliente */
+const cacheLocks = {};
+
 /** Mapeia disconnection_reason para categoria */
 function mapDisconnectionCategory(reason, durationSec) {
   if (!reason || reason === 'null' || reason === '') {
@@ -1005,27 +1189,42 @@ async function fetchProcessedCalls(agent, startDate, endDate, clientSupabase) {
   }
   const cache = callsCache[cacheKey];
 
-  // Refresh cache se expirou
+  // Refresh cache se expirou (com lock para evitar fetches paralelos)
   if (!cache.data || now - cache.timestamp > CACHE_TTL) {
-    console.log(`[Cache] Atualizando cache (${cacheKey})...`);
+    // Se já tem um fetch em andamento, espera ele terminar
+    if (cacheLocks[cacheKey]) {
+      console.log(`[Cache] Aguardando fetch em andamento (${cacheKey})...`);
+      await cacheLocks[cacheKey];
+      // Depois de esperar, retorna os dados cacheados
+      if (cache.data) {
+        return applyFilters(cache.data, agent, startDate, endDate);
+      }
+    }
 
-    // Usar paginação para não sobrecarregar
-    let allData = [];
-    let start = 0;
-    const batchSize = 5000;
+    // Criar lock
+    let resolveLock;
+    cacheLocks[cacheKey] = new Promise(r => { resolveLock = r; });
 
-    while (true) {
+    try {
+      console.log(`[Cache] Atualizando cache (${cacheKey})...`);
+
+      // Limitar a 5,000 registros mais recentes
+      let allData = [];
+      const maxRecords = 5000;
+      const batchSize = 5000;
+
       const { data, error } = await db
         .from('Retell_calls_Mindflow')
         .select('call_id,to_number,Nome,Email,agent_name,created_at,recording_url,combined_cost,Duracao,disconnection_reason')
-        .range(start, start + batchSize - 1)
-        .order('created_at', { ascending: true });
+        .range(0, batchSize - 1)
+        .order('created_at', { ascending: false });
 
-      if (error || !data || data.length === 0) break;
-      allData = allData.concat(data);
-      if (data.length < batchSize) break;
-      start += batchSize;
-    }
+      if (error) {
+        console.error(`[Cache] Erro ao buscar dados:`, error.message);
+        allData = [];
+      } else {
+        allData = data || [];
+      }
 
     if (allData.length === 0) return [];
 
@@ -1078,11 +1277,18 @@ async function fetchProcessedCalls(agent, startDate, endDate, clientSupabase) {
     cache.data = calls;
     cache.timestamp = now;
     console.log(`[Cache] Cache atualizado (${cacheKey}): ${calls.length} calls`);
+    } finally {
+      // Liberar o lock sempre
+      resolveLock();
+      delete cacheLocks[cacheKey];
+    }
   }
 
-  // Aplicar filtros em cima do cache
-  let filtered = cache.data;
+  return applyFilters(cache.data, agent, startDate, endDate);
+}
 
+function applyFilters(calls, agent, startDate, endDate) {
+  let filtered = calls;
   if (agent) {
     filtered = filtered.filter(c => c.agent_name === agent);
   }
@@ -1094,7 +1300,6 @@ async function fetchProcessedCalls(agent, startDate, endDate, clientSupabase) {
     const endMs = new Date(endDate + 'T23:59:59').getTime();
     filtered = filtered.filter(c => c.created_at <= endMs);
   }
-
   return filtered;
 }
 
@@ -1129,14 +1334,23 @@ app.get('/metrics', async (req, res) => {
   try {
     const clientDb = getActiveClientDb(req);
     const calls = await fetchProcessedCalls(req.query.agent, req.query.start_date, req.query.end_date, clientDb);
+
+    // Buscar count total do Supabase (não depende do cache limitado)
+    let totalCalls = calls.length;
+    try {
+      const { count, error: countErr } = await clientDb
+        .from('Retell_calls_Mindflow')
+        .select('*', { count: 'exact', head: true });
+      if (!countErr && count !== null) totalCalls = count;
+    } catch {}
+
     if (!calls.length) {
       return res.json({
-        total_calls: 0, unique_leads: 0, total_hooks: 0, total_conversas: 0, total_interesse: 0,
+        total_calls: totalCalls, unique_leads: 0, total_hooks: 0, total_conversas: 0, total_interesse: 0,
         total_cost: 0, avg_ligacoes_por_lead: 0, custo_por_lead: 0, custo_por_interesse: 0,
         taxa_interesse_por_lead: 0, avg_density: 0, avg_pressure: 0
       });
     }
-    const totalCalls = calls.length;
     const uniqueLeads = new Set(calls.map(c => c.to_number)).size;
     const totalHooks = calls.filter(c => c.is_hook).length;
     const totalConversas = calls.filter(c => c.is_conversa).length;
@@ -1362,6 +1576,22 @@ app.get('/calls', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// ============================================================
+// API: WHATSAPP (proxy para hub_backend)
+// ============================================================
+app.get('/whatsapp/metrics', (req, res) => proxyToDashboardBackend(req, res, '/whatsapp/metrics'));
+app.get('/whatsapp/funnel', (req, res) => proxyToDashboardBackend(req, res, '/whatsapp/funnel'));
+app.get('/whatsapp/chats', (req, res) => proxyToDashboardBackend(req, res, '/whatsapp/chats'));
+app.get('/whatsapp/hours', (req, res) => proxyToDashboardBackend(req, res, '/whatsapp/hours'));
+app.get('/whatsapp/chats/:session_id/messages', (req, res) => {
+  proxyToDashboardBackend(req, res, `/whatsapp/chats/${encodeURIComponent(req.params.session_id)}/messages`);
+});
+
+// ============================================================
+// API: AGENDAMENTOS (proxy para hub_backend)
+// ============================================================
+app.get('/agendamentos', (req, res) => proxyToDashboardBackend(req, res, '/agendamentos'));
 
 // ============================================================
 // API: PLATAFORMAS (protegida)

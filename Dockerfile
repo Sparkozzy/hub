@@ -1,11 +1,11 @@
-FROM node:18-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY hub-plataformas/package*.json ./
 RUN npm install --omit=dev
 
-COPY . .
+COPY hub-plataformas/ .
 
 EXPOSE 3000
 

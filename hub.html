@@ -507,7 +507,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
     <a href="/dashboard" class="dock-item">
       <span class="material-symbols-outlined">bar_chart</span>
     </a>
-    <a href="/atendimento" class="dock-item">
+    <a href="/atendimento" class="dock-item" id="dockAtendimento">
       <span class="material-symbols-outlined">headset_mic</span>
     </a>
 <div class="dock-sep"></div>
@@ -515,6 +515,23 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       <span class="material-symbols-outlined">logout</span>
     </a>
   </nav>
+  <script>
+    (function() {
+      var headset = document.getElementById('dockAtendimento');
+      if (headset) {
+        headset.href = '#';
+        headset.setAttribute('target', '_blank');
+        headset.setAttribute('rel', 'noopener');
+        headset.onclick = function(e) {
+          e.preventDefault();
+          fetch('/api/helena/config').then(function(r){return r.json()}).then(function(c){
+            window.open(c.crmUrl, '_blank');
+          }).catch(function(){});
+          return false;
+        };
+      }
+    })();
+  </script>
 
   <canvas id="neural-canvas"></canvas>
 

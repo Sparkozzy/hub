@@ -2259,7 +2259,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
 
   <!-- ── Dock ── -->
   <nav class="dock">
-    <a href="/hub" class="dock-item">
+    <a href="/hub" class="dock-item" style="display:none" id="dockHub">
       <span class="material-symbols-outlined">grid_view</span>
     </a>
     <a href="/disparo" class="dock-item active">
@@ -2268,11 +2268,59 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
     <a href="/dashboard" class="dock-item">
       <span class="material-symbols-outlined">bar_chart</span>
     </a>
+    <a href="/atendimento" class="dock-item" id="dockAtendimento">
+      <span class="material-symbols-outlined">headset_mic</span>
+    </a>
     <div class="dock-sep"></div>
     <a href="#" onclick="logout(); return false;" class="dock-item" style="color:rgba(255,77,77,0.5)">
       <span class="material-symbols-outlined">logout</span>
     </a>
   </nav>
+  <script>
+    (function() {
+      var dock = document.querySelector('.dock');
+      if (!dock) return;
+      var isClient = window.location.pathname === '/cliente' || sessionStorage.getItem('isClient') === '1';
+      var headset = document.getElementById('dockAtendimento');
+
+      // Headset SEMPRE abre o CRM em nova aba (admin e cliente)
+      if (headset) {
+        headset.href = '#';
+        headset.setAttribute('target', '_blank');
+        headset.setAttribute('rel', 'noopener');
+        headset.onclick = function(e) {
+          e.preventDefault();
+          fetch('/api/helena/config').then(function(r){return r.json()}).then(function(c){
+            window.open(c.crmUrl, '_blank');
+          }).catch(function(){});
+          return false;
+        };
+      }
+
+      if (isClient) {
+        // Esconde hub
+        var hub = document.getElementById('dockHub');
+        if (hub) hub.parentNode.removeChild(hub);
+
+        // Reordena dock: Dashboard, Disparo, Atendimento, [sep], Logout
+        var dash = dock.querySelector('a[href="/dashboard"], a[href="/cliente"]');
+        var disp = dock.querySelector('a[href="/disparo"]');
+        var logout = dock.querySelector('a[onclick*="logout"]');
+        var sep = dock.querySelector('.dock-sep');
+
+        while (dock.firstChild) dock.removeChild(dock.firstChild);
+        if (dash) dock.appendChild(dash);
+        if (disp) dock.appendChild(disp);
+        if (headset) dock.appendChild(headset);
+        if (sep) dock.appendChild(sep);
+        if (logout) dock.appendChild(logout);
+      } else {
+        // Admin: mostra o hub
+        var dh = document.getElementById('dockHub');
+        if (dh) dh.style.display = '';
+      }
+    })();
+  </script>
 
   <canvas id="neural-canvas"></canvas>
 
@@ -3671,6 +3719,56 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       await fetch('/api/logout', { method: 'POST' });
       window.location.href = '/';
     }
+
+    // ── Client Mode Adaptation ──
+    (async () => {
+      try {
+        const res = await fetch('/api/check');
+        const data = await res.json();
+        const isClient = data.client_access && data.client_access.length === 1 && data.client_access[0].client_id !== '2';
+        if (!isClient) return;
+
+        // ── Marca sessão como cliente (persiste entre páginas) ──
+        sessionStorage.setItem('isClient', '1');
+
+        // Logo link → /cliente
+        const logoLink = document.querySelector('.logo-mark');
+        if (logoLink) logoLink.href = '/cliente';
+
+        // Busca config de disparo do cliente
+        let agentId = null, promptId = null;
+        try {
+          const cfgRes = await fetch('/api/client/dispatch-config');
+          const cfg = await cfgRes.json();
+          agentId = cfg.agent_id;
+          promptId = cfg.prompt_id;
+        } catch {}
+
+        // Preenche campos hidden
+        if (agentId) {
+          document.getElementById('agent_id').value = agentId;
+          document.getElementById('quickAgentVal').value = agentId;
+        }
+        if (promptId) {
+          document.getElementById('prompt_id').value = promptId;
+          document.getElementById('quickPromptVal').value = promptId;
+        }
+
+        // Esconde dropdown de agente no Quick Mode
+        const qaField = document.querySelector('#csQuickAgent').closest('.field');
+        if (qaField) qaField.style.display = 'none';
+
+        // Esconde "Configurações da IA" (advanced toggle)
+        const advToggle = document.getElementById('advancedToggle');
+        if (advToggle) advToggle.style.display = 'none';
+        const advPanel = document.getElementById('advancedPanel');
+        if (advPanel) advPanel.style.display = 'none';
+
+        // Renomeia "Disparo Completo" → "Disparo para Lead"
+        const modeCompleteTitle = document.querySelector('#modeComplete .mode-card-title');
+        if (modeCompleteTitle) modeCompleteTitle.textContent = 'Disparo para Lead';
+      } catch {}
+    })();
   </script>
 </body>
 

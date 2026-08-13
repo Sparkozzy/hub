@@ -50,6 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshDashboard();
     initETLTrigger();
     initAuditPanel();
+    // Auto-refresh a cada 30 segundos
+    setInterval(refreshDashboard, 30000);
 });
 
 // 1. Tab Navigation Routing
@@ -69,7 +71,12 @@ function initTabs() {
             tab.classList.add('active');
             const targetSection = document.getElementById(`tab-${targetTab}`);
             if (targetSection) targetSection.classList.add('active');
-            
+
+            // Carrega dados do WhatsApp ao entrar na aba (após ficar visível)
+            if (targetTab === 'whatsapp') {
+                setTimeout(loadWhatsApp, 60);
+            }
+
             // Adjust chart sizes inside the new visible tab
             setTimeout(() => {
                 Object.values(state.charts).forEach(chart => {
@@ -334,6 +341,7 @@ async function loadKPIs(queryStr) {
         document.getElementById('val-avg-pressure').textContent = data.avg_pressure.toFixed(2);
     } catch (err) {
         console.error('Erro ao buscar métricas:', err);
+        document.getElementById('kpi-total-calls').textContent = 'Erro';
     }
 }
 
@@ -985,3 +993,254 @@ function openAudioPlayer(call) {
         alert('Esta ligação não contém gravação disponível no Retell.');
     }
 }
+
+// ============================================================
+// WHATSAPP TAB (dados via hub_backend proxy)
+// ============================================================
+const waState = {
+    page: 1,
+    limit: 20,
+    totalPages: 1
+};
+
+// Hook: carrega dados do WhatsApp ao entrar na aba (via initTabs)
+
+function loadWhatsApp() {
+    loadWaMetrics();
+    loadWaFunnel();
+    loadWaHours();
+    loadWaChats();
+}
+
+async function loadWaMetrics() {
+    try {
+        const res = await fetch('/whatsapp/metrics');
+        const d = await res.json();
+        const set = (id, v) => { document.getElementById(id).textContent = v; };
+        set('wa-kpi-total-leads', (d.total_leads ?? 0).toLocaleString());
+        set('wa-kpi-new-leads', (d.leads_novos_24h ?? 0).toLocaleString());
+        set('wa-kpi-active-leads', (d.leads_ativos_24h ?? 0).toLocaleString());
+        set('wa-kpi-resp-rate', `${d.taxa_resposta ?? 0}%`);
+        set('wa-kpi-total-msgs', (d.total_mensagens ?? 0).toLocaleString());
+        set('wa-kpi-avg-msgs', (d.avg_mensagens_por_lead ?? 0).toFixed(1));
+        set('wa-kpi-tma', `${d.tempo_medio_atendimento_minutos ?? 0} min`);
+    } catch (err) {
+        console.error('Erro ao carregar métricas WhatsApp:', err);
+    }
+}
+
+async function loadWaFunnel() {
+    try {
+        const res = await fetch('/whatsapp/funnel');
+        const d = await res.json();
+        const stages = ['Leads Totais', 'Com Resposta', 'Engajadas (>5 msgs)'];
+        const values = [d.total_leads ?? 0, d.leads_com_resposta ?? 0, d.conversas_engajadas_gt5_msgs ?? 0];
+
+        const ctx = document.getElementById('chart-wa-funnel').getContext('2d');
+        if (state.charts.waFunnel) state.charts.waFunnel.destroy();
+        state.charts.waFunnel = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: stages,
+                datasets: [{
+                    label: 'Volume',
+                    data: values,
+                    backgroundColor: ['#0ea5e9', '#10b981', '#a855f7'],
+                    borderRadius: 8,
+                    borderWidth: 0,
+                    barThickness: 28
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => ` ${context.raw.toLocaleString()}`
+                        }
+                    }
+                },
+                scales: {
+                    x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+                    y: { grid: { display: false }, ticks: { color: '#f3f4f6', font: { weight: 600 } } }
+                }
+            }
+        });
+    } catch (err) {
+        console.error('Erro ao construir funil WhatsApp:', err);
+    }
+}
+
+async function loadWaHours() {
+    try {
+        const res = await fetch('/whatsapp/hours');
+        const d = await res.json();
+        const rows = d.hours_distribution || [];
+
+        const labels = rows.map(r => `${r.hora}:00`);
+        const leadMsgs = rows.map(r => r.mensagens_lead ?? 0);
+        const aiMsgs = rows.map(r => r.mensagens_ia ?? 0);
+
+        const ctx = document.getElementById('chart-wa-hours').getContext('2d');
+        if (state.charts.waHours) state.charts.waHours.destroy();
+        state.charts.waHours = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Mensagens Lead',
+                        data: leadMsgs,
+                        backgroundColor: 'rgba(99,102,241,0.55)',
+                        borderColor: '#6366f1',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        barThickness: 14
+                    },
+                    {
+                        label: 'Mensagens IA',
+                        data: aiMsgs,
+                        backgroundColor: 'rgba(16,185,129,0.45)',
+                        borderColor: '#10b981',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        barThickness: 14
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top', labels: { color: '#9ca3af', boxWidth: 12 } }
+                },
+                scales: {
+                    x: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#9ca3af' } },
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } }
+                }
+            }
+        });
+    } catch (err) {
+        console.error('Erro ao construir gráfico de horas WhatsApp:', err);
+    }
+}
+
+async function loadWaChats() {
+    const tbody = document.getElementById('wa-chats-body');
+    tbody.innerHTML = '<tr><td colspan="6" class="loading-td">Carregando conversas...</td></tr>';
+
+    const params = new URLSearchParams({ page: waState.page, limit: waState.limit });
+
+    try {
+        const res = await fetch(`/whatsapp/chats?${params.toString()}`);
+        const result = await res.json();
+        tbody.innerHTML = '';
+
+        if (!result.data || result.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="loading-td">Nenhuma conversa encontrada.</td></tr>';
+            document.getElementById('wa-current-page').textContent = '1';
+            document.getElementById('wa-total-pages').textContent = '1';
+            document.getElementById('wa-btn-prev').disabled = true;
+            document.getElementById('wa-btn-next').disabled = true;
+            return;
+        }
+
+        waState.totalPages = result.pages;
+        document.getElementById('wa-current-page').textContent = result.page;
+        document.getElementById('wa-total-pages').textContent = result.pages;
+        document.getElementById('wa-btn-prev').disabled = result.page === 1;
+        document.getElementById('wa-btn-next').disabled = result.page === result.pages;
+
+        result.data.forEach(chat => {
+            const tr = document.createElement('tr');
+            const nome = chat.nome || 'Sem Nome';
+            const numero = chat.numero || '';
+            const ultima = chat.ultima_msgm_texto || '';
+            const etapa = chat.etapa_crm || '-';
+            const reuniao = chat.reuniao_marcada ? 'Sim' : 'Não';
+            const tma = chat.duracao_atendimento_minutos != null ? `${chat.duracao_atendimento_minutos} min` : '-';
+            const sessionId = chat.numero || chat.id || '';
+
+            tr.innerHTML = `
+                <td>
+                    <span class="cell-phone">${numero}</span>
+                    <span class="cell-lead-name">${nome}</span>
+                </td>
+                <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary);">${ultima}</td>
+                <td>${etapa}</td>
+                <td>${reuniao}</td>
+                <td>${tma}</td>
+                <td>
+                    <button class="btn-audit" title="Ver histórico"><span class="material-symbols-outlined" style="font-size:16px;">chat</span></button>
+                </td>
+            `;
+
+            tr.addEventListener('click', () => {
+                const active = tbody.querySelector('.active-row');
+                if (active) active.classList.remove('active-row');
+                tr.classList.add('active-row');
+                openWaChat(sessionId, nome);
+            });
+
+            tbody.appendChild(tr);
+        });
+    } catch (err) {
+        console.error('Erro ao carregar conversas WhatsApp:', err);
+        tbody.innerHTML = '<tr><td colspan="6" class="loading-td" style="color:var(--error);">Erro ao carregar conversas.</td></tr>';
+    }
+}
+
+async function openWaChat(sessionId, nome) {
+    const modal = document.getElementById('wa-modal');
+    const body = document.getElementById('wa-modal-body');
+    modal.style.display = 'flex';
+    body.innerHTML = '<p style="color:rgba(255,255,255,.4);font-size:13px;text-align:center;">Carregando mensagens...</p>';
+
+    try {
+        const res = await fetch(`/whatsapp/chats/${encodeURIComponent(sessionId)}/messages`);
+        const d = await res.json();
+        const msgs = d.messages || [];
+
+        if (msgs.length === 0) {
+            body.innerHTML = '<p style="color:rgba(255,255,255,.4);font-size:13px;text-align:center;">Nenhuma mensagem encontrada.</p>';
+            return;
+        }
+
+        body.innerHTML = msgs.map(m => {
+            const isHuman = (m.message_type === 'human');
+            const align = isHuman ? 'flex-end' : 'flex-start';
+            const bg = isHuman ? 'rgba(46,79,255,0.25)' : 'rgba(0,181,160,0.15)';
+            const border = isHuman ? 'rgba(46,79,255,0.4)' : 'rgba(0,181,160,0.3)';
+            return `
+                <div style="display:flex;flex-direction:column;align-items:${align};">
+                    <div style="max-width:75%;padding:8px 12px;border-radius:12px;background:${bg};border:1px solid ${border};font-size:13px;line-height:1.5;color:#fff;word-break:break-word;">
+                        ${m.message_content || ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } catch (err) {
+        console.error('Erro ao carregar histórico:', err);
+        body.innerHTML = '<p style="color:var(--error);font-size:13px;text-align:center;">Erro ao carregar mensagens.</p>';
+    }
+}
+
+function closeWaModal() {
+    document.getElementById('wa-modal').style.display = 'none';
+}
+
+// Fecha modal ao clicar fora
+document.getElementById('wa-modal')?.addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closeWaModal();
+});
+
+// Paginação do WhatsApp
+document.getElementById('wa-btn-prev')?.addEventListener('click', () => {
+    if (waState.page > 1) { waState.page--; loadWaChats(); }
+});
+document.getElementById('wa-btn-next')?.addEventListener('click', () => {
+    if (waState.page < waState.totalPages) { waState.page++; loadWaChats(); }
+});
