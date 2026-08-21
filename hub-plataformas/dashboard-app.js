@@ -237,6 +237,11 @@ function initFilters() {
 
     clearBtn.addEventListener('click', () => {
         state.filters.agent=''; state.filters.startDate=''; state.filters.endDate='';
+        state.auditFilters.minDuration=''; state.auditFilters.maxDuration='';
+        const minInput = document.getElementById('audit-duration-min');
+        const maxInput = document.getElementById('audit-duration-max');
+        if (minInput) minInput.value = '';
+        if (maxInput) maxInput.value = '';
         selStart=null; selEnd=null; updateToggle();
         panel.classList.remove('open'); toggle.classList.remove('open');
         refreshDashboard();
@@ -793,11 +798,26 @@ function initAuditPanel() {
     const btnPrev = document.getElementById('btn-prev-page');
     const btnNext = document.getElementById('btn-next-page');
     
-    btnApply.addEventListener('click', () => {
-        state.auditFilters.minDuration = minInput.value;
-        state.auditFilters.maxDuration = maxInput.value;
+    const applyFilters = () => {
+        state.auditFilters.minDuration = minInput ? minInput.value.trim() : '';
+        state.auditFilters.maxDuration = maxInput ? maxInput.value.trim() : '';
         state.pagination.page = 1;
         loadAuditCalls();
+    };
+    
+    if (btnApply) {
+        btnApply.addEventListener('click', applyFilters);
+    }
+
+    [minInput, maxInput].forEach(input => {
+        if (input) {
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    applyFilters();
+                }
+            });
+        }
     });
     
     btnPrev.addEventListener('click', () => {
@@ -830,8 +850,12 @@ async function loadAuditCalls() {
     if (state.filters.endDate) params.append('end_date', state.filters.endDate);
     
     // Add audit specific duration filters
-    if (state.auditFilters.minDuration) params.append('min_duration', state.auditFilters.minDuration);
-    if (state.auditFilters.maxDuration) params.append('max_duration', state.auditFilters.maxDuration);
+    if (state.auditFilters.minDuration !== '' && state.auditFilters.minDuration !== null && state.auditFilters.minDuration !== undefined) {
+        params.append('min_duration', state.auditFilters.minDuration);
+    }
+    if (state.auditFilters.maxDuration !== '' && state.auditFilters.maxDuration !== null && state.auditFilters.maxDuration !== undefined) {
+        params.append('max_duration', state.auditFilters.maxDuration);
+    }
     
     try {
         const res = await fetch(`/calls?${params.toString()}`);
