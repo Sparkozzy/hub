@@ -50,8 +50,8 @@ async function getClientAnonConfig(clientId) {
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Trust proxy — necessário para Easypanel/Traefik
-app.set('trust proxy', true);
+// Trust proxy — necessário para Easypanel/Traefik (1 hop de proxy reverso)
+app.set('trust proxy', 1);
 
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
