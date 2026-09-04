@@ -3369,7 +3369,16 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           toggleDropdown();
         }
         if (e.key === 'Escape') closeDropdown();
-      });
+      }
+
+      trigger.addEventListener('click', toggleDropdown);
+      trigger.addEventListener('keydown', handleTriggerKeydown);
+
+      container._destroyCustomSelect = () => {
+        trigger.removeEventListener('click', toggleDropdown);
+        trigger.removeEventListener('keydown', handleTriggerKeydown);
+        document.removeEventListener('click', handleOutsideClick);
+      };
 
       dropdown.addEventListener('keydown', (e) => {
         const items = dropdown.querySelectorAll('.cs-option');
