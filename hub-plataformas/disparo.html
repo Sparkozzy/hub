@@ -2243,106 +2243,249 @@
         padding: 0 4px !important;
       }
 
-      /* ── Live Call Monitor Frame ── */
-      .live-call-frame {
-        margin-top: 24px;
-        background: rgba(13, 17, 34, 0.95);
-        border: 1px solid rgba(46, 79, 255, 0.35);
-        border-radius: 16px;
-        padding: 20px;
+      /* ── Modal Ligação ao Vivo (Image 2 Replica) ── */
+      .live-modal-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 999999;
+        background: rgba(4, 6, 14, 0.85);
         backdrop-filter: blur(12px);
-        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4), inset 0 0 20px rgba(46, 79, 255, 0.08);
+        -webkit-backdrop-filter: blur(12px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+      }
+      .live-modal-overlay.active {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .live-modal-card {
+        width: 100%;
+        max-width: 480px;
+        background: rgba(8, 14, 28, 0.96);
+        border: 1px solid rgba(46, 79, 255, 0.35);
+        border-radius: 24px;
+        padding: 24px;
+        box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7), 0 0 50px rgba(46, 79, 255, 0.2);
         display: flex;
         flex-direction: column;
-        gap: 14px;
-        animation: fadeInSubtle 0.4s ease;
+        gap: 16px;
+        position: relative;
+        transform: scale(0.95);
+        transition: transform 0.3s ease;
       }
-      .live-call-frame.hidden { display: none; }
-      .live-frame-header {
+      .live-modal-overlay.active .live-modal-card {
+        transform: scale(1);
+      }
+      .live-modal-header {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+      }
+      .live-modal-header-ico {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #00B5A0;
+        font-size: 26px;
+        margin-bottom: 2px;
+      }
+      .live-modal-title {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 22px;
+        font-weight: 700;
+        color: #fff;
+      }
+      .live-modal-sub {
+        font-size: 13px;
+        color: #8E8FA2;
+      }
+      .live-modal-status-bar {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        padding-bottom: 12px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 12px;
+        padding: 10px 14px;
       }
-      .live-title-badge {
+      .live-modal-status-left {
         display: flex;
         align-items: center;
         gap: 8px;
-        font-family: 'Space Grotesk', sans-serif;
-        font-size: 15px;
+        font-size: 13px;
         font-weight: 600;
         color: #fff;
       }
-      .live-timer-badge {
-        font-family: 'Space Grotesk', sans-serif;
-        font-size: 13px;
-        font-weight: 600;
-        color: #00B5A0;
-        background: rgba(0, 181, 160, 0.12);
-        padding: 4px 10px;
-        border-radius: 20px;
-        border: 1px solid rgba(0, 181, 160, 0.25);
+      .live-modal-status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #EF4444;
+        box-shadow: 0 0 8px #EF4444;
       }
-      .live-status-pill {
-        display: inline-flex;
+      .live-modal-status-dot.ringing { background: #F59E0B; box-shadow: 0 0 8px #F59E0B; }
+      .live-modal-status-dot.in-progress { background: #00B5A0; box-shadow: 0 0 8px #00B5A0; }
+
+      .live-modal-timer-wrap {
+        display: flex;
         align-items: center;
-        gap: 6px;
-        font-size: 12px;
-        font-weight: 500;
-        color: #7B9AFF;
-        background: rgba(46, 79, 255, 0.1);
-        padding: 4px 10px;
-        border-radius: 8px;
+        gap: 10px;
       }
-      .live-transcript-box {
-        background: rgba(4, 6, 14, 0.75);
+      .live-modal-timer {
+        background: rgba(46, 79, 255, 0.2);
+        border: 1px solid rgba(46, 79, 255, 0.4);
+        border-radius: 8px;
+        padding: 4px 12px;
+        color: #7B9AFF;
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 600;
+        font-size: 13px;
+      }
+      .live-modal-close {
+        background: none;
+        border: none;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 20px;
+        cursor: pointer;
+        line-height: 1;
+        transition: color 0.15s;
+      }
+      .live-modal-close:hover { color: #fff; }
+
+      .live-modal-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .live-modal-grid-box {
+        background: rgba(255, 255, 255, 0.03);
         border: 1px solid rgba(255, 255, 255, 0.06);
         border-radius: 12px;
-        padding: 14px;
-        max-height: 220px;
+        padding: 10px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .live-modal-grid-label {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: #8E8FA2;
+      }
+      .live-modal-grid-val {
+        font-size: 13px;
+        font-weight: 600;
+        color: #fff;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .live-modal-actions {
+        display: flex;
+        gap: 10px;
+      }
+      .btn-live-action {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 10px 14px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.2s;
+      }
+      .btn-live-action.primary {
+        background: linear-gradient(135deg, rgba(0, 181, 160, 0.25), rgba(46, 79, 255, 0.25));
+        border: 1px solid rgba(0, 181, 160, 0.4);
+        color: #00B5A0;
+      }
+      .btn-live-action.primary:hover {
+        background: linear-gradient(135deg, rgba(0, 181, 160, 0.4), rgba(46, 79, 255, 0.4));
+        border-color: #00B5A0;
+      }
+      .btn-live-action.secondary {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: #fff;
+      }
+      .btn-live-action.secondary:hover {
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .live-modal-dialog-box {
+        background: rgba(4, 6, 14, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 16px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .live-dialog-header {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: #8E8FA2;
+      }
+      .live-dialog-messages {
+        max-height: 160px;
         overflow-y: auto;
         display: flex;
         flex-direction: column;
-        gap: 10px;
-        font-size: 13px;
+        gap: 8px;
       }
-      .chat-bubble {
-        max-width: 85%;
-        padding: 8px 12px;
+      .live-chat-bubble {
+        background: rgba(255, 255, 255, 0.08);
         border-radius: 10px;
+        padding: 8px 12px;
+        font-size: 13px;
+        color: #fff;
+        max-width: 88%;
         line-height: 1.4;
       }
-      .chat-bubble.user {
+      .live-chat-bubble.user {
+        align-self: flex-start;
+      }
+      .live-chat-bubble.agent {
         align-self: flex-end;
         background: rgba(46, 79, 255, 0.25);
-        color: #E2E8F0;
-        border-bottom-right-radius: 2px;
       }
-      .chat-bubble.agent {
-        align-self: flex-start;
-        background: rgba(255, 255, 255, 0.08);
-        color: #F8FAFC;
-        border-bottom-left-radius: 2px;
+      .live-audio-area {
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+        padding-top: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
       }
-      .live-action-btn {
-        display: inline-flex;
+      .live-audio-label {
+        display: flex;
         align-items: center;
-        justify-content: center;
-        gap: 8px;
-        background: linear-gradient(135deg, rgba(46, 79, 255, 0.25), rgba(0, 181, 160, 0.25));
-        border: 1px solid rgba(46, 79, 255, 0.4);
-        color: #fff;
-        padding: 10px 16px;
-        border-radius: 10px;
-        text-decoration: none;
-        font-size: 13px;
-        font-weight: 600;
-        transition: all 0.2s;
+        gap: 6px;
+        font-size: 10px;
+        font-weight: 700;
+        color: #00B5A0;
+        letter-spacing: 0.05em;
       }
-      .live-action-btn:hover {
-        background: linear-gradient(135deg, rgba(46, 79, 255, 0.4), rgba(0, 181, 160, 0.4));
-        border-color: #7B9AFF;
+      .live-audio-player {
+        width: 100%;
+        height: 36px;
       }
 
       .time-slot-custom .material-symbols-outlined {
@@ -2815,32 +2958,6 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         </div>
       </div>
 
-      <!-- ── Live Call Frame ── -->
-      <div id="liveCallFrame" class="live-call-frame hidden">
-        <div class="live-frame-header">
-          <div class="live-title-badge">
-            <span class="dot dot-pending" id="livePulseDot"></span>
-            <span>Acompanhamento ao Vivo</span>
-          </div>
-          <div class="live-timer-badge" id="liveTimerText">00:00</div>
-        </div>
-
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-          <div class="live-status-pill" id="liveStatusText">Conectando...</div>
-          <div style="font-size:12px;color:var(--muted);" id="liveMetaText">-</div>
-        </div>
-
-        <div class="live-transcript-box" id="liveTranscriptBox">
-          <div style="color:var(--muted);font-size:12px;text-align:center;padding:12px;">Aguardando áudio e transcrição...</div>
-        </div>
-
-        <div id="liveActionArea" style="display:none;text-align:right;">
-          <a id="liveLogLink" href="#" target="_blank" class="live-action-btn">
-            <span class="material-symbols-outlined">graphic_eq</span> Ouvir Áudio / Log Completo
-          </a>
-        </div>
-      </div>
-
     </div>
   </main>
 
@@ -3210,7 +3327,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
             document.getElementById('btnLabel').textContent = 'Em Andamento';
             setPill('dot-blue', 'Ligação em andamento');
             if (data && data.execution_id) {
-              startLiveCallTracking(data.execution_id, payload.telefone, payload.agent_id);
+              startLiveCallTracking(data.execution_id, payload.telefone, agentId, payload.from_number, payload.nome);
             }
           }
           setTimeout(resetForm, isScheduled ? 4000 : 9000);
@@ -3725,7 +3842,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           document.getElementById('pillText').textContent = 'Chamada iniciada!';
           document.getElementById('dot').className = 'dot dot-success';
           if (data && data.execution_id) {
-            startLiveCallTracking(data.execution_id, telefone, agentId);
+            startLiveCallTracking(data.execution_id, telefone, document.getElementById('csQuickAgentText')?.textContent || agentId, document.getElementById('quickProviderVal')?.value || 'Auto', nome);
           }
         } else {
           throw new Error(data.error || 'Erro');
@@ -3738,67 +3855,165 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       btn.innerHTML = '<span class=\"material-symbols-outlined\">phone_in_talk</span> Ligar pra mim';
     });
 
-    /* ── Live Call Monitoring Engine ── */
+    /* ── Live Call Monitoring Engine (Image 2 Popup Modal) ── */
     let liveTimerInterval = null;
     let liveSseSource = null;
     let livePollInterval = null;
+    let liveSeconds = 0;
 
-    function startLiveCallTracking(executionId, telefone, agentName) {
-      const frame = document.getElementById('liveCallFrame');
-      if (!frame) return;
-      frame.classList.remove('hidden');
+    function closeLiveModal() {
+      const modal = document.getElementById('liveCallModal');
+      if (modal) modal.classList.remove('active');
+      if (liveSseSource) liveSseSource.close();
+      if (livePollInterval) clearInterval(livePollInterval);
+      if (liveTimerInterval) clearInterval(liveTimerInterval);
+      const audio = document.getElementById('liveModalAudioElement');
+      if (audio) audio.pause();
+    }
 
-      const statusText = document.getElementById('liveStatusText');
-      const metaText = document.getElementById('liveMetaText');
-      const timerText = document.getElementById('liveTimerText');
-      const box = document.getElementById('liveTranscriptBox');
-      const actionArea = document.getElementById('liveActionArea');
-      const logLink = document.getElementById('liveLogLink');
+    function playLiveAudio() {
+      const audioWrap = document.getElementById('liveModalAudioWrap');
+      const audio = document.getElementById('liveModalAudioElement');
+      if (audioWrap && audio && audio.src) {
+        audioWrap.style.display = 'flex';
+        audio.play().catch(() => {});
+      } else {
+        alert('Gravação ainda não disponível para esta chamada.');
+      }
+    }
 
+    function startLiveCallTracking(executionId, telefone, agentName, provider, leadName) {
+      const modal = document.getElementById('liveCallModal');
+      if (!modal) return;
+
+      // Elementos do Modal Image 2
+      const statusDot = document.getElementById('liveModalStatusDot');
+      const statusText = document.getElementById('liveModalStatusText');
+      const timerText = document.getElementById('liveModalTimer');
+      const leadNameEl = document.getElementById('liveModalLeadName');
+      const leadPhoneEl = document.getElementById('liveModalLeadPhone');
+      const providerEl = document.getElementById('liveModalProvider');
+      const execIdEl = document.getElementById('liveModalExecId');
+      const messagesBox = document.getElementById('liveModalMessages');
+      const audioWrap = document.getElementById('liveModalAudioWrap');
+      const audioElement = document.getElementById('liveModalAudioElement');
+      const btnAudio = document.getElementById('btnLiveAudio');
+      const btnTranscript = document.getElementById('btnLiveTranscript');
+
+      // Reset Estado Inicial
+      modal.classList.add('active');
+      statusDot.className = 'live-modal-status-dot ringing';
       statusText.textContent = 'Discando...';
-      metaText.textContent = `${telefone || ''} · ${agentName || 'Agente'}`;
-      box.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:12px;">Chamada iniciada. Aguardando atendimento...</div>';
-      actionArea.style.display = 'none';
+      timerText.textContent = '00:00';
+      
+      leadNameEl.textContent = leadName || document.getElementById('nome')?.value || 'Pedro Ernesto';
+      leadPhoneEl.textContent = telefone || '5547991089099';
+      providerEl.textContent = provider || document.getElementById('quickProviderVal')?.value || document.getElementById('from_number')?.value || 'Auto';
+      execIdEl.textContent = executionId ? (executionId.substring(0, 14) + '...') : '—';
+      execIdEl.title = executionId || '';
 
-      let seconds = 0;
+      messagesBox.innerHTML = '<div style="color: #8E8FA2; font-size: 12px; text-align: center; width: 100%; padding: 12px 0;">Aguardando atendimento...</div>';
+      audioWrap.style.display = 'none';
+      if (audioElement) { audioElement.pause(); audioElement.src = ''; }
+      btnTranscript.href = `/dashboard#audit`;
+
+      // Timer
+      liveSeconds = 0;
       clearInterval(liveTimerInterval);
       liveTimerInterval = setInterval(() => {
-        seconds++;
-        const m = String(Math.floor(seconds / 60)).padStart(2, '0');
-        const s = String(seconds % 60).padStart(2, '0');
+        liveSeconds++;
+        const m = String(Math.floor(liveSeconds / 60)).padStart(2, '0');
+        const s = String(liveSeconds % 60).padStart(2, '0');
         timerText.textContent = `${m}:${s}`;
       }, 1000);
 
+      // Handler para dados de chamada recebidos (SSE ou Polling)
+      function handleCallUpdate(data) {
+        if (!data) return;
+
+        if (data.stageLabel) {
+          statusText.textContent = data.stageLabel;
+        }
+
+        const call = data.call || data;
+        const status = (call.status || data.status || '').toLowerCase();
+
+        if (status.includes('fail') || status.includes('busy') || status.includes('no-answer') || status.includes('recusad') || status.includes('caixa') || status.includes('ended')) {
+          statusDot.className = 'live-modal-status-dot'; // Red
+          if (!data.stageLabel) statusText.textContent = 'Caixa Postal / Recusada';
+        } else if (status.includes('in-progress') || status.includes('active') || status.includes('atendid') || status.includes('ao vivo')) {
+          statusDot.className = 'live-modal-status-dot in-progress'; // Teal
+          if (!data.stageLabel) statusText.textContent = 'Em Chamada ao Vivo';
+        } else {
+          statusDot.className = 'live-modal-status-dot ringing'; // Yellow
+        }
+
+        // Transcrição / Mensagens
+        if (call.transcript_object && Array.isArray(call.transcript_object) && call.transcript_object.length > 0) {
+          renderModalMessages(call.transcript_object);
+        } else if (call.transcript) {
+          messagesBox.innerHTML = `<div class="chat-bubble agent">${escHtml(call.transcript)}</div>`;
+        }
+
+        // Áudio / Gravação
+        const recUrl = call.recording_url || call.public_log_url;
+        if (recUrl) {
+          if (audioElement && audioElement.src !== recUrl) {
+            audioElement.src = recUrl;
+          }
+          audioWrap.style.display = 'flex';
+        }
+
+        if (data.isFinished || status.includes('ended') || status.includes('completed')) {
+          clearInterval(liveTimerInterval);
+          if (liveSseSource) liveSseSource.close();
+          if (livePollInterval) clearInterval(livePollInterval);
+          if (statusDot.className.includes('ringing')) statusDot.className = 'live-modal-status-dot';
+        }
+      }
+
+      function renderModalMessages(items) {
+        if (!messagesBox || !Array.isArray(items) || items.length === 0) return;
+        messagesBox.innerHTML = items.map(item => {
+          const role = (item.role || 'agent').toLowerCase();
+          const cls = role === 'user' ? 'user' : 'agent';
+          const label = role === 'user' ? 'LEAD' : 'AGENTE';
+          const text = escHtml(item.content || item.message || '');
+          if (role === 'user') {
+            return `
+              <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px; margin-bottom:8px;">
+                <span style="font-size:9px; font-weight:700; color:#8E8FA2; letter-spacing:0.05em;">${label}</span>
+                <div style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:12px 12px 2px 12px; padding:8px 12px; color:#fff; font-size:12px; max-width:85%;">
+                  ${text}
+                </div>
+              </div>`;
+          } else {
+            return `
+              <div style="display:flex; flex-direction:column; align-items:flex-start; gap:2px; margin-bottom:8px;">
+                <span style="font-size:9px; font-weight:700; color:#00B5A0; letter-spacing:0.05em;">${label}</span>
+                <div style="background:rgba(0,181,160,0.12); border:1px solid rgba(0,181,160,0.25); border-radius:12px 12px 12px 2px; padding:8px 12px; color:#fff; font-size:12px; max-width:85%;">
+                  ${text}
+                </div>
+              </div>`;
+          }
+        }).join('');
+        messagesBox.scrollTop = messagesBox.scrollHeight;
+      }
+
       // SSE Connection
       if (liveSseSource) liveSseSource.close();
-      liveSseSource = new EventSource('/api/calls/stream/' + executionId);
-
-      liveSseSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.stageLabel) statusText.textContent = data.stageLabel;
-
-          if (data.call) {
-            if (data.call.transcript_object && Array.isArray(data.call.transcript_object)) {
-              renderTranscriptBubbles(data.call.transcript_object);
-            } else if (data.call.transcript) {
-              box.innerHTML = `<div class="chat-bubble agent">${escHtml(data.call.transcript)}</div>`;
-            }
-
-            if (data.call.public_log_url || data.call.recording_url) {
-              logLink.href = data.call.public_log_url || data.call.recording_url;
-              actionArea.style.display = 'block';
-            }
-          }
-
-          if (data.isFinished) {
-            clearInterval(liveTimerInterval);
-            statusText.textContent = 'Chamada Finalizada';
-            if (liveSseSource) liveSseSource.close();
-            if (livePollInterval) clearInterval(livePollInterval);
-          }
-        } catch (_) {}
-      };
+      try {
+        liveSseSource = new EventSource('/api/calls/stream/' + executionId);
+        liveSseSource.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            handleCallUpdate(data);
+          } catch (_) {}
+        };
+        liveSseSource.onerror = () => {
+          if (liveSseSource) liveSseSource.close();
+        };
+      } catch (_) {}
 
       // Polling Fallback
       clearInterval(livePollInterval);
@@ -3807,40 +4022,9 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           const res = await fetch(`/api/call-status?execution_id=${executionId}`);
           if (!res.ok) return;
           const data = await res.json();
-          if (data.stageLabel) statusText.textContent = data.stageLabel;
-
-          if (data.call) {
-            if (data.call.transcript_object && Array.isArray(data.call.transcript_object)) {
-              renderTranscriptBubbles(data.call.transcript_object);
-            } else if (data.call.transcript) {
-              box.innerHTML = `<div class="chat-bubble agent">${escHtml(data.call.transcript)}</div>`;
-            }
-            if (data.call.public_log_url || data.call.recording_url) {
-              logLink.href = data.call.public_log_url || data.call.recording_url;
-              actionArea.style.display = 'block';
-            }
-          }
-
-          if (data.isFinished) {
-            clearInterval(liveTimerInterval);
-            clearInterval(livePollInterval);
-            statusText.textContent = 'Chamada Finalizada';
-            if (liveSseSource) liveSseSource.close();
-          }
+          handleCallUpdate(data);
         } catch (_) {}
       }, 2500);
-    }
-
-    function renderTranscriptBubbles(items) {
-      const box = document.getElementById('liveTranscriptBox');
-      if (!box || !Array.isArray(items) || items.length === 0) return;
-      box.innerHTML = items.map(item => {
-        const role = (item.role || 'agent').toLowerCase();
-        const cls = role === 'user' ? 'user' : 'agent';
-        const label = role === 'user' ? 'Lead' : 'Agente';
-        return `<div class="chat-bubble ${cls}"><strong>${label}:</strong> ${escHtml(item.content || item.message || '')}</div>`;
-      }).join('');
-      box.scrollTop = box.scrollHeight;
     }
 
     document.getElementById('scheduleToggle').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleScheduler(); } });
@@ -4133,6 +4317,77 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       }
     })();
   </script>
+  <!-- ── Modal Ligação ao Vivo (Image 2 Replica) ── -->
+  <div id="liveCallModal" class="live-modal-overlay">
+    <div class="live-modal-card">
+      <div class="live-modal-header">
+        <div class="live-modal-header-ico">
+          <span class="material-symbols-outlined" style="font-size: 28px;">equalizer</span>
+        </div>
+        <div class="live-modal-title">Ligação ao Vivo</div>
+        <div class="live-modal-sub">Acompanhe a chamada e a transcrição em tempo real</div>
+      </div>
+
+      <div class="live-modal-status-bar">
+        <div class="live-modal-status-left">
+          <div class="live-modal-status-dot" id="liveModalStatusDot"></div>
+          <span id="liveModalStatusText">Discando...</span>
+        </div>
+        <div class="live-modal-timer-wrap">
+          <div class="live-modal-timer" id="liveModalTimer">00:00</div>
+          <button class="live-modal-close" onclick="closeLiveModal()" type="button" title="Fechar">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="live-modal-grid">
+        <div class="live-modal-grid-box">
+          <span class="live-modal-grid-label">LEAD / CONTATO</span>
+          <span class="live-modal-grid-val" id="liveModalLeadName">Pedro Ernesto</span>
+        </div>
+        <div class="live-modal-grid-box">
+          <span class="live-modal-grid-label">TELEFONE</span>
+          <span class="live-modal-grid-val" id="liveModalLeadPhone">5547991089099</span>
+        </div>
+        <div class="live-modal-grid-box">
+          <span class="live-modal-grid-label">PROVEDOR</span>
+          <span class="live-modal-grid-val" id="liveModalProvider">Auto</span>
+        </div>
+        <div class="live-modal-grid-box">
+          <span class="live-modal-grid-label">ID EXECUÇÃO</span>
+          <span class="live-modal-grid-val" id="liveModalExecId">—</span>
+        </div>
+      </div>
+
+      <div class="live-modal-actions">
+        <button class="btn-live-action primary" id="btnLiveAudio" type="button" onclick="playLiveAudio()">
+          <span class="material-symbols-outlined">headphones</span> Ouvir Gravação
+        </button>
+        <a class="btn-live-action secondary" id="btnLiveTranscript" href="/dashboard#audit" target="_blank">
+          <span class="material-symbols-outlined">open_in_new</span> Transcrição Completa
+        </a>
+      </div>
+
+      <div class="live-modal-dialog-box">
+        <div class="live-dialog-header">
+          <span class="material-symbols-outlined" style="color: #00B5A0; font-size: 16px;">forum</span>
+          DIÁLOGO DA CHAMADA (TEMPO REAL)
+        </div>
+        <div class="live-dialog-messages" id="liveModalMessages">
+          <div style="color: #8E8FA2; font-size: 12px; text-align: center; width: 100%; padding: 12px 0;">
+            Aguardando diálogo em tempo real...
+          </div>
+        </div>
+        <div id="liveModalAudioWrap" style="display: none; flex-direction: column; gap: 4px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 10px;">
+          <div style="font-size: 10px; font-weight: 700; color: #00B5A0; letter-spacing: 0.05em; text-transform: uppercase; display: flex; align-items: center; gap: 4px;">
+            <span class="material-symbols-outlined" style="font-size: 14px;">graphic_eq</span> GRAVAÇÃO DA CHAMADA:
+          </div>
+          <audio id="liveModalAudioElement" controls style="width: 100%; height: 36px; border-radius: 8px; filter: invert(0.9) hue-rotate(180deg);"></audio>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 
 </html>
