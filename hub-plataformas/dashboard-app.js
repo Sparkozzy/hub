@@ -19,7 +19,9 @@ const state = {
         funnel: null,
         disconnections: null,
         hourly: null,
-        fatigue: null
+        fatigue: null,
+        waFunnel: null,
+        waHours: null
     },
     selectedCall: null
 };
@@ -50,31 +52,69 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshDashboard();
     initETLTrigger();
     initAuditPanel();
+    initExportCsv();
     // Auto-refresh a cada 30 segundos
     setInterval(refreshDashboard, 30000);
 });
 
 // 1. Tab Navigation Routing
+function updateHeaderTitle(tabName) {
+    const titleEl = document.getElementById('dashHeaderTitle');
+    const descEl = document.getElementById('dashHeaderDesc');
+    if (!titleEl || !descEl) return;
+
+    const isClientMode = window.location.pathname === '/cliente' || sessionStorage.getItem('isClient') === '1';
+
+    const tabConfig = {
+        overview: {
+            title: isClientMode ? 'Dashboard' : 'Dashboard de Ligações',
+            desc: 'Mapeamento de funil, produtividade dos agentes e auditoria em tempo real.'
+        },
+        fatigue: {
+            title: 'Fadiga & Pressão',
+            desc: 'Análise da densidade de contatos e pressão de rediscagem sobre a base de leads.'
+        },
+        audit: {
+            title: 'Auditoria de Ligações',
+            desc: 'Player de áudio, transcrição e diagnóstico detalhado de chamadas dos SDRs.'
+        },
+        whatsapp: {
+            title: 'Dashboard de WhatsApp',
+            desc: 'Métricas de engajamento, funil de conversas e auditoria de mensagens do WhatsApp.'
+        }
+    };
+
+    const cfg = tabConfig[tabName] || tabConfig.overview;
+    titleEl.textContent = cfg.title;
+    descEl.textContent = cfg.desc;
+}
+
 function initTabs() {
     const tabs = document.querySelectorAll('.dash-tab');
     const sections = document.querySelectorAll('.tab-content');
-    
+
     tabs.forEach(tab => {
         tab.addEventListener('click', (e) => {
             e.preventDefault();
             const targetTab = tab.getAttribute('data-tab');
-            
+
             // Toggle active classes
             tabs.forEach(t => t.classList.remove('active'));
             sections.forEach(s => s.classList.remove('active'));
-            
+
             tab.classList.add('active');
             const targetSection = document.getElementById(`tab-${targetTab}`);
             if (targetSection) targetSection.classList.add('active');
 
+            // Atualiza título e descrição do cabeçalho
+            updateHeaderTitle(targetTab);
+
             // Carrega dados do WhatsApp ao entrar na aba (após ficar visível)
             if (targetTab === 'whatsapp') {
-                setTimeout(loadWhatsApp, 60);
+                setTimeout(() => {
+                    loadWhatsApp();
+                    window._waNeedsReload = false;
+                }, 60);
             }
 
             // Adjust chart sizes inside the new visible tab
@@ -106,8 +146,8 @@ function initFilters() {
     let selStart = null, selEnd = null;
 
     function pad(n) { return String(n).padStart(2, '0'); }
-    function toStr(d) { return d ? d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()) : ''; }
-    function sameDay(a, b) { return a && b && a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+    function toStr(d) { return d ? d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) : ''; }
+    function sameDay(a, b) { return a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
 
     function fmtBr(d) { return d ? d.toLocaleDateString('pt-BR') : '—'; }
 
@@ -115,7 +155,7 @@ function initFilters() {
         if (state.filters.startDate && state.filters.endDate) {
             const s = state.filters.startDate.split('-').reverse().join('/');
             const e = state.filters.endDate.split('-').reverse().join('/');
-            text.textContent = s+' — '+e;
+            text.textContent = s + ' — ' + e;
             text.classList.add('active');
         } else { text.textContent = 'Período'; text.classList.remove('active'); }
     }
@@ -155,12 +195,13 @@ function initFilters() {
             else if (isStart) cls += ' range-start';
             else if (isEnd) cls += ' range-end';
             else if (inRange) cls += ' in-range';
-            html += `<div class="${cls}" data-date="${year}-${pad(month+1)}-${pad(d)}">${d}</div>`;
+            html += `<div class="${cls}" data-date="${year}-${pad(month + 1)}-${pad(d)}">${d}</div>`;
         }
         calGrid.innerHTML = html;
 
         calGrid.querySelectorAll('.period-cal-day:not(.empty):not(.past)').forEach(el => {
-            el.addEventListener('click', (e) => { e.stopPropagation();
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
                 const [y, m, day] = el.dataset.date.split('-').map(Number);
                 const clicked = new Date(y, m - 1, day);
 
@@ -180,7 +221,8 @@ function initFilters() {
     }
 
     // Apply
-    applyBtn.addEventListener('click', (e) => { e.stopPropagation();
+    applyBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
         if (!selStart || !selEnd) return;
         state.filters.startDate = toStr(selStart);
         state.filters.endDate = toStr(selEnd);
@@ -203,10 +245,10 @@ function initFilters() {
         toggle.classList.toggle('open');
         if (willOpen) {
             console.log('[Period] opening panel');
-            const sd = state.filters.startDate ? new Date(state.filters.startDate+'T12:00:00') : null;
-            const ed = state.filters.endDate ? new Date(state.filters.endDate+'T12:00:00') : null;
+            const sd = state.filters.startDate ? new Date(state.filters.startDate + 'T12:00:00') : null;
+            const ed = state.filters.endDate ? new Date(state.filters.endDate + 'T12:00:00') : null;
             selStart = sd; selEnd = ed;
-            try { updateFields(); renderCalendar(); } catch(e) { console.error('[Period] render error:', e); }
+            try { updateFields(); renderCalendar(); } catch (e) { console.error('[Period] render error:', e); }
         }
     });
     document.addEventListener('click', (e) => {
@@ -215,20 +257,21 @@ function initFilters() {
 
     // Presets
     document.querySelectorAll('.period-preset').forEach(btn => {
-        btn.addEventListener('click', (e) => { e.stopPropagation();
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
             const now = new Date();
             let d1, d2;
-            if (btn.dataset.range === 'today') { d1=now; d2=now; }
-            else if (btn.dataset.range === '7d') { d1=new Date(); d1.setDate(now.getDate()-6); d2=now; }
-            else if (btn.dataset.range === '30d') { d1=new Date(); d1.setDate(now.getDate()-29); d2=now; }
+            if (btn.dataset.range === 'today') { d1 = now; d2 = now; }
+            else if (btn.dataset.range === '7d') { d1 = new Date(); d1.setDate(now.getDate() - 6); d2 = now; }
+            else if (btn.dataset.range === '30d') { d1 = new Date(); d1.setDate(now.getDate() - 29); d2 = now; }
             else if (btn.dataset.range === 'all') {
-                state.filters.startDate=''; state.filters.endDate='';
-                selStart=null; selEnd=null; updateToggle();
+                state.filters.startDate = ''; state.filters.endDate = '';
+                selStart = null; selEnd = null; updateToggle();
                 panel.classList.remove('open'); toggle.classList.remove('open');
                 refreshDashboard(); return;
             }
-            selStart=d1; selEnd=d2;
-            state.filters.startDate=toStr(d1); state.filters.endDate=toStr(d2);
+            selStart = d1; selEnd = d2;
+            state.filters.startDate = toStr(d1); state.filters.endDate = toStr(d2);
             updateToggle();
             panel.classList.remove('open'); toggle.classList.remove('open');
             refreshDashboard();
@@ -236,23 +279,23 @@ function initFilters() {
     });
 
     clearBtn.addEventListener('click', () => {
-        state.filters.agent=''; state.filters.startDate=''; state.filters.endDate='';
-        selStart=null; selEnd=null; updateToggle();
+        state.filters.agent = ''; state.filters.startDate = ''; state.filters.endDate = '';
+        selStart = null; selEnd = null; updateToggle();
         panel.classList.remove('open'); toggle.classList.remove('open');
         refreshDashboard();
     });
     updateToggle();
-    
+
     // Disconnection reasons breakdown view toggler
     const toggleBtn = document.getElementById('btn-toggle-disconnections');
     if (toggleBtn) {
         toggleBtn.addEventListener('click', () => {
             state.filters.detailedDisconnections = !state.filters.detailedDisconnections;
             toggleBtn.classList.toggle('active', state.filters.detailedDisconnections);
-            
+
             const consolidatedView = document.getElementById('disconnections-consolidated-view');
             const detailedView = document.getElementById('disconnections-detailed-view');
-            
+
             if (state.filters.detailedDisconnections) {
                 consolidatedView.classList.add('hidden');
                 detailedView.classList.remove('hidden');
@@ -262,7 +305,7 @@ function initFilters() {
                 detailedView.classList.add('hidden');
                 toggleBtn.title = "Ver Índice Detalhado";
             }
-            
+
             // Re-fetch only the disconnections panel
             const qParams = new URLSearchParams();
             if (state.filters.agent) qParams.append('agent', state.filters.agent);
@@ -275,21 +318,24 @@ function initFilters() {
 
 async function loadAgents() {
     try {
-        const res = await fetch('/agents');
-        const agents = await res.json();
-        const select = document.getElementById('filter-agent');
+        const res = await fetch('/api/agents');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const raw = await res.json();
 
-        if (select) {
-            select.innerHTML = '<option value="">Todos os Agentes</option>';
-            agents.forEach(agent => {
-                const opt = document.createElement('option');
-                opt.value = agent;
-                opt.textContent = agent;
-                select.appendChild(opt);
-            });
+        // Normaliza: hub_backend pode retornar strings ou objetos {id, name}
+        const agentNames = raw.map(a => (typeof a === 'string' ? a : (a.name || a.agent_name || a.id || String(a))));
+
+        const opts = [{ value: '', label: 'Todos os Agentes' }];
+        agentNames.forEach(name => {
+            opts.push({ value: name, label: name });
+        });
+
+        if (window.dashAgentSelect) {
+            window.dashAgentSelect.setOptions(opts);
+            window.dashAgentSelect.setValue('', 'Todos os Agentes');
         }
     } catch (err) {
-        console.error('Erro ao buscar agentes:', err);
+        console.error('[Agents] Erro ao buscar agentes:', err);
     }
 }
 
@@ -300,19 +346,26 @@ async function refreshDashboard() {
     if (state.filters.agent) qParams.append('agent', state.filters.agent);
     if (state.filters.startDate) qParams.append('start_date', state.filters.startDate);
     if (state.filters.endDate) qParams.append('end_date', state.filters.endDate);
-    
+
     const queryStr = qParams.toString();
-    
+
     // Trigger parallel data requests
     loadKPIs(queryStr);
     loadFunnel(queryStr);
     loadDisconnections(queryStr);
     loadHourly(queryStr);
     loadFatigue(queryStr);
-    
+
     // Audit table respects current global filters
     state.pagination.page = 1;
     loadAuditCalls();
+
+    // Recarrega WhatsApp se a aba estiver ativa ou se houve troca de cliente
+    const waTab = document.getElementById('tab-whatsapp');
+    if (waTab && (waTab.classList.contains('active') || window._waNeedsReload)) {
+        loadWhatsApp();
+        window._waNeedsReload = false;
+    }
 }
 
 // 4. KPI Card Inserter
@@ -320,22 +373,16 @@ async function loadKPIs(queryStr) {
     try {
         const res = await fetch(`/metrics?${queryStr}`);
         const data = await res.json();
-        
+
         document.getElementById('kpi-total-calls').textContent = data.total_calls.toLocaleString();
         document.getElementById('kpi-avg-calls-lead').textContent = data.avg_ligacoes_por_lead.toFixed(1);
         document.getElementById('kpi-unique-leads').textContent = data.unique_leads.toLocaleString();
         document.getElementById('kpi-total-interest').textContent = data.total_interesse.toLocaleString();
         document.getElementById('kpi-interest-rate').textContent = data.taxa_interesse_por_lead.toFixed(1);
-        document.getElementById('kpi-total-cost').textContent = `U$ ${data.total_cost.toFixed(2)}`;
-        document.getElementById('kpi-cost-lead').textContent = `U$ ${data.custo_por_lead.toFixed(2)}`;
-        
-        const costInterest = document.getElementById('kpi-cost-interest');
-        if (data.total_interesse > 0) {
-            costInterest.textContent = `U$ ${data.custo_por_interesse.toFixed(2)}`;
-        } else {
-            costInterest.textContent = 'U$ 0.00';
-        }
-        
+        document.getElementById('kpi-total-cost').textContent = `${data.minutagem_total.toFixed(2)} min`;
+        document.getElementById('kpi-cost-lead').textContent = `${data.minutagem_por_lead.toFixed(2)} min`;
+        document.getElementById('kpi-cost-interest').textContent = `${data.minutagem_media.toFixed(2)} min`;
+
         // Gauge statistics under Fatigue tab
         document.getElementById('val-avg-density').textContent = data.avg_density.toFixed(2);
         document.getElementById('val-avg-pressure').textContent = data.avg_pressure.toFixed(2);
@@ -350,14 +397,14 @@ async function loadFunnel(queryStr) {
     try {
         const res = await fetch(`/funnel?${queryStr}`);
         const data = await res.json();
-        
+
         const stages = [
             'Leads Únicos',
             'Leads Hook (+15s)',
             'Leads Conversa (+45s)',
             'Leads Interesse (+90s)'
         ];
-        
+
         const values = [
             data.leads_totais,
             data.hook_15s,
@@ -365,39 +412,54 @@ async function loadFunnel(queryStr) {
             data.interesse_90s
         ];
 
-        // Update total calls volume outside the funnel (using the subtitle of the first KPI or a dedicated area if needed)
-        // For now, let's update the KPI subtitle for total calls to show the volume
-        const totalCallsKpi = document.getElementById('kpi-total-calls');
-        if (totalCallsKpi && data.total_calls_volume !== undefined) {
-            totalCallsKpi.textContent = data.total_calls_volume.toLocaleString();
-        }
-        
-        // Calculate conversions relative to initial Leads
-        const percentages = values.map(val => {
-            return data.leads_totais > 0 ? ((val / data.leads_totais) * 100).toFixed(1) + '%' : '0.0%';
-        });
-        
+        const funnelTotal = values[0];
+
+        // Custom plugin for labels and percentages on the right side of bars
+        const funnelValueLabels = {
+            id: 'funnelValueLabels',
+            afterDatasetsDraw(chart) {
+                const { ctx } = chart;
+                const meta = chart.getDatasetMeta(0);
+                meta.data.forEach((bar, i) => {
+                    const val = chart.data.datasets[0].data[i];
+                    const pct = funnelTotal > 0 ? ((val / funnelTotal) * 100).toFixed(0) : '0';
+                    const x = bar.x + 12;
+                    const y = bar.y;
+                    ctx.save();
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'middle';
+                    ctx.font = "600 14px 'Space Grotesk', sans-serif";
+                    ctx.fillStyle = '#F5F6FA';
+                    ctx.fillText(val.toLocaleString(), x, y - 8);
+                    ctx.font = "500 11px 'Inter', sans-serif";
+                    ctx.fillStyle = '#8A8FA3';
+                    ctx.fillText(pct + '%', x, y + 10);
+                    ctx.restore();
+                });
+            }
+        };
+
         const ctx = document.getElementById('chart-funnel').getContext('2d');
-        
+
         if (state.charts.funnel) {
             state.charts.funnel.destroy();
         }
-        
+
         state.charts.funnel = new Chart(ctx, {
             type: 'bar',
+            plugins: [funnelValueLabels],
             data: {
                 labels: stages,
                 datasets: [{
-                    label: 'Volume de Conversão',
                     data: values,
                     backgroundColor: [
-                        '#818cf8', // Indigo
-                        '#0ea5e9', // Sky Blue
-                        '#a855f7', // Purple
-                        '#10b981'  // Green
+                        '#7B9AFF',
+                        '#6366F1',
+                        '#00B5A0',
+                        '#10B981'
                     ],
                     borderRadius: 8,
-                    borderWidth: 0,
+                    borderSkipped: false,
                     barThickness: 28
                 }]
             },
@@ -405,26 +467,38 @@ async function loadFunnel(queryStr) {
                 indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
+                layout: { padding: { right: 56 } },
                 plugins: {
                     legend: { display: false },
                     tooltip: {
+                        backgroundColor: 'rgba(8, 12, 24, 0.95)',
+                        titleColor: '#fff',
+                        titleFont: { family: 'Space Grotesk', size: 13, weight: 600 },
+                        bodyColor: '#8E8FA2',
+                        bodyFont: { family: 'Inter', size: 12 },
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 1,
+                        padding: 12,
+                        cornerRadius: 8,
+                        displayColors: false,
                         callbacks: {
-                            label: (context) => {
-                                const val = context.raw;
-                                const idx = context.dataIndex;
-                                return ` Leads: ${val.toLocaleString()} (${percentages[idx]} do Funil)`;
+                            label: (c) => {
+                                const pct = funnelTotal > 0 ? ((c.raw / funnelTotal) * 100).toFixed(1) : '0';
+                                return ` ${c.raw.toLocaleString()} leads · ${pct}% do funil`;
                             }
                         }
                     }
                 },
                 scales: {
                     x: {
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                        ticks: { color: '#9ca3af' }
+                        grid: { color: 'rgba(255, 255, 255, 0.04)', drawBorder: false },
+                        ticks: { color: '#8E8FA2', font: { family: 'Inter', size: 11 } },
+                        border: { display: false }
                     },
                     y: {
                         grid: { display: false },
-                        ticks: { color: '#f3f4f6', font: { weight: 600 } }
+                        ticks: { color: '#f3f4f6', font: { family: 'Space Grotesk', size: 12, weight: 500 } },
+                        border: { display: false }
                     }
                 }
             }
@@ -441,41 +515,40 @@ async function loadDisconnections(queryStr) {
         const url = isDetailed ? `/disconnections?${queryStr}&detailed=true` : `/disconnections?${queryStr}`;
         const res = await fetch(url);
         const data = await res.json();
-        
+
         const detailedView = document.getElementById('disconnections-detailed-view');
-        
+
+        const categoryColors = {
+            'Conversa Normal': '#00B5A0',
+            'Não Atendeu': '#FBBF24',
+            'Erro Técnico': '#C084FC',
+            'Bloqueado': '#FB7185',
+            'Ocupado': '#38BDF8'
+        };
+
+        const categoryMap = {
+            'Conversa Normal': 'normal',
+            'Não Atendeu': 'no-answer',
+            'Bloqueado': 'blocked',
+            'Erro Técnico': 'technical',
+            'Ocupado': 'busy'
+        };
+
         if (isDetailed) {
-            // Render Granular List
             detailedView.innerHTML = '';
-            
+
             if (data.length === 0) {
                 detailedView.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px;">Nenhum dado encontrado</div>';
                 return;
             }
-            
-            const categoryColors = {
-                'Conversa Normal': '#10b981',
-                'Não Atendeu': '#f59e0b',
-                'Bloqueado': '#ef4444',
-                'Erro Técnico': '#a855f7',
-                'Ocupado': '#0ea5e9'
-            };
-            
-            const categoryMap = {
-                'Conversa Normal': 'normal',
-                'Não Atendeu': 'no-answer',
-                'Bloqueado': 'blocked',
-                'Erro Técnico': 'technical',
-                'Ocupado': 'busy'
-            };
-            
+
             data.forEach(item => {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'detailed-item';
-                
+
                 const classCategory = categoryMap[item.category] || 'normal';
                 const color = categoryColors[item.category] || '#6b7280';
-                
+
                 itemDiv.innerHTML = `
                     <div class="detailed-item-header" style="display: flex; justify-content: space-between; align-items: center;">
                         <span class="detailed-reason-name" style="font-family: monospace; font-size: 11px; font-weight: 600; color: #fff; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 170px;" title="${item.reason}">${item.reason}</span>
@@ -494,35 +567,15 @@ async function loadDisconnections(queryStr) {
         } else {
             const categories = data.map(c => c.category);
             const counts = data.map(c => c.count);
-            const percentages = data.map(c => c.percentage);
-            
-            const categoryLabels = {
-                'Conversa Normal': 'Conversa Normal 🟢',
-                'Não Atendeu': 'Não Atendeu 🟡',
-                'Bloqueado': 'Bloqueado 🔴',
-                'Erro Técnico': 'Erro Técnico ⚙️',
-                'Ocupado': 'Ocupado 🔵'
-            };
-            
-            // The backend now returns clean labels, we map them to labels with emojis for the chart legend
-            const labels = categories.map(cat => categoryLabels[cat] || cat);
-            
-            // Match color scheme
-            const categoryColors = {
-                'Conversa Normal': '#10b981',
-                'Não Atendeu': '#f59e0b',
-                'Bloqueado': '#ef4444',
-                'Erro Técnico': '#a855f7',
-                'Ocupado': '#0ea5e9'
-            };
+            const labels = categories;
             const bgColors = categories.map(cat => categoryColors[cat] || '#6b7280');
-            
+
             const ctx = document.getElementById('chart-disconnections').getContext('2d');
-            
+
             if (state.charts.disconnections) {
                 state.charts.disconnections.destroy();
             }
-            
+
             state.charts.disconnections = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
@@ -530,9 +583,10 @@ async function loadDisconnections(queryStr) {
                     datasets: [{
                         data: counts,
                         backgroundColor: bgColors,
-                        borderColor: '#0d0f22',
+                        borderColor: '#0b0f19',
                         borderWidth: 2,
-                        cutout: '72%'
+                        cutout: '75%',
+                        borderRadius: 4
                     }]
                 },
                 options: {
@@ -542,18 +596,31 @@ async function loadDisconnections(queryStr) {
                         legend: {
                             position: 'bottom',
                             labels: {
-                                color: '#9ca3af',
-                                boxWidth: 10,
-                                padding: 12,
-                                font: { size: 11 }
+                                color: '#8E8FA2',
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                boxWidth: 8,
+                                boxHeight: 8,
+                                padding: 14,
+                                font: { family: 'Space Grotesk', size: 11, weight: 500 }
                             }
                         },
                         tooltip: {
+                            backgroundColor: 'rgba(8, 12, 24, 0.95)',
+                            titleColor: '#fff',
+                            titleFont: { family: 'Space Grotesk', size: 13, weight: 600 },
+                            bodyColor: '#8E8FA2',
+                            bodyFont: { family: 'Inter', size: 12 },
+                            borderColor: 'rgba(255, 255, 255, 0.1)',
+                            borderWidth: 1,
+                            padding: 12,
+                            cornerRadius: 8,
+                            boxPadding: 4,
                             callbacks: {
-                                label: (context) => {
-                                    const val = context.raw;
-                                    const idx = context.dataIndex;
-                                    return ` Ligações: ${val.toLocaleString()} (${percentages[idx]}%)`;
+                                label: (c) => {
+                                    const total = c.dataset.data.reduce((a, b) => a + b, 0);
+                                    const pct = total > 0 ? ((c.raw / total) * 100).toFixed(1) : '0';
+                                    return ` ${c.label}: ${c.raw.toLocaleString()} (${pct}%)`;
                                 }
                             }
                         }
@@ -571,79 +638,126 @@ async function loadHourly(queryStr) {
     try {
         const res = await fetch(`/hours?${queryStr}`);
         const data = await res.json();
-        
-        const hours = data.map(d => d.hour);
+
+        // Formata as labels de horas para incluir o sufixo "h"
+        const hours = data.map(d => {
+            const h = parseInt(d.hour, 10);
+            return isNaN(h) ? d.hour : `${String(h).padStart(2, '0')}h`;
+        });
         const calls = data.map(d => d.call_count);
         const conversion = data.map(d => d.conversion_rate);
-        
+        const peakIndex = calls.indexOf(Math.max(...calls));
+
         const ctx = document.getElementById('chart-hourly').getContext('2d');
-        
+
         if (state.charts.hourly) {
             state.charts.hourly.destroy();
         }
-        
+
+        // Canvas Gradients
+        const gradBarPeak = ctx.createLinearGradient(0, 0, 0, 260);
+        gradBarPeak.addColorStop(0, 'rgba(123, 154, 255, 0.7)');
+        gradBarPeak.addColorStop(1, 'rgba(123, 154, 255, 0.15)');
+
+        const gradBarNorm = ctx.createLinearGradient(0, 0, 0, 260);
+        gradBarNorm.addColorStop(0, 'rgba(123, 154, 255, 0.35)');
+        gradBarNorm.addColorStop(1, 'rgba(123, 154, 255, 0.04)');
+
+        const gradLine = ctx.createLinearGradient(0, 0, 0, 260);
+        gradLine.addColorStop(0, 'rgba(0, 181, 160, 0.3)');
+        gradLine.addColorStop(1, 'rgba(0, 181, 160, 0.0)');
+
         state.charts.hourly = new Chart(ctx, {
-            type: 'line',
             data: {
                 labels: hours,
                 datasets: [
                     {
-                        label: 'Taxa de Interesse (%)',
-                        data: conversion,
-                        borderColor: '#10b981',
-                        backgroundColor: 'rgba(16, 185, 129, 0.05)',
-                        borderWidth: 3,
-                        yAxisID: 'y1',
-                        tension: 0.3,
-                        fill: true,
-                        pointBackgroundColor: '#10b981',
-                        pointHoverRadius: 6
-                    },
-                    {
+                        type: 'bar',
                         label: 'Volume de Ligações',
                         data: calls,
-                        backgroundColor: 'rgba(99, 102, 241, 0.25)',
-                        borderColor: '#6366f1',
-                        borderWidth: 1.5,
-                        yAxisID: 'y',
-                        type: 'bar',
-                        borderRadius: 4,
-                        barThickness: 16
+                        backgroundColor: calls.map((_, i) => i === peakIndex ? gradBarPeak : gradBarNorm),
+                        hoverBackgroundColor: 'rgba(123, 154, 255, 0.8)',
+                        borderRadius: { topLeft: 6, topRight: 6 },
+                        borderSkipped: false,
+                        barThickness: 16,
+                        yAxisID: 'y'
+                    },
+                    {
+                        type: 'line',
+                        label: 'Taxa de Interesse (%)',
+                        data: conversion,
+                        borderColor: '#00B5A0',
+                        backgroundColor: gradLine,
+                        borderWidth: 2.5,
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 0,
+                        pointHoverRadius: 6,
+                        pointHoverBackgroundColor: '#00B5A0',
+                        pointHoverBorderColor: '#fff',
+                        pointHoverBorderWidth: 2,
+                        yAxisID: 'y1'
                     }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
                 plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: { color: '#9ca3af', boxWidth: 12 }
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(8, 12, 24, 0.95)',
+                        titleColor: '#fff',
+                        titleFont: { family: 'Space Grotesk', size: 13, weight: 600 },
+                        bodyColor: '#8E8FA2',
+                        bodyFont: { family: 'Inter', size: 12 },
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 1,
+                        padding: 12,
+                        cornerRadius: 8,
+                        boxPadding: 4,
+                        usePointStyle: true,
+                        callbacks: {
+                            label: (context) => {
+                                const val = context.raw;
+                                if (context.dataset.type === 'line') {
+                                    return ` Taxa de Interesse: ${typeof val === 'number' ? val.toFixed(1) : val}%`;
+                                }
+                                return ` Volume de Ligações: ${val.toLocaleString()}`;
+                            }
+                        }
                     }
                 },
                 scales: {
                     x: {
-                        grid: { color: 'rgba(255, 255, 255, 0.03)' },
-                        ticks: { color: '#9ca3af' }
+                        grid: { display: false },
+                        ticks: {
+                            color: '#8E8FA2',
+                            font: { family: 'Inter', size: 11 },
+                            maxRotation: 0,
+                            minRotation: 0,
+                            maxTicksLimit: 12
+                        },
+                        border: { display: false }
                     },
                     y: {
-                        type: 'linear',
-                        display: true,
                         position: 'left',
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                        ticks: { color: '#9ca3af' },
-                        title: { display: true, text: 'Volume de Tentativas', color: '#9ca3af' }
+                        grid: { color: 'rgba(255, 255, 255, 0.04)', drawBorder: false },
+                        ticks: { color: '#8E8FA2', font: { family: 'Inter', size: 11 }, precision: 0 },
+                        border: { display: false },
+                        title: { display: false }
                     },
                     y1: {
-                        type: 'linear',
-                        display: true,
                         position: 'right',
                         grid: { drawOnChartArea: false },
-                        ticks: { 
-                            color: '#10b981',
-                            callback: (val) => `${val}%`
+                        ticks: {
+                            color: '#00B5A0',
+                            font: { family: 'Inter', size: 11 },
+                            callback: (v) => `${v}%`
                         },
-                        title: { display: true, text: 'Taxa de Conversão', color: '#10b981' }
+                        border: { display: false },
+                        title: { display: false }
                     }
                 }
             }
@@ -658,55 +772,76 @@ async function loadFatigue(queryStr) {
     try {
         const res = await fetch(`/fatigue?${queryStr}`);
         const data = await res.json();
-        
+
         const buckets = data.map(d => d.attempt_bucket);
         const calls = data.map(d => d.call_count);
         const conversions = data.map(d => d.conversion_rate);
-        
+
         const ctx = document.getElementById('chart-fatigue-impact').getContext('2d');
-        
+
         if (state.charts.fatigue) {
             state.charts.fatigue.destroy();
         }
-        
+
+        const gradBarNorm = ctx.createLinearGradient(0, 0, 0, 260);
+        gradBarNorm.addColorStop(0, 'rgba(123, 154, 255, 0.35)');
+        gradBarNorm.addColorStop(1, 'rgba(123, 154, 255, 0.04)');
+
+        const gradLine = ctx.createLinearGradient(0, 0, 0, 260);
+        gradLine.addColorStop(0, 'rgba(0, 181, 160, 0.3)');
+        gradLine.addColorStop(1, 'rgba(0, 181, 160, 0.0)');
+
         state.charts.fatigue = new Chart(ctx, {
-            type: 'bar',
             data: {
                 labels: buckets,
                 datasets: [
                     {
-                        label: 'Taxa de Interesse do Lead (%)',
-                        data: conversions,
-                        borderColor: '#a855f7',
-                        borderWidth: 3,
-                        yAxisID: 'y1',
-                        type: 'line',
-                        tension: 0.3,
-                        pointBackgroundColor: '#a855f7',
-                        pointHoverRadius: 7,
-                        pointHoverBorderColor: '#fff'
+                        type: 'bar',
+                        label: 'Volume de Ligações',
+                        data: calls,
+                        backgroundColor: gradBarNorm,
+                        hoverBackgroundColor: 'rgba(123, 154, 255, 0.8)',
+                        borderRadius: { topLeft: 6, topRight: 6 },
+                        borderSkipped: false,
+                        barThickness: 24,
+                        yAxisID: 'y'
                     },
                     {
-                        label: 'Volume de Contatos Feitos',
-                        data: calls,
-                        backgroundColor: 'rgba(99, 102, 241, 0.2)',
-                        borderColor: '#6366f1',
-                        borderWidth: 1.5,
-                        yAxisID: 'y',
-                        borderRadius: 6,
-                        barThickness: 36
+                        type: 'line',
+                        label: 'Taxa de Interesse (%)',
+                        data: conversions,
+                        borderColor: '#00B5A0',
+                        backgroundColor: gradLine,
+                        borderWidth: 2.5,
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 0,
+                        pointHoverRadius: 6,
+                        pointHoverBackgroundColor: '#00B5A0',
+                        pointHoverBorderColor: '#fff',
+                        pointHoverBorderWidth: 2,
+                        yAxisID: 'y1'
                     }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
                 plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: { color: '#9ca3af', boxWidth: 12 }
-                    },
+                    legend: { display: false },
                     tooltip: {
+                        backgroundColor: 'rgba(8, 12, 24, 0.95)',
+                        titleColor: '#fff',
+                        titleFont: { family: 'Space Grotesk', size: 13, weight: 600 },
+                        bodyColor: '#8E8FA2',
+                        bodyFont: { family: 'Inter', size: 12 },
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 1,
+                        padding: 12,
+                        cornerRadius: 8,
+                        boxPadding: 4,
+                        usePointStyle: true,
                         callbacks: {
                             label: (context) => {
                                 const idx = context.dataIndex;
@@ -720,27 +855,27 @@ async function loadFatigue(queryStr) {
                 },
                 scales: {
                     x: {
-                        grid: { color: 'rgba(255, 255, 255, 0.03)' },
-                        ticks: { color: '#f3f4f6', font: { weight: 500 } }
+                        grid: { display: false },
+                        ticks: { color: '#8E8FA2', font: { family: 'Inter', size: 11 } },
+                        border: { display: false }
                     },
                     y: {
-                        type: 'linear',
-                        display: true,
                         position: 'left',
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                        ticks: { color: '#9ca3af' },
-                        title: { display: true, text: 'Volume de Tentativas', color: '#9ca3af' }
+                        grid: { color: 'rgba(255, 255, 255, 0.04)', drawBorder: false },
+                        ticks: { color: '#8E8FA2', font: { family: 'Inter', size: 11 }, precision: 0 },
+                        border: { display: false },
+                        title: { display: false }
                     },
                     y1: {
-                        type: 'linear',
-                        display: true,
                         position: 'right',
                         grid: { drawOnChartArea: false },
-                        ticks: { 
-                            color: '#a855f7',
-                            callback: (val) => `${val}%`
+                        ticks: {
+                            color: '#00B5A0',
+                            font: { family: 'Inter', size: 11 },
+                            callback: (v) => `${v}%`
                         },
-                        title: { display: true, text: 'Taxa de Interesse (%)', color: '#a855f7' }
+                        border: { display: false },
+                        title: { display: false }
                     }
                 }
             }
@@ -755,30 +890,30 @@ function initETLTrigger() {
     const btn = document.getElementById('btn-trigger-etl');
     if (!btn) return; // Botão removido no modo nativo
     const toast = document.getElementById('etl-status-toast');
-    
+
     btn.addEventListener('click', async () => {
         btn.disabled = true;
         toast.classList.remove('hidden');
         toast.querySelector('.text').textContent = 'ETL Inicializado...';
-        
+
         try {
             const res = await fetch('/etl/trigger', { method: 'POST' });
             const data = await res.json();
-            
+
             toast.querySelector('.text').textContent = 'Processando ETL em background...';
-            
+
             // Wait 10 seconds and auto-refresh the metrics
             setTimeout(() => {
                 toast.querySelector('.text').textContent = 'Dados Recarregados!';
                 refreshDashboard();
                 loadAgents();
-                
+
                 setTimeout(() => {
                     toast.classList.add('hidden');
                     btn.disabled = false;
                 }, 3000);
             }, 10000);
-            
+
         } catch (err) {
             console.error('Erro ao rodar ETL:', err);
             toast.querySelector('.text').textContent = 'Erro ao disparar ETL';
@@ -795,24 +930,24 @@ function initAuditPanel() {
     const btnApply = document.getElementById('btn-apply-audit-filters');
     const minInput = document.getElementById('audit-duration-min');
     const maxInput = document.getElementById('audit-duration-max');
-    
+
     const btnPrev = document.getElementById('btn-prev-page');
     const btnNext = document.getElementById('btn-next-page');
-    
+
     btnApply.addEventListener('click', () => {
         state.auditFilters.minDuration = minInput.value;
         state.auditFilters.maxDuration = maxInput.value;
         state.pagination.page = 1;
         loadAuditCalls();
     });
-    
+
     btnPrev.addEventListener('click', () => {
         if (state.pagination.page > 1) {
             state.pagination.page--;
             loadAuditCalls();
         }
     });
-    
+
     btnNext.addEventListener('click', () => {
         if (state.pagination.page < state.pagination.totalPages) {
             state.pagination.page++;
@@ -821,47 +956,179 @@ function initAuditPanel() {
     });
 }
 
+function cleanTranscriptForCsv(raw) {
+    if (!raw) return '';
+    try {
+        const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        if (Array.isArray(parsed)) {
+            return parsed
+                .filter(m => m && (m.content || m.text))
+                .map(m => {
+                    const speaker = (m.role === 'user' || m.speaker === 'user') ? 'Lead' : 'Agente';
+                    const text = (m.content || m.text || '').replace(/\r?\n/g, ' ').trim();
+                    return `${speaker}: ${text}`;
+                })
+                .filter(t => t.length > 7)
+                .join(' | ');
+        }
+        if (typeof parsed === 'object' && parsed.transcript) {
+            return cleanTranscriptForCsv(parsed.transcript);
+        }
+    } catch {}
+    return String(raw).replace(/\[\{.*?\}\]/g, '').replace(/\r?\n/g, ' ').trim();
+}
+
+function formatPhoneForCsv(phone) {
+    if (!phone) return '';
+    const clean = String(phone).trim();
+    return clean ? `'${clean}` : '';
+}
+
+function formatDateForCsv(val) {
+    if (!val) return '';
+    try {
+        const d = new Date(val);
+        if (!isNaN(d.getTime())) {
+            return d.toISOString().replace('T', ' ').slice(0, 19);
+        }
+    } catch {}
+    return String(val);
+}
+
+// 11. CSV Export Handler (Gera CSV a partir da API /calls)
+function initExportCsv() {
+    const btn = document.getElementById('btn-export-csv');
+    if (!btn) return;
+
+    btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const originalHtml = btn.innerHTML;
+        btn.style.pointerEvents = 'none';
+        btn.innerHTML = '<span class="material-symbols-outlined spin" style="animation: spin 1s linear infinite;">progress_activity</span> Exportando...';
+
+        try {
+            const params = new URLSearchParams({ page: 1, limit: 5000, _t: Date.now() });
+            if (state?.filters?.agent) params.append('agent', state.filters.agent);
+            if (state?.filters?.startDate) params.append('start_date', state.filters.startDate);
+            if (state?.filters?.endDate) params.append('end_date', state.filters.endDate);
+
+            const res = await fetch(`/calls?${params.toString()}`);
+            if (!res.ok) {
+                alert('Erro ao consultar servidor de ligações.');
+                return;
+            }
+
+            const result = await res.json();
+            const calls = result.data || result.calls || (Array.isArray(result) ? result : []);
+
+            if (!calls || calls.length === 0) {
+                alert('Nenhuma ligação encontrada para os filtros selecionados.');
+                return;
+            }
+
+            // Colunas amigáveis do CSV
+            const columns = [
+                { key: 'call_id', label: 'ID Chamada' },
+                { key: 'created_at', label: 'Data/Hora' },
+                { key: 'lead_name', label: 'Nome do Lead' },
+                { key: 'lead_phone', label: 'Telefone' },
+                { key: 'agent_name', label: 'Agente' },
+                { key: 'duration_seconds', label: 'Duração (s)' },
+                { key: 'disconnection_reason', label: 'Motivo Desconexão' },
+                { key: 'recording_url', label: 'URL Gravação' },
+                { key: 'transcript', label: 'Transcrição' }
+            ];
+
+            const headerRow = columns.map(c => `"${c.label}"`).join(';');
+            const bodyRows = calls.map(item => {
+                return columns.map(col => {
+                    let val = item[col.key];
+                    if (val === undefined || val === null) {
+                        if (col.key === 'created_at') val = item.start_timestamp || item.created_at || '';
+                        else if (col.key === 'duration_seconds') val = item.duration || item.duration_seconds || item.call_length_seconds || '';
+                        else if (col.key === 'lead_phone') val = item.from_number || item.to_number || item.lead_phone || '';
+                        else if (col.key === 'agent_name') val = item.agent_id || item.agent_name || '';
+                        else val = '';
+                    }
+
+                    if (col.key === 'transcript') {
+                        val = cleanTranscriptForCsv(val);
+                    } else if (col.key === 'lead_phone') {
+                        val = formatPhoneForCsv(val);
+                    } else if (col.key === 'created_at') {
+                        val = formatDateForCsv(val);
+                    } else if (typeof val === 'object') {
+                        val = JSON.stringify(val);
+                    }
+
+                    const str = String(val).replace(/\r?\n/g, ' ').replace(/"/g, '""');
+                    return `"${str}"`;
+                }).join(';');
+            }).join('\n');
+
+            const bom = '\uFEFF';
+            const csvContent = bom + headerRow + '\n' + bodyRows;
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `ligacoes_mindflow_${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('[Export CSV] Erro:', err);
+            alert('Erro ao gerar arquivo CSV.');
+        } finally {
+            btn.style.pointerEvents = 'auto';
+            btn.innerHTML = originalHtml;
+        }
+    });
+}
+
 async function loadAuditCalls() {
     const tbody = document.querySelector('.audit-table tbody');
-    tbody.innerHTML = '<tr><td colspan="7" class="loading-td"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;display:inline-block;">pending</span> Buscando ligações...</td></tr>';
-    
+    tbody.innerHTML = '<tr><td colspan="6" class="loading-td"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;display:inline-block;">pending</span> Buscando ligações...</td></tr>';
+
     const params = new URLSearchParams({
         page: state.pagination.page,
         limit: state.pagination.limit
     });
-    
+
     // Add global filters
     if (state.filters.agent) params.append('agent', state.filters.agent);
     if (state.filters.startDate) params.append('start_date', state.filters.startDate);
     if (state.filters.endDate) params.append('end_date', state.filters.endDate);
-    
+
     // Add audit specific duration filters
     if (state.auditFilters.minDuration) params.append('min_duration', state.auditFilters.minDuration);
     if (state.auditFilters.maxDuration) params.append('max_duration', state.auditFilters.maxDuration);
-    
+
     try {
         const res = await fetch(`/calls?${params.toString()}`);
         const result = await res.json();
-        
+
         tbody.innerHTML = '';
-        
+
         if (result.data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="loading-td">Nenhuma ligação encontrada para os filtros selecionados.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="loading-td">Nenhuma ligação encontrada para os filtros selecionados.</td></tr>';
             document.getElementById('current-page').textContent = '1';
             document.getElementById('total-pages').textContent = '1';
             document.getElementById('btn-prev-page').disabled = true;
             document.getElementById('btn-next-page').disabled = true;
             return;
         }
-        
+
         // Paginate info
         state.pagination.totalPages = result.pages;
         document.getElementById('current-page').textContent = result.page;
         document.getElementById('total-pages').textContent = result.pages;
-        
+
         document.getElementById('btn-prev-page').disabled = result.page === 1;
         document.getElementById('btn-next-page').disabled = result.page === result.pages;
-        
+
         const categoryMap = {
             'Conversa Normal': 'normal',
             'Não Atendeu': 'no-answer',
@@ -869,24 +1136,24 @@ async function loadAuditCalls() {
             'Erro Técnico': 'technical',
             'Ocupado': 'busy'
         };
-        
+
         result.data.forEach(call => {
             const tr = document.createElement('tr');
-            
+
             // Highlight if active
             if (state.selectedCall && state.selectedCall.call_id === call.call_id) {
                 tr.classList.add('active-row');
             }
-            
+
             const formatDuration = (s) => {
                 const min = Math.floor(s / 60);
                 const sec = Math.floor(s % 60);
                 return `${min}:${sec.toString().padStart(2, '0')}`;
             };
-            
+
             const dateParsed = new Date(call.created_at.replace(' ', 'T')).toLocaleString('pt-BR');
             const classCategory = categoryMap[call.disconnection_category] || 'normal';
-            
+
             tr.innerHTML = `
                 <td>
                     <span class="cell-phone">${call.to_number}</span>
@@ -895,65 +1162,63 @@ async function loadAuditCalls() {
                 <td style="font-weight: 500;">${call.agent_name || '-'}</td>
                 <td style="color: var(--text-secondary);">${dateParsed}</td>
                 <td><span class="badge-duration">${formatDuration(call.Duracao)}</span></td>
-                <td style="font-family: monospace;">U$ ${call.combined_cost.toFixed(3)}</td>
                 <td><span class="disconnection-badge ${classCategory}">${call.disconnection_category}</span></td>
                 <td>
                     <button class="btn-audit" title="Ouvir gravação"><span class="material-symbols-outlined" style="font-size:16px;">play_arrow</span></button>
                 </td>
             `;
-            
+
             // Add click row to open player
             tr.addEventListener('click', () => {
                 // Remove styling on previous active
                 const active = tbody.querySelector('.active-row');
                 if (active) active.classList.remove('active-row');
                 tr.classList.add('active-row');
-                
+
                 openAudioPlayer(call);
             });
-            
+
             tbody.appendChild(tr);
         });
-        
+
     } catch (err) {
         console.error('Erro ao carregar ligações da auditoria:', err);
-        tbody.innerHTML = '<tr><td colspan="7" class="loading-td" style="color: var(--error);">Erro ao carregar ligações do servidor.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="loading-td" style="color: var(--error);">Erro ao carregar ligações do servidor.</td></tr>';
     }
 }
 
 // 11. Open Custom Player and load parameters
 function openAudioPlayer(call) {
     state.selectedCall = call;
-    
+
     const emptyState = document.getElementById('player-empty-state');
     const activeState = document.getElementById('player-active-state');
-    
+
     emptyState.classList.add('hidden');
     activeState.classList.remove('hidden');
-    
+
     // Fill lead profiling Info
     document.getElementById('player-lead-name').textContent = call.Nome || 'Contato Sem Nome';
     document.getElementById('player-lead-phone').textContent = call.to_number;
     document.getElementById('player-lead-email').textContent = call.Email || 'Sem e-mail cadastrado';
-    
+
     // Call metadata
     const dateParsed = new Date(call.created_at.replace(' ', 'T')).toLocaleString('pt-BR');
     document.getElementById('player-meta-agent').textContent = call.agent_name || '-';
     document.getElementById('player-meta-date').textContent = dateParsed;
-    
+
     const formatDuration = (s) => {
         const min = Math.floor(s / 60);
         const sec = Math.floor(s % 60);
         return `${min}m e ${sec}s`;
     };
     document.getElementById('player-meta-duration').textContent = formatDuration(call.Duracao);
-    document.getElementById('player-meta-cost').textContent = `U$ ${call.combined_cost.toFixed(3)}`;
     document.getElementById('player-meta-disconnection').textContent = call.disconnection_category;
-    
+
     // Fatigue elements badge colorizer
     const densityVal = call.densidade_tentativas.toFixed(3);
     const pressureVal = call.pressao_recente.toFixed(3);
-    
+
     const densityEl = document.getElementById('player-meta-density');
     densityEl.textContent = `${densityVal} (Tentativa/Hora)`;
     if (call.densidade_tentativas > 0.5) {
@@ -963,7 +1228,7 @@ function openAudioPlayer(call) {
     } else {
         densityEl.style.color = colors.success;
     }
-    
+
     const pressureEl = document.getElementById('player-meta-pressure');
     pressureEl.textContent = `${pressureVal} (Tentativa/Hora)`;
     if (call.pressao_recente > 1.0) {
@@ -973,17 +1238,17 @@ function openAudioPlayer(call) {
     } else {
         pressureEl.style.color = colors.success;
     }
-    
+
     // Audio source loader
     const audio = document.getElementById('audio-element');
-    
+
     if (call.recording_url) {
         audio.src = call.recording_url;
         audio.classList.remove('hidden');
         audio.play().catch(err => {
             console.log('Auto-play blocked by browser. User action required to start audio playback.');
         });
-        
+
         // Remove lgpd warning hidden state
         document.querySelector('.audio-player-wrapper').classList.remove('hidden');
     } else {
@@ -1012,9 +1277,24 @@ function loadWhatsApp() {
     loadWaChats();
 }
 
+function formatTma(val) {
+    if (val == null || isNaN(val) || val === 0) return '0 min';
+    const num = Number(val);
+    if (num > 10000) {
+        // Valor recebido em milissegundos (ex: 93817.36 ms -> 1.56 min)
+        const mins = num / 60000;
+        return mins < 1 ? `${Math.round(num / 1000)}s` : `${mins.toFixed(1)} min`;
+    }
+    if (num > 500) {
+        // Valor recebido em segundos (ex: 600s -> 10 min)
+        return `${(num / 60).toFixed(1)} min`;
+    }
+    return `${num.toFixed(1)} min`;
+}
+
 async function loadWaMetrics() {
     try {
-        const res = await fetch('/whatsapp/metrics');
+        const res = await fetch(`/whatsapp/metrics?_t=${Date.now()}`);
         const d = await res.json();
         const set = (id, v) => { document.getElementById(id).textContent = v; };
         set('wa-kpi-total-leads', (d.total_leads ?? 0).toLocaleString());
@@ -1023,7 +1303,7 @@ async function loadWaMetrics() {
         set('wa-kpi-resp-rate', `${d.taxa_resposta ?? 0}%`);
         set('wa-kpi-total-msgs', (d.total_mensagens ?? 0).toLocaleString());
         set('wa-kpi-avg-msgs', (d.avg_mensagens_por_lead ?? 0).toFixed(1));
-        set('wa-kpi-tma', `${d.tempo_medio_atendimento_minutos ?? 0} min`);
+        set('wa-kpi-tma', formatTma(d.tempo_medio_atendimento_minutos));
     } catch (err) {
         console.error('Erro ao carregar métricas WhatsApp:', err);
     }
@@ -1031,23 +1311,49 @@ async function loadWaMetrics() {
 
 async function loadWaFunnel() {
     try {
-        const res = await fetch('/whatsapp/funnel');
+        const res = await fetch(`/whatsapp/funnel?_t=${Date.now()}`);
         const d = await res.json();
         const stages = ['Leads Totais', 'Com Resposta', 'Engajadas (>5 msgs)'];
         const values = [d.total_leads ?? 0, d.leads_com_resposta ?? 0, d.conversas_engajadas_gt5_msgs ?? 0];
+        const funnelTotal = values[0];
+
+        const waFunnelValueLabels = {
+            id: 'waFunnelValueLabels',
+            afterDatasetsDraw(chart) {
+                const { ctx } = chart;
+                const meta = chart.getDatasetMeta(0);
+                meta.data.forEach((bar, i) => {
+                    const val = chart.data.datasets[0].data[i];
+                    const pct = funnelTotal > 0 ? ((val / funnelTotal) * 100).toFixed(0) : '0';
+                    const x = bar.x + 12;
+                    const y = bar.y;
+                    ctx.save();
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'middle';
+                    ctx.font = "600 14px 'Space Grotesk', sans-serif";
+                    ctx.fillStyle = '#F5F6FA';
+                    ctx.fillText(val.toLocaleString(), x, y - 8);
+                    ctx.font = "500 11px 'Inter', sans-serif";
+                    ctx.fillStyle = '#8A8FA3';
+                    ctx.fillText(pct + '%', x, y + 10);
+                    ctx.restore();
+                });
+            }
+        };
 
         const ctx = document.getElementById('chart-wa-funnel').getContext('2d');
         if (state.charts.waFunnel) state.charts.waFunnel.destroy();
         state.charts.waFunnel = new Chart(ctx, {
             type: 'bar',
+            plugins: [waFunnelValueLabels],
             data: {
                 labels: stages,
                 datasets: [{
                     label: 'Volume',
                     data: values,
-                    backgroundColor: ['#0ea5e9', '#10b981', '#a855f7'],
+                    backgroundColor: ['#7B9AFF', '#00B5A0', '#10B981'],
                     borderRadius: 8,
-                    borderWidth: 0,
+                    borderSkipped: false,
                     barThickness: 28
                 }]
             },
@@ -1055,17 +1361,28 @@ async function loadWaFunnel() {
                 indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
+                layout: { padding: { right: 56 } },
                 plugins: {
                     legend: { display: false },
                     tooltip: {
+                        backgroundColor: 'rgba(8, 12, 24, 0.95)',
+                        titleColor: '#fff',
+                        titleFont: { family: 'Space Grotesk', size: 13, weight: 600 },
+                        bodyColor: '#8E8FA2',
+                        bodyFont: { family: 'Inter', size: 12 },
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 1,
+                        padding: 12,
+                        cornerRadius: 8,
+                        displayColors: false,
                         callbacks: {
-                            label: (context) => ` ${context.raw.toLocaleString()}`
+                            label: (context) => ` ${context.raw.toLocaleString()} conversas`
                         }
                     }
                 },
                 scales: {
-                    x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
-                    y: { grid: { display: false }, ticks: { color: '#f3f4f6', font: { weight: 600 } } }
+                    x: { grid: { color: 'rgba(255, 255, 255, 0.04)', drawBorder: false }, ticks: { color: '#8E8FA2', font: { family: 'Inter', size: 11 } } },
+                    y: { grid: { display: false }, ticks: { color: '#f3f4f6', font: { family: 'Space Grotesk', size: 12, weight: 500 } } }
                 }
             }
         });
@@ -1076,16 +1393,26 @@ async function loadWaFunnel() {
 
 async function loadWaHours() {
     try {
-        const res = await fetch('/whatsapp/hours');
+        const res = await fetch(`/whatsapp/hours?_t=${Date.now()}`);
         const d = await res.json();
         const rows = d.hours_distribution || [];
 
-        const labels = rows.map(r => `${r.hora}:00`);
+        const labels = rows.map(r => `${String(r.hora).padStart(2, '0')}:00`);
         const leadMsgs = rows.map(r => r.mensagens_lead ?? 0);
         const aiMsgs = rows.map(r => r.mensagens_ia ?? 0);
 
         const ctx = document.getElementById('chart-wa-hours').getContext('2d');
         if (state.charts.waHours) state.charts.waHours.destroy();
+
+        // Canvas Gradients para barras elegantes
+        const gradLead = ctx.createLinearGradient(0, 0, 0, 260);
+        gradLead.addColorStop(0, 'rgba(123, 154, 255, 0.95)');
+        gradLead.addColorStop(1, 'rgba(123, 154, 255, 0.35)');
+
+        const gradAi = ctx.createLinearGradient(0, 0, 0, 260);
+        gradAi.addColorStop(0, 'rgba(0, 181, 160, 0.95)');
+        gradAi.addColorStop(1, 'rgba(0, 181, 160, 0.35)');
+
         state.charts.waHours = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -1094,32 +1421,72 @@ async function loadWaHours() {
                     {
                         label: 'Mensagens Lead',
                         data: leadMsgs,
-                        backgroundColor: 'rgba(99,102,241,0.55)',
-                        borderColor: '#6366f1',
-                        borderWidth: 1,
-                        borderRadius: 4,
-                        barThickness: 14
+                        backgroundColor: gradLead,
+                        hoverBackgroundColor: '#7B9AFF',
+                        borderRadius: { topLeft: 4, topRight: 4 },
+                        borderSkipped: false,
+                        barThickness: 7,
+                        categoryPercentage: 0.65,
+                        barPercentage: 0.85
                     },
                     {
                         label: 'Mensagens IA',
                         data: aiMsgs,
-                        backgroundColor: 'rgba(16,185,129,0.45)',
-                        borderColor: '#10b981',
-                        borderWidth: 1,
-                        borderRadius: 4,
-                        barThickness: 14
+                        backgroundColor: gradAi,
+                        hoverBackgroundColor: '#00B5A0',
+                        borderRadius: { topLeft: 4, topRight: 4 },
+                        borderSkipped: false,
+                        barThickness: 7,
+                        categoryPercentage: 0.65,
+                        barPercentage: 0.85
                     }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
                 plugins: {
-                    legend: { position: 'top', labels: { color: '#9ca3af', boxWidth: 12 } }
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(8, 12, 24, 0.95)',
+                        titleColor: '#fff',
+                        titleFont: { family: 'Space Grotesk', size: 13, weight: 600 },
+                        bodyColor: '#8E8FA2',
+                        bodyFont: { family: 'Inter', size: 12 },
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 1,
+                        padding: 12,
+                        cornerRadius: 8,
+                        boxPadding: 4,
+                        usePointStyle: true,
+                        callbacks: {
+                            label: (context) => ` ${context.dataset.label}: ${context.raw.toLocaleString()}`
+                        }
+                    }
                 },
                 scales: {
-                    x: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#9ca3af' } },
-                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } }
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            color: '#8E8FA2',
+                            font: { family: 'Inter', size: 11 },
+                            maxRotation: 0,
+                            minRotation: 0,
+                            maxTicksLimit: 12
+                        }
+                    },
+                    y: {
+                        grid: { color: 'rgba(255, 255, 255, 0.04)', drawBorder: false },
+                        ticks: {
+                            color: '#8E8FA2',
+                            font: { family: 'Inter', size: 11 },
+                            precision: 0
+                        }
+                    }
                 }
             }
         });
@@ -1132,7 +1499,7 @@ async function loadWaChats() {
     const tbody = document.getElementById('wa-chats-body');
     tbody.innerHTML = '<tr><td colspan="6" class="loading-td">Carregando conversas...</td></tr>';
 
-    const params = new URLSearchParams({ page: waState.page, limit: waState.limit });
+    const params = new URLSearchParams({ page: waState.page, limit: waState.limit, _t: Date.now() });
 
     try {
         const res = await fetch(`/whatsapp/chats?${params.toString()}`);
@@ -1161,7 +1528,7 @@ async function loadWaChats() {
             const ultima = chat.ultima_msgm_texto || '';
             const etapa = chat.etapa_crm || '-';
             const reuniao = chat.reuniao_marcada ? 'Sim' : 'Não';
-            const tma = chat.duracao_atendimento_minutos != null ? `${chat.duracao_atendimento_minutos} min` : '-';
+            const tma = chat.duracao_atendimento_minutos != null ? formatTma(chat.duracao_atendimento_minutos) : '-';
             const sessionId = chat.numero || chat.id || '';
 
             tr.innerHTML = `

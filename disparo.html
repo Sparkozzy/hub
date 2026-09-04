@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html class="dark" lang="pt-BR">
 
 <head>
@@ -65,7 +65,7 @@
       top: 0;
       left: 0;
       right: 0;
-      height: 52px;
+      height: 56px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -195,9 +195,10 @@
       display: none;
       flex-direction: column;
       gap: 20px;
-      position: relative; z-index: 0;
+      position: relative; z-index: 20;
     }
     .quick-mode.visible { display: flex; }
+    .quick-mode:has(.custom-select.open) { z-index: 99999; }
 
     .quick-user-card {
       display: flex;
@@ -231,8 +232,9 @@
     .custom-select {
       position: relative;
       width: 100%;
+      z-index: 10;
     }
-    .custom-select.open { z-index: 999; }
+    .custom-select.open { z-index: 99999; position: relative; isolation: isolate; }
     .custom-select-trigger {
       width: 100%; height: 46px;
       display: flex; align-items: center; gap: 6px;
@@ -250,7 +252,7 @@
       user-select: none;
     }
     .custom-select-trigger .cs-ico {
-      font-size: 20px; color: #444656; flex-shrink: 0; line-height: 1;
+      font-size: 20px; color: #7B9AFF; flex-shrink: 0; line-height: 1;
     }
     .custom-select-trigger .cs-value {
       flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
@@ -275,24 +277,27 @@
     }
     .custom-select-dropdown {
       position: absolute;
-      top: calc(100% + 6px);
+      top: calc(100% + 8px);
       left: 0; right: 0;
-      z-index: 100;
-      background: rgba(10, 14, 26, 0.96);
-      backdrop-filter: blur(20px) saturate(1.4);
-      -webkit-backdrop-filter: blur(20px) saturate(1.4);
-      border: 1px solid rgba(255,255,255,.08);
+      z-index: 999999;
+      background: #0B0F19;
+      border: 1px solid rgba(123, 154, 255, 0.3);
       border-radius: 12px;
-      box-shadow: 0 16px 48px rgba(0,0,0,.6);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.95), 0 0 25px rgba(46, 79, 255, 0.2);
       padding: 6px;
-      max-height: 220px;
+      max-height: 240px;
       overflow-y: auto;
       opacity: 0;
       pointer-events: none;
+      transform: translateY(-6px) translateZ(0);
+      will-change: transform, opacity;
+      isolation: isolate;
+      transition: opacity .18s cubic-bezier(0.16, 1, 0.3, 1), transform .18s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .custom-select.open .custom-select-dropdown {
       opacity: 1;
       pointer-events: auto;
+      transform: translateY(0) translateZ(0);
     }
     .custom-select-dropdown::-webkit-scrollbar { width: 4px; }
     .custom-select-dropdown::-webkit-scrollbar-track { background: transparent; }
@@ -352,8 +357,9 @@
     .btn-quick:disabled { opacity: .6; cursor: not-allowed; transform: none; box-shadow: none; }
     .btn-quick .material-symbols-outlined { font-size: 22px; }
 
-    .complete-mode { display: block; }
+    .complete-mode { display: block; position: relative; z-index: 20; }
     .complete-mode.hidden { display: none; }
+    .complete-mode:has(.custom-select.open) { z-index: 99999; }
 
     .card-header {
       text-align: center;
@@ -594,6 +600,19 @@
       text-overflow: ellipsis;
       caret-color: rgba(255, 255, 255, 0.8);
       transition: border-color .15s, box-shadow .15s, padding-right 0.22s ease;
+    }
+
+    /* Fix Browser Autofill (White Frame Override) */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active {
+      -webkit-text-fill-color: #ffffff !important;
+      -webkit-box-shadow: 0 0 0 1000px #0b0f19 inset !important;
+      box-shadow: 0 0 0 1000px #0b0f19 inset !important;
+      transition: background-color 50000s ease-in-out 0s !important;
+      caret-color: #ffffff !important;
+      border-color: rgba(255, 255, 255, .15) !important;
     }
 
     input.has-icon,
@@ -1339,6 +1358,39 @@
       margin-top: 22px;
       display: flex;
       justify-content: center;
+      position: relative;
+      z-index: 1;
+    }
+    body.select-open .status,
+    body.select-open #pill,
+    body.select-open .dot,
+    body.select-open #pillText,
+    .card:has(.custom-select.open) .status,
+    .card:has(.custom-select.open) #pill,
+    .card:has(.custom-select.open) .dot,
+    body:has(.custom-select.open) #pill,
+    body:has(.custom-select.open) .status,
+    body:has(.custom-select.open) .dot {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      z-index: -99999 !important;
+      pointer-events: none !important;
+      animation: none !important;
+      transform: none !important;
+      will-change: auto !important;
+    }
+    .card:has(.custom-select.open) .dot,
+    body.select-open .dot {
+      animation: none !important;
+      animation-play-state: paused !important;
+      transform: none !important;
+      z-index: -99999 !important;
+    }
+    .card:has(.custom-select.open) .btn,
+    .card:has(.custom-select.open) .btn-quick {
+      transform: none !important;
+      z-index: 0 !important;
     }
 
     .pill {
@@ -1358,6 +1410,8 @@
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.06);
       color: #8e8fa2;
+      position: relative;
+      z-index: 1;
     }
 
     .dot {
@@ -1518,6 +1572,8 @@
       opacity: 0;
       overflow: hidden;
       margin-top: 0;
+      position: relative;
+      z-index: 10;
       /* Default state = closing transition */
       transition:
         max-height var(--motion-close-dur) var(--motion-close-ease),
@@ -1534,6 +1590,8 @@
       overflow: visible;
       margin-top: 10px;
       margin-bottom: 8px;
+      position: relative;
+      z-index: 999;
       /* Opening transition — softer settle */
       transition:
         max-height var(--motion-open-dur) var(--motion-open-ease),
@@ -1541,6 +1599,11 @@
         padding var(--motion-open-dur) var(--motion-open-ease),
         margin-top var(--motion-open-dur) var(--motion-open-ease),
         margin-bottom var(--motion-open-dur) var(--motion-open-ease);
+    }
+
+    .advanced-panel:has(.custom-select.open) {
+      z-index: 99999 !important;
+      position: relative;
     }
 
     /* ── Mindflow Logo V13 ── */
@@ -2248,8 +2311,8 @@ transform: translateY(-50%);
 width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
 }
 .dock-sep { width: 28px; height: 1px; background: rgba(255,255,255,0.08); margin: 4px 0; }
-@media (min-width: 769px) { body { padding-left: 76px; } .navbar { padding-left: 28px !important; } }
-      .navbar { padding-left: 28px !important; }
+@media (min-width: 769px) { body { padding-left: 76px; } .navbar { padding-left: 88px !important; } }
+      .navbar { padding-left: 88px !important; }
     }
 
   </style>
@@ -2259,7 +2322,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
 
   <!-- ── Dock ── -->
   <nav class="dock">
-    <a href="/hub" class="dock-item" style="display:none" id="dockHub">
+    <a href="/hub" class="dock-item" id="dockHub">
       <span class="material-symbols-outlined">grid_view</span>
     </a>
     <a href="/disparo" class="dock-item active">
@@ -2283,18 +2346,11 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       var isClient = window.location.pathname === '/cliente' || sessionStorage.getItem('isClient') === '1';
       var headset = document.getElementById('dockAtendimento');
 
-      // Headset SEMPRE abre o CRM em nova aba (admin e cliente)
+      // Headset abre o atendimento (WhatsApp) em nova aba
       if (headset) {
-        headset.href = '#';
+        headset.href = 'https://mindflow.wts.chat/auth/sign-in';
         headset.setAttribute('target', '_blank');
         headset.setAttribute('rel', 'noopener');
-        headset.onclick = function(e) {
-          e.preventDefault();
-          fetch('/api/helena/config').then(function(r){return r.json()}).then(function(c){
-            window.open(c.crmUrl, '_blank');
-          }).catch(function(){});
-          return false;
-        };
       }
 
       if (isClient) {
@@ -2314,10 +2370,6 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         if (headset) dock.appendChild(headset);
         if (sep) dock.appendChild(sep);
         if (logout) dock.appendChild(logout);
-      } else {
-        // Admin: mostra o hub
-        var dh = document.getElementById('dockHub');
-        if (dh) dh.style.display = '';
       }
     })();
   </script>
@@ -2457,14 +2509,14 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
 
       <!-- ── Mode Selector ── -->
       <div class="mode-selector">
-        <div class="mode-card active" id="modeQuick">
+        <div class="mode-card active" id="modeQuick" onclick="switchMode('quick')" role="button" tabindex="0">
           <div class="mode-card-icon"><span class="material-symbols-outlined">bolt</span></div>
           <div class="mode-card-info">
             <span class="mode-card-title">Disparo Rápido</span>
             <span class="mode-card-desc">Ligar para você com 1 clique</span>
           </div>
         </div>
-        <div class="mode-card" id="modeComplete">
+        <div class="mode-card" id="modeComplete" onclick="switchMode('complete')" role="button" tabindex="0">
           <div class="mode-card-icon"><span class="material-symbols-outlined">draft</span></div>
           <div class="mode-card-info">
             <span class="mode-card-title">Disparo Completo</span>
@@ -2483,11 +2535,11 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           </div>
         </div>
         <div class="field">
-          <label for="quickAgentSelect">Agente de Voz</label>
+          <label for="quickAgentSelect">Conta / Agente Padrão</label>
           <div class="custom-select" id="csQuickAgent">
             <div class="custom-select-trigger" role="button" tabindex="0">
               <span class="material-symbols-outlined cs-ico">smart_toy</span>
-              <span class="cs-value">Selecionar agente...</span>
+              <span class="cs-value" id="csQuickAgentText">MindFlow Outbound Frio (Prompt 20)</span>
               <span class="material-symbols-outlined cs-arrow">expand_more</span>
             </div>
             <div class="custom-select-dropdown" id="csQuickAgentDropdown"></div>
@@ -2553,6 +2605,19 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
               <input class="has-icon" id="email" name="email" placeholder="contato@empresa.com" type="email" required />
               <button type="button" class="clear-btn" data-target="email" aria-label="Limpar campo">cancel</button>
             </div>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top: 14px;">
+          <label for="providerSelect">Provedor de Telefonia</label>
+          <div class="custom-select" id="csProvider">
+            <div class="custom-select-trigger" role="button" tabindex="0">
+              <span class="material-symbols-outlined cs-ico">cell_tower</span>
+              <span class="cs-value">Automático (IA / Roteamento por DDD)</span>
+              <span class="material-symbols-outlined cs-arrow">expand_more</span>
+            </div>
+            <div class="custom-select-dropdown" id="csProviderDropdown"></div>
+            <input type="hidden" id="from_number" name="from_number" value="auto">
           </div>
         </div>
 
@@ -2979,11 +3044,16 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       const isScheduled = selectedDay && selectedTime;
       const payload = {
         nome: nome,
-        telefone: '+55' + telefoneNumeros,
+        telefone: (function(raw) {
+          let d = (raw || '').replace(/\D/g, '');
+          if (d.startsWith('5555')) d = d.slice(2);
+          return (d.startsWith('55') && (d.length === 12 || d.length === 13)) ? '+' + d : '+55' + d;
+        })(telefoneInput.value),
         email: document.getElementById('email').value.trim(),
         contexto: contexto,
         agent_id: agentId || null,
         prompt_id: promptId || null,
+        from_number: document.getElementById('from_number')?.value || 'auto',
         is_scheduled: isScheduled,
         scheduled_date: isScheduled ? selectedDay.toISOString().split('T')[0] : null,
         scheduled_time: isScheduled ? selectedTime : null
@@ -3136,10 +3206,17 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         dropdown.appendChild(div);
       });
       dropdown.classList.add('visible');
+      const pill = document.getElementById('pill');
+      if (pill) pill.style.visibility = 'hidden';
     }
 
     function hideContextoSuggestions() {
       document.getElementById('contextoSuggestions').classList.remove('visible');
+      const anyOpen = document.querySelector('.custom-select.open');
+      if (!anyOpen) {
+        const pill = document.getElementById('pill');
+        if (pill) pill.style.visibility = 'visible';
+      }
     }
 
     function pickContextoSuggestion(value) {
@@ -3175,12 +3252,19 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
 
     /* ── Custom Select ── */
     let _csIdCounter = 0;
-    function initCustomSelect(containerId, options, onChange) {
+    function initCustomSelect(containerId, options, onChange, defaultVal) {
       const container = document.getElementById(containerId);
+      if (!container) return;
+
+      // Limpar ouvintes de eventos de inicializações anteriores para evitar chamadas duplicadas
+      if (typeof container._destroyCustomSelect === 'function') {
+        container._destroyCustomSelect();
+      }
+
       const trigger = container.querySelector('.custom-select-trigger');
       const dropdown = container.querySelector('.custom-select-dropdown');
       const valueEl = trigger.querySelector('.cs-value');
-      let selectedValue = '';
+      let selectedValue = defaultVal || '';
       let isOpen = false;
 
       function renderOptions() {
@@ -3218,37 +3302,28 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
 
       function openDropdown() {
         if (isOpen) return;
+        document.querySelectorAll('.custom-select.open').forEach(el => el.classList.remove('open'));
         isOpen = true;
         container.classList.add('open');
+        document.body.classList.add('select-open');
 
-        // Portal pro body: position fixed pra ficar acima de TUDO
-        const rect = trigger.getBoundingClientRect();
-        document.body.appendChild(dropdown);
-        const ds = dropdown.style;
-        ds.position = 'fixed';
-        ds.left = rect.left + 'px';
-        ds.width = rect.width + 'px';
-        ds.top = (rect.bottom + 6) + 'px';
-        ds.bottom = '';
-        ds.maxHeight = '';
-        ds.zIndex = '999999';
-        ds.opacity = '1';
-        ds.pointerEvents = 'auto';
-        ds.borderRadius = '12px';
-        ds.border = '1px solid rgba(255,255,255,.08)';
-        ds.background = 'rgba(10, 14, 26, 0.96)';
-        ds.backdropFilter = 'blur(20px) saturate(1.4)';
-        ds.boxShadow = '0 16px 48px rgba(0,0,0,.6)';
-        ds.padding = '6px';
-        ds.overflowY = 'auto';
+        const pill = document.getElementById('pill');
+        if (pill) pill.style.display = 'none';
+        const statusEl = document.querySelector('.status');
+        if (statusEl) statusEl.style.display = 'none';
+        const dot = document.getElementById('dot');
+        if (dot) dot.style.display = 'none';
 
-        // Flip pra cima se nao couber
-        const spaceBelow = window.innerHeight - rect.bottom;
-        if (spaceBelow < 220 && rect.top > 220) {
-          ds.top = '';
-          ds.bottom = (window.innerHeight - rect.top + 6) + 'px';
+        const submitBtn = document.getElementById('submitBtn');
+        if (submitBtn) {
+          submitBtn.style.zIndex = '0';
+          submitBtn.style.transform = 'none';
         }
-
+        const btnQuick = document.getElementById('btnQuickCall');
+        if (btnQuick) {
+          btnQuick.style.zIndex = '0';
+          btnQuick.style.transform = 'none';
+        }
         const selected = dropdown.querySelector('.cs-option.selected');
         if (selected) selected.scrollIntoView({ block: 'nearest' });
       }
@@ -3257,39 +3332,38 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         if (!isOpen) return;
         isOpen = false;
         container.classList.remove('open');
-        // Devolve dropdown pro container original
-        container.appendChild(dropdown);
-        dropdown.style.position = '';
-        dropdown.style.left = '';
-        dropdown.style.width = '';
-        dropdown.style.top = '';
-        dropdown.style.bottom = '';
-        dropdown.style.maxHeight = '';
-        dropdown.style.zIndex = '';
-        dropdown.style.opacity = '';
-        dropdown.style.pointerEvents = '';
-        dropdown.style.borderRadius = '';
-        dropdown.style.border = '';
-        dropdown.style.background = '';
-        dropdown.style.backdropFilter = '';
-        dropdown.style.boxShadow = '';
-        dropdown.style.padding = '';
-        dropdown.style.overflowY = '';
+        const anyOpen = document.querySelector('.custom-select.open');
+        if (!anyOpen) {
+          document.body.classList.remove('select-open');
+          const pill = document.getElementById('pill');
+          if (pill) pill.style.display = '';
+          const statusEl = document.querySelector('.status');
+          if (statusEl) statusEl.style.display = '';
+          const dot = document.getElementById('dot');
+          if (dot) dot.style.display = '';
+
+          const submitBtn = document.getElementById('submitBtn');
+          if (submitBtn) {
+            submitBtn.style.zIndex = '';
+            submitBtn.style.transform = '';
+          }
+          const btnQuick = document.getElementById('btnQuickCall');
+          if (btnQuick) {
+            btnQuick.style.zIndex = '';
+            btnQuick.style.transform = '';
+          }
+        }
       }
 
       function toggleDropdown() {
         if (isOpen) closeDropdown(); else openDropdown();
       }
 
-      // Close on click outside (incluindo dropdown no portal)
       function handleOutsideClick(e) {
         if (!container.contains(e.target) && !dropdown.contains(e.target)) closeDropdown();
       }
 
-      trigger.addEventListener('click', toggleDropdown);
-
-      // Keyboard: Enter/Space to toggle, Escape to close
-      trigger.addEventListener('keydown', (e) => {
+      function handleTriggerKeydown(e) {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           toggleDropdown();
@@ -3297,7 +3371,6 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         if (e.key === 'Escape') closeDropdown();
       });
 
-      // Keyboard navigation inside dropdown
       dropdown.addEventListener('keydown', (e) => {
         const items = dropdown.querySelectorAll('.cs-option');
         if (items.length === 0) return;
@@ -3327,22 +3400,13 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
 
       document.addEventListener('click', handleOutsideClick);
 
-      // Reposiciona no scroll/resize quando aberto (portal)
-      function repositionPortal() {
-        if (!isOpen) return;
-        const r = trigger.getBoundingClientRect();
-        dropdown.style.left = r.left + 'px';
-        dropdown.style.top = (r.bottom + 6) + 'px';
-      }
-      window.addEventListener('scroll', repositionPortal, true);
-      window.addEventListener('resize', repositionPortal);
-
-      // Initial render
       renderOptions();
 
-      // If there's exactly 1 option, auto-select it
-      if (options.length === 1) {
-        selectOption(options[0].value, options[0].label);
+      if (options && options.length > 0) {
+        const target = options.find(o => o.value === defaultVal) || options[0];
+        if (target) {
+          selectOption(target.value, target.label);
+        }
       }
     }
 
@@ -3352,64 +3416,127 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       return d.innerHTML;
     }
 
-    // Carregar agentes e prompts
+    // Presets padrão inicializados IMEDIATAMENTE (Síncrono)
+    const DEFAULT_PRESETS = [
+      { value: 'agent_f95ee856fb3d220f42171318dc', label: 'MindFlow Outbound Frio', prompt_id: '20' },
+      { value: 'agent_4f1dba5e5432cd193d324754bf', label: 'ATS Tecnologia', prompt_id: '33' },
+      { value: 'agent_f1603ca4baa2d88297d1ae9c40', label: 'MyGain', prompt_id: '34' },
+      { value: 'agent_7b9e7d53c933c83f73155662b9', label: 'Kravi', prompt_id: '30' }
+    ];
+
+    function applyQuickPresetSelection(val) {
+      const qv = document.getElementById('quickAgentVal');
+      if (qv) qv.value = val || '';
+      const av = document.getElementById('agent_id');
+      if (av) av.value = val || '';
+      const found = DEFAULT_PRESETS.find(p => p.value === val);
+      const pId = found ? found.prompt_id : '20';
+      const qp = document.getElementById('quickPromptVal');
+      if (qp) qp.value = pId;
+      const pr = document.getElementById('prompt_id');
+      if (pr) pr.value = pId;
+      if (typeof checkFormReady === 'function') checkFormReady();
+    }
+
+    window.switchMode = function(mode) {
+      const isQuick = mode === 'quick';
+      const mq = document.getElementById('modeQuick');
+      const mc = document.getElementById('modeComplete');
+      if (mq) mq.classList.toggle('active', isQuick);
+      if (mc) mc.classList.toggle('active', !isQuick);
+      const qm = document.getElementById('quickMode');
+      const cm = document.getElementById('completeMode');
+      if (qm) qm.classList.toggle('visible', isQuick);
+      if (cm) cm.classList.toggle('hidden', isQuick);
+    };
+
+    // Inicialização síncrona imediata ao parse do JS
+    initCustomSelect('csQuickAgent', DEFAULT_PRESETS, applyQuickPresetSelection, 'agent_f95ee856fb3d220f42171318dc');
+
+    // Carregar presets adicionais do servidor assincronamente
     (async function loadSelections() {
       try {
-        const [agents, prompts] = await Promise.all([
-          fetch('/api/agents').then(r => r.json()),
-          fetch('/api/prompts').then(r => r.json())
+        const [dispatchCfg, agents, prompts] = await Promise.all([
+          fetch('/api/client/dispatch-config').then(r => r.json()).catch(() => ({})),
+          fetch('/api/agents').then(r => r.json()).catch(() => []),
+          fetch('/api/prompts').then(r => r.json()).catch(() => [])
         ]);
 
+        const presets = [...DEFAULT_PRESETS];
+
+        if (dispatchCfg && dispatchCfg.presets && Array.isArray(dispatchCfg.presets)) {
+          dispatchCfg.presets.forEach(p => {
+            if (!presets.some(dp => dp.value === p.agent_id)) {
+              presets.push({
+                value: p.agent_id,
+                label: p.name,
+                prompt_id: p.prompt_id
+              });
+            }
+          });
+        }
+
         if (Array.isArray(agents)) {
-          // Indexa prompt_id por agent_id para o quick mode
-          const agentPromptMap = {};
-          agents.forEach(a => { if (a.prompt_id) agentPromptMap[a.id] = a.prompt_id; });
-
-          const agentOpts = agents.map(a => ({ value: a.id, label: a.name }));
-          // Quick mode: apenas agentes que tem prompt_id mapeado
-          const quickOpts = agents.filter(a => a.prompt_id).map(a => ({ value: a.id, label: a.name }));
-
-          initCustomSelect('csQuickAgent', quickOpts, (val) => {
-            document.getElementById('quickAgentVal').value = val;
-            // Auto-resolve prompt_id do mapeamento da tabela retell_agents
-            const promptId = agentPromptMap[val] || '';
-            document.getElementById('quickPromptVal').value = promptId;
-            // Feedback visual: mostra se o agente tem prompt mapeado
-            const hasPrompt = !!promptId;
-            document.getElementById('csQuickAgent').classList.toggle('has-prompt', hasPrompt);
-          });
-          initCustomSelect('csAgent', agentOpts, (val) => {
-            document.getElementById('agent_id').value = val;
-            checkFormReady();
+          agents.forEach(a => {
+            if (a.prompt_id && !presets.some(dp => dp.value === a.id)) {
+              presets.push({
+                value: a.id,
+                label: a.name,
+                prompt_id: a.prompt_id
+              });
+            }
           });
         }
 
-        if (Array.isArray(prompts)) {
-          const opts = prompts.map(p => ({ value: String(p.id), label: p['Nome do cliente'] || 'Prompt #' + p.id }));
-          initCustomSelect('csPrompt', opts, (val) => {
-            document.getElementById('prompt_id').value = val;
-            checkFormReady();
-          });
-        }
-      } catch (e) { console.warn('Erro ao carregar agentes/prompts:', e); }
+        const activeVal = (dispatchCfg && dispatchCfg.agent_id) || 'agent_f95ee856fb3d220f42171318dc';
+        initCustomSelect('csQuickAgent', presets, applyQuickPresetSelection, activeVal);
+
+        const agentOpts = (Array.isArray(agents) && agents.length > 0)
+          ? agents.map(a => ({ value: a.id, label: a.name }))
+          : presets.map(p => ({ value: p.value, label: p.label }));
+        
+        initCustomSelect('csAgent', agentOpts, (val) => {
+          if (document.getElementById('agent_id')) document.getElementById('agent_id').value = val;
+          checkFormReady();
+        }, activeVal);
+
+        const DEFAULT_PROMPTS = [
+          { value: '20', label: 'Prompt 20' },
+          { value: '33', label: 'Prompt 33' },
+          { value: '34', label: 'Prompt 34' },
+          { value: '30', label: 'Prompt 30' }
+        ];
+        const promptOpts = (Array.isArray(prompts) && prompts.length > 0)
+          ? prompts.map(p => ({ value: String(p.id), label: p['Nome do cliente'] ? (p['Nome do cliente'] + ' (Prompt ' + p.id + ')') : ('Prompt #' + p.id) }))
+          : DEFAULT_PROMPTS;
+
+        initCustomSelect('csPrompt', promptOpts, (val) => {
+          if (document.getElementById('prompt_id')) document.getElementById('prompt_id').value = val;
+          checkFormReady();
+        }, '20');
+
+        fetch('/api/telephony-providers').then(r => r.json()).then(providers => {
+          const providerOpts = (providers || []).map(p => ({ value: p.value, label: p.name }));
+          initCustomSelect('csProvider', providerOpts, (val) => {
+            if (document.getElementById('from_number')) document.getElementById('from_number').value = val;
+          }, 'auto');
+        }).catch(() => {});
+      } catch (e) { console.warn('Erro ao carregar seleções de disparo:', e); }
     })();
 
     // ── Mode Switching (Rapido / Completo) ──
     const modeCards = document.querySelectorAll('.mode-card');
     modeCards.forEach(card => {
       card.addEventListener('click', function () {
-        modeCards.forEach(c => c.classList.remove('active'));
-        this.classList.add('active');
         const isQuick = this.id === 'modeQuick';
-        document.getElementById('quickMode').classList.toggle('visible', isQuick);
-        document.getElementById('completeMode').classList.toggle('hidden', isQuick);
+        window.switchMode(isQuick ? 'quick' : 'complete');
       });
     });
 
     // ── Quick "Ligar pra mim" ──
     document.getElementById('btnQuickCall').addEventListener('click', async function () {
-      const agentId = document.getElementById('quickAgentVal').value;
-      const promptId = document.getElementById('quickPromptVal').value;
+      const agentId = document.getElementById('quickAgentVal').value || 'agent_f95ee856fb3d220f42171318dc';
+      const promptId = document.getElementById('quickPromptVal').value || '20';
       if (!agentId) {
         document.getElementById('pillText').textContent = 'Selecione um agente primeiro';
         document.getElementById('dot').className = 'dot dot-error';
@@ -3438,11 +3565,16 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             nome: nome,
-            telefone: '+55' + telefone.replace(/\D/g, ''),
+            telefone: (function(raw) {
+              let d = (raw || '').replace(/\D/g, '');
+              if (d.startsWith('5555')) d = d.slice(2);
+              return (d.startsWith('55') && (d.length === 12 || d.length === 13)) ? '+' + d : '+55' + d;
+            })(telefone),
             email: email,
             contexto: 'Disparo rapido - teste interno',
             agent_id: agentId,
             prompt_id: promptId,
+            from_number: document.getElementById('quickProviderVal')?.value || document.getElementById('from_number')?.value || 'auto',
             is_scheduled: false,
             scheduled_date: '',
             scheduled_time: '',
@@ -3690,9 +3822,14 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
     (async () => {
       try {
         const res = await fetch('/api/check');
-        if (!res.ok) throw new Error('unauthorized');
+        if (!res.ok) {
+          window.location.href = '/';
+          return;
+        }
         const data = await res.json();
-        document.getElementById('userName').textContent = data.name;
+        const userNameEl = document.getElementById('userName');
+        if (userNameEl && data.name) userNameEl.textContent = data.name;
+
         // Preenche nome/telefone nos campos e no quick mode card
         if (data.name) {
           const nomeEl = document.getElementById('nome');
@@ -3702,17 +3839,18 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           const qa = document.getElementById('quickAvatar');
           if (qa) qa.textContent = getInitials(data.name);
         }
-        if (data.phone) {
-          const telEl = document.getElementById('telefone');
-          if (telEl && !telEl.value) telEl.value = data.phone;
-          const qp = document.getElementById('quickUserPhone');
-          if (qp) { qp.textContent = data.phone; qp.classList.remove('no-phone'); }
-        }
+        const userPhone = data.phone || '5547991089099';
+        const telEl = document.getElementById('telefone');
+        if (telEl && !telEl.value) telEl.value = userPhone;
+        const qp = document.getElementById('quickUserPhone');
+        if (qp) { qp.textContent = userPhone; qp.classList.remove('no-phone'); }
         if (data.email) {
           const emailEl = document.getElementById('email');
           if (emailEl && !emailEl.value) emailEl.value = data.email;
         }
-      } catch { window.location.href = '/'; }
+      } catch (err) {
+        console.error('Erro ao verificar sessão do usuário:', err);
+      }
     })();
 
     async function logout() {
@@ -3723,51 +3861,28 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
     // ── Client Mode Adaptation ──
     (async () => {
       try {
-        const res = await fetch('/api/check');
-        const data = await res.json();
-        const isClient = data.client_access && data.client_access.length === 1 && data.client_access[0].client_id !== '2';
-        if (!isClient) return;
+        const checkRes = await fetch('/api/check');
+        const userData = await checkRes.json();
+        const isClient = userData.client_access && userData.client_access.length === 1 && userData.client_access[0].client_id !== '2';
 
-        // ── Marca sessão como cliente (persiste entre páginas) ──
-        sessionStorage.setItem('isClient', '1');
+        if (isClient) {
+          sessionStorage.setItem('isClient', '1');
+          const logoLink = document.querySelector('.logo-mark');
+          if (logoLink) logoLink.href = '/cliente';
 
-        // Logo link → /cliente
-        const logoLink = document.querySelector('.logo-mark');
-        if (logoLink) logoLink.href = '/cliente';
-
-        // Busca config de disparo do cliente
-        let agentId = null, promptId = null;
-        try {
-          const cfgRes = await fetch('/api/client/dispatch-config');
-          const cfg = await cfgRes.json();
-          agentId = cfg.agent_id;
-          promptId = cfg.prompt_id;
-        } catch {}
-
-        // Preenche campos hidden
-        if (agentId) {
-          document.getElementById('agent_id').value = agentId;
-          document.getElementById('quickAgentVal').value = agentId;
+          // Cliente externo: esconde seletores avançados e fixa a conta do próprio cliente
+          const qaField = document.querySelector('#csQuickAgent')?.closest('.field');
+          if (qaField) qaField.style.display = 'none';
+          const advToggle = document.getElementById('advancedToggle');
+          if (advToggle) advToggle.style.display = 'none';
+          const advPanel = document.getElementById('advancedPanel');
+          if (advPanel) advPanel.style.display = 'none';
+          const modeCompleteTitle = document.querySelector('#modeComplete .mode-card-title');
+          if (modeCompleteTitle) modeCompleteTitle.textContent = 'Disparo para Lead';
         }
-        if (promptId) {
-          document.getElementById('prompt_id').value = promptId;
-          document.getElementById('quickPromptVal').value = promptId;
-        }
-
-        // Esconde dropdown de agente no Quick Mode
-        const qaField = document.querySelector('#csQuickAgent').closest('.field');
-        if (qaField) qaField.style.display = 'none';
-
-        // Esconde "Configurações da IA" (advanced toggle)
-        const advToggle = document.getElementById('advancedToggle');
-        if (advToggle) advToggle.style.display = 'none';
-        const advPanel = document.getElementById('advancedPanel');
-        if (advPanel) advPanel.style.display = 'none';
-
-        // Renomeia "Disparo Completo" → "Disparo para Lead"
-        const modeCompleteTitle = document.querySelector('#modeComplete .mode-card-title');
-        if (modeCompleteTitle) modeCompleteTitle.textContent = 'Disparo para Lead';
-      } catch {}
+      } catch (err) {
+        console.error('Erro ao verificar modo cliente:', err);
+      }
     })();
   </script>
 </body>

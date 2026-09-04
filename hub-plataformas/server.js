@@ -59,14 +59,14 @@ app.use(express.json({ limit: '10kb' }));
 
 // Sessão segura
 app.use(session({
-  secret: process.env.SESSION_SECRET,
+  secret: process.env.SESSION_SECRET || 'mindflow-hub-session-secret-key-2026',
   resave: false,
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: IS_PRODUCTION,        // HTTPS obrigatório em produção
+    secure: false,                 // Compatível com Traefik / Easypanel reverse proxy
     sameSite: 'lax',
-    maxAge: 8 * 60 * 60 * 1000,  // 8 horas
+    maxAge: 8 * 60 * 60 * 1000,   // 8 horas
   },
 }));
 
@@ -288,16 +288,21 @@ app.get('/dashboard', (req, res) => {
 
 app.get('/dashboard-style.css', (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
+  res.setHeader('Cache-Control', 'no-cache, must-revalidate');
   res.sendFile(path.join(__dirname, 'dashboard-style.css'));
 });
 
 app.get('/dashboard-app.js', (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
+  res.setHeader('Cache-Control', 'no-cache, must-revalidate');
   res.sendFile(path.join(__dirname, 'dashboard-app.js'));
 });
 
 app.get('/disparo', (req, res) => {
   if (!req.session?.user) return res.redirect('/');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   res.sendFile(path.join(__dirname, 'disparo.html'));
 });
 
@@ -332,7 +337,7 @@ const DASHBOARD_API_URL = process.env.DASHBOARD_API_URL || 'https://hub-backend.
  * Proxy transparente para o hub_backend (analytics + WhatsApp).
  * Repassa o client_id ativo da sessão via header X-Client-ID.
  */
-async function proxyToDashboardBackend(req, res, path) {
+async function proxyToDashboardBackend(req, res, path, method = 'GET') {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
   const clientId = req.session.user.active_client || '2';
   const qs = new URLSearchParams(req.query).toString();
@@ -340,6 +345,7 @@ async function proxyToDashboardBackend(req, res, path) {
 
   try {
     const response = await fetch(url, {
+      method,
       headers: { 'X-Client-ID': clientId },
       signal: AbortSignal.timeout(20000),
     });
@@ -399,31 +405,26 @@ app.get('/api/helena/jwt', (req, res) => {
 // ============================================================
 // API: CLIENT DISPATCH CONFIG (agente + prompt do cliente)
 // ============================================================
+const CLIENT_DISPATCH_MAP = {
+  '2': { id: '2', name: 'MindFlow Outbound Frio', agent_id: 'agent_f95ee856fb3d220f42171318dc', prompt_id: '20', from_number: '+554823980162' },
+  '3': { id: '3', name: 'ATS Tecnologia', agent_id: 'agent_4f1dba5e5432cd193d324754bf', prompt_id: '33', from_number: '+554823980162' },
+  '4': { id: '4', name: 'MyGain', agent_id: 'agent_f1603ca4baa2d88297d1ae9c40', prompt_id: '34', from_number: '+554823980162' },
+  '5': { id: '5', name: 'Kravi', agent_id: 'agent_7b9e7d53c933c83f73155662b9', prompt_id: '30', from_number: '+554823980162' },
+};
+
 app.get('/api/client/dispatch-config', (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
   const user = req.session.user;
-  const activeClientId = user.active_client;
+  const activeClientId = user.active_client || '2';
 
-  // Valores padrão (fallback)
-  let agentId = 'agent_1e4cfa23e3910c557d82167949';
-  let promptId = '24';
-
-  // Mapeamento fixo de agent_id + prompt_id por cliente
-  const CLIENT_DISPATCH_MAP = {
-    '3': { agent_id: 'agent_4f1dba5e5432cd193d324754bf', prompt_id: '33' }, // ATS
-    '4': { agent_id: 'agent_f1603ca4baa2d88297d1ae9c40', prompt_id: '34' }, // MyGain
-    '5': { agent_id: 'agent_7b9e7d53c933c83f73155662b9', prompt_id: '30' }, // Kravi
-  };
-
-  if (activeClientId && CLIENT_DISPATCH_MAP[activeClientId]) {
-    agentId = CLIENT_DISPATCH_MAP[activeClientId].agent_id;
-    promptId = CLIENT_DISPATCH_MAP[activeClientId].prompt_id;
-  }
+  const cfg = CLIENT_DISPATCH_MAP[activeClientId] || CLIENT_DISPATCH_MAP['2'];
 
   res.json({
     client_id: activeClientId,
-    agent_id: agentId,
-    prompt_id: promptId,
+    agent_id: cfg.agent_id,
+    prompt_id: cfg.prompt_id,
+    name: cfg.name,
+    presets: Object.values(CLIENT_DISPATCH_MAP)
   });
 });
 
@@ -772,6 +773,8 @@ async function syncRetellAgents() {
 app.get('/api/agents', async (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
   try {
+    let agentsList = [];
+
     // Lê da tabela retell_agents no Supabase
     const { data, error } = await supabase
       .from('retell_agents')
@@ -779,25 +782,38 @@ app.get('/api/agents', async (req, res) => {
       .order('agent_name', { ascending: true });
 
     if (!error && data && data.length > 0) {
-      return res.json(data.map(a => ({ id: a.agent_id, name: a.agent_name, prompt_id: a.prompt_id || null })));
+      agentsList = data.map(a => ({ id: a.agent_id, name: a.agent_name, prompt_id: a.prompt_id || null }));
+    } else if (RETELL_AGENTS_CACHE.length > 0) {
+      agentsList = RETELL_AGENTS_CACHE;
+    } else {
+      await syncRetellAgents();
+      agentsList = RETELL_AGENTS_CACHE;
     }
 
-    // Fallback: cache em memória (tabela vazia ou inexistente)
-    if (RETELL_AGENTS_CACHE.length > 0) {
-      return res.json(RETELL_AGENTS_CACHE);
+    // Filtra agentes para clientes (active_client !== '2')
+    const activeClientId = req.session.user.active_client || '2';
+    if (activeClientId !== '2') {
+      const activeClientObj = req.session.user.client_access?.find(c => c.client_id === activeClientId);
+      const clientName = activeClientObj?.client_name || '';
+      if (clientName) {
+        // Normaliza removendo espaços e termos genéricos
+        const normClient = clientName.toLowerCase().replace(/\s+/g, '').replace('comercial', '');
+        agentsList = agentsList.filter(a => {
+          if (!a.name) return false;
+          // Remove "whatsapp" e "whats" da comparação para evitar falso-positivo com o cliente ATS
+          const normAgent = a.name.toLowerCase().replace(/\s+/g, '').replace(/whats(app)?/g, '');
+          return normAgent.includes(normClient) || normClient.includes(normAgent) || 
+                 (normClient === 'ats' && normAgent.includes('ats'));
+        });
+      } else {
+        agentsList = [];
+      }
     }
 
-    // Último recurso: busca direto da Retell
-    await syncRetellAgents();
-    if (RETELL_AGENTS_CACHE.length > 0) {
-      return res.json(RETELL_AGENTS_CACHE);
-    }
-
-    res.status(500).json({ error: 'Nenhum agente disponível.' });
+    return res.json(agentsList);
   } catch (err) {
     console.error('[Agents] Erro:', err.message);
-    if (RETELL_AGENTS_CACHE.length > 0) return res.json(RETELL_AGENTS_CACHE);
-    res.status(500).json({ error: 'Erro ao buscar agentes.' });
+    return res.status(500).json({ error: 'Erro ao buscar agentes.' });
   }
 });
 
@@ -822,47 +838,120 @@ app.get('/api/prompts', async (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
   try {
     const now = Date.now();
+    let promptsList = [];
+
     if (PROMPTS_CACHE.data && now - PROMPTS_CACHE.timestamp < PROMPTS_CACHE_TTL) {
-      return res.json(PROMPTS_CACHE.data);
+      promptsList = PROMPTS_CACHE.data;
+    } else {
+      // Usa service key pra burlar RLS
+      const serviceKey = process.env.SUPABASE_SERVICE_KEY || process.env.MASTER_SUPABASE_SERVICE_KEY;
+      const adminClient = serviceKey
+        ? createClient(process.env.SUPABASE_URL, serviceKey)
+        : supabase;
+
+      let { data, error } = await adminClient
+        .from('Prompts')
+        .select('*')
+        .order('id', { ascending: true })
+        .limit(200);
+
+      if (error) {
+        console.error('[Prompts] Erro na query:', error.message, error.code, error.details);
+        return res.status(500).json({ error: 'Erro ao buscar prompts.' });
+      }
+
+      promptsList = (data || []).map(p => {
+        const nome = p['Nome do cliente'] || p.nome_cliente || p.nome || p.name || p.client_name || '';
+        return {
+          id: p.id,
+          'Nome do cliente': (nome || '').trim() || `Prompt #${p.id}`,
+        };
+      });
+
+      PROMPTS_CACHE.data = promptsList;
+      PROMPTS_CACHE.timestamp = now;
     }
 
-    // Usa service key pra burlar RLS
-    const serviceKey = process.env.SUPABASE_SERVICE_KEY || process.env.MASTER_SUPABASE_SERVICE_KEY;
-    const adminClient = serviceKey
-      ? createClient(process.env.SUPABASE_URL, serviceKey)
-      : supabase;
+    // Filtragem por cliente (se não for admin/Mindflow)
+    const activeClientId = req.session.user.active_client || '2';
+    if (activeClientId !== '2') {
+      const { data: clientCfg } = await supabase
+        .from('client_configurations')
+        .select('prompt_id')
+        .eq('client_id', activeClientId)
+        .maybeSingle();
 
-    // Tenta primeiro com o nome exato da coluna
-    let { data, error } = await adminClient
-      .from('Prompts')
-      .select('*')
-      .order('id', { ascending: true })
-      .limit(200);
-
-    if (error) {
-      console.error('[Prompts] Erro na query:', error.message, error.code, error.details);
-      return res.json({ _error: error.message, _code: error.code });
+      const targetPromptId = clientCfg?.prompt_id;
+      if (targetPromptId) {
+        promptsList = promptsList.filter(p => p.id === targetPromptId);
+      } else {
+        promptsList = [];
+      }
     }
 
-    const prompts = (data || []).map(p => {
-      // Tenta achar o nome do cliente em várias colunas possíveis
-      const nome = p['Nome do cliente'] || p.nome_cliente || p.nome || p.name || p.client_name || '';
-      return {
-        id: p.id,
-        'Nome do cliente': (nome || '').trim() || `Prompt #${p.id}`,
-      };
-    });
-
-    PROMPTS_CACHE.data = prompts;
-    PROMPTS_CACHE.timestamp = now;
-
-    res.json(prompts);
+    res.json(promptsList);
   } catch (err) {
     console.error('[Prompts] Erro:', err.message);
-    // Retorna array vazio como fallback
-    res.json([]);
+    res.status(500).json({ error: 'Erro ao buscar prompts.' });
   }
 });
+
+// Mapeamento automático de telefone dos membros da equipe
+const TEAM_MEMBER_PHONES = [
+  { keywords: ['pedro'], phone: '5547991089099' },
+  { keywords: ['renato'], phone: '554196852463' },
+  { keywords: ['ryan'], phone: '554896027108' },
+  { keywords: ['mariah'], phone: '554896112406' },
+  { keywords: ['ivan'], phone: '554797804224' },
+  { keywords: ['wandrey'], phone: '557988768794' },
+  { keywords: ['hay', 'haylan'], phone: '5511989118774' },
+];
+
+function getTeamPhone(email, name, existingPhone) {
+  if (existingPhone && existingPhone.replace(/\D/g, '').length >= 10) {
+    return existingPhone;
+  }
+  const str = `${email || ''} ${name || ''}`.toLowerCase();
+  const found = TEAM_MEMBER_PHONES.find(member =>
+    member.keywords.some(k => str.includes(k))
+  );
+  return found ? found.phone : (existingPhone || '');
+}
+
+// Lista de Provedores de Telefonia e Roteamento Inteligente por DDD
+const TELEPHONY_PROVIDERS = [
+  { id: 'auto', name: 'Automático (IA / Roteamento por DDD)', value: 'auto' },
+  { id: '+554823980162', name: 'Twilio Brasil (+55 48)', value: '+554823980162' },
+  { id: '555196506656', name: 'Wavoip (+55 51)', value: '555196506656' },
+  { id: '+41996852463', name: 'SONAVOIP (+41)', value: '+41996852463' },
+  { id: '11111', name: 'IFIX (11111)', value: '11111' },
+  { id: 'iatizeia', name: 'Iatizeia', value: 'iatizeia' }
+];
+
+function getOptimalProvidersChain(phoneNumber, userSelectedProvider) {
+  const allProviders = ['+554823980162', '555196506656', '+41996852463', '11111', 'iatizeia'];
+
+  if (userSelectedProvider && userSelectedProvider !== 'auto') {
+    const fallbacks = allProviders.filter(p => p !== userSelectedProvider);
+    return [userSelectedProvider, ...fallbacks];
+  }
+
+  let digits = (phoneNumber || '').replace(/\D/g, '');
+  if (digits.startsWith('55')) digits = digits.slice(2);
+  const ddd = digits.slice(0, 2);
+
+  if (['41', '51', '53', '54', '55'].includes(ddd)) {
+    return ['555196506656', '+554823980162', '+41996852463', '11111', 'iatizeia'];
+  } else if (['47', '48', '49'].includes(ddd)) {
+    return ['+554823980162', '555196506656', '+41996852463', '11111', 'iatizeia'];
+  } else if (['11', '12', '13', '14', '15', '16', '17', '18', '19'].includes(ddd)) {
+    return ['11111', '+554823980162', '555196506656', '+41996852463', 'iatizeia'];
+  } else if (['71', '73', '74', '75', '77', '79', '81', '82', '83', '84', '85', '86', '87', '88', '89'].includes(ddd)) {
+    return ['+554823980162', '555196506656', '+41996852463', '11111', 'iatizeia'];
+  }
+
+  return ['+554823980162', '555196506656', '+41996852463', '11111', 'iatizeia'];
+}
 
 // ============================================================
 // API: CHECK SESSION
@@ -871,18 +960,23 @@ app.get('/api/check', (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
   const user = req.session.user;
   const activeClient = user.client_access?.find(c => c.client_id === user.active_client);
+  const phone = getTeamPhone(user.email, user.name, user.phone) || '5547991089099';
   res.json({
-    name: user.name,
-    email: user.email,
-    phone: user.phone || '',
+    name: user.name || 'Pedro Ernesto',
+    email: user.email || 'pedroernestozimmermann@gmail.com',
+    phone: phone,
     client_access: (user.client_access || []).map(c => ({
       client_id: c.client_id,
       client_name: c.client_name,
       role: c.role,
     })),
-    active_client: user.active_client,
-    active_client_name: activeClient?.client_name || null,
+    active_client: user.active_client || '2',
+    active_client_name: activeClient?.client_name || 'Mindflow',
   });
+});
+
+app.get('/api/telephony-providers', (req, res) => {
+  res.json(TELEPHONY_PROVIDERS);
 });
 
 // ============================================================
@@ -972,47 +1066,84 @@ app.post('/api/submit-lead', submitLimiter, async (req, res) => {
   }
 
   const apiUrl = process.env.WEBHOOK_URL || "https://call-github.bkpxmb.easypanel.host/webhook";
-  const apiKey = process.env.WEBHOOK_API_KEY || "";
+  const apiKey = process.env.WEBHOOK_API_KEY || process.env.PYTHON_API_KEY || "mf_sk_2026_pre_call_xK9v3Qm7bR4wT1nZ";
+
+  function formatE164Phone(raw) {
+    let digits = (raw || '').replace(/\D/g, '');
+    if (!digits) return '';
+    if (digits.startsWith('5555')) {
+      digits = digits.slice(2);
+    }
+    if (digits.startsWith('55') && (digits.length === 12 || digits.length === 13)) {
+      return '+' + digits;
+    }
+    return '+55' + digits;
+  }
+
+  const formattedPhone = formatE164Phone(telefone);
 
   try {
     let quando_ligar = "";
     if (is_scheduled && scheduled_date && scheduled_time) {
-      // Formato esperado: ISO 8601 (-03:00) -> YYYY-MM-DDTHH:MM:SS-03:00
       quando_ligar = `${scheduled_date}T${scheduled_time}:00-03:00`;
     }
 
-    const pythonPayload = {
-      nome: nome.toUpperCase(),
-      email: email || "",
-      numero: telefone,
-      contexto: contexto || "",
-      agent_id: agent_id || "agent_1e4cfa23e3910c557d82167949",
-      Prompt_id: prompt_id || "24",
-      execution_id: crypto.randomUUID(),
-      quando_ligar: quando_ligar,
-      workflow_name: "pre_call_processing"
-    };
+    const providerChain = getOptimalProvidersChain(formattedPhone, req.body.from_number);
+    let lastError = null;
+    let successData = null;
 
-    console.log(`[BFF] Enviando lead para ${apiUrl}: ${pythonPayload.nome} (${pythonPayload.execution_id})`);
+    for (const fromProvider of providerChain) {
+      const pythonPayload = {
+        nome: nome.toUpperCase(),
+        email: email || "",
+        numero: formattedPhone,
+        contexto: contexto || "",
+        agent_id: agent_id || "agent_f95ee856fb3d220f42171318dc",
+        Prompt_id: prompt_id || "20",
+        execution_id: crypto.randomUUID(),
+        quando_ligar: quando_ligar,
+        workflow_name: "pre_call_processing",
+        from_number: fromProvider
+      };
 
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        "X-API-Key": apiKey,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(pythonPayload),
-      signal: AbortSignal.timeout(12000)
-    });
+      console.log(`[BFF] Tentando disparo com provedor ${fromProvider} para ${pythonPayload.nome} (${pythonPayload.execution_id})`);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || `Erro na API remota: ${response.status}`);
+      try {
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            "X-API-Key": apiKey,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(pythonPayload),
+          signal: AbortSignal.timeout(12000)
+        });
+
+        if (response.ok) {
+          const resText = await response.text();
+          let json;
+          try { json = JSON.parse(resText); } catch { json = { ok: true, raw: resText }; }
+          successData = { ...json, execution_id: pythonPayload.execution_id, provider_used: fromProvider };
+          break;
+        } else {
+          const errorText = await response.text();
+          console.warn(`[BFF] Provedor ${fromProvider} falhou com status ${response.status}: ${errorText}`);
+          lastError = errorText;
+        }
+      } catch (err) {
+        console.warn(`[BFF] Excecao com provedor ${fromProvider}: ${err.message}`);
+        lastError = err.message;
+      }
+    }
+
+    if (!successData) {
+      throw new Error(lastError || "Todos os provedores de telefonia falharam.");
     }
 
     return res.status(202).json({
       message: "Lead processado com sucesso.",
-      execution_id: pythonPayload.execution_id
+      execution_id: successData.execution_id,
+      provider_used: successData.provider_used
     });
 
   } catch (error) {
@@ -1077,12 +1208,149 @@ app.get('/api/calls', async (req, res) => {
       .select('*')
       .order('created_at', { ascending: false })
       .limit(50);
-      
+
     if (error) throw error;
     return res.json(data);
   } catch (err) {
     console.error('[BFF] Erro ao buscar chamadas:', err.message);
     return res.status(500).json({ error: 'Erro ao buscar chamadas.' });
+  }
+});
+
+function cleanTranscriptForCsv(raw) {
+  if (!raw) return '';
+  try {
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    if (Array.isArray(parsed)) {
+      return parsed
+        .filter(m => m && (m.content || m.text))
+        .map(m => {
+          const speaker = (m.role === 'user' || m.speaker === 'user') ? 'Lead' : 'Agente';
+          const text = (m.content || m.text || '').replace(/\r?\n/g, ' ').trim();
+          return `${speaker}: ${text}`;
+        })
+        .filter(t => t.length > 7)
+        .join(' | ');
+    }
+    if (typeof parsed === 'object' && parsed.transcript) {
+      return cleanTranscriptForCsv(parsed.transcript);
+    }
+  } catch {}
+  return String(raw).replace(/\[\{.*?\}\]/g, '').replace(/\r?\n/g, ' ').trim();
+}
+
+function formatPhoneForCsv(phone) {
+  if (!phone) return '';
+  const clean = String(phone).trim();
+  return clean ? `'${clean}` : '';
+}
+
+function formatDateForCsv(val) {
+  if (!val) return '';
+  try {
+    const d = new Date(val);
+    if (!isNaN(d.getTime())) {
+      return d.toISOString().replace('T', ' ').slice(0, 19);
+    }
+  } catch {}
+  return String(val);
+}
+
+app.get('/api/export-calls', async (req, res) => {
+  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
+
+  try {
+    const clientId = req.session.user.active_client || '2';
+    let calls = [];
+
+    // 1. Tenta buscar do hub_backend (FastAPI) com page=1 e limite de 5000
+    try {
+      const response = await fetch(`${DASHBOARD_API_URL}/calls?page=1&limit=5000`, {
+        headers: { 'X-Client-ID': String(clientId) },
+        signal: AbortSignal.timeout(15000),
+      });
+      if (response.ok) {
+        const result = await response.json();
+        calls = result.data || result.calls || result.items || (Array.isArray(result) ? result : []);
+      }
+    } catch (errBackend) {
+      console.warn('[BFF Export CSV] hub_backend falhou, tentando Supabase fallback:', errBackend.message);
+    }
+
+    // 2. Fallback: Se o backend analítico não retornou nada, busca no Supabase do cliente ativo
+    if (!calls.length) {
+      try {
+        const clientDb = getActiveClientDb(req);
+        const { data, error } = await clientDb
+          .from('Retell_calls_Mindflow')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(2000);
+
+        if (!error && data && data.length) {
+          calls = data;
+        }
+      } catch (errSupa) {
+        console.warn('[BFF Export CSV] Supabase fallback falhou:', errSupa.message);
+      }
+    }
+
+    if (!calls.length) {
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      return res.status(404).send('Nenhuma ligação encontrada para o cliente selecionado.');
+    }
+
+    // Mapeamento de colunas amigáveis
+    const columns = [
+      { key: 'call_id', label: 'ID Chamada' },
+      { key: 'created_at', label: 'Data/Hora' },
+      { key: 'lead_name', label: 'Nome do Lead' },
+      { key: 'lead_phone', label: 'Telefone' },
+      { key: 'agent_name', label: 'Agente' },
+      { key: 'duration_seconds', label: 'Duração (s)' },
+      { key: 'disconnection_reason', label: 'Motivo Desconexão' },
+      { key: 'recording_url', label: 'URL Gravação' },
+      { key: 'transcript', label: 'Transcrição' }
+    ];
+
+    const headerRow = columns.map(c => `"${c.label}"`).join(';');
+    const bodyRows = calls.map(item => {
+      return columns.map(col => {
+        let val = item[col.key];
+        if (val === undefined || val === null) {
+          if (col.key === 'created_at') val = item.start_timestamp || item.created_at || '';
+          else if (col.key === 'duration_seconds') val = item.duration || item.duration_seconds || item.call_length_seconds || '';
+          else if (col.key === 'lead_phone') val = item.from_number || item.to_number || item.lead_phone || '';
+          else if (col.key === 'agent_name') val = item.agent_id || item.agent_name || '';
+          else val = '';
+        }
+
+        // Tratamento específico de cada campo
+        if (col.key === 'transcript') {
+          val = cleanTranscriptForCsv(val);
+        } else if (col.key === 'lead_phone') {
+          val = formatPhoneForCsv(val);
+        } else if (col.key === 'created_at') {
+          val = formatDateForCsv(val);
+        } else if (typeof val === 'object') {
+          val = JSON.stringify(val);
+        }
+
+        const str = String(val).replace(/\r?\n/g, ' ').replace(/"/g, '""');
+        return `"${str}"`;
+      }).join(';');
+    }).join('\n');
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="ligacoes_mindflow.csv"');
+
+    const bom = '\uFEFF';
+    return res.send(bom + headerRow + '\n' + bodyRows);
+
+  } catch (err) {
+    console.error('[BFF] Erro ao gerar CSV:', err);
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    return res.status(500).send(`Erro ao gerar arquivo CSV: ${err.message}`);
   }
 });
 
@@ -1329,253 +1597,14 @@ function buildFilterParams(agent, startDate, endDate) {
 // DASHBOARD NATIVE — APIs (sem prefixo /api/, frontend espera assim)
 // ============================================================
 
-app.get('/metrics', async (req, res) => {
-  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    const clientDb = getActiveClientDb(req);
-    const calls = await fetchProcessedCalls(req.query.agent, req.query.start_date, req.query.end_date, clientDb);
-
-    // Buscar count total do Supabase (não depende do cache limitado)
-    let totalCalls = calls.length;
-    try {
-      const { count, error: countErr } = await clientDb
-        .from('Retell_calls_Mindflow')
-        .select('*', { count: 'exact', head: true });
-      if (!countErr && count !== null) totalCalls = count;
-    } catch {}
-
-    if (!calls.length) {
-      return res.json({
-        total_calls: totalCalls, unique_leads: 0, total_hooks: 0, total_conversas: 0, total_interesse: 0,
-        total_cost: 0, avg_ligacoes_por_lead: 0, custo_por_lead: 0, custo_por_interesse: 0,
-        taxa_interesse_por_lead: 0, avg_density: 0, avg_pressure: 0
-      });
-    }
-    const uniqueLeads = new Set(calls.map(c => c.to_number)).size;
-    const totalHooks = calls.filter(c => c.is_hook).length;
-    const totalConversas = calls.filter(c => c.is_conversa).length;
-    const totalInteresse = calls.filter(c => c.is_interesse).length;
-    const totalCost = calls.reduce((s, c) => s + c.combined_cost, 0);
-    const avgDensity = calls.reduce((s, c) => s + c.densidade_tentativas, 0) / totalCalls;
-    const avgPressure = calls.reduce((s, c) => s + c.pressao_recente, 0) / totalCalls;
-
-    res.json({
-      total_calls: totalCalls,
-      unique_leads: uniqueLeads,
-      total_hooks: totalHooks,
-      total_conversas: totalConversas,
-      total_interesse: totalInteresse,
-      total_cost: Math.round(totalCost * 100) / 100,
-      avg_ligacoes_por_lead: Math.round((totalCalls / uniqueLeads) * 100) / 100,
-      custo_por_lead: Math.round((totalCost / uniqueLeads) * 100) / 100,
-      custo_por_interesse: totalInteresse > 0 ? Math.round((totalCost / totalInteresse) * 100) / 100 : 0,
-      taxa_interesse_por_lead: Math.round((totalInteresse / uniqueLeads) * 10000) / 100,
-      avg_density: Math.round(avgDensity * 1000) / 1000,
-      avg_pressure: Math.round(avgPressure * 1000) / 1000,
-    });
-  } catch (err) {
-    console.error('[Dashboard] Erro em /metrics:', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get('/funnel', async (req, res) => {
-  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    const clientDb = getActiveClientDb(req);
-    const calls = await fetchProcessedCalls(req.query.agent, req.query.start_date, req.query.end_date, clientDb);
-    if (!calls.length) {
-      return res.json({ leads_totais: 0, leads_iniciados: 0, hook_15s: 0, conversa_45s: 0, interesse_90s: 0, total_calls_volume: 0 });
-    }
-
-    const leadsByNumber = new Map();
-    calls.forEach(c => {
-      if (!leadsByNumber.has(c.to_number)) leadsByNumber.set(c.to_number, []);
-      leadsByNumber.get(c.to_number).push(c);
-    });
-
-    const leadsTotais = leadsByNumber.size;
-    let hook15s = 0, conversa45s = 0, interesse90s = 0;
-
-    leadsByNumber.forEach(leadCalls => {
-      if (leadCalls.some(c => c.is_hook)) hook15s++;
-      if (leadCalls.some(c => c.is_conversa)) conversa45s++;
-      if (leadCalls.some(c => c.is_interesse)) interesse90s++;
-    });
-
-    res.json({
-      leads_totais: leadsTotais,
-      leads_iniciados: leadsTotais,
-      hook_15s: hook15s,
-      conversa_45s: conversa45s,
-      interesse_90s: interesse90s,
-      total_calls_volume: calls.length,
-    });
-  } catch (err) {
-    console.error('[Dashboard] Erro em /funnel:', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get('/disconnections', async (req, res) => {
-  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    const clientDb = getActiveClientDb(req);
-    const calls = await fetchProcessedCalls(req.query.agent, req.query.start_date, req.query.end_date, clientDb);
-    const isDetailed = req.query.detailed === 'true';
-
-    if (isDetailed) {
-      const groups = new Map();
-      calls.forEach(c => {
-        const key = c.disconnection_reason || 'Não informado / Normal';
-        if (!groups.has(key)) groups.set(key, { reason: key, category: c.disconnection_category, count: 0 });
-        groups.get(key).count++;
-      });
-      const data = Array.from(groups.values()).sort((a, b) => b.count - a.count);
-      const total = data.reduce((s, d) => s + d.count, 0);
-      res.json(data.map(d => ({ ...d, percentage: Math.round((d.count / total) * 10000) / 100 })));
-    } else {
-      const groups = new Map();
-      calls.forEach(c => {
-        const cat = c.disconnection_category;
-        if (!groups.has(cat)) groups.set(cat, { disconnection_category: cat, count: 0 });
-        groups.get(cat).count++;
-      });
-      const data = Array.from(groups.values()).sort((a, b) => b.count - a.count);
-      const total = data.reduce((s, d) => s + d.count, 0);
-      res.json(data.map(d => ({ category: d.disconnection_category, count: d.count, percentage: Math.round((d.count / total) * 10000) / 100 })));
-    }
-  } catch (err) {
-    console.error('[Dashboard] Erro em /disconnections:', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get('/hours', async (req, res) => {
-  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    const clientDb = getActiveClientDb(req);
-    const calls = await fetchProcessedCalls(req.query.agent, req.query.start_date, req.query.end_date, clientDb);
-    const hourMap = new Map();
-
-    calls.forEach(c => {
-      const d = new Date(c.created_at);
-      const hour = String(d.getHours()).padStart(2, '0');
-      if (!hourMap.has(hour)) hourMap.set(hour, { hour: `${hour}:00`, call_count: 0, interest_count: 0 });
-      const entry = hourMap.get(hour);
-      entry.call_count++;
-      if (c.is_interesse) entry.interest_count++;
-    });
-
-    const data = Array.from(hourMap.values()).sort((a, b) => a.hour.localeCompare(b.hour));
-    data.forEach(d => {
-      d.conversion_rate = Math.round((d.interest_count / d.call_count) * 10000) / 100;
-    });
-    res.json(data);
-  } catch (err) {
-    console.error('[Dashboard] Erro em /hours:', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get('/fatigue', async (req, res) => {
-  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    const clientDb = getActiveClientDb(req);
-    const calls = await fetchProcessedCalls(req.query.agent, req.query.start_date, req.query.end_date, clientDb);
-
-    const buckets = new Map();
-    calls.forEach(c => {
-      const n = c.n_tentativas_anteriores;
-      let label;
-      if (n === 0) label = '1ª Ligação';
-      else if (n === 1) label = '2ª Ligação';
-      else if (n === 2) label = '3ª Ligação';
-      else if (n <= 4) label = '4-5 Ligações';
-      else if (n <= 9) label = '6-10 Ligações';
-      else label = '11+ Ligações';
-
-      if (!buckets.has(label)) buckets.set(label, { attempt_bucket: label, call_count: 0, interest_count: 0, density_sum: 0, pressure_sum: 0, min_order: n });
-      const b = buckets.get(label);
-      b.call_count++;
-      if (c.is_interesse) b.interest_count++;
-      b.density_sum += c.densidade_tentativas;
-      b.pressure_sum += c.pressao_recente;
-      if (n < b.min_order) b.min_order = n;
-    });
-
-    const data = Array.from(buckets.values())
-      .sort((a, b) => a.min_order - b.min_order)
-      .map(b => ({
-        attempt_bucket: b.attempt_bucket,
-        call_count: b.call_count,
-        interest_count: b.interest_count,
-        conversion_rate: Math.round((b.interest_count / b.call_count) * 10000) / 100,
-        avg_density: Math.round((b.density_sum / b.call_count) * 1000) / 1000,
-        avg_pressure: Math.round((b.pressure_sum / b.call_count) * 1000) / 1000,
-      }));
-
-    res.json(data);
-  } catch (err) {
-    console.error('[Dashboard] Erro em /fatigue:', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get('/agents', async (req, res) => {
-  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    const clientDb = getActiveClientDb(req);
-    const { data } = await clientDb.from('Retell_calls_Mindflow').select('agent_name');
-    const agents = [...new Set(data.map(d => d.agent_name).filter(Boolean))].sort();
-    res.json(agents);
-  } catch (err) {
-    console.error('[Dashboard] Erro em /agents:', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get('/calls', async (req, res) => {
-  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    const clientDb = getActiveClientDb(req);
-    const calls = await fetchProcessedCalls(req.query.agent, req.query.start_date, req.query.end_date, clientDb);
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
-    const minDuration = parseFloat(req.query.min_duration);
-    const maxDuration = parseFloat(req.query.max_duration);
-
-    let filtered = [...calls];
-
-    // Filtros de duração
-    if (!isNaN(minDuration)) filtered = filtered.filter(c => c.Duracao >= minDuration);
-    if (!isNaN(maxDuration)) filtered = filtered.filter(c => c.Duracao <= maxDuration);
-
-    const total = filtered.length;
-    const pages = Math.ceil(total / limit) || 1;
-    const offset = (page - 1) * limit;
-    const data = filtered.slice(offset, offset + limit).map(c => ({
-      call_id: c.call_id,
-      to_number: c.to_number,
-      Nome: c.Nome,
-      Email: c.Email,
-      agent_name: c.agent_name,
-      created_at: new Date(c.created_at).toISOString(),
-      recording_url: c.recording_url,
-      combined_cost: c.combined_cost,
-      Duracao: c.Duracao,
-      disconnection_category: c.disconnection_category,
-      n_tentativas_anteriores: c.n_tentativas_anteriores,
-      densidade_tentativas: c.densidade_tentativas,
-      pressao_recente: c.pressao_recente,
-    }));
-
-    res.json({ total, page, limit, pages, data });
-  } catch (err) {
-    console.error('[Dashboard] Erro em /calls:', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
+app.get('/metrics', (req, res) => proxyToDashboardBackend(req, res, '/metrics'));
+app.get('/funnel', (req, res) => proxyToDashboardBackend(req, res, '/funnel'));
+app.get('/disconnections', (req, res) => proxyToDashboardBackend(req, res, '/disconnections'));
+app.get('/hours', (req, res) => proxyToDashboardBackend(req, res, '/hours'));
+app.get('/fatigue', (req, res) => proxyToDashboardBackend(req, res, '/fatigue'));
+app.get('/agents', (req, res) => proxyToDashboardBackend(req, res, '/agents'));
+app.get('/calls', (req, res) => proxyToDashboardBackend(req, res, '/calls'));
+app.post('/etl/trigger', (req, res) => proxyToDashboardBackend(req, res, '/etl/trigger', 'POST'));
 
 // ============================================================
 // API: WHATSAPP (proxy para hub_backend)

@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="dashboard-style.css">
+  <link rel="stylesheet" href="dashboard-style.css?v=1.0.7">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -392,7 +392,7 @@ will-change: transform;
 
   <!-- ── Dock lateral ── -->
   <nav class="dock">
-    <a href="/hub" class="dock-item" style="display:none" id="dockHub">
+    <a href="/hub" class="dock-item" id="dockHub">
       <span class="material-symbols-outlined">grid_view</span>
     </a>
     <a href="/disparo" class="dock-item">
@@ -401,7 +401,7 @@ will-change: transform;
     <a href="/dashboard" class="dock-item active">
       <span class="material-symbols-outlined">bar_chart</span>
     </a>
-    <a href="/atendimento" class="dock-item" id="dockAtendimento">
+    <a href="https://mindflow.wts.chat/auth/sign-in" class="dock-item" id="dockAtendimento" target="_blank" rel="noopener">
       <span class="material-symbols-outlined">headset_mic</span>
     </a>
     <div class="dock-sep"></div>
@@ -415,20 +415,6 @@ will-change: transform;
       if (!dock) return;
       var isClient = window.location.pathname === '/cliente' || sessionStorage.getItem('isClient') === '1';
       var headset = document.getElementById('dockAtendimento');
-
-      // Headset SEMPRE abre o CRM em nova aba (admin e cliente)
-      if (headset) {
-        headset.href = '#';
-        headset.setAttribute('target', '_blank');
-        headset.setAttribute('rel', 'noopener');
-        headset.onclick = function(e) {
-          e.preventDefault();
-          fetch('/api/helena/config').then(function(r){return r.json()}).then(function(c){
-            window.open(c.crmUrl, '_blank');
-          }).catch(function(){});
-          return false;
-        };
-      }
 
       if (isClient) {
         // Esconde hub
@@ -447,10 +433,6 @@ will-change: transform;
         if (headset) dock.appendChild(headset);
         if (sep) dock.appendChild(sep);
         if (logout) dock.appendChild(logout);
-      } else {
-        // Admin: mostra o hub
-        var dh = document.getElementById('dockHub');
-        if (dh) dh.style.display = '';
       }
     })();
   </script>
@@ -479,7 +461,7 @@ will-change: transform;
       <header class="top-header">
         <div class="header-title">
           <div class="title-row">
-            <h2>Dashboard de Ligações</h2>
+            <h2 id="dashHeaderTitle">Dashboard de Ligações</h2>
             <div class="client-selector" id="clientSelector" style="display:none">
               <button class="client-selector-btn" id="clientBtn">
                 <span id="clientBtnLabel">MindFlow</span>
@@ -488,7 +470,7 @@ will-change: transform;
               <div class="client-dropdown" id="clientDropdown"></div>
             </div>
           </div>
-          <p>Mapeamento de funil, produtividade dos agentes e auditoria em tempo real.</p>
+          <p id="dashHeaderDesc">Mapeamento de funil, produtividade dos agentes e auditoria em tempo real.</p>
         </div>
         <div class="filters-panel">
           <div class="filter-group">
@@ -547,6 +529,9 @@ will-change: transform;
           <button id="btn-clear-filters" class="btn-secondary" title="Limpar Filtros">
             <span class="material-symbols-outlined">filter_alt_off</span>
           </button>
+          <a href="/api/export-calls" id="btn-export-csv" class="btn-primary" title="Exportar para CSV" download>
+            <span class="material-symbols-outlined">download</span> Exportar CSV
+          </a>
         </div>
       </header>
 
@@ -585,32 +570,32 @@ will-change: transform;
           </div>
           <div class="kpi-card">
             <div class="kpi-header">
-              <span class="kpi-title">Investimento Total</span>
-              <div class="kpi-icon icon-amber"><span class="material-symbols-outlined">attach_money</span></div>
+              <span class="kpi-title">Minutagem Total</span>
+              <div class="kpi-icon icon-amber"><span class="material-symbols-outlined">schedule</span></div>
             </div>
             <div class="kpi-body">
               <h3 id="kpi-total-cost">-</h3>
-              <span class="kpi-subtitle">USD acumulados</span>
+              <span class="kpi-subtitle">Minutos acumulados</span>
             </div>
           </div>
           <div class="kpi-card">
             <div class="kpi-header">
-              <span class="kpi-title">Custo por Lead (CPL)</span>
-              <div class="kpi-icon icon-blue2"><span class="material-symbols-outlined">payments</span></div>
+              <span class="kpi-title">Minutagem por Lead</span>
+              <div class="kpi-icon icon-blue2"><span class="material-symbols-outlined">timer</span></div>
             </div>
             <div class="kpi-body">
               <h3 id="kpi-cost-lead">-</h3>
-              <span class="kpi-subtitle">Média por contato único</span>
+              <span class="kpi-subtitle">Minutos por contato</span>
             </div>
           </div>
           <div class="kpi-card">
             <div class="kpi-header">
-              <span class="kpi-title">Custo por Interesse</span>
-              <div class="kpi-icon icon-rose"><span class="material-symbols-outlined">my_location</span></div>
+              <span class="kpi-title">Minutagem Média</span>
+              <div class="kpi-icon icon-rose"><span class="material-symbols-outlined">schedule</span></div>
             </div>
             <div class="kpi-body">
               <h3 id="kpi-cost-interest">-</h3>
-              <span class="kpi-subtitle">Custo por lead qualificado</span>
+              <span class="kpi-subtitle">Média por ligação</span>
             </div>
           </div>
         </div>
@@ -642,9 +627,15 @@ will-change: transform;
 
         <div class="charts-row">
           <div class="chart-card span-12">
-            <div class="chart-header">
-              <h3><span class="material-symbols-outlined">schedule</span> Horário Nobre de Contato</h3>
-              <span class="chart-desc">Identificação de picos de ligações e taxas de conversão (Interesse) por hora do dia</span>
+            <div class="chart-header" style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+              <div>
+                <h3><span class="material-symbols-outlined">schedule</span> Horário Nobre de Contato</h3>
+                <span class="chart-desc">Identificação de picos de ligações e taxas de conversão (Interesse) por hora do dia</span>
+              </div>
+              <div class="custom-chart-legend">
+                <span class="legend-pill pill-lead"><span class="pill-dot"></span> Volume de Ligações</span>
+                <span class="legend-pill pill-ia"><span class="pill-dot"></span> Taxa de Interesse (%)</span>
+              </div>
             </div>
             <div class="chart-container-hourly"><canvas id="chart-hourly"></canvas></div>
           </div>
@@ -662,9 +653,15 @@ will-change: transform;
         </div>
         <div class="charts-row">
           <div class="chart-card span-12">
-            <div class="chart-header">
-              <h3><span class="material-symbols-outlined">bar_chart</span> Impacto das Tentativas de Contato na Taxa de Interesse</h3>
-              <span class="chart-desc">Mapeamento de quantas tentativas de ligação otimizam ou destroem a conversão</span>
+            <div class="chart-header" style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+              <div>
+                <h3><span class="material-symbols-outlined">bar_chart</span> Impacto das Tentativas de Contato na Taxa de Interesse</h3>
+                <span class="chart-desc">Mapeamento de quantas tentativas de ligação otimizam ou destroem a conversão</span>
+              </div>
+              <div class="custom-chart-legend">
+                <span class="legend-pill pill-lead"><span class="pill-dot"></span> Volume de Ligações</span>
+                <span class="legend-pill pill-ia"><span class="pill-dot"></span> Taxa de Interesse (%)</span>
+              </div>
             </div>
             <div class="chart-container-fatigue"><canvas id="chart-fatigue-impact"></canvas></div>
           </div>
@@ -721,13 +718,12 @@ will-change: transform;
                     <th>Agente</th>
                     <th>Data/Hora</th>
                     <th>Duração</th>
-                    <th>Custo</th>
                     <th>Desconexão</th>
                     <th>Ação</th>
                   </tr>
                 </thead>
                 <tbody id="audit-table-body">
-                  <tr><td colspan="7" class="loading-td">Carregando ligações...</td></tr>
+                  <tr><td colspan="6" class="loading-td">Carregando ligações...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -763,7 +759,6 @@ will-change: transform;
                 <div class="meta-row"><span class="label">Agente:</span><span class="value" id="player-meta-agent">-</span></div>
                 <div class="meta-row"><span class="label">Data da Ligação:</span><span class="value" id="player-meta-date">-</span></div>
                 <div class="meta-row"><span class="label">Duração Real:</span><span class="value" id="player-meta-duration">-</span></div>
-                <div class="meta-row"><span class="label">Custo Retell (USD):</span><span class="value" id="player-meta-cost">-</span></div>
                 <div class="meta-row"><span class="label">Fadiga Histórica (Densidade):</span><span class="value badge-density" id="player-meta-density">-</span></div>
                 <div class="meta-row"><span class="label">Pressão Recente:</span><span class="value badge-pressure" id="player-meta-pressure">-</span></div>
                 <div class="meta-row"><span class="label">Motivo de Desconexão:</span><span class="value" id="player-meta-disconnection">-</span></div>
@@ -855,9 +850,15 @@ will-change: transform;
             <div class="chart-container-funnel"><canvas id="chart-wa-funnel"></canvas></div>
           </div>
           <div class="chart-card span-6">
-            <div class="chart-header">
-              <h3><span class="material-symbols-outlined">schedule</span> Mensagens por Hora</h3>
-              <span class="chart-desc">Distribuição de mensagens no dia (fuso BRT)</span>
+            <div class="chart-header" style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+              <div>
+                <h3><span class="material-symbols-outlined">schedule</span> Mensagens por Hora</h3>
+                <span class="chart-desc">Distribuição de mensagens no dia (fuso BRT)</span>
+              </div>
+              <div class="custom-chart-legend">
+                <span class="legend-pill pill-lead"><span class="pill-dot"></span> Mensagens Lead</span>
+                <span class="legend-pill pill-ia"><span class="pill-dot"></span> Mensagens IA</span>
+              </div>
             </div>
             <div class="chart-container-hourly"><canvas id="chart-wa-hours"></canvas></div>
           </div>
@@ -900,7 +901,7 @@ will-change: transform;
 
   <!-- Scripts do dashboard nativo -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="dashboard-app.js"></script>
+  <script src="dashboard-app.js?v=1.0.7"></script>
 
   <!-- Session check & logout -->
   <script>
@@ -962,9 +963,32 @@ will-change: transform;
             activeClientId = data.active_client;
             renderClientDropdown(data.active_client, data.active_client_name);
             if (typeof refreshDashboard === 'function') {
-              Object.values(state?.charts || {}).forEach(ch => { if (ch) ch.destroy(); });
+              // Destroi todos os charts (inclusive os do WhatsApp)
+              const allCharts = { ...state?.charts };
+              if (typeof waState !== 'undefined') {
+                allCharts.waFunnel = state?.charts?.waFunnel;
+                allCharts.waHours = state?.charts?.waHours;
+              }
+              Object.values(allCharts).forEach(ch => { if (ch) ch.destroy(); });
+
+              if (typeof state !== 'undefined' && state.filters) {
+                state.filters.agent = '';
+              }
+
+              // Reseta paginação do WhatsApp
+              if (typeof waState !== 'undefined') { waState.page = 1; }
+
               loadAgents();
               refreshDashboard();
+
+              // Se a aba WhatsApp estiver ativa, recarrega já
+              const waTab = document.getElementById('tab-whatsapp');
+              if (waTab && waTab.classList.contains('active')) {
+                if (typeof loadWhatsApp === 'function') loadWhatsApp();
+              } else {
+                // Marca para recarregar na próxima vez que entrar na aba
+                window._waNeedsReload = true;
+              }
             } else {
               window.location.reload();
             }
@@ -1062,22 +1086,13 @@ will-change: transform;
       };
     }
 
-    // Custom dropdown do dashboard — popula direto
-    (async function initDashAgentSelect() {
-      const dashAgentSelect = initDashCustomSelect('csDashboardAgent', (val) => {
-        if (typeof state !== 'undefined' && state.filters) {
-          state.filters.agent = val || '';
-          if (typeof refreshDashboard === 'function') refreshDashboard();
-        }
-      });
-      try {
-        const res = await fetch('/agents');
-        const agents = await res.json();
-        const opts = [{ value: '', label: 'Todos os Agentes' }];
-        agents.forEach(a => opts.push({ value: a, label: a }));
-        dashAgentSelect.setOptions(opts);
-      } catch (err) { console.error('Erro ao buscar agentes:', err); }
-    })();
+    // Inicializa o custom select — loadAgents() em dashboard-app.js vai populá-lo
+    window.dashAgentSelect = initDashCustomSelect('csDashboardAgent', (val) => {
+      if (typeof state !== 'undefined' && state.filters) {
+        state.filters.agent = val || '';
+        if (typeof refreshDashboard === 'function') refreshDashboard();
+      }
+    });
   </script>
 
   <!-- Neural Canvas -->

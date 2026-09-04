@@ -519,16 +519,9 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
     (function() {
       var headset = document.getElementById('dockAtendimento');
       if (headset) {
-        headset.href = '#';
+        headset.href = 'https://mindflow.wts.chat/auth/sign-in';
         headset.setAttribute('target', '_blank');
         headset.setAttribute('rel', 'noopener');
-        headset.onclick = function(e) {
-          e.preventDefault();
-          fetch('/api/helena/config').then(function(r){return r.json()}).then(function(c){
-            window.open(c.crmUrl, '_blank');
-          }).catch(function(){});
-          return false;
-        };
       }
     })();
   </script>
