@@ -49,6 +49,105 @@ async function getClientAnonConfig(clientId) {
 // ============================================================
 const app = express();
 const PORT = process.env.PORT || 3000;
+const recentDisparosMap = new Map();
+
+// Map para armazenar conexões SSE ativas: executionId -> Set de res
+const liveSseClients = new Map();
+// Map para vincular call_id -> executionId
+const callToExecutionMap = new Map();
+
+function broadcastSseEvent(executionId, data) {
+  const clients = liveSseClients.get(executionId);
+  if (!clients || clients.size === 0) return;
+  const payload = `data: ${JSON.stringify(data)}\n\n`;
+  for (const clientRes of clients) {
+    try {
+      clientRes.write(payload);
+    } catch (err) {
+      console.warn('[SSE] Erro ao enviar payload:', err.message);
+    }
+  }
+}
+
+// Endpoint de Webhook público para receber eventos da Retell AI (e pings de teste 200 OK)
+const handleRetellWebhook = async (req, res) => {
+  try {
+    const event = req.body || {};
+    const eventName = event.event || 'ping';
+    const callData = event.call || event;
+    const callId = callData.call_id;
+
+    console.log(`[Retell Webhook] Evento recebido: ${eventName} | call_id: ${callId || 'N/A'}`);
+
+    // Se for teste do painel da Retell AI ou ping sem call_id, responde 200 OK imediatamente!
+    if (!callId) {
+      return res.status(200).json({ ok: true, message: 'Retell webhook test ping received successfully' });
+    }
+
+    let executionId = callToExecutionMap.get(callId);
+    if (!executionId) {
+      for (const [execId, info] of recentDisparosMap.entries()) {
+        if (Date.now() - info.createdAt < 600000) {
+          executionId = execId;
+          callToExecutionMap.set(callId, execId);
+          break;
+        }
+      }
+    }
+
+    if (executionId) {
+      let tObj = callData.transcript_object || callData.transcript_with_tool_calls || null;
+      if (Array.isArray(tObj) && tObj.length === 0) tObj = null;
+
+      const callPayload = {
+        call_id: callId,
+        status: callData.call_status,
+        disconnection_reason: callData.disconnection_reason,
+        Duracao: callData.duration_ms ? callData.duration_ms / 1000 : 0,
+        transcript: callData.transcript || '',
+        transcript_object: tObj,
+        public_log_url: callData.public_log_url || callData.eavesdrop_url || null,
+        eavesdrop_url: callData.eavesdrop_url || null,
+        recording_url: callData.recording_url || '',
+        created_at: callData.start_timestamp ? new Date(callData.start_timestamp).toISOString() : new Date().toISOString()
+      };
+
+      let stage = 'IN_PROGRESS';
+      let stageLabel = 'Em Chamada ao Vivo';
+      let isFinished = false;
+
+      const callStatus = String(callData.call_status || '').toLowerCase();
+      const reason = String(callData.disconnection_reason || '').toLowerCase();
+
+      if (reason !== '' || ['ended', 'completed', 'error'].includes(callStatus)) {
+        isFinished = true;
+        stage = 'COMPLETED';
+        stageLabel = 'Chamada Finalizada';
+      } else if (callStatus === 'registered') {
+        stage = 'RINGING';
+        stageLabel = 'Discando / Tocando no telefone...';
+      }
+
+      broadcastSseEvent(executionId, {
+        type: eventName,
+        executionId,
+        call_id: callId,
+        stage,
+        stageLabel,
+        isFinished,
+        call: callPayload
+      });
+    }
+
+    return res.status(200).json({ ok: true, received: true });
+  } catch (err) {
+    console.error('[Retell Webhook Error]:', err.message);
+    return res.status(200).json({ ok: true, warning: err.message });
+  }
+};
+
+app.use('/api/webhooks/retell', express.json({ limit: '50mb' }), handleRetellWebhook);
+app.use('/webhooks/retell', express.json({ limit: '50mb' }), handleRetellWebhook);
 
 // Trust proxy — necessário para Easypanel/Traefik
 app.set('trust proxy', true);
@@ -288,13 +387,17 @@ app.get('/dashboard', (req, res) => {
 
 app.get('/dashboard-style.css', (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
-  res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   res.sendFile(path.join(__dirname, 'dashboard-style.css'));
 });
 
 app.get('/dashboard-app.js', (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
-  res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   res.sendFile(path.join(__dirname, 'dashboard-app.js'));
 });
 
@@ -1106,6 +1209,7 @@ app.post('/api/submit-lead', submitLimiter, async (req, res) => {
         from_number: fromProvider
       };
 
+      recentDisparosMap.set(pythonPayload.execution_id, { createdAt: Date.now(), phone: formattedPhone, nome: pythonPayload.nome });
       console.log(`[BFF] Tentando disparo com provedor ${fromProvider} para ${pythonPayload.nome} (${pythonPayload.execution_id})`);
 
       try {
@@ -1158,10 +1262,11 @@ app.get('/api/call-status/:executionId', async (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
   const { executionId } = req.params;
 
-  if (!executionId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(executionId)) {
+  if (!executionId) {
     return res.status(400).json({ error: 'ID de execução inválido.' });
   }
 
+  const clientDb = getActiveClientDb(req);
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_KEY;
 
@@ -1172,27 +1277,331 @@ app.get('/api/call-status/:executionId', async (req, res) => {
   };
 
   try {
-    const execUrl = `${supabaseUrl}/rest/v1/workflow_executions?trigger_event_id=eq.${executionId}&select=status,output_data,error_details&limit=1`;
-    const execRes = await fetch(execUrl, { headers, signal: AbortSignal.timeout(8000) });
-    if (!execRes.ok) throw new Error(`Erro no Supabase: ${execRes.status}`);
-    const execData = await execRes.json();
-    const execution = execData?.[0] || null;
+    let execution = null;
     let call = null;
 
-    if (execution?.status === 'SUCCESS' && execution.output_data?.call_id) {
-      const callId = execution.output_data.call_id;
-      const callUrl = `${supabaseUrl}/rest/v1/Retell_calls_Mindflow?call_id=eq.${callId}&select=status,disconnection_reason,Duracao,Nome,created_at&limit=1`;
-      const callRes = await fetch(callUrl, { headers, signal: AbortSignal.timeout(8000) });
-      if (callRes.ok) {
-        const callData = await callRes.json();
-        call = callData?.[0] || null;
+    // 1. Tenta buscar da tabela workflow_executions
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(executionId)) {
+      const execUrl = `${supabaseUrl}/rest/v1/workflow_executions?trigger_event_id=eq.${executionId}&select=status,output_data,error_details,created_at,updated_at&limit=1`;
+      const execRes = await fetch(execUrl, { headers, signal: AbortSignal.timeout(6000) }).catch(() => null);
+      if (execRes && execRes.ok) {
+        const execData = await execRes.json();
+        execution = execData?.[0] || null;
       }
     }
 
-    return res.json({ execution, call });
+    let callId = execution?.output_data?.call_id || (executionId.startsWith('call_') ? executionId : null);
+
+    // 2. Busca da tabela Retell_calls_Mindflow no Supabase
+    if (callId) {
+      const { data: callRows } = await clientDb
+        .from('Retell_calls_Mindflow')
+        .select('call_id,status,disconnection_reason,Duracao,Nome,transcript,transcript_object,public_log_url,recording_url,created_at')
+        .eq('call_id', callId)
+        .limit(1);
+
+      call = callRows?.[0] || null;
+    }
+
+    // Se ainda não achamos o callId, busca a chamada mais recente do Supabase nos últimos 3 minutos
+    if (!callId) {
+      const { data: recentCalls } = await clientDb
+        .from('Retell_calls_Mindflow')
+        .select('call_id,status,disconnection_reason,Duracao,Nome,transcript,transcript_object,public_log_url,recording_url,created_at')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (recentCalls && recentCalls[0]) {
+        const callTime = new Date(recentCalls[0].created_at).getTime();
+        if (Date.now() - callTime < 180000) {
+          callId = recentCalls[0].call_id;
+          call = recentCalls[0];
+        }
+      }
+    }
+
+    const disparoInfo = recentDisparosMap.get(executionId);
+    const minStartTime = disparoInfo ? (disparoInfo.createdAt - 15000) : (Date.now() - 45000);
+
+    // 3. Busca a chamada ao vivo na Retell AI (tempo real 100%)
+    if (process.env.RETELL_API_KEY) {
+      try {
+        if (callId) {
+          // Se já temos o callId, busca diretamente o status atualizado do Retell em tempo real
+          const getRes = await fetch(`https://api.retellai.com/v2/get-call/${callId}`, {
+            headers: {
+              'Authorization': `Bearer ${process.env.RETELL_API_KEY}`,
+              'Content-Type': 'application/json'
+            },
+            signal: AbortSignal.timeout(4000)
+          });
+          if (getRes.ok) {
+            const rCall = await getRes.json();
+            let tObj = rCall.transcript_object || rCall.transcript_with_tool_calls || call?.transcript_object || null;
+            if (Array.isArray(tObj) && tObj.length === 0) tObj = null;
+
+            call = {
+              call_id: rCall.call_id,
+              status: rCall.call_status || call?.status,
+              disconnection_reason: rCall.disconnection_reason || call?.disconnection_reason,
+              Duracao: rCall.duration_ms ? rCall.duration_ms / 1000 : (call?.Duracao || 0),
+              transcript: rCall.transcript || call?.transcript || '',
+              transcript_object: tObj,
+              public_log_url: rCall.public_log_url || rCall.eavesdrop_url || call?.public_log_url || null,
+              eavesdrop_url: rCall.eavesdrop_url || null,
+              recording_url: rCall.recording_url || call?.recording_url || '',
+              created_at: rCall.start_timestamp ? new Date(rCall.start_timestamp).toISOString() : call?.created_at
+            };
+          }
+        } else {
+          // Se ainda não temos o callId, lista as chamadas recentes para capturar a chamada iniciada
+          const listRes = await fetch('https://api.retellai.com/v2/list-calls', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${process.env.RETELL_API_KEY}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ limit: 10 }),
+            signal: AbortSignal.timeout(4000)
+          });
+          if (listRes.ok) {
+            const listCalls = await listRes.json();
+            if (Array.isArray(listCalls) && listCalls.length > 0) {
+              // Filha e ordena da mais recente para a mais antiga
+              const validCalls = listCalls.filter(c => {
+                const callTime = c.start_timestamp ? new Date(c.start_timestamp).getTime() : 0;
+                return callTime >= minStartTime;
+              }).sort((a, b) => (b.start_timestamp || 0) - (a.start_timestamp || 0));
+
+              // 1. Procura primeiro qualquer chamada com status 'ongoing' ou 'registered'
+              let rCall = validCalls.find(c => ['ongoing', 'registered', 'in_progress', 'in-progress'].includes(String(c.call_status || '').toLowerCase()));
+              
+              // 2. Se a chamada já finalizou, prioriza a chamada recente onde o usuário/lead efetivamente interagiu
+              if (!rCall && validCalls.length > 0) {
+                rCall = validCalls.find(c => {
+                  const tObj = c.transcript_object || c.transcript_with_tool_calls || [];
+                  return Array.isArray(tObj) && tObj.some(m => m.role === 'user' || m.speaker === 'user' || m.role === 'customer');
+                });
+                // Fallback para a chamada mais recente iniciada após o clique
+                if (!rCall) {
+                  rCall = validCalls[0];
+                }
+              }
+
+              if (rCall) {
+                callId = rCall.call_id;
+                let tObj = rCall.transcript_object || rCall.transcript_with_tool_calls || null;
+                if (Array.isArray(tObj) && tObj.length === 0) tObj = null;
+
+                call = {
+                  call_id: rCall.call_id,
+                  status: rCall.call_status,
+                  disconnection_reason: rCall.disconnection_reason,
+                  Duracao: rCall.duration_ms ? rCall.duration_ms / 1000 : 0,
+                  transcript: rCall.transcript || '',
+                  transcript_object: tObj,
+                  public_log_url: rCall.public_log_url || rCall.eavesdrop_url || null,
+                  eavesdrop_url: rCall.eavesdrop_url || null,
+                  recording_url: rCall.recording_url || '',
+                  created_at: rCall.start_timestamp ? new Date(rCall.start_timestamp).toISOString() : new Date().toISOString()
+                };
+              }
+            }
+          }
+        }
+      } catch (rErr) {
+        console.warn('[CallStatus] Retell API fetch error:', rErr.message);
+      }
+    }
+
+    // 4. Classificação amigável de status e etapas
+    let stage = 'INITIATING'; 
+    let stageLabel = 'Iniciando ligação...';
+    let isFinished = false;
+
+    if (call) {
+      const callStatus = String(call.status || '').toLowerCase();
+      const reason = String(call.disconnection_reason || '').toLowerCase();
+
+      // Verifica se o lead (usuário) respondeu a chamada
+      const transcriptArray = Array.isArray(call.transcript_object) ? call.transcript_object : [];
+      const userSpoke = transcriptArray.some(m => m.role === 'user' || m.speaker === 'user' || m.role === 'customer');
+
+      // Se possui motivo de desconexão ou status encerrado, marca como finalizada
+      if (reason !== '' || ['ended', 'completed', 'error'].includes(callStatus)) {
+        isFinished = true;
+
+        if (['user_declined', 'user-declined'].includes(reason)) {
+          stage = 'BUSY';
+          stageLabel = 'Ligação Recusada pelo Lead';
+        } else if (['voicemail_reached', 'voicemail'].includes(reason) || (!userSpoke && ['inactivity', 'user_hangup'].includes(reason))) {
+          stage = 'NO_ANSWER';
+          stageLabel = 'Caixa Postal / Recusada';
+        } else if (['dial_no_answer', 'no-answer', 'no_answer'].includes(reason)) {
+          stage = 'NO_ANSWER';
+          stageLabel = 'Não Atendeu (dial no answer)';
+        } else if (['dial_busy', 'busy'].includes(reason)) {
+          stage = 'BUSY';
+          stageLabel = 'Linha Ocupada';
+        } else if (reason.includes('error') || reason === 'dial_failed' || callStatus === 'error') {
+          stage = 'FAILED';
+          stageLabel = 'Falha na Chamada';
+        } else {
+          if (!userSpoke && transcriptArray.length > 0) {
+            stage = 'NO_ANSWER';
+            stageLabel = 'Caixa Postal / Sem Resposta do Lead';
+          } else {
+            stage = 'COMPLETED';
+            stageLabel = 'Chamada Finalizada';
+          }
+        }
+      } else if (['ongoing', 'in_progress', 'in-progress'].includes(callStatus)) {
+        stage = 'IN_PROGRESS';
+        stageLabel = 'Em Chamada ao Vivo';
+      } else if (callStatus === 'registered') {
+        stage = 'RINGING';
+        stageLabel = 'Discando / Tocando no telefone...';
+      }
+    } else if (execution) {
+      if (['RUNNING', 'PENDING'].includes(execution.status)) {
+        stage = 'INITIATING';
+        stageLabel = 'Processando disparo...';
+      } else if (execution.status === 'FAILED') {
+        isFinished = true;
+        stage = 'FAILED';
+        stageLabel = execution.error_details || 'Falha na execução do disparo';
+      }
+    }
+
+    return res.json({
+      ok: true,
+      execution_id: executionId,
+      call_id: callId,
+      execution,
+      call,
+      stage,
+      stageLabel,
+      isFinished
+    });
   } catch (error) {
     console.error('[BFF] Erro ao buscar status da ligação:', error.message);
     return res.status(500).json({ error: 'Erro ao buscar status.' });
+  }
+});
+
+// ============================================================
+// TEMPO REAL: SSE (Server-Sent Events) & RETELL WEBHOOKS
+// ============================================================
+
+// 1. Endpoint SSE para o navegador escutar em tempo real (< 100ms de latência)
+app.get('/api/calls/stream/:executionId', (req, res) => {
+  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
+  const { executionId } = req.params;
+  if (!executionId) return res.status(400).json({ error: 'Execution ID required' });
+
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no'
+  });
+
+  res.write(`data: ${JSON.stringify({ type: 'connected', executionId })}\n\n`);
+
+  if (!liveSseClients.has(executionId)) {
+    liveSseClients.set(executionId, new Set());
+  }
+  liveSseClients.get(executionId).add(res);
+
+  const heartbeat = setInterval(() => {
+    try { res.write(': ping\n\n'); } catch {}
+  }, 15000);
+
+  req.on('close', () => {
+    clearInterval(heartbeat);
+    const clients = liveSseClients.get(executionId);
+    if (clients) {
+      clients.delete(res);
+      if (clients.size === 0) liveSseClients.delete(executionId);
+    }
+  });
+});
+
+// 2. Endpoint de Webhook para receber eventos da Retell AI (e responder pings de teste com 200 OK)
+app.all('/api/webhooks/retell', express.json(), async (req, res) => {
+  try {
+    const event = req.body || {};
+    const eventName = event.event || 'ping';
+    const callData = event.call || event;
+    const callId = callData.call_id;
+
+    console.log(`[Retell Webhook] Evento recebido: ${eventName} | call_id: ${callId || 'N/A'}`);
+
+    // Se for teste do painel da Retell AI ou ping sem call_id, responde 200 OK imediatamente!
+    if (!callId) {
+      return res.status(200).json({ ok: true, message: 'Retell webhook test ping received successfully' });
+    }
+
+    let executionId = callToExecutionMap.get(callId);
+
+    if (!executionId) {
+      for (const [execId, info] of recentDisparosMap.entries()) {
+        if (Date.now() - info.createdAt < 600000) {
+          executionId = execId;
+          callToExecutionMap.set(callId, execId);
+          break;
+        }
+      }
+    }
+
+    if (executionId) {
+      let tObj = callData.transcript_object || callData.transcript_with_tool_calls || null;
+      if (Array.isArray(tObj) && tObj.length === 0) tObj = null;
+
+      const callPayload = {
+        call_id: callId,
+        status: callData.call_status,
+        disconnection_reason: callData.disconnection_reason,
+        Duracao: callData.duration_ms ? callData.duration_ms / 1000 : 0,
+        transcript: callData.transcript || '',
+        transcript_object: tObj,
+        public_log_url: callData.public_log_url || callData.eavesdrop_url || null,
+        eavesdrop_url: callData.eavesdrop_url || null,
+        recording_url: callData.recording_url || '',
+        created_at: callData.start_timestamp ? new Date(callData.start_timestamp).toISOString() : new Date().toISOString()
+      };
+
+      let stage = 'IN_PROGRESS';
+      let stageLabel = 'Em Chamada ao Vivo';
+      let isFinished = false;
+
+      const callStatus = String(callData.call_status || '').toLowerCase();
+      const reason = String(callData.disconnection_reason || '').toLowerCase();
+
+      if (reason !== '' || ['ended', 'completed', 'error'].includes(callStatus)) {
+        isFinished = true;
+        stage = 'COMPLETED';
+        stageLabel = 'Chamada Finalizada';
+      } else if (callStatus === 'registered') {
+        stage = 'RINGING';
+        stageLabel = 'Discando / Tocando no telefone...';
+      }
+
+      broadcastSseEvent(executionId, {
+        type: eventName,
+        executionId,
+        call_id: callId,
+        stage,
+        stageLabel,
+        isFinished,
+        call: callPayload
+      });
+    }
+
+    return res.status(200).json({ ok: true, received: true });
+  } catch (err) {
+    console.error('[Retell Webhook Error]:', err.message);
+    return res.status(200).json({ ok: true, warning: err.message });
   }
 });
 
@@ -1556,17 +1965,29 @@ async function fetchProcessedCalls(agent, startDate, endDate, clientSupabase) {
 }
 
 function applyFilters(calls, agent, startDate, endDate) {
-  let filtered = calls;
+  let filtered = calls || [];
   if (agent) {
-    filtered = filtered.filter(c => c.agent_name === agent);
+    filtered = filtered.filter(c => c.agent_name === agent || c.agent_id === agent);
   }
   if (startDate) {
     const startMs = new Date(startDate + 'T00:00:00').getTime();
-    filtered = filtered.filter(c => c.created_at >= startMs);
+    filtered = filtered.filter(c => {
+      if (!c || !c.created_at) return false;
+      const callMs = typeof c.created_at === 'number'
+        ? (c.created_at < 1e11 ? c.created_at * 1000 : c.created_at)
+        : new Date(String(c.created_at).replace(' ', 'T')).getTime();
+      return !isNaN(callMs) && callMs >= startMs;
+    });
   }
   if (endDate) {
     const endMs = new Date(endDate + 'T23:59:59').getTime();
-    filtered = filtered.filter(c => c.created_at <= endMs);
+    filtered = filtered.filter(c => {
+      if (!c || !c.created_at) return false;
+      const callMs = typeof c.created_at === 'number'
+        ? (c.created_at < 1e11 ? c.created_at * 1000 : c.created_at)
+        : new Date(String(c.created_at).replace(' ', 'T')).getTime();
+      return !isNaN(callMs) && callMs <= endMs;
+    });
   }
   return filtered;
 }
