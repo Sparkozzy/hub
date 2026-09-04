@@ -2243,6 +2243,108 @@
         padding: 0 4px !important;
       }
 
+      /* ── Live Call Monitor Frame ── */
+      .live-call-frame {
+        margin-top: 24px;
+        background: rgba(13, 17, 34, 0.95);
+        border: 1px solid rgba(46, 79, 255, 0.35);
+        border-radius: 16px;
+        padding: 20px;
+        backdrop-filter: blur(12px);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4), inset 0 0 20px rgba(46, 79, 255, 0.08);
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        animation: fadeInSubtle 0.4s ease;
+      }
+      .live-call-frame.hidden { display: none; }
+      .live-frame-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding-bottom: 12px;
+      }
+      .live-title-badge {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 15px;
+        font-weight: 600;
+        color: #fff;
+      }
+      .live-timer-badge {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 13px;
+        font-weight: 600;
+        color: #00B5A0;
+        background: rgba(0, 181, 160, 0.12);
+        padding: 4px 10px;
+        border-radius: 20px;
+        border: 1px solid rgba(0, 181, 160, 0.25);
+      }
+      .live-status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        color: #7B9AFF;
+        background: rgba(46, 79, 255, 0.1);
+        padding: 4px 10px;
+        border-radius: 8px;
+      }
+      .live-transcript-box {
+        background: rgba(4, 6, 14, 0.75);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 12px;
+        padding: 14px;
+        max-height: 220px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        font-size: 13px;
+      }
+      .chat-bubble {
+        max-width: 85%;
+        padding: 8px 12px;
+        border-radius: 10px;
+        line-height: 1.4;
+      }
+      .chat-bubble.user {
+        align-self: flex-end;
+        background: rgba(46, 79, 255, 0.25);
+        color: #E2E8F0;
+        border-bottom-right-radius: 2px;
+      }
+      .chat-bubble.agent {
+        align-self: flex-start;
+        background: rgba(255, 255, 255, 0.08);
+        color: #F8FAFC;
+        border-bottom-left-radius: 2px;
+      }
+      .live-action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        background: linear-gradient(135deg, rgba(46, 79, 255, 0.25), rgba(0, 181, 160, 0.25));
+        border: 1px solid rgba(46, 79, 255, 0.4);
+        color: #fff;
+        padding: 10px 16px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.2s;
+      }
+      .live-action-btn:hover {
+        background: linear-gradient(135deg, rgba(46, 79, 255, 0.4), rgba(0, 181, 160, 0.4));
+        border-color: #7B9AFF;
+      }
+
       .time-slot-custom .material-symbols-outlined {
         font-size: 13px !important;
       }
@@ -2713,6 +2815,32 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         </div>
       </div>
 
+      <!-- ── Live Call Frame ── -->
+      <div id="liveCallFrame" class="live-call-frame hidden">
+        <div class="live-frame-header">
+          <div class="live-title-badge">
+            <span class="dot dot-pending" id="livePulseDot"></span>
+            <span>Acompanhamento ao Vivo</span>
+          </div>
+          <div class="live-timer-badge" id="liveTimerText">00:00</div>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <div class="live-status-pill" id="liveStatusText">Conectando...</div>
+          <div style="font-size:12px;color:var(--muted);" id="liveMetaText">-</div>
+        </div>
+
+        <div class="live-transcript-box" id="liveTranscriptBox">
+          <div style="color:var(--muted);font-size:12px;text-align:center;padding:12px;">Aguardando áudio e transcrição...</div>
+        </div>
+
+        <div id="liveActionArea" style="display:none;text-align:right;">
+          <a id="liveLogLink" href="#" target="_blank" class="live-action-btn">
+            <span class="material-symbols-outlined">graphic_eq</span> Ouvir Áudio / Log Completo
+          </a>
+        </div>
+      </div>
+
     </div>
   </main>
 
@@ -3070,7 +3198,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         body: JSON.stringify(payload)
       })
         .then(r => r.ok ? r.json() : r.json().then(e => { throw new Error(e.error || 'Erro'); }))
-        .then(() => {
+        .then((data) => {
           btn.classList.remove('loading');
           saveContextoToHistory(contexto);
           if (isScheduled) {
@@ -3081,6 +3209,9 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
             document.getElementById('btnIco').textContent = 'phone_in_talk';
             document.getElementById('btnLabel').textContent = 'Em Andamento';
             setPill('dot-blue', 'Ligação em andamento');
+            if (data && data.execution_id) {
+              startLiveCallTracking(data.execution_id, payload.telefone, payload.agent_id);
+            }
           }
           setTimeout(resetForm, isScheduled ? 4000 : 9000);
         })
@@ -3591,8 +3722,11 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         });
         const data = await res.json();
         if (res.ok) {
-          document.getElementById('pillText').textContent = 'Chamada iniciada! (' + (data.execution_id || '').slice(0, 8) + '...)';
+          document.getElementById('pillText').textContent = 'Chamada iniciada!';
           document.getElementById('dot').className = 'dot dot-success';
+          if (data && data.execution_id) {
+            startLiveCallTracking(data.execution_id, telefone, agentId);
+          }
         } else {
           throw new Error(data.error || 'Erro');
         }
@@ -3603,6 +3737,111 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       btn.disabled = false;
       btn.innerHTML = '<span class=\"material-symbols-outlined\">phone_in_talk</span> Ligar pra mim';
     });
+
+    /* ── Live Call Monitoring Engine ── */
+    let liveTimerInterval = null;
+    let liveSseSource = null;
+    let livePollInterval = null;
+
+    function startLiveCallTracking(executionId, telefone, agentName) {
+      const frame = document.getElementById('liveCallFrame');
+      if (!frame) return;
+      frame.classList.remove('hidden');
+
+      const statusText = document.getElementById('liveStatusText');
+      const metaText = document.getElementById('liveMetaText');
+      const timerText = document.getElementById('liveTimerText');
+      const box = document.getElementById('liveTranscriptBox');
+      const actionArea = document.getElementById('liveActionArea');
+      const logLink = document.getElementById('liveLogLink');
+
+      statusText.textContent = 'Discando...';
+      metaText.textContent = `${telefone || ''} · ${agentName || 'Agente'}`;
+      box.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:12px;">Chamada iniciada. Aguardando atendimento...</div>';
+      actionArea.style.display = 'none';
+
+      let seconds = 0;
+      clearInterval(liveTimerInterval);
+      liveTimerInterval = setInterval(() => {
+        seconds++;
+        const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+        const s = String(seconds % 60).padStart(2, '0');
+        timerText.textContent = `${m}:${s}`;
+      }, 1000);
+
+      // SSE Connection
+      if (liveSseSource) liveSseSource.close();
+      liveSseSource = new EventSource('/api/calls/stream/' + executionId);
+
+      liveSseSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.stageLabel) statusText.textContent = data.stageLabel;
+
+          if (data.call) {
+            if (data.call.transcript_object && Array.isArray(data.call.transcript_object)) {
+              renderTranscriptBubbles(data.call.transcript_object);
+            } else if (data.call.transcript) {
+              box.innerHTML = `<div class="chat-bubble agent">${escHtml(data.call.transcript)}</div>`;
+            }
+
+            if (data.call.public_log_url || data.call.recording_url) {
+              logLink.href = data.call.public_log_url || data.call.recording_url;
+              actionArea.style.display = 'block';
+            }
+          }
+
+          if (data.isFinished) {
+            clearInterval(liveTimerInterval);
+            statusText.textContent = 'Chamada Finalizada';
+            if (liveSseSource) liveSseSource.close();
+            if (livePollInterval) clearInterval(livePollInterval);
+          }
+        } catch (_) {}
+      };
+
+      // Polling Fallback
+      clearInterval(livePollInterval);
+      livePollInterval = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/call-status?execution_id=${executionId}`);
+          if (!res.ok) return;
+          const data = await res.json();
+          if (data.stageLabel) statusText.textContent = data.stageLabel;
+
+          if (data.call) {
+            if (data.call.transcript_object && Array.isArray(data.call.transcript_object)) {
+              renderTranscriptBubbles(data.call.transcript_object);
+            } else if (data.call.transcript) {
+              box.innerHTML = `<div class="chat-bubble agent">${escHtml(data.call.transcript)}</div>`;
+            }
+            if (data.call.public_log_url || data.call.recording_url) {
+              logLink.href = data.call.public_log_url || data.call.recording_url;
+              actionArea.style.display = 'block';
+            }
+          }
+
+          if (data.isFinished) {
+            clearInterval(liveTimerInterval);
+            clearInterval(livePollInterval);
+            statusText.textContent = 'Chamada Finalizada';
+            if (liveSseSource) liveSseSource.close();
+          }
+        } catch (_) {}
+      }, 2500);
+    }
+
+    function renderTranscriptBubbles(items) {
+      const box = document.getElementById('liveTranscriptBox');
+      if (!box || !Array.isArray(items) || items.length === 0) return;
+      box.innerHTML = items.map(item => {
+        const role = (item.role || 'agent').toLowerCase();
+        const cls = role === 'user' ? 'user' : 'agent';
+        const label = role === 'user' ? 'Lead' : 'Agente';
+        return `<div class="chat-bubble ${cls}"><strong>${label}:</strong> ${escHtml(item.content || item.message || '')}</div>`;
+      }).join('');
+      box.scrollTop = box.scrollHeight;
+    }
 
     document.getElementById('scheduleToggle').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleScheduler(); } });
     document.getElementById('advancedToggle').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleAdvanced(); } });
