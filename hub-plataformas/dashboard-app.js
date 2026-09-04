@@ -93,37 +93,47 @@ function initTabs() {
     const tabs = document.querySelectorAll('.dash-tab');
     const sections = document.querySelectorAll('.tab-content');
 
+    function activateTab(targetTab) {
+        tabs.forEach(t => t.classList.toggle('active', t.getAttribute('data-tab') === targetTab));
+        sections.forEach(s => s.classList.toggle('active', s.id === `tab-${targetTab}`));
+
+        updateHeaderTitle(targetTab);
+
+        if (targetTab === 'audit') {
+            loadAuditCalls();
+        } else if (targetTab === 'whatsapp') {
+            setTimeout(() => {
+                loadWhatsApp();
+                window._waNeedsReload = false;
+            }, 60);
+        }
+
+        setTimeout(() => {
+            Object.values(state.charts).forEach(chart => {
+                if (chart) chart.resize();
+            });
+        }, 100);
+    }
+
     tabs.forEach(tab => {
         tab.addEventListener('click', (e) => {
             e.preventDefault();
             const targetTab = tab.getAttribute('data-tab');
-
-            // Toggle active classes
-            tabs.forEach(t => t.classList.remove('active'));
-            sections.forEach(s => s.classList.remove('active'));
-
-            tab.classList.add('active');
-            const targetSection = document.getElementById(`tab-${targetTab}`);
-            if (targetSection) targetSection.classList.add('active');
-
-            // Atualiza título e descrição do cabeçalho
-            updateHeaderTitle(targetTab);
-
-            // Carrega dados do WhatsApp ao entrar na aba (após ficar visível)
-            if (targetTab === 'whatsapp') {
-                setTimeout(() => {
-                    loadWhatsApp();
-                    window._waNeedsReload = false;
-                }, 60);
-            }
-
-            // Adjust chart sizes inside the new visible tab
-            setTimeout(() => {
-                Object.values(state.charts).forEach(chart => {
-                    if (chart) chart.resize();
-                });
-            }, 100);
+            window.location.hash = targetTab;
+            activateTab(targetTab);
         });
+    });
+
+    const initialHash = (window.location.hash || '').replace('#', '');
+    if (['overview', 'fatigue', 'audit', 'whatsapp'].includes(initialHash)) {
+        activateTab(initialHash);
+    }
+
+    window.addEventListener('hashchange', () => {
+        const hash = (window.location.hash || '').replace('#', '');
+        if (['overview', 'fatigue', 'audit', 'whatsapp'].includes(hash)) {
+            activateTab(hash);
+        }
     });
 }
 
