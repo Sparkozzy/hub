@@ -401,11 +401,12 @@ app.get('/dashboard-app.js', (req, res) => {
   res.sendFile(path.join(__dirname, 'dashboard-app.js'));
 });
 
-app.get('/disparo', (req, res) => {
+app.get(['/disparo', '/disparo.html'], (req, res) => {
   if (!req.session?.user) return res.redirect('/');
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
   res.sendFile(path.join(__dirname, 'disparo.html'));
 });
 
