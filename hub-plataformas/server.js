@@ -317,7 +317,7 @@ if (!IS_PRODUCTION) {
           devPhone = um.phone || '';
         }
       }
-    } catch {}
+    } catch { }
 
     req.session.user = {
       id: devUserId,
@@ -838,7 +838,7 @@ async function syncRetellAgents() {
           if (promptMap.has(a.agent_id)) a.prompt_id = promptMap.get(a.agent_id);
         });
       }
-    } catch {}
+    } catch { }
 
     // Upsert no Supabase
     const { error } = await supabase.from('retell_agents').upsert(agents, { onConflict: 'agent_id' });
@@ -906,8 +906,8 @@ app.get('/api/agents', async (req, res) => {
           if (!a.name) return false;
           // Remove "whatsapp" e "whats" da comparação para evitar falso-positivo com o cliente ATS
           const normAgent = a.name.toLowerCase().replace(/\s+/g, '').replace(/whats(app)?/g, '');
-          return normAgent.includes(normClient) || normClient.includes(normAgent) || 
-                 (normClient === 'ats' && normAgent.includes('ats'));
+          return normAgent.includes(normClient) || normClient.includes(normAgent) ||
+            (normClient === 'ats' && normAgent.includes('ats'));
         });
       } else {
         agentsList = [];
@@ -1133,7 +1133,7 @@ app.get('/api/client-config', async (req, res) => {
 // ============================================================
 app.post('/api/logout', async (req, res) => {
   // Invalida também o token no Supabase (boa prática)
-  await supabase.auth.signOut().catch(() => {});
+  await supabase.auth.signOut().catch(() => { });
   req.session.destroy(() => {
     res.clearCookie('connect.sid');
     res.json({ ok: true });
@@ -1376,7 +1376,7 @@ app.get('/api/call-status/:executionId', async (req, res) => {
 
               // 1. Procura primeiro qualquer chamada com status 'ongoing' ou 'registered'
               let rCall = validCalls.find(c => ['ongoing', 'registered', 'in_progress', 'in-progress'].includes(String(c.call_status || '').toLowerCase()));
-              
+
               // 2. Se a chamada já finalizou, prioriza a chamada recente onde o usuário/lead efetivamente interagiu
               if (!rCall && validCalls.length > 0) {
                 rCall = validCalls.find(c => {
@@ -1416,7 +1416,7 @@ app.get('/api/call-status/:executionId', async (req, res) => {
     }
 
     // 4. Classificação amigável de status e etapas
-    let stage = 'INITIATING'; 
+    let stage = 'INITIATING';
     let stageLabel = 'Iniciando ligação...';
     let isFinished = false;
 
@@ -1515,7 +1515,7 @@ app.get('/api/calls/stream/:executionId', (req, res) => {
   liveSseClients.get(executionId).add(res);
 
   const heartbeat = setInterval(() => {
-    try { res.write(': ping\n\n'); } catch {}
+    try { res.write(': ping\n\n'); } catch { }
   }, 15000);
 
   req.on('close', () => {
@@ -1645,7 +1645,7 @@ function cleanTranscriptForCsv(raw) {
     if (typeof parsed === 'object' && parsed.transcript) {
       return cleanTranscriptForCsv(parsed.transcript);
     }
-  } catch {}
+  } catch { }
   return String(raw).replace(/\[\{.*?\}\]/g, '').replace(/\r?\n/g, ' ').trim();
 }
 
@@ -1662,7 +1662,7 @@ function formatDateForCsv(val) {
     if (!isNaN(d.getTime())) {
       return d.toISOString().replace('T', ' ').slice(0, 19);
     }
-  } catch {}
+  } catch { }
   return String(val);
 }
 
@@ -1793,16 +1793,16 @@ app.get('/api/stats', async (req, res) => {
           validDurationCount++;
         }
       }
-      
+
       const isMarcada = c.Marcada && (
-        c.Marcada.toLowerCase().includes('sim') || 
-        c.Marcada.toLowerCase().includes('true') || 
+        c.Marcada.toLowerCase().includes('sim') ||
+        c.Marcada.toLowerCase().includes('true') ||
         c.Marcada === '1'
       );
       if (isMarcada) {
         meetingsScheduled++;
       }
-      
+
       if (c.status === 'completed') {
         completedCalls++;
       }
@@ -1841,15 +1841,15 @@ function mapDisconnectionCategory(reason, durationSec) {
     return durationSec > 15.0 ? 'Conversa Normal' : 'Não Atendeu';
   }
   const r = String(reason).toLowerCase().trim();
-  if (['agent_hangup','user_hangup','inactivity','max_duration_reached','call_transfer'].includes(r))
+  if (['agent_hangup', 'user_hangup', 'inactivity', 'max_duration_reached', 'call_transfer'].includes(r))
     return 'Conversa Normal';
-  if (['dial_no_answer','no-answer','voicemail_reached'].includes(r))
+  if (['dial_no_answer', 'no-answer', 'voicemail_reached'].includes(r))
     return 'Não Atendeu';
-  if (['user_declined','invalid_destination'].includes(r))
+  if (['user_declined', 'invalid_destination'].includes(r))
     return 'Bloqueado';
-  if (['dial_busy','ivr_reached'].includes(r))
+  if (['dial_busy', 'ivr_reached'].includes(r))
     return 'Ocupado';
-  if (r.startsWith('telephony_provider_') || ['error_asr','error_retell','dial_failed'].includes(r))
+  if (r.startsWith('telephony_provider_') || ['error_asr', 'error_retell', 'dial_failed'].includes(r))
     return 'Erro Técnico';
   return durationSec > 15.0 ? 'Conversa Normal' : 'Não Atendeu';
 }
@@ -1904,57 +1904,57 @@ async function fetchProcessedCalls(agent, startDate, endDate, clientSupabase) {
         allData = data || [];
       }
 
-    if (allData.length === 0) return [];
+      if (allData.length === 0) return [];
 
-    // Processar (transform + dedup + fatigue)
-    let calls = allData.map(c => ({
-      ...c,
-      Duracao: (parseFloat(c.Duracao) || 0) / 1000,
-      combined_cost: (parseFloat(c.combined_cost) || 0) / 100,
-      created_at: new Date(c.created_at).getTime(),
-    }));
+      // Processar (transform + dedup + fatigue)
+      let calls = allData.map(c => ({
+        ...c,
+        Duracao: (parseFloat(c.Duracao) || 0) / 1000,
+        combined_cost: (parseFloat(c.combined_cost) || 0) / 100,
+        created_at: new Date(c.created_at).getTime(),
+      }));
 
-    // Dedup
-    const seen = new Map();
-    calls.forEach(c => seen.set(c.call_id, c));
-    calls = Array.from(seen.values());
+      // Dedup
+      const seen = new Map();
+      calls.forEach(c => seen.set(c.call_id, c));
+      calls = Array.from(seen.values());
 
-    // Sort cronológico para fadiga
-    calls.sort((a, b) => a.created_at - b.created_at);
+      // Sort cronológico para fadiga
+      calls.sort((a, b) => a.created_at - b.created_at);
 
-    // Mapear categorias e flags
-    calls.forEach(c => {
-      c.disconnection_category = mapDisconnectionCategory(c.disconnection_reason, c.Duracao);
-      c.is_hook = c.Duracao > 15 ? 1 : 0;
-      c.is_conversa = c.Duracao > 45 ? 1 : 0;
-      c.is_interesse = c.Duracao > 90 ? 1 : 0;
-    });
+      // Mapear categorias e flags
+      calls.forEach(c => {
+        c.disconnection_category = mapDisconnectionCategory(c.disconnection_reason, c.Duracao);
+        c.is_hook = c.Duracao > 15 ? 1 : 0;
+        c.is_conversa = c.Duracao > 45 ? 1 : 0;
+        c.is_interesse = c.Duracao > 90 ? 1 : 0;
+      });
 
-    // Fadiga por lead
-    const leadMap = new Map();
-    calls.forEach(c => {
-      if (!leadMap.has(c.to_number)) leadMap.set(c.to_number, []);
-      leadMap.get(c.to_number).push(c);
-    });
-    calls.forEach(c => {
-      const leadCalls = leadMap.get(c.to_number) || [];
-      const idx = leadCalls.indexOf(c);
-      const nAnteriores = idx;
-      const firstContact = leadCalls[0].created_at;
-      const horasDesdePrimeiro = (c.created_at - firstContact) / 3600000;
-      const lastContact = idx > 0 ? leadCalls[idx - 1].created_at : c.created_at;
-      const horasDesdeUltimo = (c.created_at - lastContact) / 3600000;
-      c.n_tentativas_anteriores = nAnteriores;
-      c.densidade_tentativas = nAnteriores / (horasDesdePrimeiro + 1);
-      c.pressao_recente = nAnteriores / (horasDesdeUltimo + 1);
-    });
+      // Fadiga por lead
+      const leadMap = new Map();
+      calls.forEach(c => {
+        if (!leadMap.has(c.to_number)) leadMap.set(c.to_number, []);
+        leadMap.get(c.to_number).push(c);
+      });
+      calls.forEach(c => {
+        const leadCalls = leadMap.get(c.to_number) || [];
+        const idx = leadCalls.indexOf(c);
+        const nAnteriores = idx;
+        const firstContact = leadCalls[0].created_at;
+        const horasDesdePrimeiro = (c.created_at - firstContact) / 3600000;
+        const lastContact = idx > 0 ? leadCalls[idx - 1].created_at : c.created_at;
+        const horasDesdeUltimo = (c.created_at - lastContact) / 3600000;
+        c.n_tentativas_anteriores = nAnteriores;
+        c.densidade_tentativas = nAnteriores / (horasDesdePrimeiro + 1);
+        c.pressao_recente = nAnteriores / (horasDesdeUltimo + 1);
+      });
 
-    // Sort descendente para retorno
-    calls.sort((a, b) => b.created_at - a.created_at);
+      // Sort descendente para retorno
+      calls.sort((a, b) => b.created_at - a.created_at);
 
-    cache.data = calls;
-    cache.timestamp = now;
-    console.log(`[Cache] Cache atualizado (${cacheKey}): ${calls.length} calls`);
+      cache.data = calls;
+      cache.timestamp = now;
+      console.log(`[Cache] Cache atualizado (${cacheKey}): ${calls.length} calls`);
     } finally {
       // Liberar o lock sempre
       resolveLock();

@@ -1356,13 +1356,11 @@ app.get('/api/call-status/:executionId', async (req, res) => {
           }
         } else {
           // Se ainda não temos o callId, lista as chamadas recentes para capturar a chamada iniciada
-          const listRes = await fetch('https://api.retellai.com/v2/list-calls', {
-            method: 'POST',
+          const listRes = await fetch('https://api.retellai.com/v2/list-calls?limit=10', {
+            method: 'GET',
             headers: {
-              'Authorization': `Bearer ${process.env.RETELL_API_KEY}`,
-              'Content-Type': 'application/json'
+              'Authorization': `Bearer ${process.env.RETELL_API_KEY}`
             },
-            body: JSON.stringify({ limit: 10 }),
             signal: AbortSignal.timeout(4000)
           });
           if (listRes.ok) {
