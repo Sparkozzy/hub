@@ -122,8 +122,29 @@ const handleRetellWebhook = async (req, res) => {
       if (reason !== '' || ['ended', 'completed', 'error'].includes(callStatus)) {
         isFinished = true;
         stage = 'COMPLETED';
-        stageLabel = 'Chamada Finalizada';
-      } else if (callStatus === 'registered') {
+        if (['user_declined', 'user-declined'].includes(reason)) {
+          stageLabel = 'Chamada Recusada pelo Lead (user_declined)';
+        } else if (['user_hangup', 'user-hangup'].includes(reason)) {
+          stageLabel = 'Finalizada pelo Lead (user_hangup)';
+        } else if (['agent_hangup', 'agent-hangup'].includes(reason)) {
+          stageLabel = 'Finalizada pelo Agente (agent_hangup)';
+        } else if (['voicemail_reached', 'voicemail'].includes(reason)) {
+          stageLabel = 'Caixa Postal Atingida (voicemail)';
+        } else if (['inactivity'].includes(reason)) {
+          stageLabel = 'Encerrada por Inatividade (inactivity)';
+        } else if (['dial_no_answer', 'no-answer', 'no_answer'].includes(reason)) {
+          stageLabel = 'Não Atendeu (no_answer)';
+        } else if (['dial_busy', 'busy'].includes(reason)) {
+          stageLabel = 'Linha Ocupada (busy)';
+        } else if (reason.includes('error') || reason === 'dial_failed' || callStatus === 'error') {
+          stageLabel = `Falha na Chamada (${reason || 'erro'})`;
+        } else {
+          stageLabel = reason ? `Chamada Encerrada (${reason})` : 'Chamada Finalizada';
+        }
+      } else if (['ongoing', 'in_progress', 'in-progress'].includes(callStatus)) {
+        stage = 'IN_PROGRESS';
+        stageLabel = 'Em Chamada ao Vivo';
+      } else if (['registered', 'ringing'].includes(callStatus)) {
         stage = 'RINGING';
         stageLabel = 'Discando / Tocando no telefone...';
       }
@@ -1273,9 +1294,9 @@ app.post('/api/submit-lead', submitLimiter, async (req, res) => {
   }
 });
 
-app.get('/api/call-status/:executionId', async (req, res) => {
+app.get(['/api/call-status/:executionId', '/api/call-status'], async (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
-  const { executionId } = req.params;
+  const executionId = req.params.executionId || req.query.execution_id || req.query.executionId;
 
   if (!executionId) {
     return res.status(400).json({ error: 'ID de execução inválido.' });

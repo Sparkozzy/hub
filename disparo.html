@@ -4097,16 +4097,23 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         }
 
         const call = data.call || data;
-        const status = (call.status || data.status || '').toLowerCase();
+        const status = (call.status || data.stage || data.status || '').toLowerCase();
+        const reason = (call.disconnection_reason || data.disconnection_reason || '').toLowerCase();
 
-        if (status.includes('fail') || status.includes('busy') || status.includes('no-answer') || status.includes('recusad') || status.includes('caixa') || status.includes('ended')) {
+        if (data.stageLabel) {
+          if (statusText) statusText.textContent = data.stageLabel;
+          if (liveStatusText) liveStatusText.textContent = data.stageLabel;
+        }
+
+        if (data.isFinished || status.includes('ended') || status.includes('completed') || status.includes('fail') || status.includes('busy') || status.includes('no-answer') || status.includes('recusad') || status.includes('caixa') || reason !== '') {
           if (statusDot) statusDot.className = 'live-modal-status-dot';
           if (livePulseDot) livePulseDot.className = 'dot dot-error';
           if (!data.stageLabel) {
-            if (statusText) statusText.textContent = 'Caixa Postal / Recusada';
-            if (liveStatusText) liveStatusText.textContent = 'Caixa Postal / Recusada';
+            const finalReasonText = reason ? `Chamada Encerrada (${reason})` : 'Chamada Finalizada';
+            if (statusText) statusText.textContent = finalReasonText;
+            if (liveStatusText) liveStatusText.textContent = finalReasonText;
           }
-        } else if (status.includes('in-progress') || status.includes('active') || status.includes('atendid') || status.includes('ao vivo')) {
+        } else if (status.includes('ongoing') || status.includes('in-progress') || status.includes('in_progress') || status.includes('active') || status.includes('atendid') || status.includes('ao vivo')) {
           if (statusDot) statusDot.className = 'live-modal-status-dot in-progress';
           if (livePulseDot) livePulseDot.className = 'dot dot-teal';
           if (!data.stageLabel) {
@@ -4116,6 +4123,10 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         } else {
           if (statusDot) statusDot.className = 'live-modal-status-dot ringing';
           if (livePulseDot) livePulseDot.className = 'dot dot-pending';
+          if (!data.stageLabel) {
+            if (statusText) statusText.textContent = 'Discando...';
+            if (liveStatusText) liveStatusText.textContent = 'Discando...';
+          }
         }
 
         // Transcrição / Mensagens
@@ -4213,12 +4224,15 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         clearInterval(livePollInterval);
         livePollInterval = setInterval(async () => {
           try {
-            const res = await fetch(`/api/call-status?execution_id=${realExecutionId}`);
+            let res = await fetch(`/api/call-status/${realExecutionId}`);
+            if (!res.ok) {
+              res = await fetch(`/api/call-status?execution_id=${realExecutionId}`);
+            }
             if (!res.ok) return;
             const data = await res.json();
             handleCallUpdate(data);
           } catch (_) {}
-        }, 2500);
+        }, 2000);
       };
 
       if (executionId) {
