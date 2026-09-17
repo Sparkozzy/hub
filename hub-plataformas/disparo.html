@@ -25,6 +25,7 @@
       --teal: #00B5A0;
       --blue2: #7B9AFF;
       --bg: #04060E;
+      --muted: #8E8FA2;
       /* Motion tokens — same duration & curve across panel + scroll + arrow */
       --motion-open-dur: 480ms;
       --motion-close-dur: 380ms;
@@ -2242,6 +2243,90 @@
         gap: 3px !important;
         padding: 0 4px !important;
       }
+    }
+
+    /* ── Live Call Monitor Frame (Inline) ── */
+      .live-call-frame {
+        margin-top: 24px;
+        background: rgba(13, 17, 34, 0.95);
+        border: 1px solid rgba(46, 79, 255, 0.35);
+        border-radius: 16px;
+        padding: 20px;
+        backdrop-filter: blur(12px);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4), inset 0 0 20px rgba(46, 79, 255, 0.08);
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        animation: fadeInSubtle 0.4s ease;
+      }
+      .live-call-frame.hidden { display: none !important; }
+      .live-frame-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding-bottom: 12px;
+      }
+      .live-title-badge {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 15px;
+        font-weight: 600;
+        color: #fff;
+      }
+      .live-timer-badge {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 13px;
+        font-weight: 600;
+        color: #00B5A0;
+        background: rgba(0, 181, 160, 0.12);
+        padding: 4px 10px;
+        border-radius: 20px;
+        border: 1px solid rgba(0, 181, 160, 0.25);
+      }
+      .live-status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        color: #7B9AFF;
+        background: rgba(46, 79, 255, 0.1);
+        padding: 4px 10px;
+        border-radius: 8px;
+      }
+      .live-transcript-box {
+        background: rgba(4, 6, 14, 0.75);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 12px;
+        padding: 14px;
+        max-height: 220px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        font-size: 13px;
+      }
+      .live-action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        background: linear-gradient(135deg, rgba(46, 79, 255, 0.25), rgba(0, 181, 160, 0.25));
+        border: 1px solid rgba(46, 79, 255, 0.4);
+        color: #fff;
+        padding: 10px 16px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .live-action-btn:hover {
+        background: linear-gradient(135deg, rgba(46, 79, 255, 0.4), rgba(0, 181, 160, 0.4));
+        border-color: #7B9AFF;
+      }
 
       /* ── Modal Ligação ao Vivo (Image 2 Replica) ── */
       .live-modal-overlay {
@@ -2488,6 +2573,7 @@
         height: 36px;
       }
 
+    @media (max-width: 600px) {
       .time-slot-custom .material-symbols-outlined {
         font-size: 13px !important;
       }
@@ -2959,7 +3045,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       </div>
 
       <!-- ── Live Call Frame ── -->
-      <div id="liveCallFrame" class="live-call-frame hidden">
+      <div id="liveCallFrame" class="live-call-frame hidden" style="display: none !important;">
         <div class="live-frame-header">
           <div class="live-title-badge">
             <span class="dot dot-pending" id="livePulseDot"></span>
@@ -3335,6 +3421,10 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       document.getElementById('btnLabel').textContent = isScheduled ? 'Agendando...' : 'Conectando...';
       setPill('dot-blue', isScheduled ? 'Agendando...' : 'Conectando...');
 
+      if (!isScheduled) {
+        startLiveCallTracking(null, payload.telefone, agentId, payload.from_number, payload.nome);
+      }
+
       fetch('/api/submit-lead', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -3352,8 +3442,8 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
             document.getElementById('btnIco').textContent = 'phone_in_talk';
             document.getElementById('btnLabel').textContent = 'Em Andamento';
             setPill('dot-blue', 'Ligação em andamento');
-            if (data && data.execution_id) {
-              startLiveCallTracking(data.execution_id, payload.telefone, agentId, payload.from_number, payload.nome);
+            if (data && data.execution_id && typeof updateLiveCallExecution === 'function') {
+              updateLiveCallExecution(data.execution_id);
             }
           }
           setTimeout(resetForm, isScheduled ? 4000 : 9000);
@@ -3826,21 +3916,24 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         return;
       }
 
-      const nome = document.getElementById('nome')?.value || document.getElementById('quickUserName')?.textContent || '';
-      const telefone = document.getElementById('telefone')?.value || '';
+      const nome = document.getElementById('nome')?.value || document.getElementById('quickUserName')?.textContent || 'Pedro Ernesto';
+      const telefoneRaw = document.getElementById('telefone')?.value || document.getElementById('quickUserPhone')?.textContent || '';
+      const telefone = (function(raw) {
+        let d = (raw || '').replace(/\D/g, '');
+        if (d.startsWith('5555')) d = d.slice(2);
+        if (!d) d = '5547991089099';
+        return (d.startsWith('55') && (d.length === 12 || d.length === 13)) ? '+' + d : '+55' + d;
+      })(telefoneRaw);
       const email = document.getElementById('email')?.value || '';
-
-      if (!telefone) {
-        document.getElementById('pillText').textContent = 'Cadastre seu telefone nas configurações';
-        document.getElementById('dot').className = 'dot dot-error';
-        return;
-      }
 
       const btn = this;
       btn.disabled = true;
-      btn.innerHTML = '<div class=\"spinner-css\"></div> Ligando...';
-      document.getElementById('pillText').textContent = 'Iniciando ligacao...';
+      btn.innerHTML = '<div class="spinner-css"></div> Ligando...';
+      document.getElementById('pillText').textContent = 'Iniciando ligação...';
       document.getElementById('dot').className = 'dot dot-pending';
+
+      // Abre o Modal em Tempo Real IMEDIATAMENTE ao clicar
+      startLiveCallTracking(null, telefone, document.getElementById('csQuickAgentText')?.textContent || agentId, document.getElementById('quickProviderVal')?.value || 'Auto', nome);
 
       try {
         const res = await fetch('/api/submit-lead', {
@@ -3848,11 +3941,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             nome: nome,
-            telefone: (function(raw) {
-              let d = (raw || '').replace(/\D/g, '');
-              if (d.startsWith('5555')) d = d.slice(2);
-              return (d.startsWith('55') && (d.length === 12 || d.length === 13)) ? '+' + d : '+55' + d;
-            })(telefone),
+            telefone: telefone,
             email: email,
             contexto: 'Disparo rapido - teste interno',
             agent_id: agentId,
@@ -3868,17 +3957,21 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           document.getElementById('pillText').textContent = 'Chamada iniciada!';
           document.getElementById('dot').className = 'dot dot-success';
           if (data && data.execution_id) {
-            startLiveCallTracking(data.execution_id, telefone, document.getElementById('csQuickAgentText')?.textContent || agentId, document.getElementById('quickProviderVal')?.value || 'Auto', nome);
+            updateLiveCallExecution(data.execution_id);
           }
         } else {
-          throw new Error(data.error || 'Erro');
+          throw new Error(data.error || 'Erro no disparo');
         }
       } catch (e) {
         document.getElementById('pillText').textContent = 'Erro: ' + e.message;
         document.getElementById('dot').className = 'dot dot-error';
+        const st = document.getElementById('liveModalStatusText');
+        const sd = document.getElementById('liveModalStatusDot');
+        if (st) st.textContent = 'Erro no disparo: ' + e.message;
+        if (sd) sd.className = 'live-modal-status-dot';
       }
       btn.disabled = false;
-      btn.innerHTML = '<span class=\"material-symbols-outlined\">phone_in_talk</span> Ligar pra mim';
+      btn.innerHTML = '<span class="material-symbols-outlined">phone_in_talk</span> Ligar pra mim';
     });
 
     /* ── Live Call Monitoring Engine (Image 2 Popup Modal) ── */
@@ -3895,6 +3988,11 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       if (liveTimerInterval) clearInterval(liveTimerInterval);
       const audio = document.getElementById('liveModalAudioElement');
       if (audio) audio.pause();
+      const frame = document.getElementById('liveCallFrame');
+      if (frame) {
+        frame.style.setProperty('display', 'none', 'important');
+        frame.classList.add('hidden');
+      }
     }
 
     function playLiveAudio() {
@@ -3915,6 +4013,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
 
       // 1. Reset Inline Frame (no card)
       if (frame) {
+        frame.style.setProperty('display', 'flex', 'important');
         frame.classList.remove('hidden');
         const livePulseDot = document.getElementById('livePulseDot');
         const liveStatusText = document.getElementById('liveStatusText');

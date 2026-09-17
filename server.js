@@ -270,6 +270,20 @@ app.get('/redefinir-senha', (req, res) => {
   res.sendFile(path.join(__dirname, 'redefinir-senha.html'));
 });
 
+// Páginas de apresentação e institucionais públicas
+app.get(['/apresentacao-institucional.html', '/apresentacao-institucional', '/apresentacao'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'apresentacao-institucional.html'));
+});
+
+app.get(['/apresentacao-institucional.pdf', '/apresentacao-pdf'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'apresentacao-institucional.pdf'));
+});
+
+app.get(['/demonstracao-atendimento.html', '/design-agent-ops.html', '/estrategia-mindflow.html', '/mindflow-design-system.html', '/mindflow-prototype.html', '/mindflow-site-institucional.html', '/raciocinio-design-mindflow.html', '/sistema-visual-mindflow.html', '/site-disparo.html', '/tavily-editorial.html'], (req, res) => {
+  const fileName = req.path.replace(/^\//, '');
+  res.sendFile(path.join(__dirname, fileName));
+});
+
 // Dev login — cria sessão sem senha (apenas em desenvolvimento)
 if (!IS_PRODUCTION) {
   app.get('/dev-login', async (req, res) => {

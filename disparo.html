@@ -25,6 +25,7 @@
       --teal: #00B5A0;
       --blue2: #7B9AFF;
       --bg: #04060E;
+      --muted: #8E8FA2;
       /* Motion tokens — same duration & curve across panel + scroll + arrow */
       --motion-open-dur: 480ms;
       --motion-close-dur: 380ms;
@@ -2242,8 +2243,9 @@
         gap: 3px !important;
         padding: 0 4px !important;
       }
+    }
 
-      /* ── Live Call Monitor Frame (Inline) ── */
+    /* ── Live Call Monitor Frame (Inline) ── */
       .live-call-frame {
         margin-top: 24px;
         background: rgba(13, 17, 34, 0.95);
@@ -2257,7 +2259,7 @@
         gap: 14px;
         animation: fadeInSubtle 0.4s ease;
       }
-      .live-call-frame.hidden { display: none; }
+      .live-call-frame.hidden { display: none !important; }
       .live-frame-header {
         display: flex;
         align-items: center;
@@ -2571,6 +2573,7 @@
         height: 36px;
       }
 
+    @media (max-width: 600px) {
       .time-slot-custom .material-symbols-outlined {
         font-size: 13px !important;
       }
@@ -3042,7 +3045,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       </div>
 
       <!-- ── Live Call Frame ── -->
-      <div id="liveCallFrame" class="live-call-frame hidden">
+      <div id="liveCallFrame" class="live-call-frame hidden" style="display: none !important;">
         <div class="live-frame-header">
           <div class="live-title-badge">
             <span class="dot dot-pending" id="livePulseDot"></span>
@@ -3985,6 +3988,11 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       if (liveTimerInterval) clearInterval(liveTimerInterval);
       const audio = document.getElementById('liveModalAudioElement');
       if (audio) audio.pause();
+      const frame = document.getElementById('liveCallFrame');
+      if (frame) {
+        frame.style.setProperty('display', 'none', 'important');
+        frame.classList.add('hidden');
+      }
     }
 
     function playLiveAudio() {
@@ -4005,6 +4013,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
 
       // 1. Reset Inline Frame (no card)
       if (frame) {
+        frame.style.setProperty('display', 'flex', 'important');
         frame.classList.remove('hidden');
         const livePulseDot = document.getElementById('livePulseDot');
         const liveStatusText = document.getElementById('liveStatusText');
