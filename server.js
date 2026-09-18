@@ -1401,11 +1401,17 @@ app.get(['/api/call-status/:executionId', '/api/call-status'], async (req, res) 
           if (listRes.ok) {
             const listCalls = await listRes.json();
             if (Array.isArray(listCalls) && listCalls.length > 0) {
-              // Filha e ordena da mais recente para a mais antiga
+              const getCallMs = (c) => {
+                if (typeof c.start_timestamp === 'number') return c.start_timestamp;
+                if (c.start_timestamp) return new Date(c.start_timestamp).getTime() || 0;
+                if (c.created_at) return new Date(c.created_at).getTime() || 0;
+                return 0;
+              };
+
               const validCalls = listCalls.filter(c => {
-                const callTime = c.start_timestamp ? new Date(c.start_timestamp).getTime() : 0;
-                return callTime >= minStartTime;
-              }).sort((a, b) => (b.start_timestamp || 0) - (a.start_timestamp || 0));
+                const callTime = getCallMs(c);
+                return callTime >= minStartTime || callTime === 0;
+              }).sort((a, b) => getCallMs(b) - getCallMs(a));
 
               // 1. Procura primeiro qualquer chamada com status 'ongoing' ou 'registered'
               let rCall = validCalls.find(c => ['ongoing', 'registered', 'in_progress', 'in-progress'].includes(String(c.call_status || '').toLowerCase()));
@@ -1424,6 +1430,7 @@ app.get(['/api/call-status/:executionId', '/api/call-status'], async (req, res) 
 
               if (rCall) {
                 callId = rCall.call_id;
+                callToExecutionMap.set(rCall.call_id, executionId);
                 let tObj = rCall.transcript_object || rCall.transcript_with_tool_calls || null;
                 if (Array.isArray(tObj) && tObj.length === 0) tObj = null;
 

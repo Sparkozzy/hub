@@ -4130,12 +4130,16 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         }
 
         // Transcrição / Mensagens
-        if (call.transcript_object && Array.isArray(call.transcript_object) && call.transcript_object.length > 0) {
-          renderModalMessages(call.transcript_object);
-          renderTranscriptBubbles(call.transcript_object);
-        } else if (call.transcript) {
-          if (messagesBox) messagesBox.innerHTML = `<div class="chat-bubble agent">${escHtml(call.transcript)}</div>`;
-          if (liveTranscriptBox) liveTranscriptBox.innerHTML = `<div class="chat-bubble agent">${escHtml(call.transcript)}</div>`;
+        const tObj = call.transcript_object || data.transcript_object;
+        const tText = call.transcript || data.transcript;
+        if (tObj && Array.isArray(tObj) && tObj.length > 0) {
+          renderModalMessages(tObj);
+          renderTranscriptBubbles(tObj);
+        } else if (tText) {
+          const mBox = document.getElementById('liveModalMessages');
+          const tBox = document.getElementById('liveTranscriptBox');
+          if (mBox) mBox.innerHTML = `<div style="color:#fff; font-size:13px; line-height:1.5; padding:8px; background:rgba(255,255,255,0.05); border-radius:8px;">${escHtml(tText)}</div>`;
+          if (tBox) tBox.innerHTML = `<div style="color:#fff; font-size:13px; line-height:1.5; padding:8px; background:rgba(255,255,255,0.05); border-radius:8px;">${escHtml(tText)}</div>`;
         }
 
         // Áudio / Gravação
@@ -4149,7 +4153,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           if (liveActionArea) liveActionArea.style.display = 'block';
         }
 
-        if (data.isFinished || status.includes('ended') || status.includes('completed')) {
+        if (data.isFinished || status.includes('ended') || status.includes('completed') || status.includes('hangup') || status.includes('declined') || status.includes('no-answer') || reason !== '') {
           clearInterval(liveTimerInterval);
           if (liveSseSource) liveSseSource.close();
           if (livePollInterval) clearInterval(livePollInterval);
@@ -4170,8 +4174,9 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       }
 
       function renderModalMessages(items) {
-        if (!messagesBox || !Array.isArray(items) || items.length === 0) return;
-        messagesBox.innerHTML = items.map(item => {
+        const box = document.getElementById('liveModalMessages');
+        if (!box || !Array.isArray(items) || items.length === 0) return;
+        box.innerHTML = items.map(item => {
           const role = (item.role || 'agent').toLowerCase();
           const cls = role === 'user' ? 'user' : 'agent';
           const label = role === 'user' ? 'LEAD' : 'AGENTE';
@@ -4194,7 +4199,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
               </div>`;
           }
         }).join('');
-        messagesBox.scrollTop = messagesBox.scrollHeight;
+        box.scrollTop = box.scrollHeight;
       }
 
       window.updateLiveCallExecution = function(realExecutionId) {
