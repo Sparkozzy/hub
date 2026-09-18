@@ -2255,19 +2255,29 @@
       }
     }
 
-    /* ── Live Call Monitor Frame (Inline) ── */
+    /* ── Live Call Monitor Frame (Inline Redesign) ── */
       .live-call-frame {
         margin-top: 24px;
-        background: rgba(13, 17, 34, 0.95);
-        border: 1px solid rgba(46, 79, 255, 0.35);
+        background: rgba(8, 14, 28, 0.85);
+        border: 1px solid rgba(0, 181, 160, 0.3);
         border-radius: 16px;
         padding: 20px;
-        backdrop-filter: blur(12px);
-        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4), inset 0 0 20px rgba(46, 79, 255, 0.08);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4), 0 0 24px rgba(0, 181, 160, 0.08);
         display: flex;
         flex-direction: column;
         gap: 14px;
         animation: fadeInSubtle 0.4s ease;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      }
+      .live-call-frame.status-ended {
+        border-color: rgba(239, 68, 68, 0.3);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4), 0 0 24px rgba(239, 68, 68, 0.08);
+      }
+      .live-call-frame.status-warning {
+        border-color: rgba(245, 158, 11, 0.3);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4), 0 0 24px rgba(245, 158, 11, 0.08);
       }
       .live-call-frame.hidden { display: none !important; }
       .live-frame-header {
@@ -2283,7 +2293,7 @@
         gap: 8px;
         font-family: 'Space Grotesk', sans-serif;
         font-size: 15px;
-        font-weight: 600;
+        font-weight: 700;
         color: #fff;
       }
       .live-timer-badge {
@@ -2292,50 +2302,96 @@
         font-weight: 600;
         color: #00B5A0;
         background: rgba(0, 181, 160, 0.12);
-        padding: 4px 10px;
+        padding: 4px 12px;
         border-radius: 20px;
         border: 1px solid rgba(0, 181, 160, 0.25);
+        transition: all 0.3s ease;
+      }
+      .live-call-frame.status-ended .live-timer-badge {
+        color: #EF4444;
+        background: rgba(239, 68, 68, 0.12);
+        border-color: rgba(239, 68, 68, 0.25);
+      }
+      .live-call-frame.status-warning .live-timer-badge {
+        color: #F59E0B;
+        background: rgba(245, 158, 11, 0.12);
+        border-color: rgba(245, 158, 11, 0.25);
       }
       .live-status-pill {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        font-size: 12px;
-        font-weight: 500;
-        color: #7B9AFF;
-        background: rgba(46, 79, 255, 0.1);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        color: #00B5A0;
+        background: rgba(0, 181, 160, 0.12);
         padding: 4px 10px;
         border-radius: 8px;
+        border: 1px solid rgba(0, 181, 160, 0.25);
+        transition: all 0.3s ease;
+      }
+      .live-status-pill.ended {
+        color: #EF4444;
+        background: rgba(239, 68, 68, 0.12);
+        border-color: rgba(239, 68, 68, 0.25);
+      }
+      .live-status-pill.warning {
+        color: #F59E0B;
+        background: rgba(245, 158, 11, 0.12);
+        border-color: rgba(245, 158, 11, 0.25);
       }
       .live-transcript-box {
-        background: rgba(4, 6, 14, 0.75);
+        background: rgba(4, 6, 14, 0.65);
         border: 1px solid rgba(255, 255, 255, 0.06);
         border-radius: 12px;
         padding: 14px;
-        max-height: 220px;
+        max-height: 240px;
         overflow-y: auto;
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 8px;
         font-size: 13px;
+      }
+      .live-action-bar {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 4px;
       }
       .live-action-btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 8px;
-        background: linear-gradient(135deg, rgba(46, 79, 255, 0.25), rgba(0, 181, 160, 0.25));
-        border: 1px solid rgba(46, 79, 255, 0.4);
+        gap: 6px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
         color: #fff;
-        padding: 10px 16px;
+        padding: 8px 14px;
         border-radius: 10px;
         text-decoration: none;
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
       }
       .live-action-btn:hover {
-        background: linear-gradient(135deg, rgba(46, 79, 255, 0.4), rgba(0, 181, 160, 0.4));
-        border-color: #7B9AFF;
+        background: rgba(0, 181, 160, 0.2);
+        border-color: rgba(0, 181, 160, 0.4);
+        color: #00B5A0;
+      }
+      .live-action-btn.primary {
+        background: linear-gradient(135deg, rgba(0, 181, 160, 0.25), rgba(46, 79, 255, 0.25));
+        border: 1px solid rgba(0, 181, 160, 0.4);
+        color: #fff;
+      }
+      .live-action-btn.primary:hover {
+        background: linear-gradient(135deg, rgba(0, 181, 160, 0.4), rgba(46, 79, 255, 0.4));
+        border-color: #00B5A0;
+        box-shadow: 0 0 16px rgba(0, 181, 160, 0.3);
       }
 
       /* ── Modal Ligação ao Vivo (Image 2 Replica) ── */
@@ -3202,29 +3258,35 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         </div>
       </div>
 
-      <!-- ── Live Call Frame ── -->
+      <!-- ── Live Call Frame (Inline Redesign) ── -->
       <div id="liveCallFrame" class="live-call-frame hidden" style="display: none !important;">
         <div class="live-frame-header">
           <div class="live-title-badge">
             <span class="dot dot-pending" id="livePulseDot"></span>
-            <span>Acompanhamento ao Vivo</span>
+            <span id="liveFrameTitleText">Acompanhamento ao Vivo</span>
           </div>
           <div class="live-timer-badge" id="liveTimerText">00:00</div>
         </div>
 
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
           <div class="live-status-pill" id="liveStatusText">Conectando...</div>
-          <div style="font-size:12px;color:var(--muted);" id="liveMetaText">-</div>
+          <div style="font-size:12px;color:var(--muted);font-weight:500;" id="liveMetaText">-</div>
         </div>
 
         <div class="live-transcript-box" id="liveTranscriptBox">
           <div style="color:var(--muted);font-size:12px;text-align:center;padding:12px;">Aguardando áudio e transcrição...</div>
         </div>
 
-        <div id="liveActionArea" style="display:none;text-align:right;">
-          <a id="liveLogLink" href="#" target="_blank" class="live-action-btn">
-            <span class="material-symbols-outlined">graphic_eq</span> Ouvir Áudio / Log Completo
+        <div id="liveActionArea" class="live-action-bar" style="display:none;">
+          <button type="button" class="live-action-btn primary" onclick="playLiveAudioFromFrame()" id="btnFrameAudio">
+            <span class="material-symbols-outlined">headphones</span> Ouvir Gravação
+          </button>
+          <a id="liveLogLink" href="/dashboard#audit" target="_blank" class="live-action-btn">
+            <span class="material-symbols-outlined">open_in_new</span> Log Completo
           </a>
+          <button type="button" class="live-action-btn" onclick="expandLiveModal()">
+            <span class="material-symbols-outlined">open_in_full</span> Expandir Modal
+          </button>
         </div>
       </div>
 
@@ -4195,6 +4257,10 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       }
     }
 
+    function playLiveAudioFromFrame() {
+      playLiveAudio();
+    }
+
     function startLiveCallTracking(executionId, telefone, agentName, provider, leadName) {
       const modal = document.getElementById('liveCallModal');
       const frame = document.getElementById('liveCallFrame');
@@ -4203,7 +4269,8 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       // 1. Reset Inline Frame (no card)
       if (frame) {
         frame.style.setProperty('display', 'flex', 'important');
-        frame.classList.remove('hidden');
+        frame.classList.remove('hidden', 'status-ended', 'status-warning');
+        const liveFrameTitleText = document.getElementById('liveFrameTitleText');
         const livePulseDot = document.getElementById('livePulseDot');
         const liveStatusText = document.getElementById('liveStatusText');
         const liveTimerText = document.getElementById('liveTimerText');
@@ -4211,8 +4278,12 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         const liveTranscriptBox = document.getElementById('liveTranscriptBox');
         const liveActionArea = document.getElementById('liveActionArea');
 
+        if (liveFrameTitleText) liveFrameTitleText.textContent = 'Acompanhamento ao Vivo';
         if (livePulseDot) livePulseDot.className = 'dot dot-pending';
-        if (liveStatusText) liveStatusText.textContent = 'Discando...';
+        if (liveStatusText) {
+          liveStatusText.textContent = 'Discando...';
+          liveStatusText.className = 'live-status-pill warning';
+        }
         if (liveTimerText) liveTimerText.textContent = '00:00';
         if (liveMetaText) liveMetaText.textContent = `${telefone || ''} · ${agentName || 'Agente'}`;
         if (liveTranscriptBox) liveTranscriptBox.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:12px;">Chamada iniciada. Aguardando atendimento...</div>';
@@ -4283,6 +4354,8 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       function handleCallUpdate(data) {
         if (!data) return;
 
+        const liveFrameTitleText = document.getElementById('liveFrameTitleText');
+        const frame = document.getElementById('liveCallFrame');
         const liveStatusText = document.getElementById('liveStatusText');
         const statusText = document.getElementById('liveModalStatusText');
         const statusDot = document.getElementById('liveModalStatusDot');
@@ -4292,6 +4365,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         const audioWrap = document.getElementById('liveModalAudioWrap');
         const audioElement = document.getElementById('liveModalAudioElement');
         const btnLiveAudio = document.getElementById('btnLiveAudio');
+        const btnFrameAudio = document.getElementById('btnFrameAudio');
         const liveActionArea = document.getElementById('liveActionArea');
         const liveLogLink = document.getElementById('liveLogLink');
 
@@ -4332,14 +4406,30 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
             if (livePulseDot) livePulseDot.className = 'dot dot-pending';
             const finalLabel = data.stageLabel || (reason ? `Erro (${reason})` : 'Erro Técnico');
             if (statusText) statusText.textContent = finalLabel;
-            if (liveStatusText) liveStatusText.textContent = finalLabel;
+            if (liveStatusText) {
+              liveStatusText.textContent = finalLabel;
+              liveStatusText.className = 'live-status-pill warning';
+            }
+            if (liveFrameTitleText) liveFrameTitleText.textContent = 'Resumo da Chamada';
+            if (frame) {
+              frame.classList.remove('status-ended');
+              frame.classList.add('status-warning');
+            }
             syncMiniDockStatus('status-warning', 'live-modal-status-dot ringing');
           } else {
             if (statusDot) statusDot.className = 'live-modal-status-dot';
             if (livePulseDot) livePulseDot.className = 'dot dot-error';
             const finalLabel = data.stageLabel || (reason ? `Chamada Encerrada (${reason})` : 'Chamada Finalizada');
             if (statusText) statusText.textContent = finalLabel;
-            if (liveStatusText) liveStatusText.textContent = finalLabel;
+            if (liveStatusText) {
+              liveStatusText.textContent = finalLabel;
+              liveStatusText.className = 'live-status-pill ended';
+            }
+            if (liveFrameTitleText) liveFrameTitleText.textContent = 'Resumo da Chamada';
+            if (frame) {
+              frame.classList.remove('status-warning');
+              frame.classList.add('status-ended');
+            }
             syncMiniDockStatus('status-ended', 'live-modal-status-dot');
           }
         } else if (status.includes('ongoing') || status.includes('in-progress') || status.includes('in_progress') || status.includes('active') || status.includes('atendid') || status.includes('ao vivo')) {
@@ -4347,7 +4437,12 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           if (livePulseDot) livePulseDot.className = 'dot dot-teal';
           const ongoingLabel = data.stageLabel || 'Em Chamada ao Vivo';
           if (statusText) statusText.textContent = ongoingLabel;
-          if (liveStatusText) liveStatusText.textContent = ongoingLabel;
+          if (liveStatusText) {
+            liveStatusText.textContent = ongoingLabel;
+            liveStatusText.className = 'live-status-pill';
+          }
+          if (liveFrameTitleText) liveFrameTitleText.textContent = 'Acompanhamento ao Vivo';
+          if (frame) frame.classList.remove('status-ended', 'status-warning');
 
           // Sincroniza Mini Dock com status Verde (ongoing)
           syncMiniDockStatus('status-ongoing', 'live-modal-status-dot in-progress');
@@ -4374,7 +4469,15 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           if (livePulseDot) livePulseDot.className = 'dot dot-pending';
           const ringLabel = data.stageLabel || 'Discando...';
           if (statusText) statusText.textContent = ringLabel;
-          if (liveStatusText) liveStatusText.textContent = ringLabel;
+          if (liveStatusText) {
+            liveStatusText.textContent = ringLabel;
+            liveStatusText.className = 'live-status-pill warning';
+          }
+          if (liveFrameTitleText) liveFrameTitleText.textContent = 'Acompanhamento ao Vivo';
+          if (frame) {
+            frame.classList.remove('status-ended');
+            frame.classList.add('status-warning');
+          }
           syncMiniDockStatus('status-warning', 'live-modal-status-dot ringing');
         }
 
@@ -4406,13 +4509,19 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
             audioElement.src = recUrl;
           }
           if (audioWrap) audioWrap.style.display = 'flex';
-          if (liveLogLink) liveLogLink.href = recUrl;
-          if (liveActionArea) liveActionArea.style.display = 'block';
+          if (liveLogLink) liveLogLink.href = `/dashboard#audit`;
+          if (liveActionArea) liveActionArea.style.display = 'flex';
           if (btnLiveAudio) {
             btnLiveAudio.disabled = false;
             btnLiveAudio.style.opacity = '1';
             btnLiveAudio.style.cursor = 'pointer';
             btnLiveAudio.innerHTML = '<span class="material-symbols-outlined">headphones</span> Ouvir Gravação';
+          }
+          if (btnFrameAudio) {
+            btnFrameAudio.disabled = false;
+            btnFrameAudio.style.opacity = '1';
+            btnFrameAudio.style.cursor = 'pointer';
+            btnFrameAudio.innerHTML = '<span class="material-symbols-outlined">headphones</span> Ouvir Gravação';
           }
         } else {
           if (audioWrap) audioWrap.style.display = 'none';
@@ -4421,6 +4530,12 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
             btnLiveAudio.style.opacity = '0.5';
             btnLiveAudio.style.cursor = 'not-allowed';
             btnLiveAudio.innerHTML = '<span class="material-symbols-outlined">hourglass_empty</span> Processando Áudio...';
+          }
+          if (btnFrameAudio) {
+            btnFrameAudio.disabled = true;
+            btnFrameAudio.style.opacity = '0.5';
+            btnFrameAudio.style.cursor = 'not-allowed';
+            btnFrameAudio.innerHTML = '<span class="material-symbols-outlined">hourglass_empty</span> Processando Áudio...';
           }
         }
 
@@ -4436,9 +4551,28 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         if (!box || !Array.isArray(items) || items.length === 0) return;
         box.innerHTML = items.map(item => {
           const role = (item.role || 'agent').toLowerCase();
-          const cls = role === 'user' ? 'user' : 'agent';
-          const label = role === 'user' ? 'LEAD' : 'AGENTE';
-          return `<div class="chat-bubble ${cls}"><strong>${label}:</strong> ${escHtml(item.content || item.message || '')}</div>`;
+          const text = escHtml(item.content || item.message || '');
+          if (role === 'user') {
+            return `
+              <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px; margin-bottom:6px;">
+                <span style="font-size:9px; font-weight:700; color:#8E8FA2; letter-spacing:0.05em; display:flex; align-items:center; gap:3px;">
+                  LEAD <span class="material-symbols-outlined" style="font-size:11px;">person</span>
+                </span>
+                <div style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:10px 10px 2px 10px; padding:7px 11px; color:#fff; font-size:12px; max-width:90%;">
+                  ${text}
+                </div>
+              </div>`;
+          } else {
+            return `
+              <div style="display:flex; flex-direction:column; align-items:flex-start; gap:2px; margin-bottom:6px;">
+                <span style="font-size:9px; font-weight:700; color:#00B5A0; letter-spacing:0.05em; display:flex; align-items:center; gap:3px;">
+                  <span class="material-symbols-outlined" style="font-size:11px;">smart_toy</span> AGENTE
+                </span>
+                <div style="background:rgba(0,181,160,0.12); border:1px solid rgba(0,181,160,0.25); border-radius:10px 10px 10px 2px; padding:7px 11px; color:#fff; font-size:12px; max-width:90%;">
+                  ${text}
+                </div>
+              </div>`;
+          }
         }).join('');
         box.scrollTop = box.scrollHeight;
       }
