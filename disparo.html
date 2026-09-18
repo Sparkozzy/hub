@@ -352,15 +352,28 @@
       font-size: 14px;
     }
 
+    .ps3-carousel-footer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      width: 100%;
+      margin-top: 4px;
+    }
+
     .ps3-carousel-counter {
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
       font-family: 'Space Grotesk', sans-serif;
       font-size: 10px;
       font-weight: 600;
-      color: #4D5570;
-      background: rgba(255, 255, 255, 0.03);
-      padding: 3px 8px;
+      color: rgba(255, 255, 255, 0.6);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 3px 9px;
       border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       letter-spacing: 0.04em;
     }
 
@@ -3694,13 +3707,10 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
               </div>
             </div>
 
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span class="ps3-carousel-counter" id="ps3CarouselCounter">1 / 8</span>
-              <button type="button" class="group-manage-btn" onclick="openGroupManagerModal()" title="Gerenciar Contatos e Grupos">
-                <span class="material-symbols-outlined" style="font-size: 15px;">person_add</span>
-                <span>Gerenciar</span>
-              </button>
-            </div>
+            <button type="button" class="group-manage-btn" onclick="openGroupManagerModal()" title="Gerenciar Contatos e Grupos">
+              <span class="material-symbols-outlined" style="font-size: 15px;">person_add</span>
+              <span>Gerenciar</span>
+            </button>
           </div>
 
           <div class="ps3-carousel-viewport">
@@ -3717,7 +3727,10 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
             </button>
           </div>
 
-          <div class="ps3-carousel-dots" id="ps3CarouselDots"></div>
+          <div class="ps3-carousel-footer">
+            <div class="ps3-carousel-dots" id="ps3CarouselDots"></div>
+            <span class="ps3-carousel-counter" id="ps3CarouselCounter">1 / 8</span>
+          </div>
         </div>
         <div class="field">
           <label for="quickAgentSelect">Conta / Agente Padrão</label>
