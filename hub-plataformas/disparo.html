@@ -300,6 +300,16 @@
       pointer-events: auto;
       transform: translateY(0) translateZ(0);
     }
+    /* Scrollbars Escuros e Minimalistas Globais */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+    }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+
     .custom-select-dropdown::-webkit-scrollbar { width: 4px; }
     .custom-select-dropdown::-webkit-scrollbar-track { background: transparent; }
     .custom-select-dropdown::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 2px; }
@@ -2535,7 +2545,14 @@
         display: flex;
         flex-direction: column;
         gap: 8px;
+        padding-right: 4px;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
       }
+      .live-dialog-messages::-webkit-scrollbar { width: 4px; }
+      .live-dialog-messages::-webkit-scrollbar-track { background: transparent; }
+      .live-dialog-messages::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 2px; }
+      .live-dialog-messages::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
       .live-chat-bubble {
         background: rgba(255, 255, 255, 0.08);
         border-radius: 10px;
