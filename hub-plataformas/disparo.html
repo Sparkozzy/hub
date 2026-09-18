@@ -3979,6 +3979,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
     let liveSseSource = null;
     let livePollInterval = null;
     let liveSeconds = 0;
+    let liveTimerStarted = false;
 
     function closeLiveModal() {
       const modal = document.getElementById('liveCallModal');
@@ -4071,18 +4072,15 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         if (btnTranscript) btnTranscript.href = `/dashboard#audit`;
       }
 
-      // Timer
+      // Timer - Aguarda atendimento para iniciar contagem
       liveSeconds = 0;
+      liveTimerStarted = false;
       clearInterval(liveTimerInterval);
-      liveTimerInterval = setInterval(() => {
-        liveSeconds++;
-        const m = String(Math.floor(liveSeconds / 60)).padStart(2, '0');
-        const s = String(liveSeconds % 60).padStart(2, '0');
-        const timerText = document.getElementById('liveModalTimer');
-        if (timerText) timerText.textContent = `${m}:${s}`;
-        const liveTimerText = document.getElementById('liveTimerText');
-        if (liveTimerText) liveTimerText.textContent = `${m}:${s}`;
-      }, 1000);
+      liveTimerInterval = null;
+      const tTextEl = document.getElementById('liveModalTimer');
+      if (tTextEl) tTextEl.textContent = '00:00';
+      const lTextEl = document.getElementById('liveTimerText');
+      if (lTextEl) lTextEl.textContent = '00:00';
 
       // Handler para dados de chamada recebidos (SSE ou Polling)
       function handleCallUpdate(data) {
@@ -4116,6 +4114,17 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
             clearInterval(liveTimerInterval);
             liveTimerInterval = null;
           }
+          if (call && (call.Duracao || call.duration_ms)) {
+            const durSec = Math.round(call.Duracao || (call.duration_ms / 1000));
+            if (durSec > 0) {
+              const m = String(Math.floor(durSec / 60)).padStart(2, '0');
+              const s = String(durSec % 60).padStart(2, '0');
+              const tTextEl = document.getElementById('liveModalTimer');
+              if (tTextEl) tTextEl.textContent = `${m}:${s}`;
+              const lTextEl = document.getElementById('liveTimerText');
+              if (lTextEl) lTextEl.textContent = `${m}:${s}`;
+            }
+          }
           if (statusDot) statusDot.className = 'live-modal-status-dot';
           if (livePulseDot) livePulseDot.className = 'dot dot-error';
           const finalLabel = data.stageLabel || (reason ? `Chamada Encerrada (${reason})` : 'Chamada Finalizada');
@@ -4127,6 +4136,22 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           const ongoingLabel = data.stageLabel || 'Em Chamada ao Vivo';
           if (statusText) statusText.textContent = ongoingLabel;
           if (liveStatusText) liveStatusText.textContent = ongoingLabel;
+
+          // INICIA O TIMER SOMENTE QUANDO A LIGAÇÃO É ATENDIDA!
+          if (!liveTimerStarted) {
+            liveTimerStarted = true;
+            liveSeconds = 0;
+            clearInterval(liveTimerInterval);
+            liveTimerInterval = setInterval(() => {
+              liveSeconds++;
+              const m = String(Math.floor(liveSeconds / 60)).padStart(2, '0');
+              const s = String(liveSeconds % 60).padStart(2, '0');
+              const timerTextEl = document.getElementById('liveModalTimer');
+              if (timerTextEl) timerTextEl.textContent = `${m}:${s}`;
+              const liveTimerTextEl = document.getElementById('liveTimerText');
+              if (liveTimerTextEl) liveTimerTextEl.textContent = `${m}:${s}`;
+            }, 1000);
+          }
         } else {
           if (statusDot) statusDot.className = 'live-modal-status-dot ringing';
           if (livePulseDot) livePulseDot.className = 'dot dot-pending';
