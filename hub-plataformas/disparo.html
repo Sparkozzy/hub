@@ -5077,72 +5077,16 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
     }
   </script>
   <script>
-    /* ── PS3 XMB Contacts Carousel Engine ── */
+    /* ── PS3 XMB Contacts Carousel Engine (Minimalist) ── */
     let teamContacts = [
-      {
-        id: 'pedro',
-        name: 'Pedro Ernesto',
-        role: 'Diretoria Executiva · MindFlow',
-        phone: '5547991089099',
-        avatar: 'PE',
-        badgeColor: '#00B5A0'
-      },
-      {
-        id: 'renato',
-        name: 'Renato Paranhos',
-        role: 'Executivo & Co-Founder',
-        phone: '5547996070809',
-        avatar: 'RP',
-        badgeColor: '#7B9AFF'
-      },
-      {
-        id: 'ryan',
-        name: 'Ryan Ferrari',
-        role: 'Tech & Engenharia IA',
-        phone: '5547997080910',
-        avatar: 'RF',
-        badgeColor: '#A855F7'
-      },
-      {
-        id: 'ivan',
-        name: 'Ivan Iatize',
-        role: 'Operações de IA',
-        phone: '5547993040506',
-        avatar: 'II',
-        badgeColor: '#3B82F6'
-      },
-      {
-        id: 'mariah',
-        name: 'Mariah Leal',
-        role: 'Relacionamento & Ops',
-        phone: '5547995060708',
-        avatar: 'ML',
-        badgeColor: '#EC4899'
-      },
-      {
-        id: 'haynile',
-        name: 'Haynile Couto',
-        role: 'Gestão & Administração',
-        phone: '5547992010203',
-        avatar: 'HC',
-        badgeColor: '#10B981'
-      },
-      {
-        id: 'lucas',
-        name: 'Lucas Albert',
-        role: 'Engenharia & Dev',
-        phone: '5547994050607',
-        avatar: 'LA',
-        badgeColor: '#F59E0B'
-      },
-      {
-        id: 'wandrey',
-        name: 'Wandrey Oliveira',
-        role: 'Engenharia de Automação',
-        phone: '5547998091011',
-        avatar: 'WO',
-        badgeColor: '#6366F1'
-      }
+      { id: 'pedro', name: 'Pedro Ernesto', phone: '5547991089099', avatar: 'PE', badgeColor: '#00B5A0' },
+      { id: 'renato', name: 'Renato Paranhos', phone: '5547996070809', avatar: 'RP', badgeColor: '#7B9AFF' },
+      { id: 'ryan', name: 'Ryan Ferrari', phone: '5547997080910', avatar: 'RF', badgeColor: '#A855F7' },
+      { id: 'ivan', name: 'Ivan Iatize', phone: '5547993040506', avatar: 'II', badgeColor: '#3B82F6' },
+      { id: 'mariah', name: 'Mariah Leal', phone: '5547995060708', avatar: 'ML', badgeColor: '#EC4899' },
+      { id: 'haynile', name: 'Haynile Couto', phone: '5547992010203', avatar: 'HC', badgeColor: '#10B981' },
+      { id: 'lucas', name: 'Lucas Albert', phone: '5547994050607', avatar: 'LA', badgeColor: '#F59E0B' },
+      { id: 'wandrey', name: 'Wandrey Oliveira', phone: '5547998091011', avatar: 'WO', badgeColor: '#6366F1' }
     ];
 
     let currentPs3Index = 0;
@@ -5159,8 +5103,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           </div>
           <div class="ps3-info">
             <span class="ps3-name">${escHtml(c.name)}</span>
-            <span class="ps3-role" style="color:${c.badgeColor}">${escHtml(c.role)}</span>
-            <span class="ps3-phone">+${escHtml(c.phone)}</span>
+            <span class="ps3-phone">${escHtml(c.phone)}</span>
           </div>
         </div>
       `).join('');
