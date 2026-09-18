@@ -1025,6 +1025,7 @@
     function v13Cycle() { const si = Math.floor(Math.random() * V13_VERTICES.length), np = genPath(si); V13_IDS.forEach(id => { const el = document.getElementById(id); if (!el) return; el.setAttribute('d', np); const cls = el.className.baseVal.trim().split(/\s+/)[0]; el.classList.remove(cls); void el.getBoundingClientRect(); el.classList.add(cls); }); }
     v13Cycle(); setInterval(v13Cycle, 8000);
   </script>
+  <script src="/mindflow-dock.js"></script>
 </body>
 
 </html>

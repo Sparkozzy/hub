@@ -2817,6 +2817,7 @@
         border-radius: 20px;
         border: 1px solid rgba(0, 181, 160, 0.25);
         transition: all 0.3s ease;
+        margin-left: 14px;
       }
       .live-call-frame.status-ended .live-timer-badge {
         color: #EF4444;
@@ -2868,12 +2869,16 @@
       .live-action-bar {
         display: flex;
         align-items: center;
-        justify-content: flex-end;
+        justify-content: flex-start;
         gap: 10px;
         flex-wrap: wrap;
-        margin-top: 4px;
+        margin-top: 14px;
+        width: 100%;
       }
       .live-action-btn {
+        flex: 1;
+        min-width: 120px;
+        height: 38px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -2881,13 +2886,17 @@
         background: rgba(255, 255, 255, 0.06);
         border: 1px solid rgba(255, 255, 255, 0.12);
         color: #fff;
-        padding: 8px 14px;
+        padding: 0 14px;
         border-radius: 10px;
         text-decoration: none;
+        font-family: 'Space Grotesk', sans-serif;
         font-size: 12px;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.2s ease;
+        box-sizing: border-box;
+        line-height: 1;
+        text-align: center;
       }
       .live-action-btn:hover {
         background: rgba(0, 181, 160, 0.2);
@@ -3012,40 +3021,52 @@
         letter-spacing: 0;
       }
 
-      /* ── Frame Top Action Buttons ── */
+      /* ── Frame & Modal Top Action Buttons ── */
       .live-frame-top-actions {
         display: flex;
         align-items: center;
         gap: 6px;
       }
-      .live-frame-top-btn {
+      .live-frame-top-btn, .live-modal-top-btn {
         width: 30px;
         height: 30px;
         border-radius: 50%;
         background: rgba(255, 255, 255, 0.06);
         border: 1px solid rgba(255, 255, 255, 0.1);
         color: rgba(255, 255, 255, 0.7);
-        display: flex;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
         transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        padding: 0;
+        margin: 0;
+        line-height: 1;
+        box-sizing: border-box;
       }
-      .live-frame-top-btn:hover {
+      .live-frame-top-btn:hover, .live-modal-top-btn:hover {
         background: rgba(255, 255, 255, 0.14);
         color: #ffffff;
         transform: scale(1.05);
       }
-      .live-frame-top-btn.close:hover {
+      .live-frame-top-btn.close:hover, .live-modal-top-btn.close:hover {
         background: rgba(239, 68, 68, 0.2);
         border-color: rgba(239, 68, 68, 0.4);
         color: #ef4444;
       }
-      .live-frame-top-btn span {
+      .live-frame-top-btn span, .live-modal-top-btn span {
         font-size: 16px;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        height: 16px;
+        margin: 0;
+        padding: 0;
       }
 
-      /* Top Actions (Minimizar / Fechar) */
+      /* Top Actions Overlay Container */
       .live-modal-top-actions {
         position: absolute;
         top: 16px;
@@ -3054,32 +3075,6 @@
         align-items: center;
         gap: 6px;
         z-index: 10;
-      }
-      .live-modal-top-btn {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.06);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        color: rgba(255, 255, 255, 0.7);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-      }
-      .live-modal-top-btn:hover {
-        background: rgba(255, 255, 255, 0.14);
-        color: #ffffff;
-        transform: scale(1.05);
-      }
-      .live-modal-top-btn.close:hover {
-        background: rgba(239, 68, 68, 0.2);
-        border-color: rgba(239, 68, 68, 0.4);
-        color: #ef4444;
-      }
-      .live-modal-top-btn span {
-        font-size: 18px;
       }
 
       .live-modal-header {
@@ -4998,15 +4993,77 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       if (lTextEl) lTextEl.textContent = '00:00';
       syncMiniDockStatus('status-warning', 'live-modal-status-dot ringing');
 
-      // Helper para sincronizar cor e status do Mini Dock Flutuante
+      // Helper para copiar transcrição da chamada para a área de transferência
+      window.copyCallTranscript = function() {
+        const msgs = document.querySelectorAll('#liveModalMessages .chat-bubble-user, #liveModalMessages .chat-bubble-agent, #liveModalMessages .live-msg-bubble');
+        const box = document.getElementById('liveModalMessages');
+        let text = '=== TRANSCRIÇÃO DA CHAMADA - MINDFLOW ===\n\n';
+        
+        if (msgs.length > 0) {
+          msgs.forEach(m => {
+            const isUser = m.classList.contains('chat-bubble-user') || m.classList.contains('user');
+            const role = isUser ? 'LEAD' : 'AGENTE';
+            const msgText = m.innerText.replace(/^(AGENTE|LEAD)\s*/i, '').trim();
+            text += `[${role}]: ${msgText}\n`;
+          });
+        } else if (box && box.innerText) {
+          text += box.innerText.trim();
+        } else {
+          alert('Nenhuma transcrição disponível no momento para copiar.');
+          return;
+        }
+
+        navigator.clipboard.writeText(text).then(() => {
+          const lbl = document.getElementById('lblCopyTranscript');
+          if (lbl) {
+            const orig = lbl.textContent;
+            lbl.textContent = '✓ Transcrição Copiada!';
+            setTimeout(() => { lbl.textContent = orig; }, 2500);
+          }
+        }).catch(err => {
+          console.error('Erro ao copiar transcrição:', err);
+        });
+      };
+
+      // Helper para sincronizar cor e status do Mini Dock Flutuante e Global Dock
       function syncMiniDockStatus(statusTheme, dotClass) {
         const miniDock = document.getElementById('liveCallMiniDock');
         const miniLead = document.getElementById('liveMiniLeadName');
         const miniTimer = document.getElementById('liveMiniTimer');
         const miniDot = document.getElementById('liveMiniStatusDot');
 
-        if (miniLead) miniLead.textContent = document.getElementById('liveModalLeadName')?.textContent || 'Pedro Ernesto';
-        if (miniTimer) miniTimer.textContent = document.getElementById('liveModalTimer')?.textContent || '00:00';
+        const leadName = document.getElementById('liveModalLeadName')?.textContent || 'Pedro Ernesto';
+        const phone = document.getElementById('liveModalLeadPhone')?.textContent || '';
+        const timerVal = document.getElementById('liveModalTimer')?.textContent || '00:00';
+        const execId = document.getElementById('liveModalExecId')?.textContent || currentCallId || 'call_current';
+
+        let dockStatus = 'ringing';
+        let statusLbl = 'Discando...';
+        if (statusTheme === 'status-ongoing') {
+          dockStatus = 'in_progress';
+          statusLbl = 'Em Chamada ao Vivo';
+        } else if (statusTheme === 'status-ended') {
+          dockStatus = 'ended';
+          statusLbl = 'Chamada Finalizada';
+        } else if (statusTheme === 'status-warning') {
+          dockStatus = 'warning';
+          statusLbl = 'Discando...';
+        }
+
+        if (window.mindflowDockAddCall && execId) {
+          window.mindflowDockAddCall({
+            id: execId,
+            executionId: execId,
+            leadName: leadName,
+            phone: phone,
+            status: dockStatus,
+            statusLabel: statusLbl,
+            timer: timerVal
+          });
+        }
+
+        if (miniLead) miniLead.textContent = leadName;
+        if (miniTimer) miniTimer.textContent = timerVal;
         if (miniDot) miniDot.className = dotClass;
         if (miniDock) {
           miniDock.classList.remove('status-ongoing', 'status-ended', 'status-warning');
@@ -6027,7 +6084,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       <!-- Botões Superiores (Minimizar / Fechar) -->
       <div class="live-modal-top-actions">
         <button class="live-modal-top-btn" onclick="minimizeLiveModal()" type="button" title="Minimizar Modal">
-          <span class="material-symbols-outlined">minimize</span>
+          <span class="material-symbols-outlined">remove</span>
         </button>
         <button class="live-modal-top-btn close" onclick="closeLiveModal()" type="button" title="Fechar Janela">
           <span class="material-symbols-outlined">close</span>
@@ -6079,9 +6136,9 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         <button class="btn-live-action primary" id="btnLiveAudio" type="button" onclick="playLiveAudio()">
           <span class="material-symbols-outlined">headphones</span> Ouvir Gravação
         </button>
-        <a class="btn-live-action secondary" id="btnLiveTranscript" href="/dashboard#audit" target="_blank">
-          <span class="material-symbols-outlined">open_in_new</span> Transcrição Completa
-        </a>
+        <button class="btn-live-action secondary" id="btnCopyLiveTranscript" type="button" onclick="copyCallTranscript()">
+          <span class="material-symbols-outlined">content_copy</span> <span id="lblCopyTranscript">Copiar Transcrição</span>
+        </button>
       </div>
 
       <div class="live-modal-dialog-box">
@@ -6188,6 +6245,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       </div>
     </div>
   </div>
+  <script src="/mindflow-dock.js"></script>
 </body>
 
 </html>
