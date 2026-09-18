@@ -4088,7 +4088,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           execIdEl.title = executionId || '';
         }
 
-        if (messagesBox) messagesBox.innerHTML = '<div style="color: #8E8FA2; font-size: 12px; text-align: center; width: 100%; padding: 12px 0;">Aguardando atendimento...</div>';
+        if (messagesBox) messagesBox.innerHTML = '<div style="color: #8E8FA2; font-size: 12px; text-align: center; width: 100%; padding: 12px 0; display:flex; align-items:center; justify-content:center; gap:6px;"><span class="material-symbols-outlined" style="font-size:16px; color:#00B5A0;">call_inbound</span> Chamada em andamento...</div>';
         if (audioWrap) audioWrap.style.display = 'none';
         if (audioElement) { audioElement.pause(); audioElement.src = ''; }
         if (btnTranscript) btnTranscript.href = `/dashboard#audit`;
@@ -4182,7 +4182,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           if (liveStatusText) liveStatusText.textContent = ringLabel;
         }
 
-        // 2. TRANSCRIÇÃO / DIÁLOGO EM TEMPO REAL
+        // 2. TRANSCRIÇÃO / DIÁLOGO DA CHAMADA
         const tObj = call.transcript_object || data.transcript_object;
         const tText = call.transcript || data.transcript;
 
@@ -4195,7 +4195,11 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           if (liveTranscriptBox) liveTranscriptBox.innerHTML = formattedSingle;
         } else if (isFinishedState) {
           if (messagesBox && !messagesBox.querySelector('.chat-bubble-user') && !messagesBox.querySelector('.chat-bubble-agent')) {
-            messagesBox.innerHTML = '<div style="color: #7B9AFF; font-size: 12px; text-align: center; width: 100%; padding: 14px 0; display:flex; align-items:center; justify-content:center; gap:8px;"><span class="material-symbols-outlined" style="font-size:18px; animation:spin 1s linear infinite;">sync</span> Buscando transcrição final da chamada...</div>';
+            messagesBox.innerHTML = '<div style="color: #7B9AFF; font-size: 12px; text-align: center; width: 100%; padding: 14px 0; display:flex; align-items:center; justify-content:center; gap:8px;"><span class="material-symbols-outlined" style="font-size:18px; animation:spin 1s linear infinite;">sync</span> Carregando transcrição final da chamada...</div>';
+          }
+        } else {
+          if (messagesBox && !messagesBox.querySelector('.chat-bubble-user') && !messagesBox.querySelector('.chat-bubble-agent')) {
+            messagesBox.innerHTML = '<div style="color: #8E8FA2; font-size: 12px; text-align: center; width: 100%; padding: 12px 0; display:flex; align-items:center; justify-content:center; gap:6px;"><span class="material-symbols-outlined" style="font-size:16px; color:#00B5A0;">call_inbound</span> Chamada em andamento...</div>';
           }
         }
 
@@ -4280,15 +4284,13 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           execIdEl.title = realExecutionId;
         }
 
-        // SSE Connection (Tempo Real via Webhook Broadcast)
-        let lastSseTime = Date.now();
+        // SSE Connection
         if (liveSseSource) liveSseSource.close();
         try {
           liveSseSource = new EventSource('/api/calls/stream/' + realExecutionId);
           liveSseSource.onmessage = (event) => {
             try {
               const data = JSON.parse(event.data);
-              lastSseTime = Date.now();
               handleCallUpdate(data);
             } catch (_) {}
           };
@@ -4297,10 +4299,9 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           };
         } catch (_) {}
 
-        // Polling Fallback Inteligente (Sempre de reserva, ativado apenas se SSE ficar silencioso por > 3s)
+        // Polling constante a cada 1.5s para capturar imediatamente a transcrição assim que a chamada finaliza
         clearInterval(livePollInterval);
         livePollInterval = setInterval(async () => {
-          if (Date.now() - lastSseTime < 3000) return;
           try {
             let res = await fetch(`/api/call-status/${realExecutionId}`);
             if (!res.ok) {
@@ -4310,7 +4311,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
             const data = await res.json();
             handleCallUpdate(data);
           } catch (_) {}
-        }, 2500);
+        }, 1500);
       };
 
       if (executionId) {
