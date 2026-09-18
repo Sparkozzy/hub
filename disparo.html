@@ -4225,7 +4225,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           execIdEl.title = executionId || '';
         }
 
-        if (messagesBox) messagesBox.innerHTML = '<div style="color: #8E8FA2; font-size: 12px; text-align: center; width: 100%; padding: 12px 0; display:flex; align-items:center; justify-content:center; gap:6px;"><span class="material-symbols-outlined" style="font-size:16px; color:#00B5A0;">call_inbound</span> Chamada em andamento...</div>';
+        if (messagesBox) messagesBox.innerHTML = '<div style="color: #8E8FA2; font-size: 12px; text-align: center; width: 100%; padding: 12px 0; display:flex; align-items:center; justify-content:center; gap:6px;"><span class="material-symbols-outlined" style="font-size:16px; color:#00B5A0;">phone_in_talk</span> Chamada em andamento...</div>';
         if (audioWrap) audioWrap.style.display = 'none';
         if (audioElement) { audioElement.pause(); audioElement.src = ''; }
         if (btnTranscript) btnTranscript.href = `/dashboard#audit`;
@@ -4344,7 +4344,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           }
         } else {
           if (messagesBox && !messagesBox.querySelector('.chat-bubble-user') && !messagesBox.querySelector('.chat-bubble-agent')) {
-            messagesBox.innerHTML = '<div style="color: #8E8FA2; font-size: 12px; text-align: center; width: 100%; padding: 12px 0; display:flex; align-items:center; justify-content:center; gap:6px;"><span class="material-symbols-outlined" style="font-size:16px; color:#00B5A0;">call_inbound</span> Chamada em andamento...</div>';
+            messagesBox.innerHTML = '<div style="color: #8E8FA2; font-size: 12px; text-align: center; width: 100%; padding: 12px 0; display:flex; align-items:center; justify-content:center; gap:6px;"><span class="material-symbols-outlined" style="font-size:16px; color:#00B5A0;">phone_in_talk</span> Chamada em andamento...</div>';
           }
         }
 
