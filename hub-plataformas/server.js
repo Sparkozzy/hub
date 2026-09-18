@@ -57,10 +57,18 @@ const liveSseClients = new Map();
 const callToExecutionMap = new Map();
 
 function broadcastSseEvent(executionId, data) {
-  const clients = liveSseClients.get(executionId);
-  if (!clients || clients.size === 0) return;
   const payload = `data: ${JSON.stringify(data)}\n\n`;
-  for (const clientRes of clients) {
+  const targets = new Set();
+
+  if (executionId && liveSseClients.has(executionId)) {
+    for (const c of liveSseClients.get(executionId)) targets.add(c);
+  }
+  if (data && data.call_id && liveSseClients.has(data.call_id)) {
+    for (const c of liveSseClients.get(data.call_id)) targets.add(c);
+  }
+
+  if (targets.size === 0) return;
+  for (const clientRes of targets) {
     try {
       clientRes.write(payload);
     } catch (err) {
@@ -122,8 +130,29 @@ const handleRetellWebhook = async (req, res) => {
       if (reason !== '' || ['ended', 'completed', 'error'].includes(callStatus)) {
         isFinished = true;
         stage = 'COMPLETED';
-        stageLabel = 'Chamada Finalizada';
-      } else if (callStatus === 'registered') {
+        if (['user_declined', 'user-declined'].includes(reason)) {
+          stageLabel = 'Chamada Recusada pelo Lead (user_declined)';
+        } else if (['user_hangup', 'user-hangup'].includes(reason)) {
+          stageLabel = 'Finalizada pelo Lead (user_hangup)';
+        } else if (['agent_hangup', 'agent-hangup'].includes(reason)) {
+          stageLabel = 'Finalizada pelo Agente (agent_hangup)';
+        } else if (['voicemail_reached', 'voicemail'].includes(reason)) {
+          stageLabel = 'Caixa Postal Atingida (voicemail)';
+        } else if (['inactivity'].includes(reason)) {
+          stageLabel = 'Encerrada por Inatividade (inactivity)';
+        } else if (['dial_no_answer', 'no-answer', 'no_answer'].includes(reason)) {
+          stageLabel = 'Não Atendeu (no_answer)';
+        } else if (['dial_busy', 'busy'].includes(reason)) {
+          stageLabel = 'Linha Ocupada (busy)';
+        } else if (reason.includes('error') || reason === 'dial_failed' || callStatus === 'error') {
+          stageLabel = `Falha na Chamada (${reason || 'erro'})`;
+        } else {
+          stageLabel = reason ? `Chamada Encerrada (${reason})` : 'Chamada Finalizada';
+        }
+      } else if (['ongoing', 'in_progress', 'in-progress'].includes(callStatus)) {
+        stage = 'IN_PROGRESS';
+        stageLabel = 'Em Chamada ao Vivo';
+      } else if (['registered', 'ringing'].includes(callStatus)) {
         stage = 'RINGING';
         stageLabel = 'Discando / Tocando no telefone...';
       }
@@ -270,6 +299,20 @@ app.get('/redefinir-senha', (req, res) => {
   res.sendFile(path.join(__dirname, 'redefinir-senha.html'));
 });
 
+// Páginas de apresentação e institucionais públicas
+app.get(['/apresentacao-institucional.html', '/apresentacao-institucional', '/apresentacao'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'apresentacao-institucional.html'));
+});
+
+app.get(['/apresentacao-institucional.pdf', '/apresentacao-pdf'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'apresentacao-institucional.pdf'));
+});
+
+app.get(['/demonstracao-atendimento.html', '/design-agent-ops.html', '/estrategia-mindflow.html', '/mindflow-design-system.html', '/mindflow-prototype.html', '/mindflow-site-institucional.html', '/raciocinio-design-mindflow.html', '/sistema-visual-mindflow.html', '/site-disparo.html', '/tavily-editorial.html'], (req, res) => {
+  const fileName = req.path.replace(/^\//, '');
+  res.sendFile(path.join(__dirname, fileName));
+});
+
 // Dev login — cria sessão sem senha (apenas em desenvolvimento)
 if (!IS_PRODUCTION) {
   app.get('/dev-login', async (req, res) => {
@@ -317,7 +360,7 @@ if (!IS_PRODUCTION) {
           devPhone = um.phone || '';
         }
       }
-    } catch { }
+    } catch {}
 
     req.session.user = {
       id: devUserId,
@@ -817,6 +860,27 @@ async function syncRetellAgents() {
 
     const agentsRaw = await retellRes.json();
 
+    // Auto-configura o webhook_url público nos Agentes da Retell para garantir o envio de eventos live
+    const targetWebhookUrl = process.env.APP_URL ? `${process.env.APP_URL}/api/webhooks/retell` : 'https://hub.mindflow.com.br/api/webhooks/retell';
+    for (const aRaw of (agentsRaw || [])) {
+      if (aRaw.agent_id && aRaw.webhook_url !== targetWebhookUrl) {
+        try {
+          await fetch(`https://api.retellai.com/update-agent/${aRaw.agent_id}`, {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bearer ${RETELL_API_KEY}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ webhook_url: targetWebhookUrl }),
+            signal: AbortSignal.timeout(5000)
+          });
+          console.log(`[SyncAgents] Webhook configurado com sucesso para o agente ${aRaw.agent_id}`);
+        } catch (wErr) {
+          console.warn(`[SyncAgents] Falha ao configurar webhook do agente ${aRaw.agent_id}:`, wErr.message);
+        }
+      }
+    }
+
     // Dedup por agent_id
     const seen = new Map();
     (agentsRaw || []).forEach(a => {
@@ -838,7 +902,7 @@ async function syncRetellAgents() {
           if (promptMap.has(a.agent_id)) a.prompt_id = promptMap.get(a.agent_id);
         });
       }
-    } catch { }
+    } catch {}
 
     // Upsert no Supabase
     const { error } = await supabase.from('retell_agents').upsert(agents, { onConflict: 'agent_id' });
@@ -906,8 +970,8 @@ app.get('/api/agents', async (req, res) => {
           if (!a.name) return false;
           // Remove "whatsapp" e "whats" da comparação para evitar falso-positivo com o cliente ATS
           const normAgent = a.name.toLowerCase().replace(/\s+/g, '').replace(/whats(app)?/g, '');
-          return normAgent.includes(normClient) || normClient.includes(normAgent) ||
-            (normClient === 'ats' && normAgent.includes('ats'));
+          return normAgent.includes(normClient) || normClient.includes(normAgent) || 
+                 (normClient === 'ats' && normAgent.includes('ats'));
         });
       } else {
         agentsList = [];
@@ -1133,7 +1197,7 @@ app.get('/api/client-config', async (req, res) => {
 // ============================================================
 app.post('/api/logout', async (req, res) => {
   // Invalida também o token no Supabase (boa prática)
-  await supabase.auth.signOut().catch(() => { });
+  await supabase.auth.signOut().catch(() => {});
   req.session.destroy(() => {
     res.clearCookie('connect.sid');
     res.json({ ok: true });
@@ -1259,9 +1323,9 @@ app.post('/api/submit-lead', submitLimiter, async (req, res) => {
   }
 });
 
-app.get('/api/call-status/:executionId', async (req, res) => {
+app.get(['/api/call-status/:executionId', '/api/call-status'], async (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
-  const { executionId } = req.params;
+  const executionId = req.params.executionId || req.query.execution_id || req.query.executionId;
 
   if (!executionId) {
     return res.status(400).json({ error: 'ID de execução inválido.' });
@@ -1356,27 +1420,31 @@ app.get('/api/call-status/:executionId', async (req, res) => {
           }
         } else {
           // Se ainda não temos o callId, lista as chamadas recentes para capturar a chamada iniciada
-          const listRes = await fetch('https://api.retellai.com/v2/list-calls', {
-            method: 'POST',
+          const listRes = await fetch('https://api.retellai.com/v2/list-calls?limit=10', {
+            method: 'GET',
             headers: {
-              'Authorization': `Bearer ${process.env.RETELL_API_KEY}`,
-              'Content-Type': 'application/json'
+              'Authorization': `Bearer ${process.env.RETELL_API_KEY}`
             },
-            body: JSON.stringify({ limit: 10 }),
             signal: AbortSignal.timeout(4000)
           });
           if (listRes.ok) {
             const listCalls = await listRes.json();
             if (Array.isArray(listCalls) && listCalls.length > 0) {
-              // Filha e ordena da mais recente para a mais antiga
+              const getCallMs = (c) => {
+                if (typeof c.start_timestamp === 'number') return c.start_timestamp;
+                if (c.start_timestamp) return new Date(c.start_timestamp).getTime() || 0;
+                if (c.created_at) return new Date(c.created_at).getTime() || 0;
+                return 0;
+              };
+
               const validCalls = listCalls.filter(c => {
-                const callTime = c.start_timestamp ? new Date(c.start_timestamp).getTime() : 0;
-                return callTime >= minStartTime;
-              }).sort((a, b) => (b.start_timestamp || 0) - (a.start_timestamp || 0));
+                const callTime = getCallMs(c);
+                return callTime >= minStartTime || callTime === 0;
+              }).sort((a, b) => getCallMs(b) - getCallMs(a));
 
               // 1. Procura primeiro qualquer chamada com status 'ongoing' ou 'registered'
               let rCall = validCalls.find(c => ['ongoing', 'registered', 'in_progress', 'in-progress'].includes(String(c.call_status || '').toLowerCase()));
-
+              
               // 2. Se a chamada já finalizou, prioriza a chamada recente onde o usuário/lead efetivamente interagiu
               if (!rCall && validCalls.length > 0) {
                 rCall = validCalls.find(c => {
@@ -1391,6 +1459,7 @@ app.get('/api/call-status/:executionId', async (req, res) => {
 
               if (rCall) {
                 callId = rCall.call_id;
+                callToExecutionMap.set(rCall.call_id, executionId);
                 let tObj = rCall.transcript_object || rCall.transcript_with_tool_calls || null;
                 if (Array.isArray(tObj) && tObj.length === 0) tObj = null;
 
@@ -1416,7 +1485,7 @@ app.get('/api/call-status/:executionId', async (req, res) => {
     }
 
     // 4. Classificação amigável de status e etapas
-    let stage = 'INITIATING';
+    let stage = 'INITIATING'; 
     let stageLabel = 'Iniciando ligação...';
     let isFinished = false;
 
@@ -1515,7 +1584,7 @@ app.get('/api/calls/stream/:executionId', (req, res) => {
   liveSseClients.get(executionId).add(res);
 
   const heartbeat = setInterval(() => {
-    try { res.write(': ping\n\n'); } catch { }
+    try { res.write(': ping\n\n'); } catch {}
   }, 15000);
 
   req.on('close', () => {
@@ -1645,7 +1714,7 @@ function cleanTranscriptForCsv(raw) {
     if (typeof parsed === 'object' && parsed.transcript) {
       return cleanTranscriptForCsv(parsed.transcript);
     }
-  } catch { }
+  } catch {}
   return String(raw).replace(/\[\{.*?\}\]/g, '').replace(/\r?\n/g, ' ').trim();
 }
 
@@ -1662,7 +1731,7 @@ function formatDateForCsv(val) {
     if (!isNaN(d.getTime())) {
       return d.toISOString().replace('T', ' ').slice(0, 19);
     }
-  } catch { }
+  } catch {}
   return String(val);
 }
 
@@ -1793,16 +1862,16 @@ app.get('/api/stats', async (req, res) => {
           validDurationCount++;
         }
       }
-
+      
       const isMarcada = c.Marcada && (
-        c.Marcada.toLowerCase().includes('sim') ||
-        c.Marcada.toLowerCase().includes('true') ||
+        c.Marcada.toLowerCase().includes('sim') || 
+        c.Marcada.toLowerCase().includes('true') || 
         c.Marcada === '1'
       );
       if (isMarcada) {
         meetingsScheduled++;
       }
-
+      
       if (c.status === 'completed') {
         completedCalls++;
       }
@@ -1841,15 +1910,15 @@ function mapDisconnectionCategory(reason, durationSec) {
     return durationSec > 15.0 ? 'Conversa Normal' : 'Não Atendeu';
   }
   const r = String(reason).toLowerCase().trim();
-  if (['agent_hangup', 'user_hangup', 'inactivity', 'max_duration_reached', 'call_transfer'].includes(r))
+  if (['agent_hangup','user_hangup','inactivity','max_duration_reached','call_transfer'].includes(r))
     return 'Conversa Normal';
-  if (['dial_no_answer', 'no-answer', 'voicemail_reached'].includes(r))
+  if (['dial_no_answer','no-answer','voicemail_reached'].includes(r))
     return 'Não Atendeu';
-  if (['user_declined', 'invalid_destination'].includes(r))
+  if (['user_declined','invalid_destination'].includes(r))
     return 'Bloqueado';
-  if (['dial_busy', 'ivr_reached'].includes(r))
+  if (['dial_busy','ivr_reached'].includes(r))
     return 'Ocupado';
-  if (r.startsWith('telephony_provider_') || ['error_asr', 'error_retell', 'dial_failed'].includes(r))
+  if (r.startsWith('telephony_provider_') || ['error_asr','error_retell','dial_failed'].includes(r))
     return 'Erro Técnico';
   return durationSec > 15.0 ? 'Conversa Normal' : 'Não Atendeu';
 }
@@ -1904,57 +1973,57 @@ async function fetchProcessedCalls(agent, startDate, endDate, clientSupabase) {
         allData = data || [];
       }
 
-      if (allData.length === 0) return [];
+    if (allData.length === 0) return [];
 
-      // Processar (transform + dedup + fatigue)
-      let calls = allData.map(c => ({
-        ...c,
-        Duracao: (parseFloat(c.Duracao) || 0) / 1000,
-        combined_cost: (parseFloat(c.combined_cost) || 0) / 100,
-        created_at: new Date(c.created_at).getTime(),
-      }));
+    // Processar (transform + dedup + fatigue)
+    let calls = allData.map(c => ({
+      ...c,
+      Duracao: (parseFloat(c.Duracao) || 0) / 1000,
+      combined_cost: (parseFloat(c.combined_cost) || 0) / 100,
+      created_at: new Date(c.created_at).getTime(),
+    }));
 
-      // Dedup
-      const seen = new Map();
-      calls.forEach(c => seen.set(c.call_id, c));
-      calls = Array.from(seen.values());
+    // Dedup
+    const seen = new Map();
+    calls.forEach(c => seen.set(c.call_id, c));
+    calls = Array.from(seen.values());
 
-      // Sort cronológico para fadiga
-      calls.sort((a, b) => a.created_at - b.created_at);
+    // Sort cronológico para fadiga
+    calls.sort((a, b) => a.created_at - b.created_at);
 
-      // Mapear categorias e flags
-      calls.forEach(c => {
-        c.disconnection_category = mapDisconnectionCategory(c.disconnection_reason, c.Duracao);
-        c.is_hook = c.Duracao > 15 ? 1 : 0;
-        c.is_conversa = c.Duracao > 45 ? 1 : 0;
-        c.is_interesse = c.Duracao > 90 ? 1 : 0;
-      });
+    // Mapear categorias e flags
+    calls.forEach(c => {
+      c.disconnection_category = mapDisconnectionCategory(c.disconnection_reason, c.Duracao);
+      c.is_hook = c.Duracao > 15 ? 1 : 0;
+      c.is_conversa = c.Duracao > 45 ? 1 : 0;
+      c.is_interesse = c.Duracao > 90 ? 1 : 0;
+    });
 
-      // Fadiga por lead
-      const leadMap = new Map();
-      calls.forEach(c => {
-        if (!leadMap.has(c.to_number)) leadMap.set(c.to_number, []);
-        leadMap.get(c.to_number).push(c);
-      });
-      calls.forEach(c => {
-        const leadCalls = leadMap.get(c.to_number) || [];
-        const idx = leadCalls.indexOf(c);
-        const nAnteriores = idx;
-        const firstContact = leadCalls[0].created_at;
-        const horasDesdePrimeiro = (c.created_at - firstContact) / 3600000;
-        const lastContact = idx > 0 ? leadCalls[idx - 1].created_at : c.created_at;
-        const horasDesdeUltimo = (c.created_at - lastContact) / 3600000;
-        c.n_tentativas_anteriores = nAnteriores;
-        c.densidade_tentativas = nAnteriores / (horasDesdePrimeiro + 1);
-        c.pressao_recente = nAnteriores / (horasDesdeUltimo + 1);
-      });
+    // Fadiga por lead
+    const leadMap = new Map();
+    calls.forEach(c => {
+      if (!leadMap.has(c.to_number)) leadMap.set(c.to_number, []);
+      leadMap.get(c.to_number).push(c);
+    });
+    calls.forEach(c => {
+      const leadCalls = leadMap.get(c.to_number) || [];
+      const idx = leadCalls.indexOf(c);
+      const nAnteriores = idx;
+      const firstContact = leadCalls[0].created_at;
+      const horasDesdePrimeiro = (c.created_at - firstContact) / 3600000;
+      const lastContact = idx > 0 ? leadCalls[idx - 1].created_at : c.created_at;
+      const horasDesdeUltimo = (c.created_at - lastContact) / 3600000;
+      c.n_tentativas_anteriores = nAnteriores;
+      c.densidade_tentativas = nAnteriores / (horasDesdePrimeiro + 1);
+      c.pressao_recente = nAnteriores / (horasDesdeUltimo + 1);
+    });
 
-      // Sort descendente para retorno
-      calls.sort((a, b) => b.created_at - a.created_at);
+    // Sort descendente para retorno
+    calls.sort((a, b) => b.created_at - a.created_at);
 
-      cache.data = calls;
-      cache.timestamp = now;
-      console.log(`[Cache] Cache atualizado (${cacheKey}): ${calls.length} calls`);
+    cache.data = calls;
+    cache.timestamp = now;
+    console.log(`[Cache] Cache atualizado (${cacheKey}): ${calls.length} calls`);
     } finally {
       // Liberar o lock sempre
       resolveLock();

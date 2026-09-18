@@ -57,10 +57,18 @@ const liveSseClients = new Map();
 const callToExecutionMap = new Map();
 
 function broadcastSseEvent(executionId, data) {
-  const clients = liveSseClients.get(executionId);
-  if (!clients || clients.size === 0) return;
   const payload = `data: ${JSON.stringify(data)}\n\n`;
-  for (const clientRes of clients) {
+  const targets = new Set();
+
+  if (executionId && liveSseClients.has(executionId)) {
+    for (const c of liveSseClients.get(executionId)) targets.add(c);
+  }
+  if (data && data.call_id && liveSseClients.has(data.call_id)) {
+    for (const c of liveSseClients.get(data.call_id)) targets.add(c);
+  }
+
+  if (targets.size === 0) return;
+  for (const clientRes of targets) {
     try {
       clientRes.write(payload);
     } catch (err) {
@@ -851,6 +859,27 @@ async function syncRetellAgents() {
     if (!retellRes.ok) throw new Error(`Retell API: ${retellRes.status}`);
 
     const agentsRaw = await retellRes.json();
+
+    // Auto-configura o webhook_url público nos Agentes da Retell para garantir o envio de eventos live
+    const targetWebhookUrl = process.env.APP_URL ? `${process.env.APP_URL}/api/webhooks/retell` : 'https://hub.mindflow.com.br/api/webhooks/retell';
+    for (const aRaw of (agentsRaw || [])) {
+      if (aRaw.agent_id && aRaw.webhook_url !== targetWebhookUrl) {
+        try {
+          await fetch(`https://api.retellai.com/update-agent/${aRaw.agent_id}`, {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bearer ${RETELL_API_KEY}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ webhook_url: targetWebhookUrl }),
+            signal: AbortSignal.timeout(5000)
+          });
+          console.log(`[SyncAgents] Webhook configurado com sucesso para o agente ${aRaw.agent_id}`);
+        } catch (wErr) {
+          console.warn(`[SyncAgents] Falha ao configurar webhook do agente ${aRaw.agent_id}:`, wErr.message);
+        }
+      }
+    }
 
     // Dedup por agent_id
     const seen = new Map();

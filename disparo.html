@@ -4280,13 +4280,15 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           execIdEl.title = realExecutionId;
         }
 
-        // SSE Connection
+        // SSE Connection (Tempo Real via Webhook Broadcast)
+        let lastSseTime = Date.now();
         if (liveSseSource) liveSseSource.close();
         try {
           liveSseSource = new EventSource('/api/calls/stream/' + realExecutionId);
           liveSseSource.onmessage = (event) => {
             try {
               const data = JSON.parse(event.data);
+              lastSseTime = Date.now();
               handleCallUpdate(data);
             } catch (_) {}
           };
@@ -4295,9 +4297,10 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           };
         } catch (_) {}
 
-        // Polling Fallback
+        // Polling Fallback Inteligente (Sempre de reserva, ativado apenas se SSE ficar silencioso por > 3s)
         clearInterval(livePollInterval);
         livePollInterval = setInterval(async () => {
+          if (Date.now() - lastSseTime < 3000) return;
           try {
             let res = await fetch(`/api/call-status/${realExecutionId}`);
             if (!res.ok) {
@@ -4307,7 +4310,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
             const data = await res.json();
             handleCallUpdate(data);
           } catch (_) {}
-        }, 2000);
+        }, 2500);
       };
 
       if (executionId) {
