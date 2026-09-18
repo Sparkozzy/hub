@@ -222,17 +222,116 @@
       align-items: center;
       justify-content: space-between;
       padding: 0 4px;
+      z-index: 100;
     }
-    .ps3-carousel-label {
-      font-size: 10px;
+    /* ── Group Selector Dropdown ── */
+    .group-select-wrapper {
+      position: relative;
+    }
+    .group-select-trigger {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(0, 181, 160, 0.3);
+      border-radius: 8px;
+      padding: 4px 10px;
+      color: #fff;
+      font-size: 11px;
       font-weight: 700;
-      color: #7B9AFF;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
+      letter-spacing: 0.04em;
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
     }
+    .group-select-trigger:hover {
+      background: rgba(0, 181, 160, 0.15);
+      border-color: #00B5A0;
+    }
+    .group-arrow {
+      font-size: 16px;
+      color: rgba(255, 255, 255, 0.6);
+      transition: transform 0.2s ease;
+    }
+    .group-select-wrapper.open .group-arrow {
+      transform: rotate(180deg);
+    }
+
+    .group-dropdown-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      z-index: 99999;
+      width: 220px;
+      background: rgba(8, 14, 28, 0.95);
+      border: 1px solid rgba(0, 181, 160, 0.4);
+      border-radius: 12px;
+      padding: 6px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 181, 160, 0.2);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-8px);
+      transition: all 0.2s ease;
+    }
+    .group-select-wrapper.open .group-dropdown-menu {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .group-dropdown-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      border-radius: 8px;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .group-dropdown-item:hover {
+      background: rgba(0, 181, 160, 0.15);
+      color: #00B5A0;
+    }
+    .group-dropdown-item.active {
+      background: rgba(0, 181, 160, 0.25);
+      color: #fff;
+      border: 1px solid rgba(0, 181, 160, 0.4);
+    }
+    .group-dropdown-badge {
+      font-size: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2px 6px;
+      border-radius: 10px;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .group-manage-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      padding: 4px 10px;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .group-manage-btn:hover {
+      background: rgba(0, 181, 160, 0.2);
+      color: #00B5A0;
+      border-color: rgba(0, 181, 160, 0.4);
+    }
+
     .ps3-carousel-counter {
       font-family: 'Space Grotesk', sans-serif;
       font-size: 11px;
@@ -242,6 +341,178 @@
       padding: 2px 8px;
       border-radius: 10px;
       border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    /* ── Modal de Gestão de Contatos e Grupos ── */
+    .group-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 999999;
+      background: rgba(4, 6, 14, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .group-modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .group-modal-card {
+      width: 100%;
+      max-width: 440px;
+      background: rgba(8, 14, 28, 0.95);
+      border: 1px solid rgba(0, 181, 160, 0.4);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8), 0 0 32px rgba(0, 181, 160, 0.2);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .group-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 12px;
+    }
+    .group-modal-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .group-modal-close {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: rgba(255, 255, 255, 0.7);
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .group-modal-close:hover {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+    }
+
+    .group-modal-tabs {
+      display: flex;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 10px;
+      padding: 3px;
+      gap: 4px;
+    }
+    .group-tab {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 8px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .group-tab.active {
+      background: rgba(0, 181, 160, 0.2);
+      color: #00B5A0;
+      border: 1px solid rgba(0, 181, 160, 0.3);
+    }
+
+    .group-tab-content {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .group-tab-content.active {
+      display: flex;
+    }
+
+    .group-form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .group-form-group label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #8E8FA2;
+      letter-spacing: 0.05em;
+    }
+    .group-input {
+      background: rgba(4, 6, 14, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: #fff;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+    .group-input:focus {
+      border-color: #00B5A0;
+    }
+    .group-input.select {
+      appearance: none;
+      cursor: pointer;
+    }
+
+    .group-btn-primary {
+      background: linear-gradient(135deg, rgba(0, 181, 160, 0.3), rgba(46, 79, 255, 0.3));
+      border: 1px solid rgba(0, 181, 160, 0.5);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .group-btn-primary:hover {
+      background: linear-gradient(135deg, rgba(0, 181, 160, 0.5), rgba(46, 79, 255, 0.5));
+      box-shadow: 0 0 16px rgba(0, 181, 160, 0.3);
+    }
+
+    .group-list-box {
+      max-height: 180px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .group-item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      padding: 8px 12px;
+      color: #fff;
+      font-size: 12px;
     }
     .ps3-carousel-viewport {
       position: relative;
@@ -3256,11 +3527,24 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         <!-- ── PS3 XMB Style Contacts Carousel ── -->
         <div class="ps3-carousel-container" id="ps3CarouselContainer">
           <div class="ps3-carousel-header">
-            <span class="ps3-carousel-label">
-              <span class="material-symbols-outlined" style="font-size: 14px; color: #00B5A0;">contacts</span>
-              EQUIPE MINDFLOW
-            </span>
-            <span class="ps3-carousel-counter" id="ps3CarouselCounter">1 / 5</span>
+            <div class="group-select-wrapper" id="groupSelectWrapper">
+              <button type="button" class="group-select-trigger" onclick="toggleGroupDropdown(event)" title="Selecionar Grupo de Contatos">
+                <span class="material-symbols-outlined" style="font-size: 15px; color: #00B5A0;">groups</span>
+                <span id="currentGroupName">EQUIPE MINDFLOW</span>
+                <span class="material-symbols-outlined group-arrow">expand_more</span>
+              </button>
+              <div class="group-dropdown-menu" id="groupDropdownMenu">
+                <!-- Dynamically generated groups -->
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="ps3-carousel-counter" id="ps3CarouselCounter">1 / 8</span>
+              <button type="button" class="group-manage-btn" onclick="openGroupManagerModal()" title="Gerenciar Contatos e Grupos">
+                <span class="material-symbols-outlined" style="font-size: 15px;">person_add</span>
+                <span>Gerenciar</span>
+              </button>
+            </div>
           </div>
 
           <div class="ps3-carousel-viewport">
@@ -5077,8 +5361,17 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
     }
   </script>
   <script>
-    /* ── PS3 XMB Contacts Carousel Engine (Minimalist) ── */
-    let teamContacts = [
+    /* ── PS3 XMB Contacts Carousel Engine & Group Manager ── */
+    function escHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    const DEFAULT_MINDFLOW_CONTACTS = [
       { id: 'pedro', name: 'Pedro Ernesto', phone: '5547991089099', avatar: 'PE', badgeColor: '#00B5A0' },
       { id: 'renato', name: 'Renato Paranhos', phone: '5547996070809', avatar: 'RP', badgeColor: '#7B9AFF' },
       { id: 'ryan', name: 'Ryan Ferrari', phone: '5547997080910', avatar: 'RF', badgeColor: '#A855F7' },
@@ -5089,17 +5382,114 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       { id: 'wandrey', name: 'Wandrey Oliveira', phone: '5547998091011', avatar: 'WO', badgeColor: '#6366F1' }
     ];
 
+    let contactGroups = {
+      mindflow: {
+        id: 'mindflow',
+        name: 'Equipe MindFlow',
+        isDefault: true,
+        contacts: JSON.parse(JSON.stringify(DEFAULT_MINDFLOW_CONTACTS))
+      }
+    };
+
+    let activeGroupId = 'mindflow';
+    let activeContacts = [...contactGroups.mindflow.contacts];
     let currentPs3Index = 0;
+
+    function loadContactGroupsFromStorage() {
+      try {
+        const saved = localStorage.getItem('mf_contact_groups');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          contactGroups = {
+            mindflow: {
+              id: 'mindflow',
+              name: 'Equipe MindFlow',
+              isDefault: true,
+              contacts: JSON.parse(JSON.stringify(DEFAULT_MINDFLOW_CONTACTS))
+            },
+            ...parsed
+          };
+        }
+      } catch (e) {
+        console.error('Erro ao carregar grupos do localStorage:', e);
+      }
+    }
+
+    function saveContactGroupsToStorage() {
+      try {
+        const toSave = { ...contactGroups };
+        delete toSave.mindflow; // Não sobrescreve grupo oficial MindFlow no storage
+        localStorage.setItem('mf_contact_groups', JSON.stringify(toSave));
+      } catch (e) {
+        console.error('Erro ao salvar grupos no localStorage:', e);
+      }
+    }
+
+    function toggleGroupDropdown(event) {
+      if (event) event.stopPropagation();
+      const dd = document.getElementById('groupDropdownMenu');
+      if (dd) dd.classList.toggle('open');
+    }
+
+    function renderGroupDropdownOptions() {
+      const dd = document.getElementById('groupDropdownMenu');
+      if (!dd) return;
+      dd.innerHTML = Object.values(contactGroups).map(g => `
+        <div class="group-dropdown-item ${g.id === activeGroupId ? 'active' : ''}" onclick="switchGroup('${g.id}')">
+          <span>${escHtml(g.name)}</span>
+          ${g.id === activeGroupId ? '<span class="material-symbols-outlined" style="font-size:16px;">check</span>' : ''}
+        </div>
+      `).join('');
+    }
+
+    function switchGroup(groupId) {
+      if (!contactGroups[groupId]) return;
+      activeGroupId = groupId;
+      activeContacts = [...contactGroups[groupId].contacts];
+      currentPs3Index = 0;
+
+      const groupLabel = document.getElementById('activeGroupLabel');
+      if (groupLabel) groupLabel.textContent = contactGroups[groupId].name;
+
+      const dd = document.getElementById('groupDropdownMenu');
+      if (dd) dd.classList.remove('open');
+
+      renderGroupDropdownOptions();
+      renderPs3Carousel();
+    }
 
     function renderPs3Carousel() {
       const track = document.getElementById('ps3CarouselTrack');
       const dotsContainer = document.getElementById('ps3CarouselDots');
       if (!track || !dotsContainer) return;
 
-      track.innerHTML = teamContacts.map((c, idx) => `
+      if (!activeContacts || activeContacts.length === 0) {
+        track.innerHTML = `
+          <div style="color: #8E8FA2; font-size: 13px; text-align: center; width: 100%; padding: 20px 0;">
+            Nenhum contato cadastrado neste grupo.
+          </div>
+        `;
+        dotsContainer.innerHTML = '';
+        const counterEl = document.getElementById('ps3CarouselCounter');
+        if (counterEl) counterEl.textContent = '0 / 0';
+
+        const nomeEl = document.getElementById('nome');
+        const telEl = document.getElementById('telefone');
+        const btnQuick = document.getElementById('btnQuickCall');
+        if (nomeEl) nomeEl.value = '';
+        if (telEl) telEl.value = '';
+        if (btnQuick) btnQuick.innerHTML = `<span class="material-symbols-outlined">phone_in_talk</span> Selecione um Contato`;
+        return;
+      }
+
+      if (currentPs3Index >= activeContacts.length) {
+        currentPs3Index = 0;
+      }
+
+      track.innerHTML = activeContacts.map((c, idx) => `
         <div class="ps3-card" onclick="selectPs3Contact(${idx})" role="button" tabindex="0">
-          <div class="ps3-avatar" style="background: linear-gradient(135deg, ${c.badgeColor}33, rgba(46,79,255,0.25)); border-color: ${c.badgeColor};">
-            ${escHtml(c.avatar)}
+          <div class="ps3-avatar" style="background: linear-gradient(135deg, ${c.badgeColor || '#7B9AFF'}33, rgba(46,79,255,0.25)); border-color: ${c.badgeColor || '#7B9AFF'};">
+            ${escHtml(c.avatar || 'PE')}
           </div>
           <div class="ps3-info">
             <span class="ps3-name">${escHtml(c.name)}</span>
@@ -5108,7 +5498,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         </div>
       `).join('');
 
-      dotsContainer.innerHTML = teamContacts.map((_, idx) => `
+      dotsContainer.innerHTML = activeContacts.map((_, idx) => `
         <div class="ps3-dot ${idx === currentPs3Index ? 'active' : ''}" onclick="selectPs3Contact(${idx})"></div>
       `).join('');
 
@@ -5116,21 +5506,21 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
     }
 
     function movePs3Carousel(direction) {
-      const total = teamContacts.length;
+      const total = activeContacts.length;
       if (total === 0) return;
       currentPs3Index = (currentPs3Index + direction + total) % total;
       updatePs3CarouselUI();
     }
 
     function selectPs3Contact(index) {
-      const total = teamContacts.length;
+      const total = activeContacts.length;
       if (index < 0 || index >= total) return;
       currentPs3Index = index;
       updatePs3CarouselUI();
     }
 
     function updatePs3CarouselUI() {
-      const total = teamContacts.length;
+      const total = activeContacts.length;
       if (total === 0) return;
 
       const track = document.getElementById('ps3CarouselTrack');
@@ -5159,7 +5549,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         dot.classList.toggle('active', idx === currentPs3Index);
       });
 
-      const selected = teamContacts[currentPs3Index];
+      const selected = activeContacts[currentPs3Index];
       if (selected) {
         const nomeEl = document.getElementById('nome');
         const telEl = document.getElementById('telefone');
@@ -5173,12 +5563,165 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       }
     }
 
-    // Inicialização do Carousel
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', renderPs3Carousel);
-    } else {
-      renderPs3Carousel();
+    // Modal Control Functions
+    function openGroupManagerModal(event) {
+      if (event) event.stopPropagation();
+      const modal = document.getElementById('groupManagerModal');
+      if (modal) modal.classList.add('open');
+      renderGroupSelectInModal();
+      renderExistingGroupsListModal();
     }
+
+    function closeGroupManagerModal() {
+      const modal = document.getElementById('groupManagerModal');
+      if (modal) modal.classList.remove('open');
+    }
+
+    function switchGroupTab(tab) {
+      const btnC = document.getElementById('tabBtnContacts');
+      const btnG = document.getElementById('tabBtnGroups');
+      const cntC = document.getElementById('tabContentContacts');
+      const cntG = document.getElementById('tabContentGroups');
+
+      if (tab === 'contacts') {
+        btnC.classList.add('active');
+        btnG.classList.remove('active');
+        cntC.classList.add('active');
+        cntG.classList.remove('active');
+      } else {
+        btnG.classList.add('active');
+        btnC.classList.remove('active');
+        cntG.classList.add('active');
+        cntC.classList.remove('active');
+      }
+    }
+
+    function renderGroupSelectInModal() {
+      const sel = document.getElementById('newContactGroupSelect');
+      if (!sel) return;
+      sel.innerHTML = Object.values(contactGroups).map(g => `
+        <option value="${g.id}">${escHtml(g.name)}</option>
+      `).join('');
+    }
+
+    function renderExistingGroupsListModal() {
+      const container = document.getElementById('existingGroupsList');
+      if (!container) return;
+
+      container.innerHTML = Object.values(contactGroups).map(g => `
+        <div class="group-list-item">
+          <div>
+            <div class="group-list-name">${escHtml(g.name)}</div>
+            <div class="group-list-count">${g.contacts.length} contato(s)</div>
+          </div>
+          ${!g.isDefault ? `
+            <button type="button" class="group-btn-delete" onclick="deleteGroup('${g.id}')">
+              <span class="material-symbols-outlined">delete</span>
+            </button>
+          ` : '<span style="font-size:11px; color:#8E8FA2;">Padrão</span>'}
+        </div>
+      `).join('');
+    }
+
+    function saveNewContactFromModal() {
+      const nameInput = document.getElementById('newContactName');
+      const phoneInput = document.getElementById('newContactPhone');
+      const groupSelect = document.getElementById('newContactGroupSelect');
+
+      const name = nameInput ? nameInput.value.trim() : '';
+      let phone = phoneInput ? phoneInput.value.trim() : '';
+      const groupId = groupSelect ? groupSelect.value : 'mindflow';
+
+      if (!name || !phone) {
+        alert('Por favor, informe o nome e telefone do contato.');
+        return;
+      }
+
+      phone = phone.replace(/\D/g, '');
+      if (phone.length < 10) {
+        alert('Por favor, informe um telefone válido com DDD.');
+        return;
+      }
+
+      if (!contactGroups[groupId]) return;
+
+      const colors = ['#00B5A0', '#7B9AFF', '#A855F7', '#3B82F6', '#EC4899', '#10B981', '#F59E0B', '#6366F1'];
+      const randomColor = colors[Math.floor(Math.random() * colors.length)];
+      const avatar = typeof getInitials === 'function' ? getInitials(name) : name.substring(0, 2).toUpperCase();
+
+      const newContact = {
+        id: 'c_' + Date.now(),
+        name,
+        phone,
+        avatar,
+        badgeColor: randomColor
+      };
+
+      contactGroups[groupId].contacts.push(newContact);
+      saveContactGroupsToStorage();
+
+      if (nameInput) nameInput.value = '';
+      if (phoneInput) phoneInput.value = '';
+
+      alert(`Contato ${name} adicionado com sucesso!`);
+      renderExistingGroupsListModal();
+
+      if (activeGroupId === groupId) {
+        activeContacts = [...contactGroups[groupId].contacts];
+        renderPs3Carousel();
+      }
+    }
+
+    function createNewGroupFromModal() {
+      const input = document.getElementById('newGroupNameInput');
+      const name = input ? input.value.trim() : '';
+
+      if (!name) {
+        alert('Por favor, digite um nome para o grupo.');
+        return;
+      }
+
+      const groupId = 'g_' + Date.now();
+      contactGroups[groupId] = {
+        id: groupId,
+        name: name,
+        isDefault: false,
+        contacts: []
+      };
+
+      saveContactGroupsToStorage();
+      if (input) input.value = '';
+
+      renderGroupSelectInModal();
+      renderGroupDropdownOptions();
+      renderExistingGroupsListModal();
+    }
+
+    function deleteGroup(groupId) {
+      if (!contactGroups[groupId] || contactGroups[groupId].isDefault) return;
+
+      if (confirm(`Deseja realmente excluir o grupo "${contactGroups[groupId].name}"?`)) {
+        delete contactGroups[groupId];
+        saveContactGroupsToStorage();
+
+        if (activeGroupId === groupId) {
+          switchGroup('mindflow');
+        } else {
+          renderGroupSelectInModal();
+          renderGroupDropdownOptions();
+          renderExistingGroupsListModal();
+        }
+      }
+    }
+
+    // Fechar dropdown de grupo se clicar fora
+    document.addEventListener('click', (e) => {
+      const dd = document.getElementById('groupDropdownMenu');
+      const btn = document.getElementById('activeGroupBtn');
+      if (dd && dd.classList.contains('open') && !dd.contains(e.target) && (!btn || !btn.contains(e.target))) {
+        dd.classList.remove('open');
+      }
+    });
 
     // Suporte a Teclas de Seta
     document.addEventListener('keydown', e => {
@@ -5188,6 +5731,18 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         if (e.key === 'ArrowRight') movePs3Carousel(1);
       }
     });
+
+    // Inicialização
+    loadContactGroupsFromStorage();
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        renderGroupDropdownOptions();
+        renderPs3Carousel();
+      });
+    } else {
+      renderGroupDropdownOptions();
+      renderPs3Carousel();
+    }
 
     (async () => {
       try {
@@ -5200,16 +5755,22 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         const userNameEl = document.getElementById('userName');
         if (userNameEl && data.name) userNameEl.textContent = data.name;
 
-        // Preenche dados do usuário da sessão no primeiro card do carousel
+        // Preenche dados do usuário da sessão no primeiro card da equipe MindFlow
         if (data.name) {
-          teamContacts[0].name = data.name;
-          teamContacts[0].avatar = typeof getInitials === 'function' ? getInitials(data.name) : 'PE';
-          if (data.phone) teamContacts[0].phone = data.phone;
-          renderPs3Carousel();
+          contactGroups.mindflow.contacts[0].name = data.name;
+          contactGroups.mindflow.contacts[0].avatar = typeof getInitials === 'function' ? getInitials(data.name) : 'PE';
+          if (data.phone) contactGroups.mindflow.contacts[0].phone = data.phone;
+          if (activeGroupId === 'mindflow') {
+            activeContacts = [...contactGroups.mindflow.contacts];
+            renderPs3Carousel();
+          }
         } else {
           const userPhone = data.phone || '5547991089099';
-          teamContacts[0].phone = userPhone;
-          renderPs3Carousel();
+          contactGroups.mindflow.contacts[0].phone = userPhone;
+          if (activeGroupId === 'mindflow') {
+            activeContacts = [...contactGroups.mindflow.contacts];
+            renderPs3Carousel();
+          }
         }
 
         if (data.email) {
@@ -5348,6 +5909,66 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       <button class="live-mini-btn close" onclick="closeLiveModal()" type="button" title="Fechar Chamada">
         <span class="material-symbols-outlined">close</span>
       </button>
+    </div>
+  </div>
+  <!-- ── Modal de Gestão de Contatos e Grupos ── -->
+  <div class="group-modal-overlay" id="groupManagerModal">
+    <div class="group-modal-card">
+      <div class="group-modal-header">
+        <div class="group-modal-title">
+          <span class="material-symbols-outlined" style="color: #00B5A0;">contacts</span>
+          <span>Gerenciar Contatos e Grupos</span>
+        </div>
+        <button type="button" class="group-modal-close" onclick="closeGroupManagerModal()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="group-modal-tabs">
+        <button type="button" class="group-tab active" onclick="switchGroupTab('contacts')" id="tabBtnContacts">
+          <span class="material-symbols-outlined">person_add</span> Adicionar Contato
+        </button>
+        <button type="button" class="group-tab" onclick="switchGroupTab('groups')" id="tabBtnGroups">
+          <span class="material-symbols-outlined">folder_open</span> Meus Grupos
+        </button>
+      </div>
+
+      <!-- Aba 1: Adicionar Contato -->
+      <div class="group-tab-content active" id="tabContentContacts">
+        <div class="group-form-group">
+          <label>NOME DO CONTATO</label>
+          <input type="text" id="newContactName" placeholder="Ex: Carlos Oliveira" class="group-input" />
+        </div>
+        <div class="group-form-group">
+          <label>TELEFONE (COM DDD E DDI)</label>
+          <input type="text" id="newContactPhone" placeholder="Ex: 5511998877665" class="group-input" />
+        </div>
+        <div class="group-form-group">
+          <label>SALVAR NO GRUPO</label>
+          <select id="newContactGroupSelect" class="group-input select">
+            <!-- Options dynamically generated -->
+          </select>
+        </div>
+        <button type="button" class="group-btn-primary" onclick="saveNewContactFromModal()">
+          <span class="material-symbols-outlined">save</span> Salvar Contato
+        </button>
+      </div>
+
+      <!-- Aba 2: Criar/Gerenciar Grupos -->
+      <div class="group-tab-content" id="tabContentGroups">
+        <div class="group-form-group" style="display:flex; flex-direction:row; gap:8px;">
+          <input type="text" id="newGroupNameInput" placeholder="Nome do novo grupo (ex: Diretoria)" class="group-input" style="flex:1;" />
+          <button type="button" class="group-btn-primary" onclick="createNewGroupFromModal()" style="padding:0 14px;">
+            <span class="material-symbols-outlined">add</span> Criar
+          </button>
+        </div>
+        <div style="font-size:10px; font-weight:700; color:#8E8FA2; letter-spacing:0.05em; text-transform:uppercase; margin-top:8px;">
+          GRUPOS EXISTENTES
+        </div>
+        <div class="group-list-box" id="existingGroupsList">
+          <!-- Dynamic groups list -->
+        </div>
+      </div>
     </div>
   </div>
 </body>
