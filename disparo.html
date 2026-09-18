@@ -2376,6 +2376,43 @@
       .live-modal-overlay.active .live-modal-card {
         transform: scale(1);
       }
+      /* Top Actions (Minimizar / Fechar) */
+      .live-modal-top-actions {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        z-index: 10;
+      }
+      .live-modal-top-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .live-modal-top-btn:hover {
+        background: rgba(255, 255, 255, 0.14);
+        color: #ffffff;
+        transform: scale(1.05);
+      }
+      .live-modal-top-btn.close:hover {
+        background: rgba(239, 68, 68, 0.2);
+        border-color: rgba(239, 68, 68, 0.4);
+        color: #ef4444;
+      }
+      .live-modal-top-btn span {
+        font-size: 18px;
+      }
+
       .live-modal-header {
         text-align: center;
         display: flex;
@@ -2390,6 +2427,7 @@
         color: #00B5A0;
         font-size: 26px;
         margin-bottom: 2px;
+        filter: drop-shadow(0 0 8px rgba(0, 181, 160, 0.5));
       }
       .live-modal-title {
         font-family: 'Space Grotesk', sans-serif;
@@ -2532,6 +2570,9 @@
       .live-dialog-header {
         display: flex;
         align-items: center;
+        justify-content: center;
+        width: 100%;
+        text-align: center;
         gap: 6px;
         font-size: 11px;
         font-weight: 700;
@@ -2539,6 +2580,85 @@
         text-transform: uppercase;
         color: #8E8FA2;
       }
+      /* ── Mini Dock Flutuante (Picture-in-Picture) ── */
+      .live-mini-dock {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 999999;
+        background: rgba(8, 14, 28, 0.95);
+        border: 1px solid rgba(0, 181, 160, 0.4);
+        border-radius: 16px;
+        padding: 10px 14px;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 24px rgba(0, 181, 160, 0.25);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .live-mini-dock.hidden {
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(20px) scale(0.9);
+      }
+      .live-mini-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .live-mini-info {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
+      .live-mini-name {
+        font-size: 12px;
+        font-weight: 700;
+        color: #fff;
+        max-width: 130px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .live-mini-timer {
+        font-size: 11px;
+        font-weight: 600;
+        color: #7B9AFF;
+        font-family: 'Space Grotesk', sans-serif;
+      }
+      .live-mini-actions {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .live-mini-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .live-mini-btn:hover {
+        background: rgba(0, 181, 160, 0.2);
+        color: #00B5A0;
+        border-color: rgba(0, 181, 160, 0.4);
+      }
+      .live-mini-btn.close:hover {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border-color: rgba(239, 68, 68, 0.4);
+      }
+      .live-mini-btn span { font-size: 16px; }
       .live-dialog-messages {
         max-height: 160px;
         overflow-y: auto;
@@ -4003,9 +4123,25 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
     let liveSeconds = 0;
     let liveTimerStarted = false;
 
+    function minimizeLiveModal() {
+      const modal = document.getElementById('liveCallModal');
+      const miniDock = document.getElementById('liveCallMiniDock');
+      if (modal) modal.classList.remove('active');
+      if (miniDock) miniDock.classList.remove('hidden');
+    }
+
+    function expandLiveModal() {
+      const modal = document.getElementById('liveCallModal');
+      const miniDock = document.getElementById('liveCallMiniDock');
+      if (miniDock) miniDock.classList.add('hidden');
+      if (modal) modal.classList.add('active');
+    }
+
     function closeLiveModal() {
       const modal = document.getElementById('liveCallModal');
+      const miniDock = document.getElementById('liveCallMiniDock');
       if (modal) modal.classList.remove('active');
+      if (miniDock) miniDock.classList.add('hidden');
       if (liveSseSource) liveSseSource.close();
       if (livePollInterval) clearInterval(livePollInterval);
       if (liveTimerInterval) clearInterval(liveTimerInterval);
@@ -4016,6 +4152,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         frame.style.setProperty('display', 'none', 'important');
         frame.classList.add('hidden');
       }
+      if (typeof checkFormReady === 'function') checkFormReady();
     }
 
     function playLiveAudio() {
@@ -4159,6 +4296,14 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           if (statusText) statusText.textContent = ongoingLabel;
           if (liveStatusText) liveStatusText.textContent = ongoingLabel;
 
+          // Sincroniza dados com o Mini Dock Flutuante
+          const miniLead = document.getElementById('liveMiniLeadName');
+          const miniTimer = document.getElementById('liveMiniTimer');
+          const miniDot = document.getElementById('liveMiniStatusDot');
+          if (miniLead) miniLead.textContent = document.getElementById('liveModalLeadName')?.textContent || 'Pedro Ernesto';
+          if (miniTimer) miniTimer.textContent = document.getElementById('liveModalTimer')?.textContent || '00:00';
+          if (miniDot) miniDot.className = statusDot ? statusDot.className : 'live-modal-status-dot';
+
           // INICIA O TIMER SOMENTE QUANDO A LIGAÇÃO É ATENDIDA!
           if (!liveTimerStarted) {
             liveTimerStarted = true;
@@ -4258,7 +4403,9 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           if (role === 'user') {
             return `
               <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px; margin-bottom:8px;">
-                <span style="font-size:9px; font-weight:700; color:#8E8FA2; letter-spacing:0.05em;">${label}</span>
+                <span style="font-size:9px; font-weight:700; color:#8E8FA2; letter-spacing:0.05em; display:flex; align-items:center; gap:3px;">
+                  LEAD <span class="material-symbols-outlined" style="font-size:11px;">person</span>
+                </span>
                 <div style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:12px 12px 2px 12px; padding:8px 12px; color:#fff; font-size:12px; max-width:85%;">
                   ${text}
                 </div>
@@ -4266,7 +4413,9 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           } else {
             return `
               <div style="display:flex; flex-direction:column; align-items:flex-start; gap:2px; margin-bottom:8px;">
-                <span style="font-size:9px; font-weight:700; color:#00B5A0; letter-spacing:0.05em;">${label}</span>
+                <span style="font-size:9px; font-weight:700; color:#00B5A0; letter-spacing:0.05em; display:flex; align-items:center; gap:3px;">
+                  <span class="material-symbols-outlined" style="font-size:11px;">smart_toy</span> AGENTE
+                </span>
                 <div style="background:rgba(0,181,160,0.12); border:1px solid rgba(0,181,160,0.25); border-radius:12px 12px 12px 2px; padding:8px 12px; color:#fff; font-size:12px; max-width:85%;">
                   ${text}
                 </div>
@@ -4612,6 +4761,16 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
   <!-- ── Modal Ligação ao Vivo (Image 2 Replica) ── -->
   <div id="liveCallModal" class="live-modal-overlay">
     <div class="live-modal-card">
+      <!-- Botões Superiores (Minimizar / Fechar) -->
+      <div class="live-modal-top-actions">
+        <button class="live-modal-top-btn" onclick="minimizeLiveModal()" type="button" title="Minimizar Modal">
+          <span class="material-symbols-outlined">minimize</span>
+        </button>
+        <button class="live-modal-top-btn close" onclick="closeLiveModal()" type="button" title="Fechar Janela">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
       <div class="live-modal-header">
         <div class="live-modal-header-ico">
           <span class="material-symbols-outlined" style="font-size: 28px;">equalizer</span>
@@ -4627,9 +4786,6 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         </div>
         <div class="live-modal-timer-wrap">
           <div class="live-modal-timer" id="liveModalTimer">00:00</div>
-          <button class="live-modal-close" onclick="closeLiveModal()" type="button" title="Fechar">
-            <span class="material-symbols-outlined">close</span>
-          </button>
         </div>
       </div>
 
@@ -4678,6 +4834,25 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           <audio id="liveModalAudioElement" controls style="width: 100%; height: 36px; border-radius: 8px; filter: invert(0.9) hue-rotate(180deg);"></audio>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ── Mini Dock Flutuante (Picture-in-Picture) ── -->
+  <div id="liveCallMiniDock" class="live-mini-dock hidden">
+    <div class="live-mini-left">
+      <div class="live-modal-status-dot in-progress" id="liveMiniStatusDot"></div>
+      <div class="live-mini-info">
+        <span class="live-mini-name" id="liveMiniLeadName">Pedro Ernesto</span>
+        <span class="live-mini-timer" id="liveMiniTimer">00:00</span>
+      </div>
+    </div>
+    <div class="live-mini-actions">
+      <button class="live-mini-btn" onclick="expandLiveModal()" type="button" title="Expandir Chamada">
+        <span class="material-symbols-outlined">open_in_full</span>
+      </button>
+      <button class="live-mini-btn close" onclick="closeLiveModal()" type="button" title="Fechar Chamada">
+        <span class="material-symbols-outlined">close</span>
+      </button>
     </div>
   </div>
 </body>
