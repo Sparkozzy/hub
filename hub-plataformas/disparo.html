@@ -3521,6 +3521,11 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
     });
 
     function checkFormReady() {
+      const statusPill = document.querySelector('.status');
+      const isQuick = document.getElementById('modeQuick')?.classList.contains('active');
+      if (statusPill) statusPill.style.display = isQuick ? 'none' : 'flex';
+      if (isQuick) return;
+
       const nome = document.getElementById('nome').value.trim();
       const tel = document.getElementById('telefone').value.replace(/\D/g, '');
       const email = document.getElementById('email').value.trim();
@@ -3538,13 +3543,13 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         btn.classList.add(selectedDay && selectedTime ? 'ready-scheduled' : 'ready-immediate');
         // Se estiver pronto e não estiver em processo de ligação/erro, mostra Pronto
         const currentPill = document.getElementById('pillText').textContent;
-        if (currentPill === 'Aguardando Informações' || currentPill === 'Sistema Pronto') {
+        if (currentPill === 'Aguardando Informações' || currentPill === 'Sistema Pronto' || currentPill === 'Chamada iniciada!') {
           setPill('dot-teal', 'Sistema Pronto');
         }
       } else {
         // Se não estiver pronto e não estiver em processo de ligação/erro, mostra Aguardando
         const currentPill = document.getElementById('pillText').textContent;
-        if (currentPill === 'Aguardando Informações' || currentPill === 'Sistema Pronto') {
+        if (currentPill === 'Aguardando Informações' || currentPill === 'Sistema Pronto' || currentPill === 'Chamada iniciada!') {
           setPill('dot-neutral', 'Aguardando Informações');
         }
       }
@@ -3716,10 +3721,11 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         const anyOpen = document.querySelector('.custom-select.open');
         if (!anyOpen) {
           document.body.classList.remove('select-open');
+          const isQuick = document.getElementById('modeQuick')?.classList.contains('active');
+          const statusEl = document.querySelector('.status');
+          if (statusEl) statusEl.style.display = isQuick ? 'none' : 'flex';
           const pill = document.getElementById('pill');
           if (pill) pill.style.display = '';
-          const statusEl = document.querySelector('.status');
-          if (statusEl) statusEl.style.display = '';
           const dot = document.getElementById('dot');
           if (dot) dot.style.display = '';
 
@@ -3838,7 +3844,12 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       const cm = document.getElementById('completeMode');
       if (qm) qm.classList.toggle('visible', isQuick);
       if (cm) cm.classList.toggle('hidden', isQuick);
+      const statusPill = document.querySelector('.status');
+      if (statusPill) statusPill.style.display = isQuick ? 'none' : 'flex';
     };
+
+    // Esconde a pill por padrão no disparo rápido inicial
+    window.switchMode('quick');
 
     // Inicialização síncrona imediata ao parse do JS
     initCustomSelect('csQuickAgent', DEFAULT_PRESETS, applyQuickPresetSelection, 'agent_f95ee856fb3d220f42171318dc');
@@ -3946,8 +3957,6 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       const btn = this;
       btn.disabled = true;
       btn.innerHTML = '<div class="spinner-css"></div> Ligando...';
-      document.getElementById('pillText').textContent = 'Iniciando ligação...';
-      document.getElementById('dot').className = 'dot dot-pending';
 
       // Abre o Modal em Tempo Real IMEDIATAMENTE ao clicar
       startLiveCallTracking(null, telefone, document.getElementById('csQuickAgentText')?.textContent || agentId, document.getElementById('quickProviderVal')?.value || 'Auto', nome);
@@ -3971,8 +3980,6 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         });
         const data = await res.json();
         if (res.ok) {
-          document.getElementById('pillText').textContent = 'Chamada iniciada!';
-          document.getElementById('dot').className = 'dot dot-success';
           if (data && data.execution_id) {
             updateLiveCallExecution(data.execution_id);
           }
@@ -3980,8 +3987,6 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           throw new Error(data.error || 'Erro no disparo');
         }
       } catch (e) {
-        document.getElementById('pillText').textContent = 'Erro: ' + e.message;
-        document.getElementById('dot').className = 'dot dot-error';
         const st = document.getElementById('liveModalStatusText');
         const sd = document.getElementById('liveModalStatusDot');
         if (st) st.textContent = 'Erro no disparo: ' + e.message;
