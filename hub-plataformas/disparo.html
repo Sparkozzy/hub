@@ -201,33 +201,214 @@
     .quick-mode.visible { display: flex; }
     .quick-mode:has(.custom-select.open) { z-index: 99999; }
 
-    .quick-user-card {
+    /* ── PS3 XMB Contacts Carousel ── */
+    .ps3-carousel-container {
+      position: relative;
+      background: linear-gradient(145deg, rgba(8, 14, 28, 0.9), rgba(13, 22, 44, 0.7));
+      border: 1px solid rgba(0, 181, 160, 0.25);
+      border-radius: 16px;
+      padding: 16px 14px 14px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(0, 181, 160, 0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      user-select: none;
+      overflow: hidden;
+    }
+    .ps3-carousel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 4px;
+    }
+    .ps3-carousel-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #7B9AFF;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .ps3-carousel-counter {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.6);
+      background: rgba(255, 255, 255, 0.06);
+      padding: 2px 8px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .ps3-carousel-viewport {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 145px;
+      perspective: 900px;
+    }
+    .ps3-nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 10;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      backdrop-filter: blur(8px);
+    }
+    .ps3-nav-btn:hover {
+      background: rgba(0, 181, 160, 0.3);
+      border-color: #00B5A0;
+      color: #00B5A0;
+      box-shadow: 0 0 16px rgba(0, 181, 160, 0.4);
+      transform: translateY(-50%) scale(1.1);
+    }
+    .ps3-nav-btn.prev { left: 4px; }
+    .ps3-nav-btn.next { right: 4px; }
+
+    .ps3-carousel-track {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ps3-card {
+      position: absolute;
+      width: 180px;
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
-      gap: 12px;
-      padding: 28px 20px 22px;
-      background: rgba(255,255,255,0.02);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 12px;
+      gap: 8px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                  opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                  box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                  border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                  filter 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(0) scale(0.7);
     }
-    .quick-avatar {
-      width: 56px; height: 56px;
+
+    .ps3-card.active {
+      opacity: 1;
+      pointer-events: auto;
+      z-index: 5;
+      transform: translateX(0) scale(1.05);
+      background: rgba(8, 20, 38, 0.95);
+      border-color: rgba(0, 181, 160, 0.5);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 24px rgba(0, 181, 160, 0.25);
+    }
+
+    .ps3-card.prev-card {
+      opacity: 0.45;
+      pointer-events: auto;
+      z-index: 2;
+      transform: translateX(-125px) scale(0.82) rotateY(15deg);
+      filter: blur(0.5px);
+    }
+
+    .ps3-card.next-card {
+      opacity: 0.45;
+      pointer-events: auto;
+      z-index: 2;
+      transform: translateX(125px) scale(0.82) rotateY(-15deg);
+      filter: blur(0.5px);
+    }
+
+    .ps3-avatar {
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
-      background: linear-gradient(135deg, rgba(46,79,255,0.2), rgba(0,181,160,0.2));
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
+      background: linear-gradient(135deg, rgba(0, 181, 160, 0.3), rgba(46, 79, 255, 0.3));
+      border: 2px solid rgba(0, 181, 160, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 20px;
+      font-size: 15px;
       font-weight: 700;
-      color: #7B9AFF;
-      letter-spacing: 0.02em;
+      color: #fff;
+      box-shadow: 0 0 12px rgba(0, 181, 160, 0.2);
+      transition: all 0.3s ease;
     }
-    .quick-user-info { display: flex; flex-direction: column; gap: 4px; }
-    .quick-user-name { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 600; color: #fff; }
-    .quick-user-phone { font-size: 13px; color: rgba(255,255,255,0.4); }
-    .quick-user-phone.no-phone { color: rgba(255,77,77,0.5); font-style: italic; }
+    .ps3-card.active .ps3-avatar {
+      width: 48px;
+      height: 48px;
+      border-color: #00B5A0;
+      box-shadow: 0 0 20px rgba(0, 181, 160, 0.5);
+    }
+
+    .ps3-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      width: 100%;
+    }
+    .ps3-name {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .ps3-role {
+      font-size: 10px;
+      font-weight: 500;
+      color: #00B5A0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .ps3-phone {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.5);
+      font-family: monospace;
+    }
+
+    .ps3-carousel-dots {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .ps3-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .ps3-dot.active {
+      width: 18px;
+      border-radius: 10px;
+      background: #00B5A0;
+      box-shadow: 0 0 10px rgba(0, 181, 160, 0.6);
+    }
 
     /* ── Custom Dropdown ── */
     .custom-select {
@@ -3072,12 +3253,31 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
 
       <!-- ── Quick Mode ── -->
       <div class="quick-mode visible" id="quickMode">
-        <div class="quick-user-card">
-          <div class="quick-avatar" id="quickAvatar">—</div>
-          <div class="quick-user-info">
-            <span class="quick-user-name" id="quickUserName">Carregando...</span>
-            <span class="quick-user-phone" id="quickUserPhone">—</span>
+        <!-- ── PS3 XMB Style Contacts Carousel ── -->
+        <div class="ps3-carousel-container" id="ps3CarouselContainer">
+          <div class="ps3-carousel-header">
+            <span class="ps3-carousel-label">
+              <span class="material-symbols-outlined" style="font-size: 14px; color: #00B5A0;">contacts</span>
+              EQUIPE MINDFLOW
+            </span>
+            <span class="ps3-carousel-counter" id="ps3CarouselCounter">1 / 5</span>
           </div>
+
+          <div class="ps3-carousel-viewport">
+            <button type="button" class="ps3-nav-btn prev" onclick="movePs3Carousel(-1)" aria-label="Contato Anterior">
+              <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+
+            <div class="ps3-carousel-track" id="ps3CarouselTrack">
+              <!-- Dynamically populated contacts -->
+            </div>
+
+            <button type="button" class="ps3-nav-btn next" onclick="movePs3Carousel(1)" aria-label="Próximo Contato">
+              <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+          </div>
+
+          <div class="ps3-carousel-dots" id="ps3CarouselDots"></div>
         </div>
         <div class="field">
           <label for="quickAgentSelect">Conta / Agente Padrão</label>
@@ -4877,6 +5077,151 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
     }
   </script>
   <script>
+    /* ── PS3 XMB Contacts Carousel Engine ── */
+    let teamContacts = [
+      {
+        id: 'pedro',
+        name: 'Pedro Ernesto',
+        role: 'Diretoria Executiva · CEO',
+        phone: '5547991089099',
+        avatar: 'PE',
+        badgeColor: '#00B5A0'
+      },
+      {
+        id: 'kaique',
+        name: 'Kaique Santos',
+        role: 'Outbound & Vendas',
+        phone: '5547999881122',
+        avatar: 'KS',
+        badgeColor: '#7B9AFF'
+      },
+      {
+        id: 'ueine',
+        name: 'Ueine Rocha',
+        role: 'Engenharia de IA & Ops',
+        phone: '5547992334455',
+        avatar: 'UR',
+        badgeColor: '#A855F7'
+      },
+      {
+        id: 'gabriel',
+        name: 'Gabriel Silva',
+        role: 'Gestão de Produto',
+        phone: '5547988776655',
+        avatar: 'GS',
+        badgeColor: '#F59E0B'
+      },
+      {
+        id: 'suporte',
+        name: 'MindFlow Suporte',
+        role: 'Central de Atendimento 24h',
+        phone: '5547991112233',
+        avatar: 'MF',
+        badgeColor: '#EC4899'
+      }
+    ];
+
+    let currentPs3Index = 0;
+
+    function renderPs3Carousel() {
+      const track = document.getElementById('ps3CarouselTrack');
+      const dotsContainer = document.getElementById('ps3CarouselDots');
+      if (!track || !dotsContainer) return;
+
+      track.innerHTML = teamContacts.map((c, idx) => `
+        <div class="ps3-card" onclick="selectPs3Contact(${idx})" role="button" tabindex="0">
+          <div class="ps3-avatar" style="background: linear-gradient(135deg, ${c.badgeColor}33, rgba(46,79,255,0.25)); border-color: ${c.badgeColor};">
+            ${escHtml(c.avatar)}
+          </div>
+          <div class="ps3-info">
+            <span class="ps3-name">${escHtml(c.name)}</span>
+            <span class="ps3-role" style="color:${c.badgeColor}">${escHtml(c.role)}</span>
+            <span class="ps3-phone">+${escHtml(c.phone)}</span>
+          </div>
+        </div>
+      `).join('');
+
+      dotsContainer.innerHTML = teamContacts.map((_, idx) => `
+        <div class="ps3-dot ${idx === currentPs3Index ? 'active' : ''}" onclick="selectPs3Contact(${idx})"></div>
+      `).join('');
+
+      updatePs3CarouselUI();
+    }
+
+    function movePs3Carousel(direction) {
+      const total = teamContacts.length;
+      if (total === 0) return;
+      currentPs3Index = (currentPs3Index + direction + total) % total;
+      updatePs3CarouselUI();
+    }
+
+    function selectPs3Contact(index) {
+      const total = teamContacts.length;
+      if (index < 0 || index >= total) return;
+      currentPs3Index = index;
+      updatePs3CarouselUI();
+    }
+
+    function updatePs3CarouselUI() {
+      const total = teamContacts.length;
+      if (total === 0) return;
+
+      const track = document.getElementById('ps3CarouselTrack');
+      const dotsContainer = document.getElementById('ps3CarouselDots');
+      const counterEl = document.getElementById('ps3CarouselCounter');
+
+      if (counterEl) counterEl.textContent = `${currentPs3Index + 1} / ${total}`;
+
+      const prevIdx = (currentPs3Index - 1 + total) % total;
+      const nextIdx = (currentPs3Index + 1) % total;
+
+      const cards = track ? track.querySelectorAll('.ps3-card') : [];
+      cards.forEach((card, idx) => {
+        card.classList.remove('active', 'prev-card', 'next-card');
+        if (idx === currentPs3Index) {
+          card.classList.add('active');
+        } else if (idx === prevIdx) {
+          card.classList.add('prev-card');
+        } else if (idx === nextIdx) {
+          card.classList.add('next-card');
+        }
+      });
+
+      const dots = dotsContainer ? dotsContainer.querySelectorAll('.ps3-dot') : [];
+      dots.forEach((dot, idx) => {
+        dot.classList.toggle('active', idx === currentPs3Index);
+      });
+
+      const selected = teamContacts[currentPs3Index];
+      if (selected) {
+        const nomeEl = document.getElementById('nome');
+        const telEl = document.getElementById('telefone');
+        const btnQuick = document.getElementById('btnQuickCall');
+
+        if (nomeEl) nomeEl.value = selected.name;
+        if (telEl) telEl.value = selected.phone;
+        if (btnQuick) {
+          btnQuick.innerHTML = `<span class="material-symbols-outlined">phone_in_talk</span> Ligar para ${escHtml(selected.name)}`;
+        }
+      }
+    }
+
+    // Inicialização do Carousel
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', renderPs3Carousel);
+    } else {
+      renderPs3Carousel();
+    }
+
+    // Suporte a Teclas de Seta
+    document.addEventListener('keydown', e => {
+      const quickMode = document.getElementById('quickMode');
+      if (quickMode && quickMode.classList.contains('visible')) {
+        if (e.key === 'ArrowLeft') movePs3Carousel(-1);
+        if (e.key === 'ArrowRight') movePs3Carousel(1);
+      }
+    });
+
     (async () => {
       try {
         const res = await fetch('/api/check');
@@ -4888,20 +5233,18 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         const userNameEl = document.getElementById('userName');
         if (userNameEl && data.name) userNameEl.textContent = data.name;
 
-        // Preenche nome/telefone nos campos e no quick mode card
+        // Preenche dados do usuário da sessão no primeiro card do carousel
         if (data.name) {
-          const nomeEl = document.getElementById('nome');
-          if (nomeEl && !nomeEl.value) nomeEl.value = data.name;
-          const qn = document.getElementById('quickUserName');
-          if (qn) qn.textContent = data.name;
-          const qa = document.getElementById('quickAvatar');
-          if (qa) qa.textContent = getInitials(data.name);
+          teamContacts[0].name = data.name;
+          teamContacts[0].avatar = typeof getInitials === 'function' ? getInitials(data.name) : 'PE';
+          if (data.phone) teamContacts[0].phone = data.phone;
+          renderPs3Carousel();
+        } else {
+          const userPhone = data.phone || '5547991089099';
+          teamContacts[0].phone = userPhone;
+          renderPs3Carousel();
         }
-        const userPhone = data.phone || '5547991089099';
-        const telEl = document.getElementById('telefone');
-        if (telEl && !telEl.value) telEl.value = userPhone;
-        const qp = document.getElementById('quickUserPhone');
-        if (qp) { qp.textContent = userPhone; qp.classList.remove('no-phone'); }
+
         if (data.email) {
           const emailEl = document.getElementById('email');
           if (emailEl && !emailEl.value) emailEl.value = data.email;
