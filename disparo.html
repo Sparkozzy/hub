@@ -2943,6 +2943,108 @@
       .live-modal-overlay.active .live-modal-card {
         transform: scale(1);
       }
+      /* ── Animated Equalizer Bars (Motion Graphic) ── */
+      .live-equalizer-bars {
+        display: inline-flex;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 3.5px;
+        height: 22px;
+        width: 22px;
+        padding-bottom: 2px;
+      }
+      .live-equalizer-bars .eq-bar {
+        width: 4px;
+        background: #00B5A0;
+        border-radius: 3px;
+        box-shadow: 0 0 8px rgba(0, 181, 160, 0.6);
+        height: 100%;
+        transform-origin: bottom;
+        animation: eqBreathing 1.1s ease-in-out infinite alternate;
+      }
+      .live-equalizer-bars .eq-bar.bar-1 {
+        height: 60%;
+        animation-delay: 0s;
+      }
+      .live-equalizer-bars .eq-bar.bar-2 {
+        height: 100%;
+        animation-delay: 0.25s;
+      }
+      .live-equalizer-bars .eq-bar.bar-3 {
+        height: 75%;
+        animation-delay: 0.5s;
+      }
+
+      @keyframes eqBreathing {
+        0% {
+          transform: scaleY(0.3);
+          opacity: 0.5;
+        }
+        50% {
+          transform: scaleY(1);
+          opacity: 1;
+        }
+        100% {
+          transform: scaleY(0.4);
+          opacity: 0.7;
+        }
+      }
+
+      .live-equalizer-bars.ended .eq-bar {
+        animation: none !important;
+        transform: scaleY(0.3) !important;
+        background: #EF4444 !important;
+        box-shadow: 0 0 6px rgba(239, 68, 68, 0.4) !important;
+      }
+      .live-equalizer-bars.warning .eq-bar {
+        animation: none !important;
+        transform: scaleY(0.3) !important;
+        background: #F59E0B !important;
+        box-shadow: 0 0 6px rgba(245, 158, 11, 0.4) !important;
+      }
+
+      .disconnection-reason-sub {
+        font-size: 11px;
+        font-weight: 400;
+        color: #8E8FA2;
+        margin-left: 4px;
+        text-transform: none;
+        letter-spacing: 0;
+      }
+
+      /* ── Frame Top Action Buttons ── */
+      .live-frame-top-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .live-frame-top-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .live-frame-top-btn:hover {
+        background: rgba(255, 255, 255, 0.14);
+        color: #ffffff;
+        transform: scale(1.05);
+      }
+      .live-frame-top-btn.close:hover {
+        background: rgba(239, 68, 68, 0.2);
+        border-color: rgba(239, 68, 68, 0.4);
+        color: #ef4444;
+      }
+      .live-frame-top-btn span {
+        font-size: 16px;
+      }
+
       /* Top Actions (Minimizar / Fechar) */
       .live-modal-top-actions {
         position: absolute;
@@ -3807,8 +3909,16 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           <div class="live-title-badge">
             <span class="dot dot-pending" id="livePulseDot"></span>
             <span id="liveFrameTitleText">Acompanhamento ao Vivo</span>
+            <div class="live-timer-badge" id="liveTimerText">00:00</div>
           </div>
-          <div class="live-timer-badge" id="liveTimerText">00:00</div>
+          <div class="live-frame-top-actions">
+            <button type="button" class="live-frame-top-btn" onclick="resetForm()" title="Nova Ligação / Refazer">
+              <span class="material-symbols-outlined">refresh</span>
+            </button>
+            <button type="button" class="live-frame-top-btn close" onclick="closeLiveCallFrame()" title="Fechar Resumo">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
         </div>
 
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
@@ -4781,6 +4891,14 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       if (typeof checkFormReady === 'function') checkFormReady();
     }
 
+    function closeLiveCallFrame() {
+      const frame = document.getElementById('liveCallFrame');
+      if (frame) {
+        frame.style.setProperty('display', 'none', 'important');
+        frame.classList.add('hidden');
+      }
+    }
+
     function playLiveAudio() {
       const audioWrap = document.getElementById('liveModalAudioWrap');
       const audio = document.getElementById('liveModalAudioElement');
@@ -4808,6 +4926,9 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       const modal = document.getElementById('liveCallModal');
       const frame = document.getElementById('liveCallFrame');
       if (!modal && !frame) return;
+
+      const eqBars = document.getElementById('liveEqualizerBars');
+      if (eqBars) eqBars.className = 'live-equalizer-bars';
 
       // 1. Reset Inline Frame (no card)
       if (frame) {
@@ -4927,6 +5048,18 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
                             reason.includes('error') || reason.includes('failed') || 
                             reason.includes('no_answer') || reason.includes('busy');
 
+        const disconnectionReason = (function(rRaw, sRaw) {
+          const r = (rRaw || sRaw || '').toLowerCase();
+          if (r.includes('user_hangup') || r.includes('user hangup') || r.includes('desligado pelo usuario')) return 'Desconectado pelo usuário';
+          if (r.includes('agent_hangup') || r.includes('agent hangup')) return 'Finalizada pelo agente';
+          if (r.includes('no_answer') || r.includes('no answer')) return 'Sem resposta';
+          if (r.includes('busy')) return 'Linha ocupada';
+          if (r.includes('voicemail')) return 'Caixa postal';
+          if (r.includes('inactivity')) return 'Inatividade na chamada';
+          if (r.includes('error') || r.includes('failed')) return 'Falha de conexão';
+          return 'Chamada finalizada';
+        })(reason, status);
+
         // 1. SE A CHAMADA FINALIZOU, PARA O TIMER IMEDIATAMENTE!
         if (isFinishedState) {
           if (liveTimerInterval) {
@@ -4944,13 +5077,16 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
               if (lTextEl) lTextEl.textContent = `${m}:${s}`;
             }
           }
+
+          const eqBars = document.getElementById('liveEqualizerBars');
+          if (eqBars) eqBars.className = isTechError ? 'live-equalizer-bars warning' : 'live-equalizer-bars ended';
+
           if (isTechError) {
             if (statusDot) statusDot.className = 'live-modal-status-dot ringing';
             if (livePulseDot) livePulseDot.className = 'dot dot-pending';
-            const finalLabel = data.stageLabel || (reason ? `Erro (${reason})` : 'Erro Técnico');
-            if (statusText) statusText.textContent = finalLabel;
+            if (statusText) statusText.innerHTML = `Chamada Finalizada <span class="disconnection-reason-sub">· ${escHtml(disconnectionReason)}</span>`;
             if (liveStatusText) {
-              liveStatusText.textContent = finalLabel;
+              liveStatusText.innerHTML = `ERRO NA CHAMADA <span class="disconnection-reason-sub">· ${escHtml(disconnectionReason)}</span>`;
               liveStatusText.className = 'live-status-pill warning';
             }
             if (liveFrameTitleText) liveFrameTitleText.textContent = 'Resumo da Chamada';
@@ -4962,10 +5098,9 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           } else {
             if (statusDot) statusDot.className = 'live-modal-status-dot';
             if (livePulseDot) livePulseDot.className = 'dot dot-error';
-            const finalLabel = data.stageLabel || (reason ? `Chamada Encerrada (${reason})` : 'Chamada Finalizada');
-            if (statusText) statusText.textContent = finalLabel;
+            if (statusText) statusText.innerHTML = `Chamada Finalizada <span class="disconnection-reason-sub">· ${escHtml(disconnectionReason)}</span>`;
             if (liveStatusText) {
-              liveStatusText.textContent = finalLabel;
+              liveStatusText.innerHTML = `CHAMADA FINALIZADA <span class="disconnection-reason-sub">· ${escHtml(disconnectionReason)}</span>`;
               liveStatusText.className = 'live-status-pill ended';
             }
             if (liveFrameTitleText) liveFrameTitleText.textContent = 'Resumo da Chamada';
@@ -5901,7 +6036,11 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
 
       <div class="live-modal-header">
         <div class="live-modal-header-ico">
-          <span class="material-symbols-outlined" style="font-size: 28px;">equalizer</span>
+          <div class="live-equalizer-bars" id="liveEqualizerBars">
+            <span class="eq-bar bar-1"></span>
+            <span class="eq-bar bar-2"></span>
+            <span class="eq-bar bar-3"></span>
+          </div>
         </div>
         <div class="live-modal-title">Ligação ao Vivo</div>
         <div class="live-modal-sub">Acompanhe a chamada e a transcrição em tempo real</div>
