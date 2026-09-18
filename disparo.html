@@ -3998,11 +3998,19 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
     function playLiveAudio() {
       const audioWrap = document.getElementById('liveModalAudioWrap');
       const audio = document.getElementById('liveModalAudioElement');
-      if (audioWrap && audio && audio.src) {
+      const btn = document.getElementById('btnLiveAudio');
+      if (audio && audio.src && audio.src.length > 5 && !audio.src.endsWith('#')) {
         audioWrap.style.display = 'flex';
-        audio.play().catch(() => {});
+        if (audio.paused) {
+          audio.play().then(() => {
+            if (btn) btn.innerHTML = '<span class="material-symbols-outlined">pause</span> Pausar Áudio';
+          }).catch(() => {});
+        } else {
+          audio.pause();
+          if (btn) btn.innerHTML = '<span class="material-symbols-outlined">headphones</span> Ouvir Gravação';
+        }
       } else {
-        alert('Gravação ainda não disponível para esta chamada.');
+        alert('A gravação de áudio ainda está sendo processada pela operadora Retell. Tente novamente em alguns segundos.');
       }
     }
 
@@ -4088,76 +4096,91 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         const liveTranscriptBox = document.getElementById('liveTranscriptBox');
         const audioWrap = document.getElementById('liveModalAudioWrap');
         const audioElement = document.getElementById('liveModalAudioElement');
+        const btnLiveAudio = document.getElementById('btnLiveAudio');
         const liveActionArea = document.getElementById('liveActionArea');
         const liveLogLink = document.getElementById('liveLogLink');
-
-        if (data.stageLabel) {
-          if (statusText) statusText.textContent = data.stageLabel;
-          if (liveStatusText) liveStatusText.textContent = data.stageLabel;
-        }
 
         const call = data.call || data;
         const status = (call.status || data.stage || data.status || '').toLowerCase();
         const reason = (call.disconnection_reason || data.disconnection_reason || '').toLowerCase();
 
-        if (data.stageLabel) {
-          if (statusText) statusText.textContent = data.stageLabel;
-          if (liveStatusText) liveStatusText.textContent = data.stageLabel;
-        }
+        // Checa se a chamada foi encerrada
+        const isFinishedState = data.isFinished || 
+                                ['ended', 'completed', 'user_hangup', 'agent_hangup', 'call_ended', 'error', 'failed'].includes(status) || 
+                                (reason && reason !== '') || 
+                                (data.stageLabel && (data.stageLabel.includes('Finaliz') || data.stageLabel.includes('Encerrad') || data.stageLabel.includes('Recusad') || data.stageLabel.includes('Ocupad')));
 
-        if (data.isFinished || status.includes('ended') || status.includes('completed') || status.includes('fail') || status.includes('busy') || status.includes('no-answer') || status.includes('recusad') || status.includes('caixa') || reason !== '') {
+        // 1. SE A CHAMADA FINALIZOU, PARA O TIMER IMEDIATAMENTE!
+        if (isFinishedState) {
+          if (liveTimerInterval) {
+            clearInterval(liveTimerInterval);
+            liveTimerInterval = null;
+          }
           if (statusDot) statusDot.className = 'live-modal-status-dot';
           if (livePulseDot) livePulseDot.className = 'dot dot-error';
-          if (!data.stageLabel) {
-            const finalReasonText = reason ? `Chamada Encerrada (${reason})` : 'Chamada Finalizada';
-            if (statusText) statusText.textContent = finalReasonText;
-            if (liveStatusText) liveStatusText.textContent = finalReasonText;
-          }
+          const finalLabel = data.stageLabel || (reason ? `Chamada Encerrada (${reason})` : 'Chamada Finalizada');
+          if (statusText) statusText.textContent = finalLabel;
+          if (liveStatusText) liveStatusText.textContent = finalLabel;
         } else if (status.includes('ongoing') || status.includes('in-progress') || status.includes('in_progress') || status.includes('active') || status.includes('atendid') || status.includes('ao vivo')) {
           if (statusDot) statusDot.className = 'live-modal-status-dot in-progress';
           if (livePulseDot) livePulseDot.className = 'dot dot-teal';
-          if (!data.stageLabel) {
-            if (statusText) statusText.textContent = 'Em Chamada ao Vivo';
-            if (liveStatusText) liveStatusText.textContent = 'Em Chamada ao Vivo';
-          }
+          const ongoingLabel = data.stageLabel || 'Em Chamada ao Vivo';
+          if (statusText) statusText.textContent = ongoingLabel;
+          if (liveStatusText) liveStatusText.textContent = ongoingLabel;
         } else {
           if (statusDot) statusDot.className = 'live-modal-status-dot ringing';
           if (livePulseDot) livePulseDot.className = 'dot dot-pending';
-          if (!data.stageLabel) {
-            if (statusText) statusText.textContent = 'Discando...';
-            if (liveStatusText) liveStatusText.textContent = 'Discando...';
-          }
+          const ringLabel = data.stageLabel || 'Discando...';
+          if (statusText) statusText.textContent = ringLabel;
+          if (liveStatusText) liveStatusText.textContent = ringLabel;
         }
 
-        // Transcrição / Mensagens
+        // 2. TRANSCRIÇÃO / DIÁLOGO EM TEMPO REAL
         const tObj = call.transcript_object || data.transcript_object;
         const tText = call.transcript || data.transcript;
+
         if (tObj && Array.isArray(tObj) && tObj.length > 0) {
           renderModalMessages(tObj);
           renderTranscriptBubbles(tObj);
-        } else if (tText) {
-          const mBox = document.getElementById('liveModalMessages');
-          const tBox = document.getElementById('liveTranscriptBox');
-          if (mBox) mBox.innerHTML = `<div style="color:#fff; font-size:13px; line-height:1.5; padding:8px; background:rgba(255,255,255,0.05); border-radius:8px;">${escHtml(tText)}</div>`;
-          if (tBox) tBox.innerHTML = `<div style="color:#fff; font-size:13px; line-height:1.5; padding:8px; background:rgba(255,255,255,0.05); border-radius:8px;">${escHtml(tText)}</div>`;
+        } else if (tText && typeof tText === 'string' && tText.trim().length > 0) {
+          const formattedSingle = `<div style="color:#fff; font-size:12px; line-height:1.5; padding:10px 14px; background:rgba(0,181,160,0.12); border:1px solid rgba(0,181,160,0.25); border-radius:12px;"><strong>REGISTRO DA CONVERSA:</strong><br/>${escHtml(tText)}</div>`;
+          if (messagesBox) messagesBox.innerHTML = formattedSingle;
+          if (liveTranscriptBox) liveTranscriptBox.innerHTML = formattedSingle;
+        } else if (isFinishedState) {
+          if (messagesBox && !messagesBox.querySelector('.chat-bubble-user') && !messagesBox.querySelector('.chat-bubble-agent')) {
+            messagesBox.innerHTML = '<div style="color: #7B9AFF; font-size: 12px; text-align: center; width: 100%; padding: 14px 0; display:flex; align-items:center; justify-content:center; gap:8px;"><span class="material-symbols-outlined" style="font-size:18px; animation:spin 1s linear infinite;">sync</span> Buscando transcrição final da chamada...</div>';
+          }
         }
 
-        // Áudio / Gravação
+        // 3. ÁUDIO / GRAVAÇÃO
         const recUrl = call.recording_url || call.public_log_url;
-        if (recUrl) {
+        if (recUrl && recUrl.length > 5 && !recUrl.endsWith('#')) {
           if (audioElement && audioElement.src !== recUrl) {
             audioElement.src = recUrl;
           }
           if (audioWrap) audioWrap.style.display = 'flex';
           if (liveLogLink) liveLogLink.href = recUrl;
           if (liveActionArea) liveActionArea.style.display = 'block';
+          if (btnLiveAudio) {
+            btnLiveAudio.disabled = false;
+            btnLiveAudio.style.opacity = '1';
+            btnLiveAudio.style.cursor = 'pointer';
+            btnLiveAudio.innerHTML = '<span class="material-symbols-outlined">headphones</span> Ouvir Gravação';
+          }
+        } else {
+          if (audioWrap) audioWrap.style.display = 'none';
+          if (btnLiveAudio) {
+            btnLiveAudio.disabled = true;
+            btnLiveAudio.style.opacity = '0.5';
+            btnLiveAudio.style.cursor = 'not-allowed';
+            btnLiveAudio.innerHTML = '<span class="material-symbols-outlined">hourglass_empty</span> Processando Áudio...';
+          }
         }
 
-        if (data.isFinished || status.includes('ended') || status.includes('completed') || status.includes('hangup') || status.includes('declined') || status.includes('no-answer') || reason !== '') {
-          clearInterval(liveTimerInterval);
+        // 4. ENCERRAR POLLING APENAS QUANDO A TRANSCRIÇÃO CHEGAR
+        if (isFinishedState && ((tObj && tObj.length > 0) || (tText && tText.trim().length > 0))) {
           if (liveSseSource) liveSseSource.close();
           if (livePollInterval) clearInterval(livePollInterval);
-          if (statusDot && statusDot.className.includes('ringing')) statusDot.className = 'live-modal-status-dot';
         }
       }
 
