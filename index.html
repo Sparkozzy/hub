@@ -630,6 +630,19 @@
       transition: border-color .15s, box-shadow .15s;
     }
 
+    /* Fix Browser Autofill (White Frame Override) */
+    .input-wrap input:-webkit-autofill,
+    .input-wrap input:-webkit-autofill:hover,
+    .input-wrap input:-webkit-autofill:focus,
+    .input-wrap input:-webkit-autofill:active {
+      -webkit-text-fill-color: #ffffff !important;
+      -webkit-box-shadow: 0 0 0 1000px #0b0f19 inset !important;
+      box-shadow: 0 0 0 1000px #0b0f19 inset !important;
+      transition: background-color 50000s ease-in-out 0s !important;
+      caret-color: #ffffff !important;
+      border-color: rgba(255, 255, 255, .15) !important;
+    }
+
     .input-wrap input::placeholder {
       color: #9BA0B0;
     }
