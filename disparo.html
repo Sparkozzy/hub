@@ -2600,6 +2600,27 @@
         transform: translateY(0) scale(1);
         transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       }
+      .live-mini-dock.status-ongoing {
+        border-color: rgba(0, 181, 160, 0.4);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 24px rgba(0, 181, 160, 0.25);
+      }
+      .live-mini-dock.status-ended {
+        border-color: rgba(239, 68, 68, 0.4);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 24px rgba(239, 68, 68, 0.25);
+      }
+      .live-mini-dock.status-warning {
+        border-color: rgba(245, 158, 11, 0.4);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 24px rgba(245, 158, 11, 0.25);
+      }
+      .live-mini-dock.status-ended .live-mini-timer {
+        color: #EF4444;
+      }
+      .live-mini-dock.status-warning .live-mini-timer {
+        color: #F59E0B;
+      }
+      .live-mini-dock.status-ongoing .live-mini-timer {
+        color: #00B5A0;
+      }
       .live-mini-dock.hidden {
         opacity: 0;
         pointer-events: none;
@@ -4240,6 +4261,23 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       if (tTextEl) tTextEl.textContent = '00:00';
       const lTextEl = document.getElementById('liveTimerText');
       if (lTextEl) lTextEl.textContent = '00:00';
+      syncMiniDockStatus('status-warning', 'live-modal-status-dot ringing');
+
+      // Helper para sincronizar cor e status do Mini Dock Flutuante
+      function syncMiniDockStatus(statusTheme, dotClass) {
+        const miniDock = document.getElementById('liveCallMiniDock');
+        const miniLead = document.getElementById('liveMiniLeadName');
+        const miniTimer = document.getElementById('liveMiniTimer');
+        const miniDot = document.getElementById('liveMiniStatusDot');
+
+        if (miniLead) miniLead.textContent = document.getElementById('liveModalLeadName')?.textContent || 'Pedro Ernesto';
+        if (miniTimer) miniTimer.textContent = document.getElementById('liveModalTimer')?.textContent || '00:00';
+        if (miniDot) miniDot.className = dotClass;
+        if (miniDock) {
+          miniDock.classList.remove('status-ongoing', 'status-ended', 'status-warning');
+          miniDock.classList.add(statusTheme);
+        }
+      }
 
       // Handler para dados de chamada recebidos (SSE ou Polling)
       function handleCallUpdate(data) {
@@ -4267,6 +4305,11 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
                                 (reason && reason !== '') || 
                                 (data.stageLabel && (data.stageLabel.includes('Finaliz') || data.stageLabel.includes('Encerrad') || data.stageLabel.includes('Recusad') || data.stageLabel.includes('Ocupad')));
 
+        // Checa se ocorreu erro técnico
+        const isTechError = status.includes('error') || status.includes('failed') || 
+                            reason.includes('error') || reason.includes('failed') || 
+                            reason.includes('no_answer') || reason.includes('busy');
+
         // 1. SE A CHAMADA FINALIZOU, PARA O TIMER IMEDIATAMENTE!
         if (isFinishedState) {
           if (liveTimerInterval) {
@@ -4284,11 +4327,21 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
               if (lTextEl) lTextEl.textContent = `${m}:${s}`;
             }
           }
-          if (statusDot) statusDot.className = 'live-modal-status-dot';
-          if (livePulseDot) livePulseDot.className = 'dot dot-error';
-          const finalLabel = data.stageLabel || (reason ? `Chamada Encerrada (${reason})` : 'Chamada Finalizada');
-          if (statusText) statusText.textContent = finalLabel;
-          if (liveStatusText) liveStatusText.textContent = finalLabel;
+          if (isTechError) {
+            if (statusDot) statusDot.className = 'live-modal-status-dot ringing';
+            if (livePulseDot) livePulseDot.className = 'dot dot-pending';
+            const finalLabel = data.stageLabel || (reason ? `Erro (${reason})` : 'Erro Técnico');
+            if (statusText) statusText.textContent = finalLabel;
+            if (liveStatusText) liveStatusText.textContent = finalLabel;
+            syncMiniDockStatus('status-warning', 'live-modal-status-dot ringing');
+          } else {
+            if (statusDot) statusDot.className = 'live-modal-status-dot';
+            if (livePulseDot) livePulseDot.className = 'dot dot-error';
+            const finalLabel = data.stageLabel || (reason ? `Chamada Encerrada (${reason})` : 'Chamada Finalizada');
+            if (statusText) statusText.textContent = finalLabel;
+            if (liveStatusText) liveStatusText.textContent = finalLabel;
+            syncMiniDockStatus('status-ended', 'live-modal-status-dot');
+          }
         } else if (status.includes('ongoing') || status.includes('in-progress') || status.includes('in_progress') || status.includes('active') || status.includes('atendid') || status.includes('ao vivo')) {
           if (statusDot) statusDot.className = 'live-modal-status-dot in-progress';
           if (livePulseDot) livePulseDot.className = 'dot dot-teal';
@@ -4296,13 +4349,8 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           if (statusText) statusText.textContent = ongoingLabel;
           if (liveStatusText) liveStatusText.textContent = ongoingLabel;
 
-          // Sincroniza dados com o Mini Dock Flutuante
-          const miniLead = document.getElementById('liveMiniLeadName');
-          const miniTimer = document.getElementById('liveMiniTimer');
-          const miniDot = document.getElementById('liveMiniStatusDot');
-          if (miniLead) miniLead.textContent = document.getElementById('liveModalLeadName')?.textContent || 'Pedro Ernesto';
-          if (miniTimer) miniTimer.textContent = document.getElementById('liveModalTimer')?.textContent || '00:00';
-          if (miniDot) miniDot.className = statusDot ? statusDot.className : 'live-modal-status-dot';
+          // Sincroniza Mini Dock com status Verde (ongoing)
+          syncMiniDockStatus('status-ongoing', 'live-modal-status-dot in-progress');
 
           // INICIA O TIMER SOMENTE QUANDO A LIGAÇÃO É ATENDIDA!
           if (!liveTimerStarted) {
@@ -4317,6 +4365,8 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
               if (timerTextEl) timerTextEl.textContent = `${m}:${s}`;
               const liveTimerTextEl = document.getElementById('liveTimerText');
               if (liveTimerTextEl) liveTimerTextEl.textContent = `${m}:${s}`;
+              const miniTimer = document.getElementById('liveMiniTimer');
+              if (miniTimer) miniTimer.textContent = `${m}:${s}`;
             }, 1000);
           }
         } else {
@@ -4325,6 +4375,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           const ringLabel = data.stageLabel || 'Discando...';
           if (statusText) statusText.textContent = ringLabel;
           if (liveStatusText) liveStatusText.textContent = ringLabel;
+          syncMiniDockStatus('status-warning', 'live-modal-status-dot ringing');
         }
 
         // 2. TRANSCRIÇÃO / DIÁLOGO DA CHAMADA
