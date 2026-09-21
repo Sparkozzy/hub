@@ -529,9 +529,30 @@ will-change: transform;
           <button id="btn-clear-filters" class="btn-secondary" title="Limpar Filtros">
             <span class="material-symbols-outlined">filter_alt_off</span>
           </button>
-          <a href="/api/export-calls" id="btn-export-csv" class="btn-primary" title="Exportar para CSV" download>
-            <span class="material-symbols-outlined">download</span> Exportar CSV
-          </a>
+          <div class="export-dropdown-wrapper" id="exportDropdownWrapper">
+            <button type="button" class="export-trigger-btn" id="btnExportTrigger" onclick="toggleExportMenu(event)" title="Opções de Exportação">
+              <span class="material-symbols-outlined">download</span>
+              <span id="lblExportBtn">Exportar</span>
+              <span class="material-symbols-outlined export-arrow">expand_more</span>
+            </button>
+            <div class="export-menu-dropdown" id="exportMenuDropdown">
+              <div class="export-menu-header">OPÇÕES DE EXPORTAÇÃO</div>
+              <button type="button" class="export-option-item" onclick="executeExport('csv')">
+                <div class="export-opt-icon csv"><span class="material-symbols-outlined">table_view</span></div>
+                <div class="export-opt-text">
+                  <span class="opt-title">Planilha Excel / CSV</span>
+                  <span class="opt-desc">Dados estruturados compatíveis com Excel e Sheets</span>
+                </div>
+              </button>
+              <button type="button" class="export-option-item" onclick="executeExport('pdf')">
+                <div class="export-opt-icon pdf"><span class="material-symbols-outlined">picture_as_pdf</span></div>
+                <div class="export-opt-text">
+                  <span class="opt-title">Relatório Executivo PDF (MindFlow)</span>
+                  <span class="opt-desc">Documento visual com KPIs e design impecável</span>
+                </div>
+              </button>
+            </div>
+          </div>
         </div>
       </header>
 

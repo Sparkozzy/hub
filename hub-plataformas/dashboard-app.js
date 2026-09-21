@@ -1005,97 +1005,479 @@ function formatDateForCsv(val) {
     return String(val);
 }
 
-// 11. CSV Export Handler (Gera CSV a partir da API /calls)
+// 11. State-of-the-Art Export System (CSV / Excel & PDF MindFlow Report)
+
+function toggleExportMenu(event) {
+    if (event) event.stopPropagation();
+    const wrapper = document.getElementById('exportDropdownWrapper');
+    if (wrapper) wrapper.classList.toggle('open');
+}
+
+// Fechar menu de exportação ao clicar fora
+document.addEventListener('click', (e) => {
+    const wrapper = document.getElementById('exportDropdownWrapper');
+    if (wrapper && !wrapper.contains(e.target)) {
+        wrapper.classList.remove('open');
+    }
+});
+
 function initExportCsv() {
-    const btn = document.getElementById('btn-export-csv');
-    if (!btn) return;
+    const wrapper = document.getElementById('exportDropdownWrapper');
+    if (wrapper) {
+        console.log('[Export System] Sistema de exportação MindFlow inicializado.');
+    }
+}
 
-    btn.addEventListener('click', async (e) => {
-        e.preventDefault();
-        const originalHtml = btn.innerHTML;
-        btn.style.pointerEvents = 'none';
-        btn.innerHTML = '<span class="material-symbols-outlined spin" style="animation: spin 1s linear infinite;">progress_activity</span> Exportando...';
+async function executeExport(format) {
+    const wrapper = document.getElementById('exportDropdownWrapper');
+    if (wrapper) wrapper.classList.remove('open');
 
-        try {
-            const params = new URLSearchParams({ page: 1, limit: 5000, _t: Date.now() });
-            if (state?.filters?.agent) params.append('agent', state.filters.agent);
-            if (state?.filters?.startDate) params.append('start_date', state.filters.startDate);
-            if (state?.filters?.endDate) params.append('end_date', state.filters.endDate);
+    const triggerBtn = document.getElementById('btnExportTrigger');
+    const labelEl = document.getElementById('lblExportBtn');
+    const originalLabel = labelEl ? labelEl.textContent : 'Exportar';
 
-            const res = await fetch(`/calls?${params.toString()}`);
-            if (!res.ok) {
-                alert('Erro ao consultar servidor de ligações.');
-                return;
-            }
+    if (triggerBtn) {
+        triggerBtn.disabled = true;
+        if (labelEl) labelEl.textContent = format === 'pdf' ? 'Gerando PDF...' : 'Gerando CSV...';
+    }
 
-            const result = await res.json();
-            const calls = result.data || result.calls || (Array.isArray(result) ? result : []);
+    try {
+        const activeTab = document.querySelector('.dash-tab.active')?.getAttribute('data-tab') || 'overview';
+        const isWhatsApp = activeTab === 'whatsapp';
 
-            if (!calls || calls.length === 0) {
-                alert('Nenhuma ligação encontrada para os filtros selecionados.');
-                return;
-            }
+        // Filtros ativos
+        const filters = {
+            agent: state?.filters?.agent || '',
+            startDate: state?.filters?.startDate || '',
+            endDate: state?.filters?.endDate || ''
+        };
 
-            // Colunas amigáveis do CSV
-            const columns = [
-                { key: 'call_id', label: 'ID Chamada' },
-                { key: 'created_at', label: 'Data/Hora' },
-                { key: 'lead_name', label: 'Nome do Lead' },
-                { key: 'lead_phone', label: 'Telefone' },
-                { key: 'agent_name', label: 'Agente' },
-                { key: 'duration_seconds', label: 'Duração (s)' },
-                { key: 'disconnection_reason', label: 'Motivo Desconexão' },
-                { key: 'recording_url', label: 'URL Gravação' },
-                { key: 'transcript', label: 'Transcrição' }
-            ];
-
-            const headerRow = columns.map(c => `"${c.label}"`).join(';');
-            const bodyRows = calls.map(item => {
-                return columns.map(col => {
-                    let val = item[col.key];
-                    if (val === undefined || val === null) {
-                        if (col.key === 'created_at') val = item.start_timestamp || item.created_at || '';
-                        else if (col.key === 'duration_seconds') val = item.duration || item.duration_seconds || item.call_length_seconds || '';
-                        else if (col.key === 'lead_phone') val = item.from_number || item.to_number || item.lead_phone || '';
-                        else if (col.key === 'agent_name') val = item.agent_id || item.agent_name || '';
-                        else val = '';
-                    }
-
-                    if (col.key === 'transcript') {
-                        val = cleanTranscriptForCsv(val);
-                    } else if (col.key === 'lead_phone') {
-                        val = formatPhoneForCsv(val);
-                    } else if (col.key === 'created_at') {
-                        val = formatDateForCsv(val);
-                    } else if (typeof val === 'object') {
-                        val = JSON.stringify(val);
-                    }
-
-                    const str = String(val).replace(/\r?\n/g, ' ').replace(/"/g, '""');
-                    return `"${str}"`;
-                }).join(';');
-            }).join('\n');
-
-            const bom = '\uFEFF';
-            const csvContent = bom + headerRow + '\n' + bodyRows;
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = `ligacoes_mindflow_${new Date().toISOString().slice(0, 10)}.csv`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-        } catch (err) {
-            console.error('[Export CSV] Erro:', err);
-            alert('Erro ao gerar arquivo CSV.');
-        } finally {
-            btn.style.pointerEvents = 'auto';
-            btn.innerHTML = originalHtml;
+        // Formatação legível do período
+        let periodText = 'Período Completo';
+        if (filters.startDate && filters.endDate) {
+            const s = filters.startDate.split('-').reverse().join('/');
+            const e = filters.endDate.split('-').reverse().join('/');
+            periodText = `${s} a ${e}`;
+        } else if (filters.startDate) {
+            periodText = `A partir de ${filters.startDate.split('-').reverse().join('/')}`;
         }
-    });
+
+        if (format === 'csv') {
+            await exportCsvData(isWhatsApp, filters, periodText);
+        } else if (format === 'pdf') {
+            await exportPdfReport(isWhatsApp, filters, periodText);
+        }
+    } catch (err) {
+        console.error('[Export Error]:', err);
+        alert(`Erro ao exportar dados: ${err.message || 'Falha de conexão'}`);
+    } finally {
+        if (triggerBtn) {
+            triggerBtn.disabled = false;
+            if (labelEl) labelEl.textContent = originalLabel;
+        }
+    }
+}
+
+async function exportCsvData(isWhatsApp, filters, periodText) {
+    const params = new URLSearchParams({ page: 1, limit: 5000, _t: Date.now() });
+    if (filters.agent) params.append('agent', filters.agent);
+    if (filters.startDate) params.append('start_date', filters.startDate);
+    if (filters.endDate) params.append('end_date', filters.endDate);
+
+    const endpoint = isWhatsApp ? `/whatsapp/chats?${params.toString()}` : `/calls?${params.toString()}`;
+    const res = await fetch(endpoint);
+    if (!res.ok) throw new Error('Erro ao consultar API do servidor');
+
+    const result = await res.json();
+    const items = result.data || result.calls || (Array.isArray(result) ? result : []);
+
+    if (!items || items.length === 0) {
+        alert('Nenhum registro encontrado para os filtros selecionados.');
+        return;
+    }
+
+    let columns = [];
+    if (isWhatsApp) {
+        columns = [
+            { key: 'numero', label: 'Telefone' },
+            { key: 'nome', label: 'Nome do Lead' },
+            { key: 'ultima_msgm_texto', label: 'Última Mensagem' },
+            { key: 'etapa_crm', label: 'Etapa CRM' },
+            { key: 'reuniao_marcada', label: 'Reunião Marcada' },
+            { key: 'duracao_atendimento_minutos', label: 'TMA (minutos)' }
+        ];
+    } else {
+        columns = [
+            { key: 'call_id', label: 'ID Chamada' },
+            { key: 'created_at', label: 'Data/Hora' },
+            { key: 'lead_name', label: 'Nome do Lead' },
+            { key: 'lead_phone', label: 'Telefone' },
+            { key: 'agent_name', label: 'Agente' },
+            { key: 'duration_seconds', label: 'Duração (s)' },
+            { key: 'disconnection_reason', label: 'Motivo Desconexão' },
+            { key: 'recording_url', label: 'URL Gravação' },
+            { key: 'transcript', label: 'Transcrição' }
+        ];
+    }
+
+    const headerRow = columns.map(c => `"${c.label}"`).join(';');
+    const bodyRows = items.map(item => {
+        return columns.map(col => {
+            let val = item[col.key];
+            if (val === undefined || val === null) {
+                if (col.key === 'created_at') val = item.start_timestamp || item.created_at || '';
+                else if (col.key === 'duration_seconds') val = item.duration || item.duration_seconds || item.call_length_seconds || '';
+                else if (col.key === 'lead_phone' || col.key === 'numero') val = item.from_number || item.to_number || item.lead_phone || item.numero || '';
+                else if (col.key === 'lead_name' || col.key === 'nome') val = item.lead_name || item.nome || '';
+                else if (col.key === 'agent_name') val = item.agent_id || item.agent_name || '';
+                else if (col.key === 'reuniao_marcada') val = item.reuniao_marcada ? 'Sim' : 'Não';
+                else val = '';
+            }
+
+            if (col.key === 'transcript') {
+                val = cleanTranscriptForCsv(val);
+            } else if (col.key === 'lead_phone' || col.key === 'numero') {
+                val = formatPhoneForCsv(val);
+            } else if (col.key === 'created_at') {
+                val = formatDateForCsv(val);
+            } else if (typeof val === 'object') {
+                val = JSON.stringify(val);
+            }
+
+            const str = String(val).replace(/\r?\n/g, ' ').replace(/"/g, '""');
+            return `"${str}"`;
+        }).join(';');
+    }).join('\n');
+
+    const bom = '\uFEFF';
+    const csvContent = bom + headerRow + '\n' + bodyRows;
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = `mindflow_${isWhatsApp ? 'whatsapp' : 'ligacoes'}_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+
+async function exportPdfReport(isWhatsApp, filters, periodText) {
+    const params = new URLSearchParams({ page: 1, limit: 100, _t: Date.now() });
+    if (filters.agent) params.append('agent', filters.agent);
+    if (filters.startDate) params.append('start_date', filters.startDate);
+    if (filters.endDate) params.append('end_date', filters.endDate);
+
+    const endpoint = isWhatsApp ? `/whatsapp/chats?${params.toString()}` : `/calls?${params.toString()}`;
+    const res = await fetch(endpoint);
+    if (!res.ok) throw new Error('Erro ao consultar dados para relatório PDF');
+
+    const result = await res.json();
+    const items = result.data || result.calls || (Array.isArray(result) ? result : []);
+
+    if (!items || items.length === 0) {
+        alert('Nenhum registro encontrado para gerar relatório PDF.');
+        return;
+    }
+
+    const kpi1Label = isWhatsApp ? 'Leads Totais' : 'Volume de Ligações';
+    const kpi1Val = isWhatsApp 
+        ? (document.getElementById('wa-kpi-total-leads')?.textContent || items.length)
+        : (document.getElementById('kpi-total-calls')?.textContent || items.length);
+
+    const kpi2Label = isWhatsApp ? 'Taxa de Resposta' : 'Conversão (Interesse)';
+    const kpi2Val = isWhatsApp
+        ? (document.getElementById('wa-kpi-resp-rate')?.textContent || '-')
+        : (document.getElementById('kpi-total-interest')?.textContent || '-');
+
+    const kpi3Label = isWhatsApp ? 'Total Mensagens' : 'Minutagem Total';
+    const kpi3Val = isWhatsApp
+        ? (document.getElementById('wa-kpi-total-msgs')?.textContent || '-')
+        : (document.getElementById('kpi-total-cost')?.textContent || '-');
+
+    const printWin = window.open('', '_blank', 'width=1100,height=850');
+    if (!printWin) {
+        alert('Por favor, permita pop-ups no navegador para gerar o relatório PDF.');
+        return;
+    }
+
+    const tableHeadersHTML = isWhatsApp ? `
+        <th>CONTATO / TELEFONE</th>
+        <th>ÚLTIMA MENSAGEM</th>
+        <th>ETAPA CRM</th>
+        <th>REUNIÃO</th>
+        <th>TMA (MIN)</th>
+    ` : `
+        <th>DATA / HORA</th>
+        <th>LEAD / CONTATO</th>
+        <th>TELEFONE</th>
+        <th>AGENTE</th>
+        <th>DURAÇÃO</th>
+        <th>STATUS / MOTIVO</th>
+    `;
+
+    const tableRowsHTML = items.slice(0, 100).map(item => {
+        if (isWhatsApp) {
+            const nome = item.nome || 'Sem Nome';
+            const tel = item.numero || '-';
+            const msg = item.ultima_msgm_texto || '-';
+            const etapa = item.etapa_crm || '-';
+            const reuniao = item.reuniao_marcada ? '<span class="badge badge-success">Sim</span>' : '<span class="badge badge-muted">Não</span>';
+            const tma = item.duracao_atendimento_minutos != null ? formatTma(item.duracao_atendimento_minutos) : '-';
+            return `
+                <tr>
+                    <td><strong>${escHtml(nome)}</strong><br/><small style="color:#8E8FA2;">${escHtml(tel)}</small></td>
+                    <td style="max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(msg)}</td>
+                    <td>${escHtml(etapa)}</td>
+                    <td>${reuniao}</td>
+                    <td>${escHtml(tma)}</td>
+                </tr>
+            `;
+        } else {
+            const dateStr = formatDateForCsv(item.start_timestamp || item.created_at);
+            const leadName = item.lead_name || 'Pedro Ernesto';
+            const phone = item.from_number || item.to_number || item.lead_phone || '-';
+            const agent = item.agent_id || item.agent_name || 'MindFlow Outbound';
+            const dur = item.duration || item.duration_seconds || item.call_length_seconds || 0;
+            const durFormatted = `${Math.floor(dur / 60)}m ${dur % 60}s`;
+            const reason = item.disconnection_reason || 'Concluída';
+            let badgeClass = 'badge-success';
+            if (reason.toLowerCase().includes('user')) badgeClass = 'badge-purple';
+            else if (reason.toLowerCase().includes('error') || reason.toLowerCase().includes('failed')) badgeClass = 'badge-error';
+            else if (reason.toLowerCase().includes('answer') || reason.toLowerCase().includes('busy')) badgeClass = 'badge-warning';
+
+            return `
+                <tr>
+                    <td>${escHtml(dateStr)}</td>
+                    <td><strong>${escHtml(leadName)}</strong></td>
+                    <td>${escHtml(phone)}</td>
+                    <td>${escHtml(agent)}</td>
+                    <td>${escHtml(durFormatted)}</td>
+                    <td><span class="badge ${badgeClass}">${escHtml(reason)}</span></td>
+                </tr>
+            `;
+        }
+    }).join('');
+
+    const nowStr = new Date().toLocaleDateString('pt-BR') + ' às ' + new Date().toLocaleTimeString('pt-BR').slice(0, 5);
+
+    printWin.document.write(`
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+            <meta charset="UTF-8">
+            <title>Relatório Executivo MindFlow - ${isWhatsApp ? 'WhatsApp' : 'Ligações'}</title>
+            <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+            <style>
+                * { box-sizing: border-box; margin: 0; padding: 0; }
+                body {
+                    background: #04060E;
+                    color: #FFFFFF;
+                    font-family: 'Inter', sans-serif;
+                    font-size: 12px;
+                    padding: 32px;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
+                .report-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    border-bottom: 2px solid rgba(0, 181, 160, 0.4);
+                    padding-bottom: 20px;
+                    margin-bottom: 28px;
+                }
+                .brand-wrap {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                }
+                .brand-logo {
+                    width: 42px;
+                    height: 42px;
+                    border-radius: 12px;
+                    background: linear-gradient(135deg, #00B5A0, #2E4FFF);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-family: 'Space Grotesk', sans-serif;
+                    font-weight: 700;
+                    font-size: 20px;
+                    color: #fff;
+                    box-shadow: 0 0 16px rgba(0, 181, 160, 0.4);
+                }
+                .brand-title {
+                    font-family: 'Space Grotesk', sans-serif;
+                    font-size: 22px;
+                    font-weight: 700;
+                    color: #fff;
+                    letter-spacing: -0.02em;
+                }
+                .brand-sub {
+                    font-size: 11px;
+                    color: #00B5A0;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.06em;
+                }
+                .period-pill {
+                    background: rgba(46, 79, 255, 0.15);
+                    border: 1px solid rgba(46, 79, 255, 0.35);
+                    color: #7B9AFF;
+                    padding: 6px 14px;
+                    border-radius: 20px;
+                    font-family: 'Space Grotesk', sans-serif;
+                    font-size: 12px;
+                    font-weight: 600;
+                }
+                .kpi-row {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 16px;
+                    margin-bottom: 28px;
+                }
+                .kpi-card {
+                    background: rgba(255, 255, 255, 0.03);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    border-radius: 12px;
+                    padding: 16px;
+                }
+                .kpi-card-title {
+                    font-size: 11px;
+                    color: #8E8FA2;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                    margin-bottom: 6px;
+                }
+                .kpi-card-val {
+                    font-family: 'Space Grotesk', sans-serif;
+                    font-size: 24px;
+                    font-weight: 700;
+                    color: #ffffff;
+                }
+                .section-title {
+                    font-family: 'Space Grotesk', sans-serif;
+                    font-size: 14px;
+                    font-weight: 700;
+                    color: #fff;
+                    margin-bottom: 12px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    background: rgba(255, 255, 255, 0.02);
+                    border-radius: 12px;
+                    overflow: hidden;
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    margin-bottom: 24px;
+                }
+                th {
+                    background: rgba(255, 255, 255, 0.06);
+                    color: #00B5A0;
+                    font-family: 'Space Grotesk', sans-serif;
+                    font-size: 10px;
+                    font-weight: 700;
+                    letter-spacing: 0.06em;
+                    text-transform: uppercase;
+                    padding: 12px 14px;
+                    text-align: left;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                }
+                td {
+                    padding: 12px 14px;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+                    color: #E2E8F0;
+                    font-size: 11px;
+                }
+                tr:nth-child(even) { background: rgba(255, 255, 255, 0.015); }
+                .badge {
+                    display: inline-block;
+                    padding: 3px 8px;
+                    border-radius: 6px;
+                    font-size: 10px;
+                    font-weight: 600;
+                }
+                .badge-success { background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); }
+                .badge-purple { background: rgba(168, 85, 247, 0.15); color: #A855F7; border: 1px solid rgba(168, 85, 247, 0.3); }
+                .badge-warning { background: rgba(245, 158, 11, 0.15); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.3); }
+                .badge-error { background: rgba(239, 68, 68, 0.15); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+                .badge-muted { background: rgba(255, 255, 255, 0.05); color: #8E8FA2; }
+                .report-footer {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    color: #8E8FA2;
+                    font-size: 10px;
+                    border-top: 1px solid rgba(255, 255, 255, 0.08);
+                    padding-top: 16px;
+                }
+                @media print {
+                    body { background: #fff !important; color: #000 !important; padding: 0 !important; }
+                    .report-header, table, .kpi-card { border-color: #ddd !important; background: #fff !important; color: #000 !important; }
+                    .brand-title, .kpi-card-val, th, td { color: #000 !important; }
+                    .period-pill { background: #f0f4ff !important; color: #2E4FFF !important; border-color: #cbd5e1 !important; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="report-header">
+                <div class="brand-wrap">
+                    <div class="brand-logo">M</div>
+                    <div>
+                        <div class="brand-title">MindFlow Platform</div>
+                        <div class="brand-sub">Relatório Executivo · ${isWhatsApp ? 'WhatsApp Operations' : 'Voice Operations'}</div>
+                    </div>
+                </div>
+                <div class="period-pill">📅 Período: ${escHtml(periodText)}</div>
+            </div>
+
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-card-title">${escHtml(kpi1Label)}</div>
+                    <div class="kpi-card-val">${escHtml(kpi1Val)}</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-card-title">${escHtml(kpi2Label)}</div>
+                    <div class="kpi-card-val">${escHtml(kpi2Val)}</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-card-title">${escHtml(kpi3Label)}</div>
+                    <div class="kpi-card-val">${escHtml(kpi3Val)}</div>
+                </div>
+            </div>
+
+            <div class="section-title">
+                <span>REGISTROS DETALHADOS</span>
+                <small style="font-weight:400;color:#8E8FA2;">Total de ${items.length} registros no relatório</small>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>${tableHeadersHTML}</tr>
+                </thead>
+                <tbody>
+                    ${tableRowsHTML}
+                </tbody>
+            </table>
+
+            <div class="report-footer">
+                <span>Gerado automaticamente pelo MindFlow Hub em ${nowStr}</span>
+                <span>Documento Confidencial · MindFlow AI Platforms</span>
+            </div>
+
+            <script>
+                window.onload = function() {
+                    setTimeout(function() { window.print(); }, 600);
+                };
+            </script>
+        </body>
+        </html>
+    `);
+    printWin.document.close();
 }
 
 async function loadAuditCalls() {
