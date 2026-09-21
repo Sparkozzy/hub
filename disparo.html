@@ -3800,10 +3800,10 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
             </div>
           </div>
           <div class="field">
-            <label for="email">E-mail</label>
+            <label for="email">E-mail <span style="font-weight: 400; opacity: 0.5;">(opcional)</span></label>
             <div class="input-wrap">
               <span class="material-symbols-outlined input-ico">mail</span>
-              <input class="has-icon" id="email" name="email" placeholder="contato@empresa.com" type="email" required />
+              <input class="has-icon" id="email" name="email" placeholder="contato@empresa.com (opcional)" type="email" />
               <button type="button" class="clear-btn" data-target="email" aria-label="Limpar campo">cancel</button>
             </div>
           </div>
@@ -4255,7 +4255,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
 
       const isNomeValid = nome.length >= 2;
       const isTelefoneValid = telefoneNumeros.length === 10 || telefoneNumeros.length === 11;
-      const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      const isEmailValid = email.length === 0 || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
       const isContextoValid = contexto.length >= 5;
       const isAgentValid = agentId.length >= 2;
       const isPromptValid = promptId.length >= 2;
@@ -4270,7 +4270,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       let errorMsg = [];
       if (!isNomeValid) errorMsg.push("• Nome inválido.");
       if (!isTelefoneValid) errorMsg.push("• Telefone incompleto.");
-      if (!isEmailValid) errorMsg.push(email.length === 0 ? "• Preencha o e-mail." : "• E-mail inválido.");
+      if (!isEmailValid) errorMsg.push("• E-mail inválido.");
       if (!isContextoValid) errorMsg.push("• Contexto curto.");
       if (!isAgentValid) errorMsg.push("• Agent ID inválido.");
       if (!isPromptValid) errorMsg.push("• Prompt ID inválido.");
@@ -4401,7 +4401,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       const pid = document.getElementById('prompt_id').value.trim();
       const btn = document.getElementById('submitBtn');
 
-      const isEmailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      const isEmailOk = email.length === 0 || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
       const ok = nome.length >= 2 && (tel.length === 10 || tel.length === 11) && isEmailOk && ctx.length >= 5 && aid.length >= 2 && pid.length >= 2;
 
       btn.classList.remove('ready-immediate', 'ready-scheduled');
