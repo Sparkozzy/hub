@@ -777,12 +777,14 @@
       position: relative;
       user-select: none;
       box-sizing: border-box;
+      min-width: 0;
+      overflow: hidden;
     }
     .custom-select-trigger .cs-ico {
       font-size: 20px; color: #7B9AFF; flex-shrink: 0; line-height: 1;
     }
     .custom-select-trigger .cs-value {
-      flex: 0 1 auto; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
+      flex: 1; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; position: relative;
     }
     .custom-select-trigger .cs-arrow {
       position: absolute; right: 12px; top: 50%;
@@ -851,6 +853,8 @@
       cursor: pointer;
       transition: background .12s, color .12s;
       position: relative;
+      min-width: 0;
+      overflow: hidden;
     }
     .cs-option:hover {
       background: rgba(255,255,255,.04);
@@ -867,7 +871,32 @@
     .cs-option.selected .cs-opt-check {
       visibility: visible;
     }
-    .cs-option .cs-opt-label { flex: 1; }
+    .cs-option .cs-opt-label {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+      position: relative;
+    }
+
+    /* Marquee animation on hover for long text */
+    .custom-select-trigger:hover .cs-value.is-overflowing,
+    .cs-option:hover .cs-opt-label.is-overflowing {
+      text-overflow: clip;
+    }
+    .custom-select-trigger:hover .cs-value.is-overflowing .cs-text-inner,
+    .cs-option:hover .cs-opt-label.is-overflowing .cs-text-inner {
+      display: inline-block;
+      white-space: nowrap;
+      will-change: transform;
+      animation: csMarquee 6s linear infinite alternate;
+    }
+    @keyframes csMarquee {
+      0%, 20% { transform: translateX(0); }
+      85%, 100% { transform: translateX(var(--marquee-dist, -50%)); }
+    }
+
     .cs-no-options {
       padding: 14px 12px; text-align: center;
       color: rgba(255,255,255,0.25); font-size: 13px;
@@ -3942,8 +3971,8 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         </div>
 
         <div id="liveActionArea" class="live-action-bar" style="display:none;">
-          <button type="button" class="live-action-btn primary" onclick="playLiveAudioFromFrame()" id="btnFrameAudio">
-            <span class="material-symbols-outlined">headphones</span> Ouvir Gravação
+          <button type="button" class="live-action-btn primary" onclick="reTriggerLastCall()" id="btnFrameAudio">
+            <span class="material-symbols-outlined">replay</span> Disparar novamente
           </button>
           <a id="liveLogLink" href="/dashboard#audit" target="_blank" class="live-action-btn">
             <span class="material-symbols-outlined">open_in_new</span> Log Completo
@@ -4532,7 +4561,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           div.dataset.value = opt.value;
           div.innerHTML = `
             <span class="material-symbols-outlined cs-opt-check">check</span>
-            <span class="cs-opt-label">${escHtml(opt.label)}</span>
+            <span class="cs-opt-label"><span class="cs-text-inner">${escHtml(opt.label)}</span></span>
           `;
           div.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -4546,7 +4575,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       function selectOption(val, label) {
         selectedValue = val;
         container.classList.add('has-value');
-        valueEl.textContent = label || val;
+        valueEl.innerHTML = `<span class="cs-text-inner">${escHtml(label || val)}</span>`;
         dropdown.querySelectorAll('.cs-option').forEach(el => {
           el.classList.toggle('selected', el.dataset.value === val);
         });
@@ -4662,6 +4691,21 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       });
 
       document.addEventListener('click', handleOutsideClick);
+
+      // Listener global para calcular overflow e acionar a animação de texto deslizante (marquee) no hover
+      document.addEventListener('mouseover', (e) => {
+        const target = e.target.closest('.cs-value, .cs-opt-label');
+        if (!target) return;
+        const inner = target.querySelector('.cs-text-inner');
+        if (!inner) return;
+        const diff = inner.scrollWidth - target.clientWidth;
+        if (diff > 4) {
+          target.style.setProperty('--marquee-dist', `-${diff + 14}px`);
+          target.classList.add('is-overflowing');
+        } else {
+          target.classList.remove('is-overflowing');
+        }
+      });
 
       renderOptions();
 
@@ -5272,7 +5316,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
             btnFrameAudio.disabled = false;
             btnFrameAudio.style.opacity = '1';
             btnFrameAudio.style.cursor = 'pointer';
-            btnFrameAudio.innerHTML = '<span class="material-symbols-outlined">headphones</span> Ouvir Gravação';
+            btnFrameAudio.innerHTML = '<span class="material-symbols-outlined">replay</span> Disparar novamente';
           }
         } else {
           if (audioWrap) audioWrap.style.display = 'none';
@@ -5283,10 +5327,10 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
             btnLiveAudio.innerHTML = '<span class="material-symbols-outlined">hourglass_empty</span> Processando Áudio...';
           }
           if (btnFrameAudio) {
-            btnFrameAudio.disabled = true;
-            btnFrameAudio.style.opacity = '0.5';
-            btnFrameAudio.style.cursor = 'not-allowed';
-            btnFrameAudio.innerHTML = '<span class="material-symbols-outlined">hourglass_empty</span> Processando Áudio...';
+            btnFrameAudio.disabled = false;
+            btnFrameAudio.style.opacity = '1';
+            btnFrameAudio.style.cursor = 'pointer';
+            btnFrameAudio.innerHTML = '<span class="material-symbols-outlined">replay</span> Disparar novamente';
           }
         }
 
@@ -5295,6 +5339,11 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           if (liveSseSource) liveSseSource.close();
           if (livePollInterval) clearInterval(livePollInterval);
         }
+      }
+
+      function reTriggerLastCall() {
+        loadFormDraft();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
 
       function renderTranscriptBubbles(items) {
@@ -5429,8 +5478,33 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       }
     }
 
-    // === Botões de limpar campo ===
+    // === Botões de limpar campo e Rascunho Persistente (localStorage) ===
     const CLEARABLE_IDS = ['nome', 'contexto', 'telefone', 'email', 'agent_id', 'prompt_id'];
+
+    function saveFormDraft() {
+      try {
+        const draft = {
+          nome: document.getElementById('nome')?.value || '',
+          contexto: document.getElementById('contexto')?.value || '',
+          telefone: document.getElementById('telefone')?.value || '',
+          email: document.getElementById('email')?.value || ''
+        };
+        localStorage.setItem('mindflow_disparo_draft', JSON.stringify(draft));
+      } catch (e) {}
+    }
+
+    function loadFormDraft() {
+      try {
+        const raw = localStorage.getItem('mindflow_disparo_draft');
+        if (!raw) return;
+        const draft = JSON.parse(raw);
+        if (draft.nome) { const el = document.getElementById('nome'); if (el) { el.value = draft.nome; updateClearBtn('nome'); } }
+        if (draft.contexto) { const el = document.getElementById('contexto'); if (el) { el.value = draft.contexto; updateClearBtn('contexto'); } }
+        if (draft.telefone) { const el = document.getElementById('telefone'); if (el) { el.value = draft.telefone; updateClearBtn('telefone'); } }
+        if (draft.email) { const el = document.getElementById('email'); if (el) { el.value = draft.email; updateClearBtn('email'); } }
+        if (typeof checkFormReady === 'function') checkFormReady();
+      } catch (e) {}
+    }
 
     function updateClearAllBtn() {
       const btn = document.getElementById('clearAllBtn');
@@ -5450,6 +5524,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       field.classList.toggle('has-content', has);
       btn.classList.toggle('has-content', has);
       updateClearAllBtn();
+      saveFormDraft();
     }
 
     function clearField(id) {
@@ -5462,6 +5537,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         field.dispatchEvent(new Event('input'));
       }
       updateClearBtn(id);
+      saveFormDraft();
       checkFormReady();
     }
 
@@ -5472,6 +5548,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       hideContextoSuggestions();
       ctxEl.dispatchEvent(new Event('input'));
       CLEARABLE_IDS.forEach(id => updateClearBtn(id));
+      localStorage.removeItem('mindflow_disparo_draft');
       checkFormReady();
     }
 
@@ -5481,7 +5558,17 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
 
     CLEARABLE_IDS.forEach(id => {
       const el = document.getElementById(id);
-      if (el) el.addEventListener('input', () => updateClearBtn(id));
+      if (el) {
+        el.addEventListener('input', () => {
+          updateClearBtn(id);
+          saveFormDraft();
+        });
+      }
+    });
+
+    // Carregar dados salvos ao abrir a página
+    document.addEventListener('DOMContentLoaded', () => {
+      loadFormDraft();
     });
 
     document.addEventListener('click', e => {
