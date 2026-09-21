@@ -3510,10 +3510,256 @@ transform: translateY(-50%);
 width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
 }
 .dock-sep { width: 28px; height: 1px; background: rgba(255,255,255,0.08); margin: 4px 0; }
-@media (min-width: 769px) { body { padding-left: 76px; } .navbar { padding-left: 88px !important; } }
-      .navbar { padding-left: 88px !important; }
+    /* ── User Dispatch History Section ── */
+    .user-history-card {
+      width: 100%;
+      max-width: 720px;
+      margin-top: 24px;
+      background: rgba(8, 14, 28, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 24px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
 
+    .user-history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding-bottom: 14px;
+    }
+
+    .user-history-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.02em;
+    }
+
+    .user-history-title .material-symbols-outlined {
+      color: #7B9AFF;
+      font-size: 22px;
+    }
+
+    .history-badge {
+      background: rgba(46, 79, 255, 0.2);
+      border: 1px solid rgba(46, 79, 255, 0.35);
+      color: #7B9AFF;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 9px;
+      border-radius: 12px;
+    }
+
+    .history-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .history-btn-action {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      color: #8E8FA2;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .history-btn-action:hover {
+      background: rgba(46, 79, 255, 0.15);
+      color: #7B9AFF;
+      border-color: rgba(46, 79, 255, 0.3);
+    }
+
+    .history-btn-action.danger:hover {
+      background: rgba(239, 68, 68, 0.15);
+      color: #EF4444;
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .history-btn-action .material-symbols-outlined {
+      font-size: 16px;
+    }
+
+    .user-history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 440px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .history-item-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .history-item-card:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(123, 154, 255, 0.2);
+    }
+
+    .history-item-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .history-lead-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .history-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: rgba(46, 79, 255, 0.12);
+      border: 1px solid rgba(46, 79, 255, 0.25);
+      color: #7B9AFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .history-name-num {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .history-lead-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .history-lead-phone {
+      font-size: 11px;
+      color: #8E8FA2;
+      font-family: monospace;
+    }
+
+    .history-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .history-status-badge.in-progress {
+      background: rgba(46, 79, 255, 0.15);
+      border: 1px solid rgba(46, 79, 255, 0.3);
+      color: #7B9AFF;
+    }
+
+    .history-status-badge.completed {
+      background: rgba(0, 181, 160, 0.12);
+      border: 1px solid rgba(0, 181, 160, 0.3);
+      color: #00B5A0;
+    }
+
+    .history-status-badge.voicemail {
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: #F59E0B;
+    }
+
+    .history-status-badge.error {
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #EF4444;
+    }
+
+    .history-item-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.4);
+      padding-top: 8px;
+      border-top: 1px dashed rgba(255, 255, 255, 0.05);
+      flex-wrap: wrap;
+    }
+
+    .history-meta-text {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .history-item-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .history-action-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      color: rgba(255, 255, 255, 0.8);
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .history-action-btn:hover {
+      background: rgba(46, 79, 255, 0.2);
+      color: #7B9AFF;
+      border-color: rgba(46, 79, 255, 0.3);
+    }
+
+    .history-action-btn .material-symbols-outlined {
+      font-size: 14px;
+    }
+
+    .user-history-empty {
+      padding: 32px 16px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
   </style>
 </head>
 
@@ -3980,6 +4226,32 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           <button type="button" class="live-action-btn" onclick="expandLiveModal()">
             <span class="material-symbols-outlined">open_in_full</span> Expandir Modal
           </button>
+        </div>
+      </div>
+
+      <!-- ── HISTÓRICO DE DISPAROS DO USUÁRIO ── -->
+      <div class="user-history-card" id="userHistoryCard">
+        <div class="user-history-header">
+          <div class="user-history-title">
+            <span class="material-symbols-outlined">history</span>
+            <span>Meu Histórico de Disparos</span>
+            <span class="history-badge" id="userHistoryCount">0</span>
+          </div>
+          <div class="history-actions">
+            <button type="button" class="history-btn-action" onclick="loadUserDispatchHistory(true)" title="Atualizar Histórico">
+              <span class="material-symbols-outlined">refresh</span>
+            </button>
+            <button type="button" class="history-btn-action danger" onclick="clearUserLocalHistory()" title="Limpar Histórico Local">
+              <span class="material-symbols-outlined">delete_sweep</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="user-history-list" id="userHistoryList">
+          <div class="user-history-empty">
+            <span class="material-symbols-outlined" style="font-size:32px; color:rgba(255,255,255,0.2);">phone_disabled</span>
+            <p style="margin-top:8px; font-size:13px; color:#8E8FA2;">Nenhum disparo realizado nesta sessão.</p>
+          </div>
         </div>
       </div>
 
@@ -5006,6 +5278,17 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         if (liveTimerText) liveTimerText.textContent = '00:00';
         if (liveMetaText) liveMetaText.textContent = `${telefone || ''} · ${agentName || 'Agente'}`;
         if (liveTranscriptBox) liveTranscriptBox.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:12px;">Chamada iniciada. Aguardando atendimento...</div>';
+        
+        addDispatchToHistory({
+          execution_id: executionId || 'temp_' + Date.now(),
+          nome: leadName || document.getElementById('nome')?.value || 'Contato',
+          telefone: telefone || document.getElementById('telefone')?.value || '',
+          contexto: document.getElementById('contexto')?.value || '',
+          email: document.getElementById('email')?.value || '',
+          agent_name: agentName || 'Agente Mindflow',
+          status: 'in_progress',
+          created_at: new Date().toISOString()
+        });
         if (liveActionArea) liveActionArea.style.display = 'none';
       }
 
@@ -5339,6 +5622,14 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           if (liveSseSource) liveSseSource.close();
           if (livePollInterval) clearInterval(livePollInterval);
         }
+
+        // Atualiza o card do histórico com os dados recebidos
+        updateDispatchInHistory(data.execution_id || data.call_id || call.id, {
+          status: status,
+          duration: formattedDur || call.duration || data.duration,
+          recording_url: recUrl,
+          disconnection_reason: call.disconnection_reason || data.disconnection_reason
+        });
       }
 
       function reTriggerLastCall() {
@@ -5566,9 +5857,231 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       }
     });
 
+    // ── Gestão do Histórico de Disparos do Usuário ──
+    const USER_HISTORY_KEY = 'mindflow_user_dispatch_history';
+
+    function getUserLocalHistory() {
+      try {
+        const raw = localStorage.getItem(USER_HISTORY_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveUserLocalHistory(list) {
+      try {
+        localStorage.setItem(USER_HISTORY_KEY, JSON.stringify((list || []).slice(0, 50)));
+      } catch (e) {}
+    }
+
+    function addDispatchToHistory(item) {
+      const list = getUserLocalHistory();
+      const existingIdx = list.findIndex(x => (x.execution_id && item.execution_id && x.execution_id === item.execution_id) || (x.id && item.id && x.id === item.id));
+      if (existingIdx >= 0) {
+        list[existingIdx] = { ...list[existingIdx], ...item };
+      } else {
+        list.unshift(item);
+      }
+      saveUserLocalHistory(list);
+      renderUserDispatchHistoryList(list);
+    }
+
+    function updateDispatchInHistory(executionId, patch) {
+      if (!executionId) return;
+      const list = getUserLocalHistory();
+      const idx = list.findIndex(x => x.execution_id === executionId || x.call_id === executionId || x.id == executionId);
+      if (idx >= 0) {
+        list[idx] = { ...list[idx], ...patch };
+        saveUserLocalHistory(list);
+        renderUserDispatchHistoryList(list);
+      }
+    }
+
+    function clearUserLocalHistory() {
+      if (confirm('Deseja limpar o seu histórico local de disparos?')) {
+        localStorage.removeItem(USER_HISTORY_KEY);
+        renderUserDispatchHistoryList([]);
+      }
+    }
+
+    function formatTimeAgo(ts) {
+      if (!ts) return 'Recente';
+      const d = new Date(ts);
+      if (isNaN(d.getTime())) return ts;
+      const now = new Date();
+      const diffMs = now - d;
+      const diffSec = Math.floor(diffMs / 1000);
+      if (diffSec < 60) return 'Agora mesmo';
+      const diffMin = Math.floor(diffSec / 60);
+      if (diffMin < 60) return `há ${diffMin} min`;
+      const diffHour = Math.floor(diffMin / 60);
+      if (diffHour < 24) return `há ${diffHour}h`;
+      return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function renderUserDispatchHistoryList(list) {
+      const container = document.getElementById('userHistoryList');
+      const countEl = document.getElementById('userHistoryCount');
+      if (!container) return;
+
+      if (!Array.isArray(list) || list.length === 0) {
+        if (countEl) countEl.textContent = '0';
+        container.innerHTML = `
+          <div class="user-history-empty">
+            <span class="material-symbols-outlined" style="font-size:32px; color:rgba(255,255,255,0.2);">phone_disabled</span>
+            <p style="margin-top:8px; font-size:13px; color:#8E8FA2;">Nenhum disparo realizado nesta sessão.</p>
+          </div>
+        `;
+        return;
+      }
+
+      if (countEl) countEl.textContent = list.length.toString();
+
+      container.innerHTML = list.map((item) => {
+        const initials = getInitials(item.nome || item.Nome || 'Contato');
+        const leadName = item.nome || item.Nome || 'Sem Nome';
+        const phone = item.telefone || item.Numero || item.to_number || '-';
+        const agentName = item.agent_name || item.agentName || 'Agente Mindflow';
+        const statusStr = (item.status || 'in_progress').toLowerCase();
+        const reason = item.disconnection_reason || item.reason || '';
+
+        let badgeClass = 'in-progress';
+        let badgeIcon = 'sync';
+        let badgeText = 'Em Andamento';
+
+        if (statusStr.includes('ended') || statusStr.includes('finalizad') || statusStr.includes('complet')) {
+          if (reason.toLowerCase().includes('voicemail') || reason.toLowerCase().includes('caixa')) {
+            badgeClass = 'voicemail';
+            badgeIcon = 'voicemail';
+            badgeText = 'Caixa Postal';
+          } else {
+            badgeClass = 'completed';
+            badgeIcon = 'check_circle';
+            const dur = item.duration || item.Duracao || '';
+            badgeText = dur ? `Finalizada (${dur})` : 'Finalizada';
+          }
+        } else if (statusStr.includes('error') || statusStr.includes('fail')) {
+          badgeClass = 'error';
+          badgeIcon = 'error';
+          badgeText = 'Falha';
+        }
+
+        const jsonPayload = escHtml(JSON.stringify(item));
+
+        return `
+          <div class="history-item-card" data-id="${item.execution_id || item.id || ''}">
+            <div class="history-item-top">
+              <div class="history-lead-info">
+                <div class="history-avatar">${initials}</div>
+                <div class="history-name-num">
+                  <span class="history-lead-name">${escHtml(leadName)}</span>
+                  <span class="history-lead-phone">${escHtml(phone)}</span>
+                </div>
+              </div>
+              <div class="history-status-badge ${badgeClass}">
+                <span class="material-symbols-outlined" style="font-size:13px;">${badgeIcon}</span>
+                <span>${badgeText}</span>
+              </div>
+            </div>
+
+            <div class="history-item-meta">
+              <div class="history-meta-text">
+                <span class="material-symbols-outlined" style="font-size:14px; color:#7B9AFF;">smart_toy</span>
+                <span>${escHtml(agentName)}</span>
+                <span>·</span>
+                <span>${formatTimeAgo(item.created_at || item.timestamp)}</span>
+              </div>
+              <div class="history-item-actions">
+                <button type="button" class="history-action-btn" onclick="reTriggerHistoryItem(this)" data-item='${jsonPayload}'>
+                  <span class="material-symbols-outlined">replay</span> Refazer
+                </button>
+                ${item.recording_url ? `
+                  <button type="button" class="history-action-btn" onclick="playHistoryAudio('${item.recording_url}')">
+                    <span class="material-symbols-outlined">play_arrow</span> Ouvir
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function reTriggerHistoryItem(btn) {
+      try {
+        const item = JSON.parse(btn.dataset.item);
+        if (item.nome || item.Nome) { const el = document.getElementById('nome'); if (el) { el.value = item.nome || item.Nome; updateClearBtn('nome'); } }
+        if (item.telefone || item.Numero) { const el = document.getElementById('telefone'); if (el) { el.value = item.telefone || item.Numero; updateClearBtn('telefone'); } }
+        if (item.contexto) { const el = document.getElementById('contexto'); if (el) { el.value = item.contexto; updateClearBtn('contexto'); } }
+        if (item.email) { const el = document.getElementById('email'); if (el) { el.value = item.email; updateClearBtn('email'); } }
+        saveFormDraft();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch (e) {
+        console.error('Erro ao refazer disparo:', e);
+      }
+    }
+
+    function playHistoryAudio(url) {
+      if (!url) return;
+      const audioWrap = document.getElementById('liveModalAudioWrap');
+      const audio = document.getElementById('liveModalAudioElement');
+      if (audio) {
+        audio.src = url;
+        if (audioWrap) audioWrap.style.display = 'flex';
+        audio.play().catch(() => {});
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      }
+    }
+
+    async function loadUserDispatchHistory(forceFetchServer = false) {
+      const local = getUserLocalHistory();
+      renderUserDispatchHistoryList(local);
+
+      if (forceFetchServer || local.length < 5) {
+        try {
+          const res = await fetch('/api/calls?limit=20');
+          if (res.ok) {
+            const data = await res.json();
+            const serverCalls = data.calls || data.data || [];
+            if (Array.isArray(serverCalls) && serverCalls.length > 0) {
+              const mergedMap = new Map();
+              local.forEach(item => {
+                const key = item.execution_id || item.id || item.call_id;
+                if (key) mergedMap.set(key, item);
+              });
+              serverCalls.forEach(item => {
+                const key = item.call_id || item.id;
+                if (key && !mergedMap.has(key)) {
+                  mergedMap.set(key, {
+                    id: item.id,
+                    call_id: item.call_id,
+                    nome: item.Nome,
+                    telefone: item.Numero || item.to_number,
+                    status: item.status || 'completed',
+                    duration: item.Duracao,
+                    recording_url: item.recording_url,
+                    disconnection_reason: item.disconnection_reason,
+                    created_at: item.created_at,
+                    agent_name: item.agent_name
+                  });
+                }
+              });
+              const mergedList = Array.from(mergedMap.values());
+              saveUserLocalHistory(mergedList);
+              renderUserDispatchHistoryList(mergedList);
+            }
+          }
+        } catch (e) {
+          console.error('Erro ao buscar histórico do servidor:', e);
+        }
+      }
+    }
+
     // Carregar dados salvos ao abrir a página
     document.addEventListener('DOMContentLoaded', () => {
       loadFormDraft();
+      loadUserDispatchHistory();
     });
 
     document.addEventListener('click', e => {
