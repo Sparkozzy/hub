@@ -1682,14 +1682,30 @@ app.get('/api/calls', async (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
   try {
     const clientDb = getActiveClientDb(req);
-    const { data, error } = await clientDb
+    const limit = parseInt(req.query.limit) || 1000;
+    let query = clientDb
       .from('Retell_calls_Mindflow')
       .select('*')
       .order('created_at', { ascending: false })
-      .limit(50);
+      .limit(limit);
 
+    const startDate = req.query.start_date || req.query.startDate;
+    const endDate = req.query.end_date || req.query.endDate;
+    const agent = req.query.agent;
+
+    if (startDate) {
+      query = query.gte('created_at', startDate);
+    }
+    if (endDate) {
+      query = query.lte('created_at', endDate + 'T23:59:59');
+    }
+    if (agent && agent !== 'all' && agent !== 'Todos os Agentes') {
+      query = query.eq('agent_id', agent);
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
-    return res.json(data);
+    return res.json({ data: data || [], calls: data || [], pages: 1, page: 1 });
   } catch (err) {
     console.error('[BFF] Erro ao buscar chamadas:', err.message);
     return res.status(500).json({ error: 'Erro ao buscar chamadas.' });

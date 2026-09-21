@@ -1016,7 +1016,7 @@ function escHtml(str) {
 }
 
 async function fetchExportData(isWhatsApp, filters) {
-    const params = new URLSearchParams({ page: 1, limit: 1000, _t: Date.now() });
+    const params = new URLSearchParams({ _t: Date.now() });
     if (filters.agent) params.append('agent', filters.agent);
     if (filters.startDate) {
         params.append('start_date', filters.startDate);
@@ -1027,23 +1027,45 @@ async function fetchExportData(isWhatsApp, filters) {
         params.append('endDate', filters.endDate);
     }
 
-    const endpoint = isWhatsApp ? `/whatsapp/chats?${params.toString()}` : `/calls?${params.toString()}`;
-    try {
-        const res = await fetch(endpoint);
-        if (res.ok) {
-            const result = await res.json();
-            const items = result.data || result.calls || (Array.isArray(result) ? result : []);
-            if (Array.isArray(items) && items.length > 0) return items;
+    if (isWhatsApp) {
+        const waEndpoints = [
+            `/whatsapp/chats?page=1&limit=500&${params.toString()}`,
+            `/whatsapp/chats?${params.toString()}`
+        ];
+        for (const ep of waEndpoints) {
+            try {
+                const res = await fetch(ep);
+                if (res.ok) {
+                    const result = await res.json();
+                    const items = result.data || result.chats || (Array.isArray(result) ? result : []);
+                    if (Array.isArray(items) && items.length > 0) return items;
+                }
+            } catch (e) {
+                console.warn('[Export System] WhatsApp endpoint attempt failed:', ep, e);
+            }
         }
-    } catch (e) {
-        console.warn('[Export System] Direct fetch failed:', e);
+        if (Array.isArray(waState?.chats) && waState.chats.length > 0) return waState.chats;
+    } else {
+        const callEndpoints = [
+            `/api/calls?limit=1000&${params.toString()}`,
+            `/calls?page=1&limit=500&${params.toString()}`,
+            `/calls?${params.toString()}`
+        ];
+        for (const ep of callEndpoints) {
+            try {
+                const res = await fetch(ep);
+                if (res.ok) {
+                    const result = await res.json();
+                    const items = result.data || result.calls || (Array.isArray(result) ? result : []);
+                    if (Array.isArray(items) && items.length > 0) return items;
+                }
+            } catch (e) {
+                console.warn('[Export System] Call endpoint attempt failed:', ep, e);
+            }
+        }
+        if (Array.isArray(state?.auditCalls) && state.auditCalls.length > 0) return state.auditCalls;
     }
 
-    // Fallback: usar dados da memória caso existam na tela
-    if (!isWhatsApp && Array.isArray(state?.auditCalls) && state.auditCalls.length > 0) {
-        console.log('[Export System] Usando dados em memória (state.auditCalls)');
-        return state.auditCalls;
-    }
     return [];
 }
 
