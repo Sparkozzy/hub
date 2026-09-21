@@ -1126,8 +1126,19 @@ async function executeExport(format) {
             periodText = `A partir de ${filters.startDate.split('-').reverse().join('/')}`;
         }
 
-        if (format === 'csv') {
-            await exportCsvData(isWhatsApp, filters, periodText);
+        if (format === 'csv' || format === 'excel') {
+            const params = new URLSearchParams();
+            if (isWhatsApp) params.append('tab', 'whatsapp');
+            if (filters.agent) params.append('agent', filters.agent);
+            if (filters.startDate) {
+                params.append('start_date', filters.startDate);
+                params.append('startDate', filters.startDate);
+            }
+            if (filters.endDate) {
+                params.append('end_date', filters.endDate);
+                params.append('endDate', filters.endDate);
+            }
+            window.location.href = `/api/export-excel?${params.toString()}`;
         } else if (format === 'pdf') {
             await exportPdfReport(isWhatsApp, filters, periodText);
         }
