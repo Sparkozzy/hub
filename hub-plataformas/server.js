@@ -1852,7 +1852,7 @@ app.get('/api/export-calls', async (req, res) => {
   }
 });
 
-async function generateMindFlowExcelBuffer(items, isWhatsApp = false, clientName = 'MINDFLOW') {
+async function generateMindFlowExcelBuffer(items, isWhatsApp = false, clientName = 'MINDFLOW', periodText = 'Período Completo', isLimited = false) {
     const wb = new ExcelJS.Workbook();
     wb.creator = 'MindFlow Platform';
     wb.lastModifiedBy = 'MindFlow Platform';
@@ -1882,6 +1882,17 @@ async function generateMindFlowExcelBuffer(items, isWhatsApp = false, clientName
     titleCell1.alignment = { vertical: 'middle', horizontal: 'left' };
     ws1.getRow(1).height = 32;
 
+    // Period / Safety Notice Row 2
+    ws1.mergeCells('A2:F2');
+    const periodCell = ws1.getCell('A2');
+    periodCell.value = isLimited
+        ? `📌 Nota de Exportação: Exibindo os ${items.length} registros mais recentes da operação. Para um recorte específico, selecione o período no filtro do Dashboard.`
+        : `📅 Período Filtrado: ${periodText} (${items.length} registros exportados)`;
+    periodCell.font = { name: 'Century Gothic', size: 9, italic: true, color: { argb: 'FF475569' } };
+    periodCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+    periodCell.alignment = { vertical: 'middle', horizontal: 'left' };
+    ws1.getRow(2).height = 22;
+
     const totalItems = items.length;
     const uniquePhones = new Set(items.map(c => c.lead_phone || c.from_number || c.to_number || c.numero || c.phone)).size;
     
@@ -1904,15 +1915,15 @@ async function generateMindFlowExcelBuffer(items, isWhatsApp = false, clientName
     const estimatedValue = (highCalls * 2500) + (medCalls * 500);
 
     // KPI Cards Block 1
-    ws1.getRow(3).values = ['TOTAL DE REGISTROS', '', 'LEADS ÚNICOS', '', 'VOLUME COMERCIAL ESTIMADO', ''];
-    ws1.getRow(4).values = [totalItems, '', uniquePhones, '', estimatedValue, ''];
+    ws1.getRow(4).values = ['TOTAL DE REGISTROS', '', 'LEADS ÚNICOS', '', 'VOLUME COMERCIAL ESTIMADO', ''];
+    ws1.getRow(5).values = [totalItems, '', uniquePhones, '', estimatedValue, ''];
 
     // KPI Cards Block 2
-    ws1.getRow(5).values = ['INTERESSE ALTO (SUCESSO)', '', 'INTERESSE MÉDIO', '', 'TAXA DE CONVERSÃO ÚTIL', ''];
-    ws1.getRow(6).values = [highCalls, '', medCalls, '', conversionRate, ''];
+    ws1.getRow(6).values = ['INTERESSE ALTO (SUCESSO)', '', 'INTERESSE MÉDIO', '', 'TAXA DE CONVERSÃO ÚTIL', ''];
+    ws1.getRow(7).values = [highCalls, '', medCalls, '', conversionRate, ''];
 
     // Style KPI Cards
-    const kpiTitleRows = [3, 5];
+    const kpiTitleRows = [4, 6];
     kpiTitleRows.forEach(r => {
         ws1.getRow(r).height = 20;
         ['A', 'C', 'E'].forEach(col => {
@@ -1923,7 +1934,7 @@ async function generateMindFlowExcelBuffer(items, isWhatsApp = false, clientName
         });
     });
 
-    const kpiValRows = [4, 6];
+    const kpiValRows = [5, 7];
     kpiValRows.forEach(r => {
         ws1.getRow(r).height = 26;
         ['A', 'C', 'E'].forEach(col => {
@@ -1939,26 +1950,26 @@ async function generateMindFlowExcelBuffer(items, isWhatsApp = false, clientName
         });
     });
 
-    ws1.getCell('E4').numFmt = '"R$ "#,##0';
-    ws1.getCell('E6').numFmt = '0.0%';
+    ws1.getCell('E5').numFmt = '"R$ "#,##0';
+    ws1.getCell('E7').numFmt = '0.0%';
 
     // Breakdown Title
-    ws1.getRow(8).values = ['Detalhamento do Status das Chamadas (Motivos / CRM)'];
-    ws1.getCell('A8').font = { name: 'Century Gothic', size: 11, bold: true, color: { argb: 'FF1E293B' } };
+    ws1.getRow(9).values = ['Detalhamento do Status das Chamadas (Motivos / CRM)'];
+    ws1.getCell('A9').font = { name: 'Century Gothic', size: 11, bold: true, color: { argb: 'FF1E293B' } };
 
     // Breakdown Header
-    ws1.getRow(9).values = ['Status / Motivo', 'Quantidade', 'Percentual'];
-    const bHeaderRow = ws1.getRow(9);
+    ws1.getRow(10).values = ['Status / Motivo', 'Quantidade', 'Percentual'];
+    const bHeaderRow = ws1.getRow(10);
     bHeaderRow.height = 22;
     ['A', 'B', 'C'].forEach(col => {
-        const cell = ws1.getCell(`${col}9`);
+        const cell = ws1.getCell(`${col}10`);
         cell.font = { name: 'Century Gothic', size: 9, bold: true, color: { argb: 'FFFFFFFF' } };
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF00B5A0' } };
         cell.alignment = { vertical: 'middle', horizontal: col === 'A' ? 'left' : 'center' };
     });
 
     // Breakdown Rows
-    let currentRow = 10;
+    let currentRow = 11;
     Object.entries(reasonCounts).sort((a, b) => b[1] - a[1]).forEach(([reason, count]) => {
         const pct = totalItems > 0 ? count / totalItems : 0;
         const row = ws1.getRow(currentRow);
@@ -2171,13 +2182,27 @@ app.get('/api/export-excel', async (req, res) => {
   try {
     const isWhatsApp = req.query.tab === 'whatsapp';
     const clientId = req.session.user.active_client || '2';
+    
+    const startDate = (req.query.start_date || req.query.startDate || '').trim();
+    const endDate = (req.query.end_date || req.query.endDate || '').trim();
+    const agent = (req.query.agent || '').trim();
+    const isFiltered = Boolean(startDate || endDate || (agent && agent !== 'all'));
+
+    let periodText = 'Todo o Histórico (2.000 mais recentes)';
+    if (startDate && endDate) {
+      periodText = `${startDate.split('-').reverse().join('/')} a ${endDate.split('-').reverse().join('/')}`;
+    } else if (startDate) {
+      periodText = `A partir de ${startDate.split('-').reverse().join('/')}`;
+    }
+
+    const safeLimit = isFiltered ? 5000 : 2000;
     let items = [];
 
     const endpointPath = isWhatsApp ? '/whatsapp/chats' : '/calls';
     const qs = new URLSearchParams(req.query).toString();
 
     try {
-      const response = await fetch(`${DASHBOARD_API_URL}${endpointPath}?page=1&limit=5000${qs ? '&' + qs : ''}`, {
+      const response = await fetch(`${DASHBOARD_API_URL}${endpointPath}?page=1&limit=${safeLimit}${qs ? '&' + qs : ''}`, {
         headers: { 'X-Client-ID': String(clientId) },
         signal: AbortSignal.timeout(15000),
       });
@@ -2193,12 +2218,8 @@ app.get('/api/export-excel', async (req, res) => {
       try {
         const clientDb = getActiveClientDb(req);
         const cols = 'id, created_at, Nome, Numero, status, call_id, agent_id, agent_name, transcript, recording_url, disconnection_reason, from_number, to_number, Duracao, Marcada';
-        let query = clientDb.from('Retell_calls_Mindflow').select(cols).order('id', { ascending: false }).limit(2000);
+        let query = clientDb.from('Retell_calls_Mindflow').select(cols).order('id', { ascending: false }).limit(safeLimit);
         
-        const startDate = (req.query.start_date || req.query.startDate || '').trim();
-        const endDate = (req.query.end_date || req.query.endDate || '').trim();
-        const agent = (req.query.agent || '').trim();
-
         if (startDate) query = query.gte('created_at', startDate);
         if (endDate) query = query.lte('created_at', endDate + 'T23:59:59');
         if (agent && agent !== 'all' && agent !== 'Todos os Agentes') query = query.eq('agent_id', agent);
@@ -2215,7 +2236,7 @@ app.get('/api/export-excel', async (req, res) => {
       return res.status(404).send('Nenhum registro encontrado para gerar a planilha Excel.');
     }
 
-    const buffer = await generateMindFlowExcelBuffer(items, isWhatsApp, 'MINDFLOW');
+    const buffer = await generateMindFlowExcelBuffer(items, isWhatsApp, 'MINDFLOW', periodText, !isFiltered);
 
     const filename = `mindflow_relatorio_${isWhatsApp ? 'whatsapp' : 'ligacoes'}_${new Date().toISOString().slice(0, 10)}.xlsx`;
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
