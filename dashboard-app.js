@@ -1005,6 +1005,48 @@ function formatDateForCsv(val) {
     return String(val);
 }
 
+function escHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+async function fetchExportData(isWhatsApp, filters) {
+    const params = new URLSearchParams({ page: 1, limit: 1000, _t: Date.now() });
+    if (filters.agent) params.append('agent', filters.agent);
+    if (filters.startDate) {
+        params.append('start_date', filters.startDate);
+        params.append('startDate', filters.startDate);
+    }
+    if (filters.endDate) {
+        params.append('end_date', filters.endDate);
+        params.append('endDate', filters.endDate);
+    }
+
+    const endpoint = isWhatsApp ? `/whatsapp/chats?${params.toString()}` : `/calls?${params.toString()}`;
+    try {
+        const res = await fetch(endpoint);
+        if (res.ok) {
+            const result = await res.json();
+            const items = result.data || result.calls || (Array.isArray(result) ? result : []);
+            if (Array.isArray(items) && items.length > 0) return items;
+        }
+    } catch (e) {
+        console.warn('[Export System] Direct fetch failed:', e);
+    }
+
+    // Fallback: usar dados da memória caso existam na tela
+    if (!isWhatsApp && Array.isArray(state?.auditCalls) && state.auditCalls.length > 0) {
+        console.log('[Export System] Usando dados em memória (state.auditCalls)');
+        return state.auditCalls;
+    }
+    return [];
+}
+
 // 11. State-of-the-Art Export System (CSV / Excel & PDF MindFlow Report)
 
 function toggleExportMenu(event) {
@@ -1079,17 +1121,7 @@ async function executeExport(format) {
 }
 
 async function exportCsvData(isWhatsApp, filters, periodText) {
-    const params = new URLSearchParams({ page: 1, limit: 5000, _t: Date.now() });
-    if (filters.agent) params.append('agent', filters.agent);
-    if (filters.startDate) params.append('start_date', filters.startDate);
-    if (filters.endDate) params.append('end_date', filters.endDate);
-
-    const endpoint = isWhatsApp ? `/whatsapp/chats?${params.toString()}` : `/calls?${params.toString()}`;
-    const res = await fetch(endpoint);
-    if (!res.ok) throw new Error('Erro ao consultar API do servidor');
-
-    const result = await res.json();
-    const items = result.data || result.calls || (Array.isArray(result) ? result : []);
+    const items = await fetchExportData(isWhatsApp, filters);
 
     if (!items || items.length === 0) {
         alert('Nenhum registro encontrado para os filtros selecionados.');
@@ -1164,17 +1196,7 @@ async function exportCsvData(isWhatsApp, filters, periodText) {
 }
 
 async function exportPdfReport(isWhatsApp, filters, periodText) {
-    const params = new URLSearchParams({ page: 1, limit: 100, _t: Date.now() });
-    if (filters.agent) params.append('agent', filters.agent);
-    if (filters.startDate) params.append('start_date', filters.startDate);
-    if (filters.endDate) params.append('end_date', filters.endDate);
-
-    const endpoint = isWhatsApp ? `/whatsapp/chats?${params.toString()}` : `/calls?${params.toString()}`;
-    const res = await fetch(endpoint);
-    if (!res.ok) throw new Error('Erro ao consultar dados para relatório PDF');
-
-    const result = await res.json();
-    const items = result.data || result.calls || (Array.isArray(result) ? result : []);
+    const items = await fetchExportData(isWhatsApp, filters);
 
     if (!items || items.length === 0) {
         alert('Nenhum registro encontrado para gerar relatório PDF.');
