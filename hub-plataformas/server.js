@@ -1684,15 +1684,17 @@ app.get('/api/calls', async (req, res) => {
   try {
     const clientDb = getActiveClientDb(req);
     const limit = parseInt(req.query.limit) || 1000;
+    const cols = 'id, created_at, Nome, Numero, status, call_id, agent_id, agent_name, transcript, recording_url, disconnection_reason, from_number, to_number, Duracao, Marcada';
+    
     let query = clientDb
       .from('Retell_calls_Mindflow')
-      .select('*')
-      .order('created_at', { ascending: false })
+      .select(cols)
+      .order('id', { ascending: false })
       .limit(limit);
 
-    const startDate = req.query.start_date || req.query.startDate;
-    const endDate = req.query.end_date || req.query.endDate;
-    const agent = req.query.agent;
+    const startDate = (req.query.start_date || req.query.startDate || '').trim();
+    const endDate = (req.query.end_date || req.query.endDate || '').trim();
+    const agent = (req.query.agent || '').trim();
 
     if (startDate) {
       query = query.gte('created_at', startDate);
@@ -2190,13 +2192,23 @@ app.get('/api/export-excel', async (req, res) => {
     if (!items.length && !isWhatsApp) {
       try {
         const clientDb = getActiveClientDb(req);
-        let query = clientDb.from('Retell_calls_Mindflow').select('*').order('created_at', { ascending: false }).limit(2000);
-        if (req.query.start_date || req.query.startDate) query = query.gte('created_at', req.query.start_date || req.query.startDate);
-        if (req.query.end_date || req.query.endDate) query = query.lte('created_at', (req.query.end_date || req.query.endDate) + 'T23:59:59');
-        if (req.query.agent && req.query.agent !== 'all') query = query.eq('agent_id', req.query.agent);
-        const { data } = await query;
+        const cols = 'id, created_at, Nome, Numero, status, call_id, agent_id, agent_name, transcript, recording_url, disconnection_reason, from_number, to_number, Duracao, Marcada';
+        let query = clientDb.from('Retell_calls_Mindflow').select(cols).order('id', { ascending: false }).limit(2000);
+        
+        const startDate = (req.query.start_date || req.query.startDate || '').trim();
+        const endDate = (req.query.end_date || req.query.endDate || '').trim();
+        const agent = (req.query.agent || '').trim();
+
+        if (startDate) query = query.gte('created_at', startDate);
+        if (endDate) query = query.lte('created_at', endDate + 'T23:59:59');
+        if (agent && agent !== 'all' && agent !== 'Todos os Agentes') query = query.eq('agent_id', agent);
+
+        const { data, error } = await query;
+        if (error) console.error('[Export Excel Supabase Error]:', error);
         if (data && data.length) items = data;
-      } catch (e) {}
+      } catch (e) {
+        console.error('[Export Excel Supabase Catch]:', e);
+      }
     }
 
     if (!items.length) {
