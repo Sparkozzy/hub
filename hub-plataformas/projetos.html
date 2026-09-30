@@ -282,23 +282,50 @@
       animation: pulse 1.5s infinite;
     }
 
-    /* Tags Bar */
+    /* Tags Bar Redesign */
     .card-tags { display: flex; flex-wrap: wrap; gap: 6px; }
     .card-tag {
-      font-size: 9.5px; font-weight: 600; letter-spacing: 0.04em;
+      font-size: 11px; font-weight: 500;
       font-family: 'Space Grotesk', sans-serif;
-      text-transform: uppercase; padding: 3px 8px; border-radius: 12px;
-      background: rgba(255, 255, 255, 0.04); color: #94A3B8;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      line-height: 1; display: inline-flex; align-items: center;
+      text-transform: none; padding: 4px 10px; border-radius: 20px;
+      background: rgba(255, 255, 255, 0.05); color: #CBD5E1;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      line-height: 1; display: inline-flex; align-items: center; gap: 4px;
+      transition: all 0.2s ease;
     }
     .card-tag.whatsapp {
-      background: rgba(0, 210, 190, 0.1); color: #2DD4BF;
-      border-color: rgba(45, 212, 191, 0.25);
+      background: rgba(16, 185, 129, 0.12); color: #34D399;
+      border-color: rgba(52, 211, 153, 0.25);
+    }
+    .card-tag.comercial {
+      background: rgba(59, 130, 246, 0.12); color: #60A5FA;
+      border-color: rgba(96, 165, 250, 0.25);
     }
     .card-tag.voz {
       background: rgba(139, 92, 246, 0.12); color: #C084FC;
-      border-color: rgba(192, 132, 252, 0.3);
+      border-color: rgba(192, 132, 252, 0.25);
+    }
+    .card-tag.juridico {
+      background: rgba(245, 158, 11, 0.12); color: #FBBF24;
+      border-color: rgba(251, 191, 36, 0.25);
+    }
+    .card-tag.sac {
+      background: rgba(236, 72, 153, 0.12); color: #F472B6;
+      border-color: rgba(244, 114, 182, 0.25);
+    }
+
+    /* Drag & Drop Visual Feedback */
+    .kanban-card.dragging {
+      opacity: 0.35;
+      transform: scale(0.98);
+      border-color: #2E4FFF !important;
+      box-shadow: 0 0 25px rgba(46, 79, 255, 0.5) !important;
+    }
+    .col-cards.drag-over {
+      background: rgba(46, 79, 255, 0.08);
+      border: 2px dashed rgba(79, 70, 229, 0.6);
+      border-radius: 12px;
+      transition: all 0.2s ease;
     }
 
     /* Metrics Bar */
@@ -847,21 +874,42 @@
         }
       }
 
+      // Permite Arrastar e Soltar (Drag & Drop) e Clique no Card Body
+      div.setAttribute('draggable', 'true');
+      div.onclick = (e) => editCard(e, id);
+
+      div.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', id);
+        e.dataTransfer.effectAllowed = 'move';
+        div.classList.add('dragging');
+      });
+
+      div.addEventListener('dragend', () => {
+        div.classList.remove('dragging');
+      });
+
       // Status da Z-API / Telemetria em Badge Separado
       const isZapiDisconnected = p.zapiStatus === 'disconnected';
       const statusPillHtml = isZapiDisconnected 
         ? `<span class="status-pill offline">⚠️ Off</span>`
         : `<span class="status-pill online">● Online</span>`;
 
-      // Tags Categorias
+      // Tags Categorias com formatação elegante (sem '#' feio)
       const tagsList = p.tags || [];
       const tagsHtml = tagsList.map(t => {
-        const l = t.toLowerCase();
+        let cleanTag = t.replace(/^#/, '').trim();
+        if (!cleanTag) return '';
+        const l = cleanTag.toLowerCase();
         let cls = '';
-        if (l.includes('whatsapp')) cls = 'whatsapp';
-        if (l.includes('voz') || l.includes('ligação')) cls = 'voz';
-        return `<span class="card-tag ${cls}">#${t.trim()}</span>`;
-      }).join('');
+        if (l.includes('whatsapp')) { cls = 'whatsapp'; cleanTag = 'WhatsApp'; }
+        else if (l.includes('comercial')) { cls = 'comercial'; cleanTag = 'Comercial'; }
+        else if (l.includes('voz') || l.includes('ligação')) { cls = 'voz'; cleanTag = 'Voz'; }
+        else if (l.includes('juridico') || l.includes('jurídico')) { cls = 'juridico'; cleanTag = 'Jurídico'; }
+        else if (l.includes('sac')) { cls = 'sac'; cleanTag = 'SAC'; }
+        else if (l.includes('crm')) { cleanTag = 'CRM'; }
+        
+        return `<span class="card-tag ${cls}">${cleanTag}</span>`;
+      }).filter(Boolean).join('');
 
       const roundsClass = (p.rounds || 1) >= 4 ? 'high' : '';
 
@@ -906,6 +954,44 @@
 
       return div;
     }
+
+    // ── Configuração das Zonas de Drop (Arrastar & Soltar entre Colunas) ──
+    function setupDragAndDrop() {
+      const cols = ['setup', 'dev', 'test', 'wait', 'live'];
+      cols.forEach(c => {
+        const colCardsEl = document.getElementById(`cards-${c}`);
+        if (!colCardsEl) return;
+
+        colCardsEl.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          colCardsEl.classList.add('drag-over');
+        });
+
+        colCardsEl.addEventListener('dragleave', (e) => {
+          if (e.target === colCardsEl) {
+            colCardsEl.classList.remove('drag-over');
+          }
+        });
+
+        colCardsEl.addEventListener('drop', (e) => {
+          e.preventDefault();
+          colCardsEl.classList.remove('drag-over');
+          const cardId = e.dataTransfer.getData('text/plain');
+          if (cardId && allProjects[cardId]) {
+            if (allProjects[cardId].stage !== c) {
+              projectsRef.child(cardId).update({
+                stage: c,
+                movedAt: Date.now()
+              });
+            }
+          }
+        });
+      });
+    }
+
+    // Inicializa os event listeners de Drag & Drop ao carregar a página
+    document.addEventListener('DOMContentLoaded', setupDragAndDrop);
 
     // ── Mover Card entre Colunas ──
     const STAGES_ORDER = ['setup', 'dev', 'test', 'wait', 'live'];
