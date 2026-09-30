@@ -6136,7 +6136,11 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         }
 
         const modal = document.getElementById('historyDetailModal');
-        if (modal) modal.style.display = 'flex';
+        if (modal) {
+          modal.style.display = 'flex';
+          modal.classList.add('active');
+          modal.classList.add('open');
+        }
       } catch (err) {
         console.error('Erro ao abrir modal do histórico por índice:', err);
       }
@@ -6242,7 +6246,11 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         }
 
         const modal = document.getElementById('historyDetailModal');
-        if (modal) modal.style.display = 'flex';
+        if (modal) {
+          modal.style.display = 'flex';
+          modal.classList.add('active');
+          modal.classList.add('open');
+        }
       } catch (err) {
         console.error('Erro ao abrir modal do histórico:', err);
       }
@@ -6261,7 +6269,11 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
 
     function closeHistoryDetailModal() {
       const modal = document.getElementById('historyDetailModal');
-      if (modal) modal.style.display = 'none';
+      if (modal) {
+        modal.classList.remove('active');
+        modal.classList.remove('open');
+        modal.style.display = 'none';
+      }
       const audioElem = document.getElementById('histModalAudioElement');
       if (audioElem) {
         audioElem.pause();
