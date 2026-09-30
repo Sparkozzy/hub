@@ -282,7 +282,7 @@
       animation: pulse 1.5s infinite;
     }
 
-    /* Tags Bar Redesign */
+    /* Tags Bar Redesign — CS Mind Brain Statuses */
     .card-tags { display: flex; flex-wrap: wrap; gap: 6px; }
     .card-tag {
       font-size: 11px; font-weight: 500;
@@ -293,25 +293,61 @@
       line-height: 1; display: inline-flex; align-items: center; gap: 4px;
       transition: all 0.2s ease;
     }
-    .card-tag.whatsapp {
-      background: rgba(16, 185, 129, 0.12); color: #34D399;
-      border-color: rgba(52, 211, 153, 0.25);
+    .card-tag.saudavel {
+      background: rgba(16, 185, 129, 0.15); color: #34D399;
+      border-color: rgba(52, 211, 153, 0.35); font-weight: 600;
+      box-shadow: 0 0 10px rgba(52, 211, 153, 0.12);
     }
-    .card-tag.comercial {
+    .card-tag.atencao {
+      background: rgba(245, 158, 11, 0.15); color: #FBBF24;
+      border-color: rgba(251, 191, 36, 0.35); font-weight: 600;
+    }
+    .card-tag.risco {
+      background: rgba(239, 68, 68, 0.15); color: #F87171;
+      border-color: rgba(248, 113, 113, 0.4); font-weight: 700;
+      animation: pulse 1.5s infinite;
+    }
+    .card-tag.onboarding {
       background: rgba(59, 130, 246, 0.12); color: #60A5FA;
       border-color: rgba(96, 165, 250, 0.25);
     }
-    .card-tag.voz {
+    .card-tag.prompt {
       background: rgba(139, 92, 246, 0.12); color: #C084FC;
       border-color: rgba(192, 132, 252, 0.25);
     }
-    .card-tag.juridico {
-      background: rgba(245, 158, 11, 0.12); color: #FBBF24;
-      border-color: rgba(251, 191, 36, 0.25);
+    .card-tag.crm {
+      background: rgba(6, 182, 212, 0.12); color: #22D3EE;
+      border-color: rgba(34, 211, 238, 0.25);
     }
-    .card-tag.sac {
-      background: rgba(236, 72, 153, 0.12); color: #F472B6;
-      border-color: rgba(244, 114, 182, 0.25);
+    .card-tag.pendente {
+      background: rgba(244, 63, 94, 0.12); color: #FB7185;
+      border-color: rgba(251, 113, 133, 0.25);
+    }
+    .card-tag.homologacao {
+      background: rgba(99, 102, 241, 0.12); color: #818CF8;
+      border-color: rgba(129, 140, 248, 0.25);
+    }
+    .card-tag.ajustes {
+      background: rgba(217, 119, 6, 0.12); color: #F59E0B;
+      border-color: rgba(245, 158, 11, 0.25);
+    }
+
+    /* Preset Tag Quick Chips in Modal */
+    .preset-tag-chip {
+      font-size: 11px; font-family: 'Space Grotesk', sans-serif;
+      padding: 4px 10px; border-radius: 20px; cursor: pointer;
+      background: rgba(255, 255, 255, 0.05); color: #94A3B8;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.15s ease; user-select: none;
+    }
+    .preset-tag-chip:hover {
+      background: rgba(46, 79, 255, 0.2); color: #FFF;
+      border-color: var(--blue2); transform: translateY(-1px);
+    }
+    .preset-tag-chip.active {
+      background: linear-gradient(135deg, var(--blue), var(--teal));
+      color: #FFF; border-color: transparent;
+      box-shadow: 0 0 10px rgba(46, 79, 255, 0.4);
     }
 
     /* Drag & Drop Visual Feedback */
@@ -673,15 +709,25 @@
         </div>
       </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Tags (separadas por vírgula)</label>
-          <input type="text" class="form-input" id="cardTags" placeholder="WhatsApp, Voz, CRM">
+      <div class="form-group">
+        <label class="form-label">Mapeamento CS & Saúde do Cliente (Mind Brain)</label>
+        <div style="display:flex; flex-wrap:wrap; gap:6px; margin:4px 0 8px 0;" id="presetTagChips">
+          <span class="preset-tag-chip" onclick="togglePresetTag('🟢 Saudável')">🟢 Saudável</span>
+          <span class="preset-tag-chip" onclick="togglePresetTag('🟡 Em Atenção')">🟡 Em Atenção</span>
+          <span class="preset-tag-chip" onclick="togglePresetTag('🔴 Risco Churn')">🔴 Risco Churn</span>
+          <span class="preset-tag-chip" onclick="togglePresetTag('🚀 Onboarding')">🚀 Onboarding</span>
+          <span class="preset-tag-chip" onclick="togglePresetTag('⚙️ Engenharia Prompt')">⚙️ Engenharia Prompt</span>
+          <span class="preset-tag-chip" onclick="togglePresetTag('🔗 Conexão CRM')">🔗 Conexão CRM</span>
+          <span class="preset-tag-chip" onclick="togglePresetTag('⏳ Pendente Cliente')">⏳ Pendente Cliente</span>
+          <span class="preset-tag-chip" onclick="togglePresetTag('🧪 Homologação')">🧪 Homologação</span>
+          <span class="preset-tag-chip" onclick="togglePresetTag('🔥 Rodada Ajustes')">🔥 Rodada Ajustes</span>
         </div>
-        <div class="form-group">
-          <label class="form-label">Rodada de Alteração</label>
-          <input type="number" class="form-input" id="cardRounds" min="1" value="1">
-        </div>
+        <input type="text" class="form-input" id="cardTags" oninput="updatePresetTagChipsActive()" placeholder="Selecione acima ou digite tags personalizadas (separadas por vírgula)...">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Rodada de Alteração</label>
+        <input type="number" class="form-input" id="cardRounds" min="1" value="1">
       </div>
 
       <div class="form-group">
@@ -758,40 +804,40 @@
 
     let allProjects = {};
 
-    // ── Preenchimento Inicial de Exemplo (Seed Data se estive vazio) ──
+    // ── Preenchimento Inicial de Exemplo (Seed Data se estiver vazio) ──
     const SEED_PROJECTS = {
       "p1": {
         name: "[Kravi SAC]",
         stage: "live",
         assignee: "Pedro",
-        tags: ["WhatsApp", "SAC"],
+        tags: ["🟢 Saudável", "✅ Go-Live Ativo", "💬 WhatsApp SAC"],
         rounds: 1,
-        notes: "Operação ativa e rodando com sucesso.",
+        notes: "Operação ativa e rodando com sucesso no atendimento ao cliente.",
         movedAt: Date.now() - (15 * 86400000) // 15 dias atrás
       },
       "p2": {
         name: "[DevolveJus]",
         stage: "test",
         assignee: "Mariah",
-        tags: ["WhatsApp", "Jurídico"],
+        tags: ["🟡 Em Atenção", "🧪 Homologação", "🔥 Rodada Ajustes"],
         rounds: 3,
-        notes: "Em testes finais com os advogados do cliente.",
+        notes: "Em testes finais de tom de voz com os advogados do cliente.",
         movedAt: Date.now() - (6 * 86400000) // 6 dias atrás
       },
       "p3": {
         name: "MY Gain",
         stage: "dev",
         assignee: "Wandrey",
-        tags: ["WhatsApp", "Comercial"],
+        tags: ["🟢 Saudável", "⚙️ Engenharia Prompt", "🔗 Conexão CRM"],
         rounds: 2,
-        notes: "Ajustando fluxo de qualificação de leads.",
+        notes: "Ajustando fluxo de qualificação de leads e integração webhook.",
         movedAt: Date.now() - (3 * 86400000) // 3 dias atrás
       },
       "p4": {
         name: "Eduardo - CRM",
         stage: "wait",
         assignee: "Pedro",
-        tags: ["Voz", "Retell"],
+        tags: ["🔴 Risco Churn", "⏳ Pendente Cliente", "🎙️ Ajuste de Tom"],
         rounds: 6,
         notes: "Aguardando aprovação do cliente para as gravações de voz.",
         movedAt: Date.now() - (9 * 86400000) // 9 dias atrás (Estagnado!)
@@ -894,19 +940,23 @@
         ? `<span class="status-pill offline">⚠️ Off</span>`
         : `<span class="status-pill online">● Online</span>`;
 
-      // Tags Categorias com formatação elegante (sem '#' feio)
+      // Tags Categorias com Visão de Controle CS / Mind Brain
       const tagsList = p.tags || [];
       const tagsHtml = tagsList.map(t => {
         let cleanTag = t.replace(/^#/, '').trim();
         if (!cleanTag) return '';
         const l = cleanTag.toLowerCase();
         let cls = '';
-        if (l.includes('whatsapp')) { cls = 'whatsapp'; cleanTag = 'WhatsApp'; }
-        else if (l.includes('comercial')) { cls = 'comercial'; cleanTag = 'Comercial'; }
-        else if (l.includes('voz') || l.includes('ligação')) { cls = 'voz'; cleanTag = 'Voz'; }
-        else if (l.includes('juridico') || l.includes('jurídico')) { cls = 'juridico'; cleanTag = 'Jurídico'; }
-        else if (l.includes('sac')) { cls = 'sac'; cleanTag = 'SAC'; }
-        else if (l.includes('crm')) { cleanTag = 'CRM'; }
+
+        if (l.includes('saudável') || l.includes('saudavel')) cls = 'saudavel';
+        else if (l.includes('atenção') || l.includes('atencao')) cls = 'atencao';
+        else if (l.includes('risco') || l.includes('churn') || l.includes('bloqueado')) cls = 'risco';
+        else if (l.includes('onboarding') || l.includes('setup')) cls = 'onboarding';
+        else if (l.includes('prompt') || l.includes('ia')) cls = 'prompt';
+        else if (l.includes('crm') || l.includes('z-api') || l.includes('conexão')) cls = 'crm';
+        else if (l.includes('pendente') || l.includes('cliente')) cls = 'pendente';
+        else if (l.includes('homologação') || l.includes('testes')) cls = 'homologacao';
+        else if (l.includes('ajustes') || l.includes('rodada')) cls = 'ajustes';
         
         return `<span class="card-tag ${cls}">${cleanTag}</span>`;
       }).filter(Boolean).join('');
@@ -1022,6 +1072,37 @@
       }
     }
 
+    // ── Helper para Presets de Tags CS (Mind Brain) no Modal ──
+    function togglePresetTag(tagName) {
+      const input = document.getElementById('cardTags');
+      let currentTags = input.value.split(',').map(t => t.trim()).filter(Boolean);
+      
+      const existsIndex = currentTags.findIndex(t => t.toLowerCase() === tagName.toLowerCase());
+      if (existsIndex >= 0) {
+        currentTags.splice(existsIndex, 1);
+      } else {
+        currentTags.push(tagName);
+      }
+      
+      input.value = currentTags.join(', ');
+      updatePresetTagChipsActive();
+    }
+
+    function updatePresetTagChipsActive() {
+      const inputVal = document.getElementById('cardTags').value || '';
+      const currentTags = inputVal.split(',').map(t => t.trim().toLowerCase());
+      
+      const chips = document.querySelectorAll('.preset-tag-chip');
+      chips.forEach(c => {
+        const chipText = c.textContent.trim().toLowerCase();
+        if (currentTags.includes(chipText)) {
+          c.classList.add('active');
+        } else {
+          c.classList.remove('active');
+        }
+      });
+    }
+
     // ── Criar / Editar Card Modal ──
     function openNewCardModal() {
       document.getElementById('modalTitle').textContent = 'Novo Cliente / Projeto';
@@ -1029,14 +1110,15 @@
       document.getElementById('cardClientName').value = '';
       document.getElementById('cardStage').value = 'setup';
       document.getElementById('cardAssignee').value = 'Pedro';
-      document.getElementById('cardTags').value = 'WhatsApp';
+      document.getElementById('cardTags').value = '🟢 Saudável, 🚀 Onboarding';
       document.getElementById('cardRounds').value = 1;
       document.getElementById('cardNotes').value = '';
+      updatePresetTagChipsActive();
       openModal('modalCard');
     }
 
     function editCard(e, id) {
-      e.stopPropagation();
+      if (e && e.stopPropagation) e.stopPropagation();
       const p = allProjects[id];
       if (!p) return;
       document.getElementById('modalTitle').textContent = 'Editar Projeto';
@@ -1047,6 +1129,7 @@
       document.getElementById('cardTags').value = (p.tags || []).join(', ');
       document.getElementById('cardRounds').value = p.rounds || 1;
       document.getElementById('cardNotes').value = p.notes || '';
+      updatePresetTagChipsActive();
       openModal('modalCard');
     }
 
