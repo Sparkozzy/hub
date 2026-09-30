@@ -5942,30 +5942,68 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         const initials = getInitials(item.nome || item.Nome || 'Contato');
         const leadName = item.nome || item.Nome || 'Sem Nome';
         const phone = item.telefone || item.Numero || item.to_number || '-';
+    function getCallStatusBadge(item) {
+      if (!item) return { badgeClass: 'completed', badgeIcon: 'check_circle', badgeText: 'Finalizada' };
+
+      const statusStr = (item.status || '').toLowerCase();
+      const reason = (item.disconnection_reason || item.reason || '').toLowerCase();
+      const hasRecording = !!(item.recording_url && item.recording_url.length > 5);
+      const duration = item.duration || item.Duracao || '';
+
+      const itemTime = item.created_at ? new Date(item.created_at).getTime() : (item.timestamp ? new Date(item.timestamp).getTime() : 0);
+      const ageMs = itemTime > 0 ? (Date.now() - itemTime) : 999999999;
+      const isOldCall = ageMs > 3 * 60 * 1000;
+
+      if (statusStr.includes('error') || statusStr.includes('fail') || reason.includes('error') || reason.includes('fail') || reason.includes('dial_failed')) {
+        return { badgeClass: 'error', badgeIcon: 'error', badgeText: 'Falha' };
+      }
+      if (reason.includes('voicemail') || reason.includes('caixa') || statusStr.includes('voicemail')) {
+        return { badgeClass: 'voicemail', badgeIcon: 'voicemail', badgeText: 'Caixa Postal' };
+      }
+      if (reason.includes('no_answer') || reason.includes('busy') || reason.includes('sem resposta') || reason.includes('ocupad')) {
+        return {
+          badgeClass: 'voicemail',
+          badgeIcon: 'phone_missed',
+          badgeText: (reason.includes('busy') || reason.includes('ocupad')) ? 'Ocupado' : 'Sem Resposta'
+        };
+      }
+      if (!isOldCall && !reason && !hasRecording && (statusStr.includes('ongoing') || statusStr.includes('in_progress') || statusStr.includes('progress') || statusStr.includes('ring') || statusStr.includes('discando') || statusStr.includes('active'))) {
+        return { badgeClass: 'in-progress', badgeIcon: 'sync', badgeText: 'Em Andamento' };
+      }
+      if (reason.includes('user_hangup') || reason.includes('user hangup')) {
+        return { badgeClass: 'completed', badgeIcon: 'check_circle', badgeText: duration ? `Encerrada (${duration})` : 'Encerrada' };
+      }
+      if (reason.includes('agent_hangup') || reason.includes('agent hangup')) {
+        return { badgeClass: 'completed', badgeIcon: 'check_circle', badgeText: duration ? `Finalizada (${duration})` : 'Finalizada' };
+      }
+
+      return { badgeClass: 'completed', badgeIcon: 'check_circle', badgeText: duration ? `Finalizada (${duration})` : 'Finalizada' };
+    }
+
+    function renderUserDispatchHistoryList(list) {
+      const container = document.getElementById('userHistoryList');
+      const countEl = document.getElementById('userHistoryCount');
+      if (!container) return;
+
+      if (!Array.isArray(list) || list.length === 0) {
+        if (countEl) countEl.textContent = '0';
+        container.innerHTML = `
+          <div class="user-history-empty">
+            <span class="material-symbols-outlined" style="font-size:32px; color:rgba(255,255,255,0.2);">phone_disabled</span>
+            <p style="margin-top:8px; font-size:13px; color:#8E8FA2;">Nenhum disparo realizado nesta sessão.</p>
+          </div>
+        `;
+        return;
+      }
+
+      if (countEl) countEl.textContent = list.length.toString();
+
+      container.innerHTML = list.map((item) => {
+        const initials = getInitials(item.nome || item.Nome || 'Contato');
+        const leadName = item.nome || item.Nome || 'Sem Nome';
+        const phone = item.telefone || item.Numero || item.to_number || '-';
         const agentName = item.agent_name || item.agentName || 'Agente Mindflow';
-        const statusStr = (item.status || 'in_progress').toLowerCase();
-        const reason = item.disconnection_reason || item.reason || '';
-
-        let badgeClass = 'in-progress';
-        let badgeIcon = 'sync';
-        let badgeText = 'Em Andamento';
-
-        if (statusStr.includes('ended') || statusStr.includes('finalizad') || statusStr.includes('complet')) {
-          if (reason.toLowerCase().includes('voicemail') || reason.toLowerCase().includes('caixa')) {
-            badgeClass = 'voicemail';
-            badgeIcon = 'voicemail';
-            badgeText = 'Caixa Postal';
-          } else {
-            badgeClass = 'completed';
-            badgeIcon = 'check_circle';
-            const dur = item.duration || item.Duracao || '';
-            badgeText = dur ? `Finalizada (${dur})` : 'Finalizada';
-          }
-        } else if (statusStr.includes('error') || statusStr.includes('fail')) {
-          badgeClass = 'error';
-          badgeIcon = 'error';
-          badgeText = 'Falha';
-        }
+        const { badgeClass, badgeIcon, badgeText } = getCallStatusBadge(item);
 
         const jsonPayload = escHtml(JSON.stringify(item));
 
@@ -6029,31 +6067,10 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         const email = item.email || item.Email || '-';
         const agentName = item.agent_name || item.agentName || 'Agente Mindflow';
         const providerName = item.provider || item.provedor || 'Automático (IA / Roteamento por DDD)';
-        const statusStr = (item.status || 'in_progress').toLowerCase();
-        const reason = item.disconnection_reason || item.reason || '';
         const contexto = item.contexto || item.context || 'Sem contexto informado.';
         const timeFormatted = item.created_at ? new Date(item.created_at).toLocaleString('pt-BR') : (item.timestamp ? new Date(item.timestamp).toLocaleString('pt-BR') : 'Recentemente');
 
-        let badgeClass = 'in-progress';
-        let badgeIcon = 'sync';
-        let badgeText = 'Em Andamento';
-
-        if (statusStr.includes('ended') || statusStr.includes('finalizad') || statusStr.includes('complet')) {
-          if (reason.toLowerCase().includes('voicemail') || reason.toLowerCase().includes('caixa')) {
-            badgeClass = 'voicemail';
-            badgeIcon = 'voicemail';
-            badgeText = 'Caixa Postal';
-          } else {
-            badgeClass = 'completed';
-            badgeIcon = 'check_circle';
-            const dur = item.duration || item.Duracao || '';
-            badgeText = dur ? `Finalizada (${dur})` : 'Finalizada';
-          }
-        } else if (statusStr.includes('error') || statusStr.includes('fail')) {
-          badgeClass = 'error';
-          badgeIcon = 'error';
-          badgeText = 'Falha';
-        }
+        const { badgeClass, badgeIcon, badgeText } = getCallStatusBadge(item);
 
         const avatarEl = document.getElementById('histModalAvatar');
         if (avatarEl) avatarEl.textContent = initials;
