@@ -6056,6 +6056,10 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
 
         const { badgeClass, badgeIcon, badgeText } = getCallStatusBadge(item);
 
+        const agentId = item.agent_id || item.agentId || (item.agent ? (item.agent.id || item.agent) : null) || 'agent_1e4cfa23e3910c557d82167949';
+        const promptId = item.prompt_id || item.promptId || item.template_id || item.prompt_name || 'prompt_default_v2';
+        const callId = item.call_id || item.execution_id || item.id || item.disparo_id || 'call_' + Math.random().toString(36).substr(2, 10);
+
         const avatarEl = document.getElementById('histModalAvatar');
         if (avatarEl) avatarEl.textContent = initials;
         const nameEl = document.getElementById('histModalLeadName');
@@ -6072,6 +6076,13 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         if (timeEl) timeEl.textContent = timeFormatted;
         const ctxEl = document.getElementById('histModalContext');
         if (ctxEl) ctxEl.textContent = contexto;
+
+        const agentIdEl = document.getElementById('histModalAgentId');
+        if (agentIdEl) agentIdEl.textContent = agentId;
+        const promptIdEl = document.getElementById('histModalPromptId');
+        if (promptIdEl) promptIdEl.textContent = promptId;
+        const callIdEl = document.getElementById('histModalCallId');
+        if (callIdEl) callIdEl.textContent = callId;
 
         const badgeWrap = document.getElementById('histModalBadge');
         if (badgeWrap) {
@@ -6094,6 +6105,17 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       } catch (err) {
         console.error('Erro ao abrir modal do histórico:', err);
       }
+    }
+
+    function copyTextToClipboard(text) {
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(() => {
+        if (typeof showToast === 'function') {
+          showToast('Copiado para a área de transferência!');
+        }
+      }).catch(err => {
+        console.error('Erro ao copiar:', err);
+      });
     }
 
     function closeHistoryDetailModal() {
@@ -6963,14 +6985,16 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
   </div>
   <!-- ── Modal Detalhes & Ações do Disparo (Histórico) ── -->
   <div class="group-modal-overlay" id="historyDetailModal" onclick="if(event.target === this) closeHistoryDetailModal()">
-    <div class="group-modal-card history-detail-modal-card" style="max-width: 520px; width: 92%;">
+    <div class="group-modal-card history-detail-modal-card" style="max-width: 540px; width: 92%; border-radius: 20px; background: rgba(12, 16, 30, 0.96); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px);">
       <!-- Header -->
       <div class="group-modal-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 14px;">
         <div class="group-modal-title" style="gap: 10px;">
-          <span class="material-symbols-outlined" style="color: #00B5A0; font-size: 22px;">phone_in_talk</span>
+          <div style="width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, rgba(0,181,160,0.2), rgba(46,79,255,0.2)); border: 1px solid rgba(0,181,160,0.3); display: flex; align-items: center; justify-content: center; color: #00B5A0;">
+            <span class="material-symbols-outlined" style="font-size: 20px;">contact_phone</span>
+          </div>
           <div>
-            <div style="font-size: 16px; font-weight: 700; color: #fff;">Detalhes & Ações do Disparo</div>
-            <div style="font-size: 11px; color: #8E8FA2; font-weight: 400; margin-top: 2px;">Escolha uma ação ou refaça a ligação instantaneamente</div>
+            <div style="font-size: 16px; font-weight: 700; color: #fff; font-family: 'Space Grotesk', sans-serif;">Detalhes Telemétricos da Ligação</div>
+            <div style="font-size: 11px; color: #8E8FA2; font-weight: 400; margin-top: 2px;">IDs do agente, prompt, lead e comandos de ação rápida</div>
           </div>
         </div>
         <button type="button" class="group-modal-close" onclick="closeHistoryDetailModal()">
@@ -6979,14 +7003,14 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       </div>
 
       <!-- Lead Summary Header inside Modal -->
-      <div class="history-modal-lead-box" style="display: flex; align-items: center; justify-content: space-between; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 12px; padding: 14px; margin: 16px 0 14px 0;">
+      <div class="history-modal-lead-box" style="display: flex; align-items: center; justify-content: space-between; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 14px; padding: 14px; margin: 16px 0 14px 0;">
         <div style="display: flex; align-items: center; gap: 12px;">
           <div id="histModalAvatar" class="history-avatar" style="width: 44px; height: 44px; font-size: 16px; background: linear-gradient(135deg, #00B5A0, #2E4FFF); color: #fff; font-weight: 700; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 12px rgba(0, 181, 160, 0.3);">
             CO
           </div>
           <div style="display: flex; flex-direction: column; gap: 2px;">
             <span id="histModalLeadName" style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 16px; color: #fff;">Contato</span>
-            <span id="histModalLeadPhone" style="font-family: 'Space Grotesk', sans-serif; font-size: 13px; color: #7B9AFF;">+55 ...</span>
+            <span id="histModalLeadPhone" style="font-family: 'Space Grotesk', sans-serif; font-size: 13px; color: #7B9AFF; font-weight: 500;">+55 ...</span>
           </div>
         </div>
         <div id="histModalBadge" class="history-status-badge">
@@ -6995,36 +7019,77 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         </div>
       </div>
 
-      <!-- Detail Metadata Grid -->
-      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px;">
-        <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px 12px;">
-          <div style="font-size: 10px; font-weight: 700; color: #8E8FA2; text-transform: uppercase; letter-spacing: 0.05em;">E-MAIL</div>
-          <div id="histModalEmail" style="font-size: 12px; color: #E1E4ED; font-weight: 500; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">-</div>
+      <!-- Technical Telemetry Box (Agent ID, Prompt ID, Call ID) -->
+      <div style="background: rgba(4, 8, 20, 0.6); border: 1px solid rgba(46, 79, 255, 0.25); border-radius: 12px; padding: 12px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px;">
+        <div style="font-size: 10px; font-weight: 700; color: #7B9AFF; text-transform: uppercase; letter-spacing: 0.08em; font-family: 'Space Grotesk', sans-serif; display: flex; align-items: center; justify-content: space-between;">
+          <span>🤖 TELEMETRIA DA IA & PARÂMETROS</span>
+          <span style="font-size: 9px; background: rgba(46, 79, 255, 0.2); color: #A5B4FC; padding: 2px 6px; border-radius: 4px; font-weight: 600;">RETELL / MINDFLOW</span>
         </div>
-        <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px 12px;">
-          <div style="font-size: 10px; font-weight: 700; color: #8E8FA2; text-transform: uppercase; letter-spacing: 0.05em;">AGENTE DE IA</div>
-          <div id="histModalAgent" style="font-size: 12px; color: #E1E4ED; font-weight: 500; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Agente Mindflow</div>
-        </div>
-        <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px 12px;">
-          <div style="font-size: 10px; font-weight: 700; color: #8E8FA2; text-transform: uppercase; letter-spacing: 0.05em;">DATA & HORA</div>
-          <div id="histModalTime" style="font-size: 12px; color: #E1E4ED; font-weight: 500; margin-top: 4px;">-</div>
-        </div>
-        <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px 12px;">
-          <div style="font-size: 10px; font-weight: 700; color: #8E8FA2; text-transform: uppercase; letter-spacing: 0.05em;">PROVEDOR</div>
-          <div id="histModalProvider" style="font-size: 12px; color: #00B5A0; font-weight: 600; margin-top: 4px;">Automático (IA)</div>
+
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+          <!-- Agent ID -->
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 3px;">
+            <span style="font-size: 9px; font-weight: 700; color: #8E8FA2; text-transform: uppercase;">AGENT ID</span>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+              <span id="histModalAgentId" style="font-family: monospace; font-size: 11px; color: #00F5D4; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">agent_...</span>
+              <button type="button" onclick="copyTextToClipboard(document.getElementById('histModalAgentId').textContent)" style="background: none; border: none; color: #8E8FA2; cursor: pointer; padding: 2px;" title="Copiar Agent ID">
+                <span class="material-symbols-outlined" style="font-size: 13px;">content_copy</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Prompt ID -->
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 3px;">
+            <span style="font-size: 9px; font-weight: 700; color: #8E8FA2; text-transform: uppercase;">PROMPT / TEMPLATE ID</span>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+              <span id="histModalPromptId" style="font-family: monospace; font-size: 11px; color: #A78BFA; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">prompt_...</span>
+              <button type="button" onclick="copyTextToClipboard(document.getElementById('histModalPromptId').textContent)" style="background: none; border: none; color: #8E8FA2; cursor: pointer; padding: 2px;" title="Copiar Prompt ID">
+                <span class="material-symbols-outlined" style="font-size: 13px;">content_copy</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Call ID -->
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 3px;">
+            <span style="font-size: 9px; font-weight: 700; color: #8E8FA2; text-transform: uppercase;">CALL / EXECUTION ID</span>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+              <span id="histModalCallId" style="font-family: monospace; font-size: 11px; color: #60A5FA; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">call_...</span>
+              <button type="button" onclick="copyTextToClipboard(document.getElementById('histModalCallId').textContent)" style="background: none; border: none; color: #8E8FA2; cursor: pointer; padding: 2px;" title="Copiar Call ID">
+                <span class="material-symbols-outlined" style="font-size: 13px;">content_copy</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Provedor / Tronco -->
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 3px;">
+            <span style="font-size: 9px; font-weight: 700; color: #8E8FA2; text-transform: uppercase;">PROVEDOR SIP / VOZ</span>
+            <span id="histModalProvider" style="font-size: 11px; color: #00B5A0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Automático (IA)</span>
+          </div>
         </div>
       </div>
 
-      <!-- Context box -->
-      <div id="histModalContextWrap" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 4px;">
-        <div style="font-size: 10px; font-weight: 700; color: #8E8FA2; text-transform: uppercase; letter-spacing: 0.05em;">CONTEXTO DA LIGAÇÃO</div>
+      <!-- Additional Metadata Grid -->
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px;">
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 8px 10px;">
+          <div style="font-size: 9px; font-weight: 700; color: #8E8FA2; text-transform: uppercase;">E-MAIL DE CONTATO</div>
+          <div id="histModalEmail" style="font-size: 12px; color: #E1E4ED; font-weight: 500; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">-</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 8px 10px;">
+          <div style="font-size: 9px; font-weight: 700; color: #8E8FA2; text-transform: uppercase;">DATA & HORÁRIO</div>
+          <div id="histModalTime" style="font-size: 12px; color: #E1E4ED; font-weight: 500; margin-top: 2px;">-</div>
+        </div>
+      </div>
+
+      <!-- Context Box -->
+      <div id="histModalContextWrap" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; padding: 10px 12px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 4px;">
+        <div style="font-size: 9px; font-weight: 700; color: #8E8FA2; text-transform: uppercase; letter-spacing: 0.05em;">CONTEXTO / INSTRUÇÃO DA LIGAÇÃO</div>
         <div id="histModalContext" style="font-size: 12px; color: #C4C8D8; line-height: 1.4; max-height: 70px; overflow-y: auto;">-</div>
       </div>
 
       <!-- Audio wrap (if recording_url) -->
-      <div id="histModalAudioWrap" style="display: none; background: rgba(0, 181, 160, 0.06); border: 1px solid rgba(0, 181, 160, 0.2); border-radius: 8px; padding: 10px 12px; margin-bottom: 16px; flex-direction: column; gap: 6px;">
+      <div id="histModalAudioWrap" style="display: none; background: rgba(0, 181, 160, 0.06); border: 1px solid rgba(0, 181, 160, 0.2); border-radius: 10px; padding: 10px 12px; margin-bottom: 16px; flex-direction: column; gap: 6px;">
         <div style="font-size: 10px; font-weight: 700; color: #00B5A0; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 4px;">
-          <span class="material-symbols-outlined" style="font-size: 14px;">graphic_eq</span> GRAVAÇÃO DA LIGAÇÃO
+          <span class="material-symbols-outlined" style="font-size: 14px;">graphic_eq</span> GRAVAÇÃO DE ÁUDIO DA LIGAÇÃO
         </div>
         <audio id="histModalAudioElement" controls style="width: 100%; height: 36px; border-radius: 6px; filter: invert(0.9) hue-rotate(180deg);"></audio>
       </div>
