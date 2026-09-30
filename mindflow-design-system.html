@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-tint": "#bbc3ff",
+                    "secondary-container": "#00b49f",
+                    "on-primary-container": "#e2e4ff",
+                    "surface-container-high": "#282934",
+                    "secondary-fixed": "#6ff9e1",
+                    "surface-variant": "#33343f",
+                    "surface-container-low": "#1a1b25",
+                    "outline": "#8e8fa2",
+                    "background": "#11131c",
+                    "on-secondary-container": "#003f37",
+                    "on-primary": "#001d93",
+                    "on-error": "#690005",
+                    "tertiary-fixed-dim": "#ffb59e",
+                    "secondary-fixed-dim": "#4edcc5",
+                    "inverse-surface": "#e2e1ef",
+                    "on-tertiary-container": "#ffdfd5",
+                    "tertiary-fixed": "#ffdbd0",
+                    "on-surface-variant": "#c4c5d9",
+                    "primary-fixed": "#dee0ff",
+                    "on-tertiary-fixed": "#3a0b00",
+                    "on-primary-fixed-variant": "#002cce",
+                    "on-background": "#e2e1ef",
+                    "on-error-container": "#ffdad6",
+                    "surface-container-lowest": "#0c0e17",
+                    "primary-container": "#2e4fff",
+                    "surface-container": "#1e1f29",
+                    "inverse-on-surface": "#2f303a",
+                    "on-tertiary-fixed-variant": "#842500",
+                    "surface-container-highest": "#33343f",
+                    "error": "#ffb4ab",
+                    "tertiary": "#ffb59e",
+                    "on-secondary-fixed-variant": "#005046",
+                    "surface-bright": "#373843",
+                    "inverse-primary": "#2145f7",
+                    "outline-variant": "#444656",
+                    "on-surface": "#e2e1ef",
+                    "primary-fixed-dim": "#bbc3ff",
+                    "on-secondary-fixed": "#00201b",
+                    "surface-dim": "#11131c",
+                    "on-tertiary": "#5d1800",
+                    "on-secondary": "#003730",
+                    "secondary": "#4edcc5",
+                    "on-primary-fixed": "#000f5d",
+                    "primary": "#bbc3ff",
+                    "error-container": "#93000a",
+                    "tertiary-container": "#bb3800",
+                    "surface": "#11131c"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "xs": "4px",
+                    "margin": "24px",
+                    "lg": "24px",
+                    "md": "16px",
+                    "sm": "8px",
+                    "unit": "4px",
+                    "max_width": "1440px",
+                    "gutter": "16px",
+                    "xl": "40px"
+            },
+            "fontFamily": {
+                    "mono-label": ["Inter"],
+                    "h1": ["Space Grotesk"],
+                    "display-lg": ["Space Grotesk"],
+                    "body-lg": ["Inter"],
+                    "h3": ["Space Grotesk"],
+                    "body-md": ["Inter"],
+                    "h2": ["Space Grotesk"],
+                    "body-sm": ["Inter"]
+            },
+            "fontSize": {
+                    "mono-label": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "h1": ["32px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "h3": ["20px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                    "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "h2": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "1.4", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #04060E;
+            color: #e2e1ef;
+        }
+        .glass-card {
+            background: rgba(26, 34, 53, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            padding: 1px;
+            border-radius: 16px;
+            background: conic-gradient(from 0deg, transparent, #2E4FFF, transparent 25%, transparent 50%, #00B5A0, transparent 75%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+        .liquid-glass {
+            background: linear-gradient(135deg, rgba(46, 79, 255, 0.05) 0%, rgba(0, 181, 160, 0.05) 100%);
+        }
+        .pulse-teal {
+            box-shadow: 0 0 0 0 rgba(0, 180, 159, 0.4);
+            animation: pulse-teal 2s infinite;
+        }
+        @keyframes pulse-teal {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 180, 159, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(0, 180, 159, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 180, 159, 0); }
+        }
+        .pulse-blue {
+            box-shadow: 0 0 0 0 rgba(46, 79, 255, 0.4);
+            animation: pulse-blue 2s infinite;
+        }
+        @keyframes pulse-blue {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 79, 255, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(46, 79, 255, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 79, 255, 0); }
+        }
+    </style>
+</head>
+<body class="flex min-h-screen overflow-x-hidden">
+<!-- Sidebar Component -->
+<aside class="hidden md:flex flex-col h-screen w-64 border-r border-[#1A2235] bg-[#04060E] py-8 fixed left-0 top-0">
+<div class="px-6 mb-10">
+<h2 class="text-white font-bold font-['Space_Grotesk'] text-xl tracking-tighter">MINDFLOW</h2>
+<p class="font-['Space_Grotesk'] text-xs uppercase tracking-widest text-slate-500 mt-1">V2.0.4-STABLE</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center px-6 py-3 text-slate-500 hover:text-blue-400 hover:bg-[#1A2235] transition-all duration-150 font-['Space_Grotesk'] text-xs uppercase tracking-widest" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="grid_view">grid_view</span> Dashboard
+            </a>
+<a class="flex items-center px-6 py-3 text-slate-500 hover:text-blue-400 hover:bg-[#1A2235] transition-all duration-150 font-['Space_Grotesk'] text-xs uppercase tracking-widest" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="monitoring">monitoring</span> Analytics
+            </a>
+<a class="flex items-center px-6 py-3 text-white bg-blue-600/10 border-r-2 border-blue-600 transition-all duration-150 font-['Space_Grotesk'] text-xs uppercase tracking-widest" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="hub">hub</span> Nodes
+            </a>
+<a class="flex items-center px-6 py-3 text-slate-500 hover:text-blue-400 hover:bg-[#1A2235] transition-all duration-150 font-['Space_Grotesk'] text-xs uppercase tracking-widest" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="terminal">terminal</span> Logs
+            </a>
+<a class="flex items-center px-6 py-3 text-slate-500 hover:text-blue-400 hover:bg-[#1A2235] transition-all duration-150 font-['Space_Grotesk'] text-xs uppercase tracking-widest" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="settings_input_component">settings_input_component</span> System
+            </a>
+</nav>
+</aside>
+<!-- Main Canvas -->
+<main class="flex-1 md:ml-64 bg-[#04060E] min-h-screen">
+<!-- Header -->
+<header class="fixed top-0 right-0 left-0 md:left-64 h-16 flex justify-between items-center px-6 border-b border-[#1A2235] bg-[#04060E] z-50">
+<h1 class="text-white font-['Space_Grotesk'] font-bold text-xl tracking-tight">Component Library</h1>
+<div class="flex items-center space-gap-4">
+<div class="relative mr-4">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" data-icon="search">search</span>
+<input class="bg-[#080C18] border border-[#1A2235] rounded-md py-1.5 pl-9 pr-4 text-sm text-on-surface focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all w-64" placeholder="Search components..." type="text"/>
+</div>
+<button class="p-2 text-slate-400 hover:bg-[#1A2235] rounded-md transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<button class="p-2 text-slate-400 hover:bg-[#1A2235] rounded-md transition-colors">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Content Area -->
+<div class="pt-24 pb-16 px-10 max-w-6xl">
+<div class="mb-12">
+<h2 class="text-h1 font-h1 text-white mb-1">Component Library</h2>
+<p class="text-body-sm font-body-sm text-outline">Mindflow Brand System — UI Components &amp; States</p>
+</div>
+<!-- Section 1: Buttons -->
+<section class="mb-xl">
+<div class="flex items-center gap-2 mb-lg border-b border-[#1A2235] pb-sm">
+<span class="material-symbols-outlined text-secondary" data-icon="smart_button">smart_button</span>
+<h3 class="text-h3 font-h3 text-white uppercase tracking-wider">01. Buttons</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+<div class="flex flex-col gap-sm">
+<span class="text-[10px] font-mono-label text-outline uppercase">Primary</span>
+<button class="h-10 px-4 bg-gradient-to-r from-[#2E4FFF] to-[#00B5A0] rounded-[10px] flex items-center justify-center gap-2 text-white font-['Space_Grotesk'] text-[14px] font-semibold hover:brightness-110 transition-all">
+<span class="material-symbols-outlined text-[18px]" data-icon="phone">phone</span> Call Support
+                        </button>
+</div>
+<div class="flex flex-col gap-sm">
+<span class="text-[10px] font-mono-label text-outline uppercase">Secondary</span>
+<button class="h-10 px-4 border border-primary-container rounded-[10px] flex items-center justify-center text-primary-container font-['Space_Grotesk'] text-[14px] font-semibold hover:bg-primary-container/10 transition-all">
+                            Secondary Action
+                        </button>
+</div>
+<div class="flex flex-col gap-sm">
+<span class="text-[10px] font-mono-label text-outline uppercase">Ghost</span>
+<button class="h-10 px-4 rounded-[10px] flex items-center justify-center text-outline font-['Space_Grotesk'] text-[14px] font-semibold hover:bg-[#1A2235] transition-all">
+                            Ghost Button
+                        </button>
+</div>
+<div class="flex flex-col gap-sm">
+<span class="text-[10px] font-mono-label text-outline uppercase">Disabled</span>
+<button class="h-10 px-4 bg-gradient-to-r from-[#2E4FFF] to-[#00B5A0] opacity-60 cursor-not-allowed rounded-[10px] flex items-center justify-center text-white font-['Space_Grotesk'] text-[14px] font-semibold" disabled="">
+                            Disabled State
+                        </button>
+</div>
+<div class="flex flex-col gap-sm">
+<span class="text-[10px] font-mono-label text-outline uppercase">Loading</span>
+<button class="h-10 px-4 bg-gradient-to-r from-[#2E4FFF] to-[#00B5A0] rounded-[10px] flex items-center justify-center gap-2 text-white font-['Space_Grotesk'] text-[14px] font-semibold">
+<span class="material-symbols-outlined animate-spin text-[18px]" data-icon="progress_activity">progress_activity</span> Syncing
+                        </button>
+</div>
+</div>
+</section>
+<!-- Section 2: Input Fields -->
+<section class="mb-xl">
+<div class="flex items-center gap-2 mb-lg border-b border-[#1A2235] pb-sm">
+<span class="material-symbols-outlined text-secondary" data-icon="input">input</span>
+<h3 class="text-h3 font-h3 text-white uppercase tracking-wider">02. Input Fields</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+<div class="flex flex-col gap-sm">
+<label class="font-['Space_Grotesk'] text-[11px] font-bold text-outline uppercase tracking-[0.1em]">Default Input</label>
+<input class="bg-[#080C18] border border-[#1A2235] rounded-md h-10 px-4 text-sm text-white focus:outline-none" placeholder="Enter node name..." type="text"/>
+</div>
+<div class="flex flex-col gap-sm">
+<label class="font-['Space_Grotesk'] text-[11px] font-bold text-blue-400 uppercase tracking-[0.1em]">Focus State</label>
+<input class="bg-[#080C18] border border-primary-container ring-2 ring-primary-container/20 rounded-md h-10 px-4 text-sm text-white focus:outline-none shadow-[0_0_15px_rgba(46,79,255,0.2)]" type="text" value="Active interaction"/>
+</div>
+<div class="flex flex-col gap-sm">
+<label class="font-['Space_Grotesk'] text-[11px] font-bold text-error uppercase tracking-[0.1em]">Error State</label>
+<input class="bg-[#080C18] border border-error ring-2 ring-error/20 rounded-md h-10 px-4 text-sm text-white focus:outline-none shadow-[0_0_15px_rgba(255,180,171,0.1)]" type="text" value="Invalid credentials"/>
+</div>
+<div class="flex flex-col gap-sm">
+<label class="font-['Space_Grotesk'] text-[11px] font-bold text-outline uppercase tracking-[0.1em]">With Label</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]" data-icon="lock">lock</span>
+<input class="bg-[#080C18] border border-[#1A2235] rounded-md h-10 pl-10 pr-4 text-sm text-white focus:outline-none w-full" type="password" value="********"/>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 3: Cards -->
+<section class="mb-xl">
+<div class="flex items-center gap-2 mb-lg border-b border-[#1A2235] pb-sm">
+<span class="material-symbols-outlined text-secondary" data-icon="dashboard_customize">dashboard_customize</span>
+<h3 class="text-h3 font-h3 text-white uppercase tracking-wider">03. Cards &amp; Surfaces</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-margin">
+<!-- Glass Card -->
+<div class="glass-card rounded-[16px] p-8 flex flex-col items-center justify-center text-center group">
+<div class="w-16 h-16 rounded-full liquid-glass flex items-center justify-center mb-6 border border-white/10 group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-secondary-fixed text-3xl" data-icon="auto_awesome" data-weight="fill">auto_awesome</span>
+</div>
+<h4 class="text-h2 font-h2 text-white mb-2">Glassmorphism Card</h4>
+<p class="text-body-sm font-body-sm text-outline max-w-xs">High-end surface featuring conic gradient borders, backdrop-blur effects, and liquid light texturing.</p>
+<div class="mt-8 flex gap-4">
+<div class="h-1 w-12 rounded-full bg-primary-container"></div>
+<div class="h-1 w-12 rounded-full bg-secondary-container"></div>
+</div>
+</div>
+<!-- Solid Card -->
+<div class="bg-[#080C18] border border-[#1A2235] rounded-[16px] overflow-hidden flex flex-col">
+<div class="h-40 bg-[#11131c] relative flex items-center justify-center">
+<img class="w-full h-full object-cover opacity-50 grayscale hover:grayscale-0 transition-all duration-500" data-alt="A macro photograph of high-tech circuit boards with glowing blue and teal neon data lines flowing through the processors. The environment is dark and clinical, reflecting a futuristic server room aesthetic. The lighting is low-key with sharp highlights on metallic surfaces, emphasizing technical precision and data efficiency. The overall atmosphere is cold, professional, and sophisticated." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0Ng3RDX4Ho9j93WEqkmB39AVS7NoG59avon4QSvfNdAkQBvcmR9CodFm6Z4rsmXly4s95YvGrHzExHZi67zW_tvhTYHNa_A_pjvtAYcZVJBbBqFoFX-A0qw1LnCOJzjQoBsp7cesvMGgK46rNSe1GbCsMnM6drMYI_3LWP_828pP4mqUrLhJNGTQ9jSiL09Axt7EeEFDkfKix26_nHAEVxD61QqTLxmzKdU0jdFvdXfxdRMpZU-tVtvpalYosLbrva6j4aH5mkVTD"/>
+<div class="absolute inset-0 bg-gradient-to-t from-[#080C18] to-transparent"></div>
+<span class="material-symbols-outlined absolute text-white/20 text-6xl" data-icon="memory">memory</span>
+</div>
+<div class="p-8">
+<div class="flex justify-between items-start mb-4">
+<h4 class="text-h2 font-h2 text-white">Solid Infrastructure</h4>
+<span class="bg-secondary-container/10 text-secondary-container px-2 py-1 rounded text-[10px] font-bold">V-NODE 01</span>
+</div>
+<p class="text-body-sm font-body-sm text-outline mb-6">Standard modular widget surface for data density. Optimized for tabular content and system logs.</p>
+<div class="flex gap-4 border-t border-[#1A2235] pt-6">
+<div class="flex-1">
+<p class="text-[10px] font-mono-label text-outline uppercase mb-1">Status</p>
+<p class="text-secondary font-['Space_Grotesk'] font-bold text-sm">OPTIMIZED</p>
+</div>
+<div class="flex-1">
+<p class="text-[10px] font-mono-label text-outline uppercase mb-1">Latency</p>
+<p class="text-white font-['Space_Grotesk'] font-bold text-sm">12ms</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 4: Status Pills -->
+<section class="mb-xl">
+<div class="flex items-center gap-2 mb-lg border-b border-[#1A2235] pb-sm">
+<span class="material-symbols-outlined text-secondary" data-icon="radio_button_checked">radio_button_checked</span>
+<h3 class="text-h3 font-h3 text-white uppercase tracking-wider">04. Status Indicators</h3>
+</div>
+<div class="flex flex-wrap gap-margin">
+<div class="bg-secondary-container/10 border border-secondary-container/20 px-4 py-2 rounded-full flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-secondary pulse-teal"></div>
+<span class="text-secondary text-[12px] font-bold font-['Space_Grotesk'] uppercase tracking-wider">System Ready</span>
+</div>
+<div class="bg-primary-container/10 border border-primary-container/20 px-4 py-2 rounded-full flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-primary-container pulse-blue"></div>
+<span class="text-primary-container text-[12px] font-bold font-['Space_Grotesk'] uppercase tracking-wider">Node Active</span>
+</div>
+<div class="bg-secondary-container/10 border border-secondary-container/20 px-4 py-2 rounded-full flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary text-[16px]" data-icon="check_circle">check_circle</span>
+<span class="text-secondary text-[12px] font-bold font-['Space_Grotesk'] uppercase tracking-wider">Operation Success</span>
+</div>
+<div class="bg-error-container/10 border border-error-container/20 px-4 py-2 rounded-full flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-error"></div>
+<span class="text-error text-[12px] font-bold font-['Space_Grotesk'] uppercase tracking-wider">Critical Failure</span>
+</div>
+</div>
+</section>
+<!-- Section 5: Disclosure Panels -->
+<section class="mb-xl">
+<div class="flex items-center gap-2 mb-lg border-b border-[#1A2235] pb-sm">
+<span class="material-symbols-outlined text-secondary" data-icon="keyboard_arrow_down">keyboard_arrow_down</span>
+<h3 class="text-h3 font-h3 text-white uppercase tracking-wider">05. Disclosure Panels</h3>
+</div>
+<div class="space-y-4 max-w-2xl">
+<!-- Closed Accordion -->
+<div class="bg-[#080C18] border border-[#1A2235] rounded-lg overflow-hidden group cursor-pointer hover:border-blue-600 transition-colors">
+<div class="p-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline" data-icon="settings_suggest">settings_suggest</span>
+<span class="font-['Space_Grotesk'] font-medium text-white">Configurações da IA</span>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-blue-400" data-icon="expand_more">expand_more</span>
+</div>
+</div>
+<!-- Open Accordion -->
+<div class="bg-[#080C18] border border-blue-600/50 rounded-lg overflow-hidden shadow-[0_0_15px_rgba(46,79,255,0.1)]">
+<div class="p-4 flex items-center justify-between border-b border-[#1A2235] bg-blue-600/5">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-blue-400" data-icon="settings_suggest">settings_suggest</span>
+<span class="font-['Space_Grotesk'] font-medium text-white">Configurações da IA</span>
+</div>
+<span class="material-symbols-outlined text-blue-400" data-icon="expand_less">expand_less</span>
+</div>
+<div class="p-6 space-y-6">
+<div class="flex items-center justify-between">
+<div>
+<p class="text-sm font-medium text-white">Processamento Neural</p>
+<p class="text-xs text-outline">Ativa o motor de inferência de baixa latência.</p>
+</div>
+<div class="w-10 h-5 bg-primary-container rounded-full relative">
+<div class="absolute right-1 top-1 w-3 h-3 bg-white rounded-full"></div>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div>
+<p class="text-sm font-medium text-white">Criptografia Ponta-a-Ponta</p>
+<p class="text-xs text-outline">Segurança de nível militar para todos os logs.</p>
+</div>
+<div class="w-10 h-5 bg-[#1A2235] rounded-full relative">
+<div class="absolute left-1 top-1 w-3 h-3 bg-outline rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 6: Validation Alert -->
+<section>
+<div class="flex items-center gap-2 mb-lg border-b border-[#1A2235] pb-sm">
+<span class="material-symbols-outlined text-secondary" data-icon="warning">warning</span>
+<h3 class="text-h3 font-h3 text-white uppercase tracking-wider">06. Validation Alerts</h3>
+</div>
+<div class="bg-error-container/10 border-l-4 border-error p-6 rounded-r-lg max-w-3xl flex gap-4">
+<span class="material-symbols-outlined text-error" data-icon="report">report</span>
+<div>
+<h4 class="font-['Space_Grotesk'] font-bold text-error mb-1">ERRO DE VALIDAÇÃO</h4>
+<p class="text-sm text-on-surface-variant leading-relaxed mb-4">A conexão com o servidor central falhou. Verifique sua chave de API ou as configurações de firewall para garantir que as portas 443 e 8080 estejam abertas para tráfego bidirecional.</p>
+<div class="flex gap-4">
+<button class="text-[11px] font-mono-label uppercase text-error hover:underline">Detalhes Técnicos</button>
+<button class="text-[11px] font-mono-label uppercase text-outline hover:text-white">Tentar Novamente</button>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Footer -->
+<footer class="mt-20 border-t border-[#1A2235] py-12 px-10">
+<div class="flex flex-col md:flex-row justify-between items-center gap-6">
+<div>
+<h3 class="text-white font-['Space_Grotesk'] font-bold text-lg mb-1">MINDFLOW</h3>
+<p class="text-[12px] text-outline">© 2024 Intelligent Infrastructure Systems. All rights reserved.</p>
+</div>
+<div class="flex gap-8">
+<a class="text-outline text-xs uppercase tracking-widest hover:text-white transition-colors" href="#">Documentation</a>
+<a class="text-outline text-xs uppercase tracking-widest hover:text-white transition-colors" href="#">Github</a>
+<a class="text-outline text-xs uppercase tracking-widest hover:text-white transition-colors" href="#">Status</a>
+</div>
+</div>
+</footer>
+</main>
+</body></html>

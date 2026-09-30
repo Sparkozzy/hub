@@ -1,0 +1,2060 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>MLflow · MindFlow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 16mm;
+    background: #04060E;
+  }
+  @page :first {
+    margin: 0;
+    background: #04060E;
+  }
+
+  :root {
+    --blue:     #2E4FFF;
+    --blue2:    #7B9AFF;
+    --teal:     #00B5A0;
+    --mint:     #4edcc5;
+    --bg:       #04060E;
+    --surface:  rgba(8, 12, 24, 0.72);
+    --surface2: rgba(255, 255, 255, 0.04);
+    --surface3: rgba(255, 255, 255, 0.06);
+    --border:   rgba(255, 255, 255, 0.10);
+    --border2:  rgba(255, 255, 255, 0.06);
+    --ink:      #FFFFFF;
+    --ink-soft: #E0E2EF;
+    --muted:    #8e8fa2;
+    --muted2:   #4d5570;
+    --muted3:   #2a2d3a;
+    --danger:   #ff4e6a;
+    --warn:     #FFB547;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--ink-soft);
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.6;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4, .display {
+    font-family: 'Space Grotesk', sans-serif;
+    color: var(--ink);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+  }
+
+  /* ==================== COVER ==================== */
+  .cover {
+    height: 297mm;
+    width: 100%;
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 25%, rgba(46, 79, 255, 0.22) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 50% at 80% 75%, rgba(0, 181, 160, 0.20) 0%, transparent 60%),
+      radial-gradient(ellipse 30% 30% at 50% 50%, rgba(123, 154, 255, 0.08) 0%, transparent 70%),
+      var(--bg);
+    color: var(--ink);
+    page-break-after: always;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 0 30mm;
+  }
+
+  /* Decorative neural-like dots — static SVG visible in PDF */
+  .cover-deco {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.45;
+  }
+
+  /* Subtle conic-gradient border accent line on cover */
+  .cover-accent {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 16mm;
+    width: 1px;
+    background: linear-gradient(180deg, transparent 0%, rgba(46, 79, 255, 0.5) 30%, rgba(0, 181, 160, 0.5) 70%, transparent 100%);
+  }
+
+  .cover-eyebrow {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 11pt;
+    font-weight: 600;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, var(--blue2) 0%, var(--mint) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    margin-bottom: 8mm;
+    position: relative;
+    z-index: 2;
+  }
+
+  .cover-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 48pt;
+    line-height: 1.04;
+    font-weight: 600;
+    letter-spacing: -0.035em;
+    color: var(--ink);
+    margin: 0 0 10mm 0;
+    max-width: 160mm;
+    position: relative;
+    z-index: 2;
+  }
+
+  .cover-title .accent {
+    background: linear-gradient(135deg, var(--blue) 0%, var(--teal) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  .cover-sub {
+    font-family: 'Inter', sans-serif;
+    font-size: 14pt;
+    font-weight: 400;
+    line-height: 1.55;
+    color: var(--muted);
+    max-width: 145mm;
+    position: relative;
+    z-index: 2;
+  }
+
+  .cover-divider {
+    width: 70mm;
+    height: 2px;
+    background: linear-gradient(90deg, var(--blue) 0%, var(--teal) 100%);
+    margin: 18mm 0 0 0;
+    position: relative;
+    z-index: 2;
+    border-radius: 2px;
+  }
+
+  /* ==================== CHAPTER ==================== */
+  .chapter {
+    page-break-before: always;
+    padding-top: 2mm;
+  }
+  .chapter-header {
+    margin-bottom: 9mm;
+    padding-bottom: 5mm;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .chapter-header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 30mm;
+    height: 1px;
+    background: linear-gradient(90deg, var(--blue) 0%, var(--teal) 100%);
+  }
+  .chapter-eyebrow {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 9pt;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--blue2);
+    font-weight: 600;
+    margin-bottom: 3mm;
+  }
+  .chapter-title {
+    font-size: 28pt;
+    line-height: 1.1;
+    margin: 0 0 4mm 0;
+    color: var(--ink);
+  }
+  .chapter-lede {
+    font-family: 'Inter', sans-serif;
+    font-size: 12pt;
+    font-weight: 400;
+    color: var(--muted);
+    line-height: 1.55;
+    max-width: 170mm;
+    margin: 0;
+  }
+
+  h2 {
+    font-size: 18pt;
+    margin: 10mm 0 4mm 0;
+    line-height: 1.2;
+    color: var(--ink);
+  }
+  h3 {
+    font-size: 13pt;
+    margin: 7mm 0 3mm 0;
+    line-height: 1.35;
+    color: var(--ink-soft);
+    font-weight: 600;
+  }
+  h4 {
+    font-size: 11pt;
+    margin: 5mm 0 2mm 0;
+    color: var(--ink-soft);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+  }
+
+  p { margin: 0 0 3.5mm 0; color: var(--ink-soft); }
+  p.lede { font-size: 11.5pt; line-height: 1.55; color: var(--muted); }
+
+  strong { color: var(--ink); font-weight: 600; }
+  em { color: var(--blue2); font-style: italic; }
+
+  a { color: var(--blue2); text-decoration: none; }
+
+  /* ==================== LISTS ==================== */
+  ul, ol { padding-left: 6mm; margin: 0 0 4mm 0; color: var(--ink-soft); }
+  li { margin-bottom: 1.8mm; }
+  li::marker { color: var(--blue2); }
+
+  .check-list { list-style: none; padding-left: 0; }
+  .check-list li {
+    padding-left: 9mm;
+    position: relative;
+    margin-bottom: 2.8mm;
+  }
+  .check-list li::before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--teal);
+    font-weight: 700;
+    font-size: 11pt;
+  }
+
+  /* ==================== TABLES ==================== */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 4mm 0 5mm 0;
+    font-size: 9.5pt;
+    page-break-inside: avoid;
+    color: var(--ink-soft);
+  }
+  thead th {
+    text-align: left;
+    background: linear-gradient(135deg, var(--blue) 0%, #1E3CC9 100%);
+    color: #fff;
+    padding: 3mm 3.5mm;
+    font-weight: 600;
+    font-size: 9pt;
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  tbody td {
+    padding: 2.8mm 3.5mm;
+    border-bottom: 1px solid var(--border2);
+    vertical-align: top;
+    color: var(--ink-soft);
+  }
+  tbody tr:nth-child(even) td { background: rgba(255, 255, 255, 0.018); }
+  tbody tr:last-child td { border-bottom: 1px solid var(--border); }
+  tbody td code { background: rgba(78, 220, 197, 0.08); color: var(--mint); }
+
+  .table-compact td, .table-compact th { padding: 2.2mm 2.8mm; font-size: 9pt; }
+
+  /* ==================== CODE ==================== */
+  code, pre {
+    font-family: 'Space Grotesk', 'SF Mono', Consolas, monospace;
+    font-size: 8.8pt;
+  }
+  code {
+    padding: 0.4mm 1.8mm;
+    border-radius: 1mm;
+    background: rgba(78, 220, 197, 0.08);
+    color: var(--mint);
+    font-size: 9pt;
+    letter-spacing: 0.02em;
+  }
+  pre {
+    padding: 5mm 6mm;
+    border-radius: 2mm;
+    overflow: hidden;
+    margin: 4mm 0;
+    line-height: 1.55;
+    page-break-inside: avoid;
+    background: rgba(8, 12, 24, 0.85);
+    border: 1px solid var(--border);
+    color: #e0e2ef;
+    font-family: 'Space Grotesk', 'SF Mono', Consolas, monospace;
+  }
+  pre .c-key { color: var(--blue2); }
+  pre .c-str { color: #ff9ab0; }
+  pre .c-com { color: var(--muted2); font-style: italic; }
+  pre .c-fn  { color: var(--mint); }
+
+  /* ==================== CALLOUTS ==================== */
+  .callout {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--blue);
+    padding: 5mm 6mm;
+    margin: 5mm 0;
+    border-radius: 2mm;
+    page-break-inside: avoid;
+    backdrop-filter: blur(8px);
+  }
+  .callout-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    color: var(--blue2);
+    font-size: 9.5pt;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 3mm;
+  }
+  .callout p { color: var(--ink-soft); }
+  .callout p:last-child { margin-bottom: 0; }
+
+  .callout.accent { border-left-color: var(--teal); }
+  .callout.accent .callout-title { color: var(--mint); }
+
+  .callout.success { border-left-color: var(--mint); }
+  .callout.success .callout-title { color: var(--mint); }
+
+  .callout.warn {
+    border-left-color: var(--warn);
+    background: rgba(255, 181, 71, 0.06);
+  }
+  .callout.warn .callout-title { color: var(--warn); }
+
+  .callout.danger {
+    border-left-color: var(--danger);
+    background: rgba(255, 78, 106, 0.06);
+  }
+  .callout.danger .callout-title { color: var(--danger); }
+
+  /* ==================== STATS ==================== */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4mm;
+    margin: 5mm 0;
+    page-break-inside: avoid;
+  }
+  .stat-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .stat-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 5mm;
+    border-radius: 3mm;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, var(--blue) 0%, var(--teal) 100%);
+  }
+  .stat-value {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 24pt;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-bottom: 3mm;
+    background: linear-gradient(135deg, var(--blue2) 0%, var(--mint) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+  .stat-value.danger {
+    background: linear-gradient(135deg, var(--danger) 0%, #FF8090 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .stat-value.success {
+    background: linear-gradient(135deg, var(--mint) 0%, #7BFFE3 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .stat-value.accent {
+    background: linear-gradient(135deg, var(--warn) 0%, var(--mint) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .stat-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 8.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .stat-detail {
+    font-size: 8.5pt;
+    color: var(--muted2);
+    margin-top: 2.5mm;
+    line-height: 1.4;
+  }
+
+  /* ==================== BEFORE/AFTER ==================== */
+  .ba-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4mm;
+    margin: 5mm 0;
+    page-break-inside: avoid;
+  }
+  .ba-card {
+    border: 1px solid var(--border);
+    padding: 5mm;
+    border-radius: 3mm;
+    background: var(--surface);
+  }
+  .ba-card.before {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: var(--border);
+  }
+  .ba-card.after {
+    background: rgba(46, 79, 255, 0.06);
+    border-color: rgba(78, 220, 197, 0.25);
+  }
+  .ba-tag {
+    display: inline-block;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 8pt;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    padding: 1mm 3mm;
+    border-radius: 1.5mm;
+    text-transform: uppercase;
+    margin-bottom: 3mm;
+  }
+  .ba-card.before .ba-tag {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--muted);
+  }
+  .ba-card.after .ba-tag {
+    background: linear-gradient(135deg, var(--blue) 0%, var(--teal) 100%);
+    color: #fff;
+  }
+  .ba-card h4 {
+    margin-top: 0;
+    margin-bottom: 2.5mm;
+    font-size: 11pt;
+    color: var(--ink);
+  }
+  .ba-card p, .ba-card li {
+    font-size: 9.5pt;
+    margin-bottom: 1.8mm;
+    color: var(--ink-soft);
+  }
+  .ba-card ul { margin: 0; padding-left: 5mm; }
+
+  /* ==================== TIMELINE ==================== */
+  .timeline {
+    position: relative;
+    padding-left: 14mm;
+    margin: 6mm 0;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 4mm;
+    top: 4mm;
+    bottom: 4mm;
+    width: 1px;
+    background: linear-gradient(180deg, var(--blue) 0%, var(--teal) 100%);
+    opacity: 0.4;
+  }
+  .timeline-item {
+    position: relative;
+    margin-bottom: 7mm;
+    page-break-inside: avoid;
+  }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -10.4mm;
+    top: 2mm;
+    width: 3.5mm;
+    height: 3.5mm;
+    border-radius: 50%;
+    background: var(--blue);
+    box-shadow: 0 0 0 1.5mm var(--bg), 0 0 0 2mm rgba(46, 79, 255, 0.5);
+  }
+  .timeline-item.future::before {
+    background: var(--bg);
+    box-shadow: 0 0 0 1.5mm var(--bg), 0 0 0 2mm var(--muted2);
+  }
+  .timeline-phase {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 8.5pt;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--blue2);
+    margin-bottom: 1.5mm;
+  }
+  .timeline-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13pt;
+    font-weight: 600;
+    margin-bottom: 2mm;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+  }
+  .timeline-duration {
+    display: inline-block;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 8.5pt;
+    font-weight: 500;
+    background: linear-gradient(135deg, var(--blue) 0%, var(--teal) 100%);
+    color: #fff;
+    padding: 0.7mm 3mm;
+    border-radius: 1.5mm;
+    margin-left: 4mm;
+    vertical-align: middle;
+    letter-spacing: 0.05em;
+  }
+  .timeline-item p {
+    color: var(--muted);
+    font-size: 10pt;
+  }
+
+  /* ==================== DIAGRAM ==================== */
+  .diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3mm;
+    padding: 7mm;
+    margin: 5mm 0;
+    page-break-inside: avoid;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .diagram::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, var(--blue) 50%, transparent 100%);
+  }
+  .diagram svg { max-width: 100%; height: auto; }
+  .diagram-caption {
+    font-size: 8.8pt;
+    color: var(--muted);
+    margin-top: 4mm;
+    font-style: italic;
+    line-height: 1.5;
+  }
+
+  /* ==================== TOC ==================== */
+  .toc { margin: 6mm 0; }
+  .toc-item {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 3mm;
+    font-size: 10.5pt;
+    color: var(--ink-soft);
+  }
+  .toc-num {
+    font-family: 'Space Grotesk', sans-serif;
+    color: var(--blue2);
+    font-weight: 600;
+    width: 16mm;
+    flex-shrink: 0;
+    letter-spacing: 0.05em;
+  }
+  .toc-title { flex-grow: 1; color: var(--ink-soft); }
+  .toc-dots {
+    flex-grow: 1;
+    border-bottom: 1px dotted var(--muted2);
+    margin: 0 2.5mm;
+    transform: translateY(-1.5mm);
+    opacity: 0.5;
+  }
+  .toc-page {
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    font-family: 'Space Grotesk', sans-serif;
+    width: 10mm;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .toc-divider {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 9pt;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--mint);
+    margin: 5mm 0 3mm 0;
+    padding-bottom: 1mm;
+    border-bottom: 1px solid var(--border2);
+  }
+
+  /* ==================== INSIGHT ==================== */
+  .insight {
+    background:
+      linear-gradient(135deg, rgba(46, 79, 255, 0.08) 0%, rgba(0, 181, 160, 0.06) 100%),
+      var(--surface);
+    border: 1px solid rgba(78, 220, 197, 0.2);
+    padding: 6mm 7mm;
+    margin: 5mm 0;
+    border-radius: 3mm;
+    page-break-inside: avoid;
+    position: relative;
+  }
+  .insight::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4mm;
+    height: 100%;
+    background: linear-gradient(180deg, var(--blue) 0%, var(--teal) 100%);
+    border-radius: 3mm 0 0 3mm;
+  }
+  .insight-num {
+    position: absolute;
+    top: -3mm;
+    right: 6mm;
+    background: linear-gradient(135deg, var(--blue) 0%, var(--teal) 100%);
+    color: #fff;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 9pt;
+    padding: 1.2mm 3.5mm;
+    border-radius: 1.5mm;
+    letter-spacing: 0.15em;
+  }
+  .insight h4 {
+    margin-top: 2mm;
+    color: var(--ink);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13pt;
+    letter-spacing: -0.02em;
+    margin-bottom: 3mm;
+  }
+  .insight p { color: var(--ink-soft); }
+
+  /* ==================== MISC ==================== */
+  .small { font-size: 9pt; color: var(--muted); }
+  .footnote { font-size: 8.5pt; color: var(--muted2); font-style: italic; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; margin: 4mm 0; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; margin: 4mm 0; }
+
+  hr.fancy {
+    border: 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--blue) 30%, var(--teal) 70%, transparent);
+    margin: 10mm 0;
+    opacity: 0.5;
+  }
+
+  .pull-quote {
+    font-family: 'Space Grotesk', sans-serif;
+    font-style: italic;
+    font-size: 14pt;
+    line-height: 1.45;
+    color: var(--ink);
+    border-left: 3px solid var(--teal);
+    padding: 4mm 0 4mm 8mm;
+    margin: 6mm 0;
+    background: rgba(0, 181, 160, 0.04);
+    border-radius: 0 2mm 2mm 0;
+    padding-right: 6mm;
+    letter-spacing: -0.01em;
+  }
+  .pull-quote cite {
+    display: block;
+    margin-top: 3mm;
+    font-style: normal;
+    font-size: 9pt;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .badge {
+    display: inline-block;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 8pt;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.8mm 2.5mm;
+    border-radius: 1mm;
+    background: var(--surface3);
+    color: var(--muted);
+    vertical-align: middle;
+  }
+  .badge.brand {
+    background: linear-gradient(135deg, var(--blue) 0%, var(--teal) 100%);
+    color: #fff;
+  }
+  .badge.success {
+    background: rgba(78, 220, 197, 0.15);
+    color: var(--mint);
+    border: 1px solid rgba(78, 220, 197, 0.3);
+  }
+  .badge.accent {
+    background: rgba(46, 79, 255, 0.15);
+    color: var(--blue2);
+    border: 1px solid rgba(46, 79, 255, 0.3);
+  }
+
+</style>
+</head>
+<body>
+
+<!-- ==================== COVER ==================== -->
+<section class="cover">
+
+  <!-- Decorative dots/lines suggesting neural network -->
+  <svg class="cover-deco" viewBox="0 0 595 842" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <!-- Connection lines -->
+    <line x1="80" y1="120" x2="200" y2="180" stroke="rgba(46,79,255,0.18)" stroke-width="0.5"/>
+    <line x1="200" y1="180" x2="350" y2="140" stroke="rgba(46,79,255,0.15)" stroke-width="0.5"/>
+    <line x1="350" y1="140" x2="480" y2="220" stroke="rgba(0,181,160,0.18)" stroke-width="0.5"/>
+    <line x1="120" y1="380" x2="280" y2="420" stroke="rgba(123,154,255,0.12)" stroke-width="0.5"/>
+    <line x1="280" y1="420" x2="450" y2="380" stroke="rgba(46,79,255,0.12)" stroke-width="0.5"/>
+    <line x1="450" y1="380" x2="540" y2="480" stroke="rgba(0,181,160,0.15)" stroke-width="0.5"/>
+    <line x1="60" y1="620" x2="220" y2="680" stroke="rgba(46,79,255,0.10)" stroke-width="0.5"/>
+    <line x1="220" y1="680" x2="380" y2="640" stroke="rgba(0,181,160,0.12)" stroke-width="0.5"/>
+    <line x1="380" y1="640" x2="520" y2="720" stroke="rgba(46,79,255,0.10)" stroke-width="0.5"/>
+    <line x1="200" y1="180" x2="220" y2="420" stroke="rgba(78,220,197,0.08)" stroke-width="0.5"/>
+    <line x1="350" y1="140" x2="380" y2="380" stroke="rgba(78,220,197,0.08)" stroke-width="0.5"/>
+    <line x1="480" y1="220" x2="450" y2="380" stroke="rgba(78,220,197,0.08)" stroke-width="0.5"/>
+
+    <!-- Nodes -->
+    <circle cx="80" cy="120" r="2" fill="#7B9AFF"/>
+    <circle cx="200" cy="180" r="2.5" fill="#4edcc5"/>
+    <circle cx="350" cy="140" r="2" fill="#7B9AFF"/>
+    <circle cx="480" cy="220" r="2.5" fill="#2E4FFF"/>
+    <circle cx="120" cy="380" r="2" fill="#7B9AFF"/>
+    <circle cx="280" cy="420" r="3" fill="#4edcc5"/>
+    <circle cx="450" cy="380" r="2" fill="#2E4FFF"/>
+    <circle cx="540" cy="480" r="2.5" fill="#7B9AFF"/>
+    <circle cx="60" cy="620" r="2" fill="#4edcc5"/>
+    <circle cx="220" cy="680" r="2.5" fill="#7B9AFF"/>
+    <circle cx="380" cy="640" r="2" fill="#2E4FFF"/>
+    <circle cx="520" cy="720" r="2.5" fill="#4edcc5"/>
+
+    <!-- Glow halo around some nodes -->
+    <circle cx="280" cy="420" r="14" fill="rgba(78,220,197,0.06)"/>
+    <circle cx="480" cy="220" r="14" fill="rgba(46,79,255,0.08)"/>
+    <circle cx="200" cy="180" r="14" fill="rgba(78,220,197,0.05)"/>
+  </svg>
+
+  <div class="cover-accent"></div>
+
+  <div class="cover-eyebrow">Documento de Estratégia Técnica</div>
+
+  <h1 class="cover-title">MLflow como espinha dorsal de <span class="accent">IA da MindFlow</span></h1>
+
+  <p class="cover-sub">Um plano técnico e estratégico para transformar versionamento, observabilidade e governança de modelos numa vantagem competitiva — para o Call Predict, para os agentes de clientes e para o produto de portaria.</p>
+
+  <div class="cover-divider"></div>
+</section>
+
+
+<!-- ==================== SUMÁRIO EXECUTIVO ==================== -->
+<section class="chapter">
+  <header class="chapter-header">
+    <div class="chapter-eyebrow">Sumário Executivo</div>
+    <h1 class="chapter-title">Por que este documento existe</h1>
+    <p class="chapter-lede">A MindFlow já opera um sistema de Machine Learning em produção com qualidade técnica acima da média do mercado — porém sem a infraestrutura de versionamento, observabilidade e governança que escala para múltiplos produtos. MLflow resolve essa lacuna sem reescrever nada.</p>
+  </header>
+
+  <p>Em 2026, a MindFlow tem três frentes ativas que dependem de inteligência artificial: o <strong>Call Predict</strong> (cascata de modelos XGBoost que decide para quais leads ligar e em que horário), os <strong>agentes Retell AI</strong> (que executam as ligações com prompts versionados manualmente), e o <strong>novo produto de portaria inteligente</strong>, que vai introduzir visão computacional, áudio e agentes conversacionais no mesmo stack.</p>
+
+  <p>Cada uma dessas frentes é hoje uma ilha: o Call Predict guarda modelos em <code>.pkl</code> no Git, os prompts dos agentes vivem em campos de texto no Supabase, e a portaria começará do zero. Sem uma plataforma comum de versionamento, cada novo cliente, cada novo modelo e cada nova regulamentação (LGPD para portarias é especialmente sensível) tornam-se trabalho artesanal de novo.</p>
+
+  <p><strong>MLflow é a plataforma open-source que consolida esse versionamento.</strong> A versão 3.0, lançada em 2025, deixou de ser apenas uma ferramenta de ML clássico e passou a tratar agentes de IA e LLMs como cidadãos de primeira classe — com rastreamento de prompts, traces de execução e avaliação automática. É usada por mais de 60% das empresas Fortune 500 e tem licença Apache 2.0.</p>
+
+  <div class="stat-grid">
+    <div class="stat">
+      <div class="stat-value">33%</div>
+      <div class="stat-label">Leads filtrados hoje</div>
+      <div class="stat-detail">Pelo Lead Scoring atual, sem MLflow</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value success">0,03%</div>
+      <div class="stat-label">Falsos negativos</div>
+      <div class="stat-detail">167× melhor que a meta de 5%</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value accent">3</div>
+      <div class="stat-label">Produtos a unificar</div>
+      <div class="stat-detail">Call Predict, agentes, portaria</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value success">28%</div>
+      <div class="stat-label">ROI médio MLOps</div>
+      <div class="stat-detail">Deloitte, organizações maduras</div>
+    </div>
+  </div>
+
+  <h3>O que este documento entrega</h3>
+  <ul class="check-list">
+    <li><strong>Diagnóstico completo</strong> do estado atual de ML/IA da MindFlow, incluindo análise do código real do repositório <code>call_predict</code> e da arquitetura Supabase.</li>
+    <li><strong>Explicação técnica e didática</strong> de como MLflow funciona, dos seus 4 componentes e da expansão para agentes de IA na versão 3.0.</li>
+    <li><strong>Comparação fundamentada</strong> com alternativas (LangFuse, LangSmith, Weights &amp; Biases) e justificativa da escolha.</li>
+    <li><strong>Aplicação direta</strong> em cada frente da MindFlow, com diagramas, código e métricas esperadas.</li>
+    <li><strong>Roadmap de implementação em 6 fases</strong> com prazos estimados, marcos e dependências.</li>
+    <li><strong>Análise financeira</strong> de custos de infraestrutura e ROI esperado.</li>
+    <li><strong>Insights estratégicos</strong> e mitigação de riscos.</li>
+  </ul>
+
+  <div class="callout accent">
+    <div class="callout-title">A aposta em uma frase</div>
+    <p>Implementar MLflow agora — usando o Call Predict como piloto — significa que a MindFlow estará pronta para escalar agentes multi-cliente e o produto de portaria sem dívida técnica de versionamento, sem ad-hoc de prompt management, e com audit trail juridicamente defensável para LGPD desde o primeiro dia.</p>
+  </div>
+</section>
+
+
+<!-- ==================== ÍNDICE ==================== -->
+<section class="chapter">
+  <header class="chapter-header">
+    <div class="chapter-eyebrow">Sumário</div>
+    <h1 class="chapter-title">Índice</h1>
+  </header>
+
+  <div class="toc">
+    <div class="toc-divider">Parte I · Diagnóstico</div>
+    <div class="toc-item"><span class="toc-num">1.1</span><span class="toc-title">A empresa e seus três produtos de IA</span><span class="toc-dots"></span><span class="toc-page">5</span></div>
+    <div class="toc-item"><span class="toc-num">1.2</span><span class="toc-title">O sistema de Call Predict explicado</span><span class="toc-dots"></span><span class="toc-page">6</span></div>
+    <div class="toc-item"><span class="toc-num">1.3</span><span class="toc-title">Gaps de plataforma identificados</span><span class="toc-dots"></span><span class="toc-page">9</span></div>
+
+    <div class="toc-divider">Parte II · O que é MLflow</div>
+    <div class="toc-item"><span class="toc-num">2.1</span><span class="toc-title">Modelo mental e os 4 componentes</span><span class="toc-dots"></span><span class="toc-page">11</span></div>
+    <div class="toc-item"><span class="toc-num">2.2</span><span class="toc-title">MLflow 3.0: o pivot para GenAI e agentes</span><span class="toc-dots"></span><span class="toc-page">13</span></div>
+    <div class="toc-item"><span class="toc-num">2.3</span><span class="toc-title">Comparação com alternativas</span><span class="toc-dots"></span><span class="toc-page">15</span></div>
+
+    <div class="toc-divider">Parte III · Aplicação por produto</div>
+    <div class="toc-item"><span class="toc-num">3.1</span><span class="toc-title">Call Predict — versionar XGBoost</span><span class="toc-dots"></span><span class="toc-page">17</span></div>
+    <div class="toc-item"><span class="toc-num">3.2</span><span class="toc-title">Agentes Retell AI — prompt registry</span><span class="toc-dots"></span><span class="toc-page">20</span></div>
+    <div class="toc-item"><span class="toc-num">3.3</span><span class="toc-title">Portaria — multi-modal e LGPD by design</span><span class="toc-dots"></span><span class="toc-page">23</span></div>
+
+    <div class="toc-divider">Parte IV · Implementação e governança</div>
+    <div class="toc-item"><span class="toc-num">4.1</span><span class="toc-title">Roadmap em 6 fases</span><span class="toc-dots"></span><span class="toc-page">26</span></div>
+    <div class="toc-item"><span class="toc-num">4.2</span><span class="toc-title">Arquitetura proposta</span><span class="toc-dots"></span><span class="toc-page">28</span></div>
+    <div class="toc-item"><span class="toc-num">4.3</span><span class="toc-title">Análise financeira e ROI</span><span class="toc-dots"></span><span class="toc-page">30</span></div>
+    <div class="toc-item"><span class="toc-num">4.4</span><span class="toc-title">Riscos e mitigação</span><span class="toc-dots"></span><span class="toc-page">31</span></div>
+
+    <div class="toc-divider">Parte V · Estratégia &amp; conclusão</div>
+    <div class="toc-item"><span class="toc-num">5.1</span><span class="toc-title">Sete insights que mudam a tese</span><span class="toc-dots"></span><span class="toc-page">32</span></div>
+    <div class="toc-item"><span class="toc-num">5.2</span><span class="toc-title">Próximos passos imediatos</span><span class="toc-dots"></span><span class="toc-page">34</span></div>
+    <div class="toc-item"><span class="toc-num">5.3</span><span class="toc-title">Referências e fontes</span><span class="toc-dots"></span><span class="toc-page">35</span></div>
+  </div>
+</section>
+
+
+<!-- ==================== PARTE I — DIAGNÓSTICO ==================== -->
+<section class="chapter">
+  <header class="chapter-header">
+    <div class="chapter-eyebrow">Parte I · Diagnóstico</div>
+    <h1 class="chapter-title">O que existe hoje na MindFlow</h1>
+    <p class="chapter-lede">Antes de propor qualquer plataforma nova, é preciso mapear com precisão o que já está rodando em produção. A MindFlow está mais madura do que parece — e isso muda a escolha.</p>
+  </header>
+
+  <h2>1.1 A empresa e seus três produtos de IA</h2>
+
+  <p>A MindFlow opera no espaço de <strong>agentes de IA para empresas</strong>, com foco principal em automação comercial via voz (cold calling com Retell AI) e canais digitais (WhatsApp, Instagram). A operação tem três frentes ativas de inteligência artificial, com graus distintos de maturidade:</p>
+
+  <div class="grid-3">
+    <div class="ba-card after">
+      <div class="ba-tag">Em produção</div>
+      <h4>Call Predict</h4>
+      <p>Cascata de modelos XGBoost. Decide quais leads vale a pena ligar e em que horário, antes de encaminhar para o disparo na Retell AI.</p>
+    </div>
+    <div class="ba-card after">
+      <div class="ba-tag">Em produção</div>
+      <h4>Agentes Retell &amp; classificadores</h4>
+      <p>Agentes de voz por cliente (Sócios Mind, Gatekeeper, etc.) e workflow n8n de classificação de ligações com GPT-4.1-nano + RAG.</p>
+    </div>
+    <div class="ba-card before" style="background:rgba(255, 181, 71, 0.06); border-color:rgba(255, 181, 71, 0.25)">
+      <div class="ba-tag" style="background:rgba(255, 181, 71, 0.15); color:#FFB547">Em desenvolvimento</div>
+      <h4>Portaria inteligente</h4>
+      <p>Novo produto. Provavelmente envolverá visão computacional, reconhecimento facial, áudio e agentes conversacionais para interfone.</p>
+    </div>
+  </div>
+
+  <p>O denominador comum dessas três frentes é que <strong>todas dependem de modelos que precisam evoluir continuamente</strong> — ligações geram dados que retroalimentam o Call Predict, prompts dos agentes mudam conforme cada cliente, e o produto de portaria nascerá com modelos que precisarão ser retreinados frequentemente.</p>
+
+  <h2>1.2 O sistema de Call Predict explicado</h2>
+
+  <p>O Call Predict é a frente de IA mais madura. Vale entendê-la em profundidade — porque é nela que MLflow será implementado primeiro, e ela serve de modelo mental para o resto.</p>
+
+  <h3>O problema de negócio</h3>
+
+  <p>Antes do ML, o disparo de cold calls era cego. Os dados históricos mostraram a magnitude da ineficiência:</p>
+
+  <div class="stat-grid">
+    <div class="stat">
+      <div class="stat-value danger">99,64%</div>
+      <div class="stat-label">Números não convertem</div>
+      <div class="stat-detail">Sobre 3.661 leads históricos</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value danger">98,94%</div>
+      <div class="stat-label">Do custo queimado</div>
+      <div class="stat-detail">Ia para leads que nunca atendiam</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">8,49%</div>
+      <div class="stat-label">Números engajam</div>
+      <div class="stat-detail">Atendem e conversam &gt; 1min30</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value accent">30%</div>
+      <div class="stat-label">Custo nos engajados</div>
+      <div class="stat-detail">Os 8,49% que sustentam o pipeline</div>
+    </div>
+  </div>
+
+  <p>A pergunta que o ML precisava responder mudou: em vez de "para quem ligar para fechar reunião" (depende de fatores externos), passou a ser <em>"para quem ligar para ter uma conversa real"</em> — fator que a empresa pode controlar com dados.</p>
+
+  <h3>A arquitetura de cascata</h3>
+
+  <p>A solução foi dividir o problema em dois modelos especializados, encadeados:</p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 720 220" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L9,3 z" fill="#7B9AFF"/>
+        </marker>
+        <linearGradient id="grad-blue" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#2E4FFF;stop-opacity:1"/>
+          <stop offset="100%" style="stop-color:#1E3CC9;stop-opacity:1"/>
+        </linearGradient>
+        <linearGradient id="grad-teal" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#00B5A0;stop-opacity:1"/>
+          <stop offset="100%" style="stop-color:#008B7A;stop-opacity:1"/>
+        </linearGradient>
+      </defs>
+
+      <rect x="20" y="90" width="100" height="40" rx="6" fill="rgba(255,255,255,0.04)" stroke="#7B9AFF" stroke-width="1"/>
+      <text x="70" y="115" text-anchor="middle" font-family="Space Grotesk" font-size="12" fill="#E0E2EF">Lead recebido</text>
+
+      <line x1="120" y1="110" x2="170" y2="110" stroke="#7B9AFF" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+      <rect x="175" y="75" width="160" height="70" rx="6" fill="url(#grad-blue)"/>
+      <text x="255" y="100" text-anchor="middle" font-family="Space Grotesk" font-size="13" font-weight="600" fill="#FFFFFF">Modelo 1</text>
+      <text x="255" y="118" text-anchor="middle" font-family="Inter" font-size="11" fill="#FFFFFF">Lead Scoring (XGBoost)</text>
+      <text x="255" y="134" text-anchor="middle" font-family="Inter" font-size="9" fill="#BFD3FF">Vale a pena ligar?</text>
+
+      <line x1="335" y1="110" x2="390" y2="110" stroke="#7B9AFF" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <text x="362" y="105" text-anchor="middle" font-family="Inter" font-size="9" fill="#8e8fa2">prob ≥ 0.0045</text>
+
+      <rect x="395" y="75" width="160" height="70" rx="6" fill="url(#grad-teal)"/>
+      <text x="475" y="100" text-anchor="middle" font-family="Space Grotesk" font-size="13" font-weight="600" fill="#FFFFFF">Modelo 2</text>
+      <text x="475" y="118" text-anchor="middle" font-family="Inter" font-size="11" fill="#FFFFFF">Timing Predict (XGBoost)</text>
+      <text x="475" y="134" text-anchor="middle" font-family="Inter" font-size="9" fill="#B7F2EA">Qual o melhor horário?</text>
+
+      <line x1="555" y1="110" x2="610" y2="110" stroke="#4edcc5" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <rect x="615" y="90" width="95" height="40" rx="6" fill="rgba(78,220,197,0.08)" stroke="#4edcc5" stroke-width="1"/>
+      <text x="662" y="108" text-anchor="middle" font-family="Space Grotesk" font-size="11" fill="#E0E2EF">Agenda</text>
+      <text x="662" y="123" text-anchor="middle" font-family="Inter" font-size="9" fill="#4edcc5">no pico</text>
+
+      <line x1="255" y1="145" x2="255" y2="190" stroke="#ff4e6a" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <text x="270" y="170" font-family="Inter" font-size="9" fill="#ff4e6a">prob &lt; 0.0045</text>
+      <rect x="200" y="190" width="120" height="25" rx="4" fill="rgba(255,78,106,0.12)" stroke="#ff4e6a"/>
+      <text x="260" y="207" text-anchor="middle" font-family="Space Grotesk" font-size="10" fill="#ff4e6a" font-weight="600">DESCARTAR</text>
+    </svg>
+    <div class="diagram-caption">A cascata: filtro barato (Lead Scoring) antes do cálculo caro (Timing Predict, que simula 16 cenários horários).</div>
+  </div>
+
+  <h3>Lead Scoring — o "Go/No-Go"</h3>
+
+  <p>Recebe 20 features (geografia, histórico de tentativas, contagens por tipo de disconexão, última razão) e retorna probabilidade de 0 a 1 de que o lead vá conversar &gt; 1min30 com a IA. Threshold de produção: <strong>0,0045</strong>.</p>
+
+  <p>O motivo do threshold tão baixo é desenho intencional: minimizar falsos negativos. A regra é "deixar passar menos de 5% de leads bons como descarte". Na prática, a calibração ficou em <strong>0,03% de falsos negativos</strong>, descartando ainda assim <strong>33,2% dos leads</strong> — economia de custo direta sem perder quase nada.</p>
+
+  <table class="table-compact">
+    <thead>
+      <tr><th>Métrica</th><th>Classe 0 (não engaja)</th><th>Classe 1 (engaja)</th><th>Média ponderada</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Precisão</td><td>1,00</td><td>0,58</td><td>0,98</td></tr>
+      <tr><td>Recall</td><td>0,98</td><td>0,91</td><td>0,97</td></tr>
+      <tr><td>F1-Score</td><td>0,99</td><td>0,71</td><td>0,98</td></tr>
+      <tr><td><strong>ROC-AUC global</strong></td><td colspan="3"><strong>0,9892</strong> — excelente capacidade de discriminação</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Timing Predict — o "Quando"</h3>
+
+  <p>Em vez de prever "o melhor horário" abstratamente, o modelo recebe cenários hipotéticos (próximas 24 horas, excluindo 23h-6h) e retorna a probabilidade de cada um. O sistema simplesmente escolhe o argmax. Usa 6 features: <code>ddd</code>, <code>hora_contato</code>, <code>dia_semana</code>, <code>densidade_tentativas</code>, <code>pressao_recente</code>, <code>hora_ultimo_contato</code>.</p>
+
+  <p>A análise descobriu um conceito interessante chamado <strong>Elasticidade Probabilística Temporal</strong>: a probabilidade de um lead atender varia drasticamente ao longo do dia, e <strong>o DDD responde por quase 43% dessa variação</strong>. Em linguagem simples: <em>não existe "melhor horário universal"</em> — o horário nobre para um lead em SP (DDD 11) pode ser inútil para um lead no interior do PR (DDD 46).</p>
+
+  <h3>O loop de aprendizado</h3>
+
+  <p>Cada inferência grava uma linha na tabela <code>model_executions</code> do Supabase, com a versão exata do modelo, a probabilidade, a decisão, e — crucialmente — um flag <code>is_exploration</code> (TRUE em 5% dos casos). Esses 5% são um <strong>grupo de controle</strong>: a IA é ignorada e a ligação acontece de qualquer jeito. Sem isso, o modelo só veria os leads que ele mesmo aprovou no passado (survivorship bias).</p>
+
+  <h2>1.3 Gaps de plataforma identificados</h2>
+
+  <p>Tecnicamente o Call Predict está bem desenhado. O que falta são <strong>capacidades de plataforma</strong> — coisas que não pertencem a um produto único, mas que toda empresa de IA precisa em algum momento:</p>
+
+  <table>
+    <thead>
+      <tr><th style="width:30%">Capacidade</th><th style="width:35%">Estado atual</th><th>Impacto do gap</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Tracking de experimentos</strong></td>
+        <td>Manual no Colab, prints/screenshots no PDF da arquitetura ML</td>
+        <td>Não há histórico estruturado dos treinos. Comparar 2 versões exige rodar 2 notebooks à mão.</td>
+      </tr>
+      <tr>
+        <td><strong>Registry de modelos</strong></td>
+        <td>Arquivos <code>.pkl</code> no Git; deploy via PR com relatório anexado</td>
+        <td>Toda atualização exige rebuild de container. Rollback é lento. Champion/challenger é impossível.</td>
+      </tr>
+      <tr>
+        <td><strong>Versionamento de prompts</strong></td>
+        <td>Campo <code>Prompt_Text</code> na tabela Prompts do Supabase, sem histórico semântico</td>
+        <td>Os 10 fixes do prompt do classificador foram perdidos como entidades versionáveis.</td>
+      </tr>
+      <tr>
+        <td><strong>Tracing de agentes</strong></td>
+        <td>Logs em <code>workflow_step_executions</code>; sem visualização integrada</td>
+        <td>Debug de execução do agente Retell exige juntar dados de várias fontes.</td>
+      </tr>
+      <tr>
+        <td><strong>Avaliação automática</strong></td>
+        <td>Ad-hoc — métricas calculadas no Colab quando alguém lembra</td>
+        <td>Sem regressão detectada automaticamente entre versões.</td>
+      </tr>
+      <tr>
+        <td><strong>Audit trail para LGPD</strong></td>
+        <td>Parcial (<code>model_executions</code> existe), mas sem link ao treino</td>
+        <td>Crítico para o produto de portaria, que opera com biometria.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <div class="callout-title">Diagnóstico em uma frase</div>
+    <p>A MindFlow tem produtos de IA bem desenhados, mas <strong>não tem ainda uma plataforma comum por baixo</strong>. Cada produto é uma ilha de ML/prompts/auditoria. Isso é normal numa empresa em crescimento — e MLflow é o caminho mais econômico para unificar antes da escala chegar.</p>
+  </div>
+</section>
+
+
+<!-- ==================== PARTE II — O QUE É MLFLOW ==================== -->
+<section class="chapter">
+  <header class="chapter-header">
+    <div class="chapter-eyebrow">Parte II · O que é MLflow</div>
+    <h1 class="chapter-title">A plataforma, sem mistério</h1>
+    <p class="chapter-lede">MLflow é, simplificadamente, o "Git + GitHub Actions" do mundo de machine learning — adaptado para que mudanças em modelos sejam tão rastreáveis quanto mudanças em código.</p>
+  </header>
+
+  <h2>2.1 Modelo mental e os 4 componentes</h2>
+
+  <p>O projeto nasceu na Databricks em 2018 e hoje é mantido pela Linux Foundation, com licença Apache 2.0. <strong>Mais de 60% das empresas Fortune 500 usam MLflow em produção</strong>, segundo dados da própria fundação. É de longe o padrão de fato em MLOps open source.</p>
+
+  <p>A plataforma tem quatro componentes principais, todos opcionais — você pode usar só o que faz sentido:</p>
+
+  <table>
+    <thead>
+      <tr><th style="width:25%">Componente</th><th style="width:25%">Analogia</th><th>O que ele resolve, na prática</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Tracking</strong></td>
+        <td>"Git commit" pra experimentos</td>
+        <td>Toda vez que você treina um modelo, grava: parâmetros, métricas, dataset, código, gráficos. Cada treino vira um "run" identificável. Compara N runs lado a lado na UI.</td>
+      </tr>
+      <tr>
+        <td><strong>Models</strong></td>
+        <td>Pacote universal</td>
+        <td>Empacota modelo (XGBoost, PyTorch, LLM, etc.) com <strong>assinatura</strong> (schema de entrada/saída), dependências e um exemplo de input. Garante que o modelo carregado em produção é idêntico ao treinado.</td>
+      </tr>
+      <tr>
+        <td><strong>Registry</strong></td>
+        <td>"GitHub releases" para modelos</td>
+        <td>Versiona modelos com aliases (<code>@production</code>, <code>@challenger</code>, <code>@cliente_xpto</code>). Trocar de versão em produção vira mudança de metadado, não de código.</td>
+      </tr>
+      <tr>
+        <td><strong>Projects</strong></td>
+        <td>"Docker para treinamento"</td>
+        <td>Reproduz o treino com 1 comando. Útil em times grandes; para a MindFlow, hoje, é overkill.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Como o fluxo realmente acontece</h3>
+
+  <div class="diagram">
+    <svg viewBox="0 0 720 280" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L9,3 z" fill="#7B9AFF"/>
+        </marker>
+        <linearGradient id="grad-card1" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color:rgba(46,79,255,0.15);stop-opacity:1"/>
+          <stop offset="100%" style="stop-color:rgba(46,79,255,0.04);stop-opacity:1"/>
+        </linearGradient>
+        <linearGradient id="grad-card2" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color:rgba(0,181,160,0.15);stop-opacity:1"/>
+          <stop offset="100%" style="stop-color:rgba(0,181,160,0.04);stop-opacity:1"/>
+        </linearGradient>
+      </defs>
+
+      <text x="120" y="20" text-anchor="middle" font-family="Space Grotesk" font-size="11" font-weight="600" fill="#7B9AFF" letter-spacing="0.1em">TREINO</text>
+      <rect x="20" y="35" width="200" height="80" rx="6" fill="url(#grad-card1)" stroke="#2E4FFF" stroke-width="1"/>
+      <text x="120" y="60" text-anchor="middle" font-family="Inter" font-size="11" fill="#E0E2EF">Notebook / script Python</text>
+      <text x="120" y="80" text-anchor="middle" font-family="Space Grotesk" font-size="9" fill="#4edcc5">mlflow.xgboost.autolog()</text>
+      <text x="120" y="98" text-anchor="middle" font-family="Space Grotesk" font-size="9" fill="#4edcc5">xgb.train(...)</text>
+
+      <line x1="220" y1="75" x2="280" y2="75" stroke="#7B9AFF" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+      <rect x="280" y="35" width="220" height="200" rx="6" fill="rgba(255,255,255,0.03)" stroke="#7B9AFF" stroke-width="1"/>
+      <text x="390" y="55" text-anchor="middle" font-family="Space Grotesk" font-size="13" font-weight="600" fill="#FFFFFF">MLflow Server</text>
+
+      <rect x="295" y="70" width="190" height="38" rx="3" fill="rgba(46,79,255,0.08)"/>
+      <text x="305" y="86" font-family="Space Grotesk" font-size="9" font-weight="600" fill="#7B9AFF">Tracking</text>
+      <text x="305" y="100" font-family="Inter" font-size="8" fill="#8e8fa2">runs · params · metrics · artifacts</text>
+
+      <rect x="295" y="115" width="190" height="38" rx="3" fill="rgba(0,181,160,0.08)"/>
+      <text x="305" y="131" font-family="Space Grotesk" font-size="9" font-weight="600" fill="#4edcc5">Model Registry</text>
+      <text x="305" y="145" font-family="Inter" font-size="8" fill="#8e8fa2">versões · aliases · linhagem</text>
+
+      <rect x="295" y="160" width="190" height="38" rx="3" fill="rgba(123,154,255,0.08)"/>
+      <text x="305" y="176" font-family="Space Grotesk" font-size="9" font-weight="600" fill="#7B9AFF">Tracing (GenAI)</text>
+      <text x="305" y="190" font-family="Inter" font-size="8" fill="#8e8fa2">traces de agente · LLM calls</text>
+
+      <text x="390" y="220" text-anchor="middle" font-family="Inter" font-size="8" fill="#4d5570" font-style="italic">Postgres + S3/MinIO</text>
+
+      <line x1="500" y1="75" x2="560" y2="75" stroke="#7B9AFF" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+      <text x="640" y="20" text-anchor="middle" font-family="Space Grotesk" font-size="11" font-weight="600" fill="#4edcc5" letter-spacing="0.1em">PRODUÇÃO</text>
+      <rect x="540" y="35" width="180" height="80" rx="6" fill="url(#grad-card2)" stroke="#00B5A0" stroke-width="1"/>
+      <text x="630" y="60" text-anchor="middle" font-family="Inter" font-size="11" fill="#E0E2EF">ARQ Worker</text>
+      <text x="630" y="80" text-anchor="middle" font-family="Space Grotesk" font-size="8" fill="#4edcc5">load_model(</text>
+      <text x="630" y="92" text-anchor="middle" font-family="Space Grotesk" font-size="8" fill="#4edcc5">"models:/lead_scoring</text>
+      <text x="630" y="104" text-anchor="middle" font-family="Space Grotesk" font-size="8" fill="#4edcc5">@production")</text>
+
+      <rect x="540" y="155" width="180" height="80" rx="6" fill="rgba(0,181,160,0.06)" stroke="#00B5A0" stroke-width="1" stroke-dasharray="3,3"/>
+      <text x="630" y="180" text-anchor="middle" font-family="Inter" font-size="11" fill="#E0E2EF">Inferência</text>
+      <text x="630" y="200" text-anchor="middle" font-family="Inter" font-size="9" fill="#8e8fa2">latência 5-10ms</text>
+      <text x="630" y="215" text-anchor="middle" font-family="Inter" font-size="9" fill="#8e8fa2">+ trace opcional</text>
+    </svg>
+    <div class="diagram-caption">Fluxo end-to-end. A chave conceitual: o nome <code>lead_scoring@production</code> nunca muda; só o que ele aponta.</div>
+  </div>
+
+  <h2>2.2 MLflow 3.0: o pivot para GenAI e agentes</h2>
+
+  <p>A versão 3.0, lançada em meados de 2025, redesenhou a plataforma. Até a versão 2.x, MLflow era visto como ferramenta de ML clássico (XGBoost, sklearn, PyTorch). A 3.0 promoveu agentes de IA, LLMs e prompts a <strong>cidadãos de primeira classe</strong>.</p>
+
+  <p>Três capacidades novas são especialmente relevantes para a MindFlow:</p>
+
+  <div class="grid-3">
+    <div class="ba-card after">
+      <div class="ba-tag">Novo em 3.0</div>
+      <h4>Prompt Registry</h4>
+      <p>Versiona prompts com semântica de commit (mensagens, timestamps, diff visual). Aliases <code>@production</code> e <code>@staging</code> funcionam exatamente como em modelos.</p>
+    </div>
+    <div class="ba-card after">
+      <div class="ba-tag">Novo em 3.0</div>
+      <h4>Tracing de agentes</h4>
+      <p>Auto-tracing para OpenAI, Anthropic, LangChain, LlamaIndex, Pydantic AI e mais 40 frameworks. Compatível com OpenTelemetry.</p>
+    </div>
+    <div class="ba-card after">
+      <div class="ba-tag">Novo em 3.0</div>
+      <h4>LoggedModel</h4>
+      <p>Nova entidade que conecta modelo + código + prompt + dataset + avaliações em uma única linhagem rastreável.</p>
+    </div>
+  </div>
+
+  <div class="callout accent">
+    <div class="callout-title">Por que isso importa pra MindFlow agora</div>
+    <p>Em 2024, escolher MLflow significava aceitar que para LLMs você ia precisar de outra ferramenta (Langfuse, LangSmith). Em 2026, com MLflow 3.x consolidado, <strong>a mesma plataforma cobre o Call Predict (XGBoost), o classificador de ligações (GPT-4.1-nano) e o agente Retell</strong>. Uma stack só, um login só, uma fonte de verdade só.</p>
+  </div>
+
+  <h3>O conceito-chave: aliases de versão</h3>
+
+  <p>Esse é o mecanismo mais importante de entender. Em vez de hard-coding versões no código:</p>
+
+  <pre><span class="c-com"># ANTES (frágil)</span>
+ctx[<span class="c-str">"model"</span>] = joblib.load(<span class="c-str">"models/xgboost_LS_v3.pkl"</span>)
+
+<span class="c-com"># DEPOIS (com MLflow)</span>
+ctx[<span class="c-str">"model"</span>] = mlflow.xgboost.load_model(<span class="c-str">"models:/lead_scoring@production"</span>)</pre>
+
+  <p>Trocar o modelo em produção vira <strong>uma linha</strong>:</p>
+
+  <pre>client.set_registered_model_alias(<span class="c-str">"lead_scoring"</span>, <span class="c-str">"production"</span>, version=<span class="c-key">4</span>)</pre>
+
+  <p>Próximo restart do worker (ou hot-reload, se implementado), o modelo novo está rodando. Rollback é igualmente trivial. <strong>Isso elimina o ritual atual de "PR + relatório + merge + rebuild"</strong> documentado no PDF de arquitetura ML.</p>
+
+  <h2>2.3 Comparação com alternativas</h2>
+
+  <p>A escolha de MLflow não é óbvia. Em 2026, existe um ecossistema fragmentado de ferramentas. As principais alternativas a considerar:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:18%">Ferramenta</th>
+        <th>Forças</th>
+        <th>Limitações para a MindFlow</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>MLflow</strong> <span class="badge brand">Recomendado</span></td>
+        <td>Open source Apache 2.0. Self-hosted no EasyPanel. ML clássico + GenAI numa só plataforma. 60%+ Fortune 500. Sem vendor lock-in.</td>
+        <td>Open source não tem RBAC/multi-tenancy nativo (mitigável). UI menos polida que LangSmith para LLM-only.</td>
+      </tr>
+      <tr>
+        <td><strong>LangFuse</strong></td>
+        <td>Excelente para tracing/observabilidade de LLM. Open source (MIT). UI moderna.</td>
+        <td>Foco quase exclusivo em LLM — não versiona XGBoost. Avaliação rudimentar comparada a MLflow. Adquirida pela ClickHouse em 2025 (incerteza sobre roadmap).</td>
+      </tr>
+      <tr>
+        <td><strong>LangSmith</strong></td>
+        <td>Integração nativa com LangChain/LangGraph. UX polida.</td>
+        <td>Closed source. Sem self-hosting na versão padrão. Pricing por traces ($39/seat/mês + uso). Inviável para audit trail completo da MindFlow.</td>
+      </tr>
+      <tr>
+        <td><strong>Weights &amp; Biases</strong></td>
+        <td>Tracking robusto. Boa para deep learning.</td>
+        <td>Pricing alto em escala. Tem free tier mas dados sensíveis ficam na nuvem deles. Sem prompt registry maduro.</td>
+      </tr>
+      <tr>
+        <td><strong>Não fazer nada</strong></td>
+        <td>Zero esforço imediato.</td>
+        <td>Dívida técnica que cresce exponencialmente com cada novo cliente e cada novo modelo. Inviabiliza a portaria.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout success">
+    <div class="callout-title">Por que MLflow vence aqui</div>
+    <p>Três motivos: <strong>(1)</strong> única plataforma que cobre ML clássico (Call Predict) e GenAI (agentes) sem mistura de ferramentas; <strong>(2)</strong> open source com licença permissiva, vital para uma empresa B2B que pode precisar mostrar audit trail para clientes; <strong>(3)</strong> self-hosting nativo no EasyPanel, mesmo padrão dos outros serviços MindFlow — sem novos vendors, sem novas credenciais.</p>
+  </div>
+</section>
+
+
+<!-- ==================== PARTE III · 3.1 CALL PREDICT ==================== -->
+<section class="chapter">
+  <header class="chapter-header">
+    <div class="chapter-eyebrow">Parte III · Aplicação por produto</div>
+    <h1 class="chapter-title">Call Predict — versionar XGBoost</h1>
+    <p class="chapter-lede">A primeira frente de implementação. Risco baixo, ROI imediato, e o piloto perfeito antes de expandir para os outros produtos.</p>
+  </header>
+
+  <h2>3.1 O que MLflow muda no Call Predict</h2>
+
+  <p>Hoje, a operação do Call Predict tem 3 pontos de fricção que MLflow resolve diretamente:</p>
+
+  <div class="ba-grid">
+    <div class="ba-card before">
+      <div class="ba-tag">Hoje</div>
+      <h4>Deploy de modelo</h4>
+      <p>Cientista treina no Colab → exporta <code>.pkl</code> → cria PR no GitHub com relatório em PDF/markdown → tech lead revisa → merge → rebuild do container no EasyPanel → restart.</p>
+      <p><strong>Tempo médio:</strong> 1-3 dias.</p>
+    </div>
+    <div class="ba-card after">
+      <div class="ba-tag">Com MLflow</div>
+      <h4>Deploy de modelo</h4>
+      <p>Cientista treina (autolog grava tudo) → registra como challenger → revisa métricas na UI → reassigna alias <code>@production</code> para nova versão. Worker pega no próximo restart.</p>
+      <p><strong>Tempo médio:</strong> 5 minutos.</p>
+    </div>
+  </div>
+
+  <div class="ba-grid">
+    <div class="ba-card before">
+      <div class="ba-tag">Hoje</div>
+      <h4>Rollback de modelo ruim</h4>
+      <p>Reverter commit → rebuild → restart. Pode demorar horas se descoberto fora do horário comercial.</p>
+    </div>
+    <div class="ba-card after">
+      <div class="ba-tag">Com MLflow</div>
+      <h4>Rollback de modelo ruim</h4>
+      <p>Reassign de alias para versão anterior. <strong>Segundos</strong>. Sem rebuild.</p>
+    </div>
+  </div>
+
+  <div class="ba-grid">
+    <div class="ba-card before">
+      <div class="ba-tag">Hoje</div>
+      <h4>Comparação de versões</h4>
+      <p>Roda 2 notebooks à mão. Copia métricas para uma planilha. Conclusões dependem de quem está olhando.</p>
+    </div>
+    <div class="ba-card after">
+      <div class="ba-tag">Com MLflow</div>
+      <h4>Comparação de versões</h4>
+      <p>UI nativa. Seleciona N runs, vê todas as métricas e parâmetros lado a lado. Gráficos automáticos. Diff de hiperparâmetros explícito.</p>
+    </div>
+  </div>
+
+  <h2>Passo a passo da migração</h2>
+
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-phase">Passo 1 <span class="timeline-duration">~4 horas</span></div>
+      <div class="timeline-title">Subir infraestrutura no EasyPanel</div>
+      <p>Três containers: <code>mlflow-server</code>, <code>mlflow-postgres</code>, <code>mlflow-minio</code>. Apontar para o mesmo padrão de domínio dos outros serviços. Validar acesso à UI em <code>https://mlflow-mindflow.bkpxmb.easypanel.host</code>.</p>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-phase">Passo 2 <span class="timeline-duration">~3 horas</span></div>
+      <div class="timeline-title">Backfill dos modelos atuais</div>
+      <p>Script Python que carrega <code>xgboost_LS_model.pkl</code> e <code>xgboost_model_TP_V1.pkl</code>, registra com signature derivada de <code>ml_metadata.md</code>, anexa as métricas conhecidas (ROC-AUC 0.9892, threshold 0.0045) e cria alias <code>@production</code>.</p>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-phase">Passo 3 <span class="timeline-duration">~6 horas</span></div>
+      <div class="timeline-title">Refatorar <code>worker.py</code></div>
+      <p>Mudar do <code>joblib.load()</code> para <code>mlflow.xgboost.load_model()</code> no hook startup do ARQ. Capturar versão ativa para gravar em <code>model_executions</code>. Manter fallback para <code>.pkl</code> local em caso de MLflow indisponível.</p>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-phase">Passo 4 <span class="timeline-duration">~2 horas</span></div>
+      <div class="timeline-title">Adicionar colunas de linhagem em <code>model_executions</code></div>
+      <p>Duas colunas novas: <code>mlflow_run_id</code> e <code>mlflow_model_version</code>. Cada inferência grava a versão exata do modelo. Agora cada predição é rastreável até o run de treino.</p>
+    </div>
+
+    <div class="timeline-item future">
+      <div class="timeline-phase">Passo 5 <span class="timeline-duration">~2 dias</span></div>
+      <div class="timeline-title">Pipeline de retreino automatizado</div>
+      <p>Notebook/script que extrai <code>model_executions</code> JOIN <code>Retell_calls_Mindflow</code>, aplica sample weights distintos para <code>is_exploration=TRUE</code>, faz temporal split (últimos 20% cronológicos), treina com autolog e registra como <code>@challenger</code>.</p>
+    </div>
+
+    <div class="timeline-item future">
+      <div class="timeline-phase">Passo 6 <span class="timeline-duration">~1 dia</span></div>
+      <div class="timeline-title">Habilitar champion/challenger</div>
+      <p>Implementar split de tráfego no worker: 90% para <code>@production</code>, 10% para <code>@challenger</code>. Métricas comparativas automáticas. Promoção do challenger vira reassign de alias.</p>
+    </div>
+  </div>
+
+  <h3>O código antes e depois</h3>
+
+  <p>Para que fique concreto, o diff real do <code>worker.py</code>:</p>
+
+  <pre><span class="c-com"># ANTES — worker.py atual</span>
+<span class="c-key">async def</span> <span class="c-fn">startup</span>(ctx):
+    ctx[<span class="c-str">"model_ls"</span>] = joblib.load(<span class="c-str">"models/xgboost_LS_model.pkl"</span>)
+    ctx[<span class="c-str">"model_tp"</span>] = joblib.load(<span class="c-str">"models/xgboost_model_TP_V1.pkl"</span>)
+
+<span class="c-com"># DEPOIS — com MLflow</span>
+<span class="c-key">import</span> mlflow
+mlflow.set_tracking_uri(os.getenv(<span class="c-str">"MLFLOW_TRACKING_URI"</span>))
+
+<span class="c-key">async def</span> <span class="c-fn">startup</span>(ctx):
+    ctx[<span class="c-str">"model_ls"</span>] = mlflow.xgboost.load_model(<span class="c-str">"models:/lead_scoring@production"</span>)
+    ctx[<span class="c-str">"model_tp"</span>] = mlflow.xgboost.load_model(<span class="c-str">"models:/timing_predict@production"</span>)
+
+    client = mlflow.MlflowClient()
+    ctx[<span class="c-str">"ls_version"</span>] = client.get_model_version_by_alias(<span class="c-str">"lead_scoring"</span>, <span class="c-str">"production"</span>).version
+    ctx[<span class="c-str">"tp_version"</span>] = client.get_model_version_by_alias(<span class="c-str">"timing_predict"</span>, <span class="c-str">"production"</span>).version</pre>
+
+  <div class="callout warn">
+    <div class="callout-title">Atenção técnica importante</div>
+    <p>O método <code>mlflow.pyfunc.load_model()</code> retorna uma interface unificada que só expõe <code>.predict()</code>, não <code>.predict_proba()</code>. Como o <code>ml_logic.py</code> usa <code>predict_proba</code> diretamente, use <code>mlflow.xgboost.load_model()</code> (preserva a API XGBoost nativa). Detalhe que parece pequeno mas quebra silenciosamente em produção se errado.</p>
+  </div>
+
+  <h3>Métricas de sucesso</h3>
+
+  <p>Como saber se a migração deu certo? Três indicadores:</p>
+
+  <div class="stat-grid cols-3">
+    <div class="stat">
+      <div class="stat-value success">&lt; 5 min</div>
+      <div class="stat-label">Tempo médio de deploy</div>
+      <div class="stat-detail">Versus 1-3 dias hoje</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">100%</div>
+      <div class="stat-label">Predições com linhagem</div>
+      <div class="stat-detail">Cada inferência rastreável ao treino</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value success">0</div>
+      <div class="stat-label">Regressões em produção</div>
+      <div class="stat-detail">Pipeline de eval bloqueia auto</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ==================== PARTE III · 3.2 AGENTES ==================== -->
+<section class="chapter">
+  <header class="chapter-header">
+    <div class="chapter-eyebrow">Parte III · Aplicação por produto</div>
+    <h1 class="chapter-title">Agentes Retell AI &amp; Classificador</h1>
+    <p class="chapter-lede">O Prompt Registry do MLflow 3.0 transforma a iteração de prompts — hoje feita em campo de texto no Supabase — numa operação versionada com diff, alias e rollback.</p>
+  </header>
+
+  <h2>3.2 Do prompt artesanal ao prompt versionado</h2>
+
+  <p>Hoje, os prompts dos agentes Retell vivem em uma tabela do Supabase chamada <code>Prompts</code>, no campo <code>Prompt_Text</code>. Cada cliente tem o seu. Quando um prompt evolui — e nós sabemos que o classificador de ligações já passou por <strong>10 iterações documentadas</strong> — o histórico não é estruturado. Não há diff. Não há comparação de performance entre versões. Não há rollback rápido.</p>
+
+  <p>O Prompt Registry do MLflow resolve isso preservando a sensação de "Git para prompts":</p>
+
+  <pre><span class="c-com"># Registrar versão nova de prompt do classificador</span>
+mlflow.register_prompt(
+    name=<span class="c-str">"classificador_ligacoes"</span>,
+    template=<span class="c-str">"""</span>
+<span class="c-str">    Você é um classificador de ligações da MindFlow.</span>
+<span class="c-str">    Passo 1: identificar causa_raiz...</span>
+<span class="c-str">    """</span>,
+    commit_message=<span class="c-str">"Fix #11: Caixa Postal sem interação"</span>,
+    tags={<span class="c-str">"cliente"</span>: <span class="c-str">"socios_mind"</span>, <span class="c-str">"modelo_base"</span>: <span class="c-str">"gpt-4.1-nano"</span>}
+)
+
+<span class="c-com"># Promover para produção</span>
+client.set_prompt_alias(<span class="c-str">"classificador_ligacoes"</span>, <span class="c-str">"production"</span>, version=<span class="c-key">11</span>)
+
+<span class="c-com"># Carregar no agente n8n / worker</span>
+prompt = mlflow.load_prompt(<span class="c-str">"prompts:/classificador_ligacoes@production"</span>).format(
+    transcricao=transcricao_da_ligacao
+)</pre>
+
+  <p>O n8n pode chamar a API HTTP do MLflow para puxar o prompt ativo a cada execução, ou cachear localmente com refresh periódico.</p>
+
+  <h2>Tracing: visibilidade completa de cada execução do agente</h2>
+
+  <p>Hoje, quando uma ligação dá errado e o time precisa entender o que aconteceu, isso exige juntar pedaços de: <code>workflow_executions</code>, <code>workflow_step_executions</code>, transcrição da Retell, output do classificador, etc. Cada um numa fonte diferente.</p>
+
+  <p>MLflow Tracing captura tudo isso automaticamente, no padrão OpenTelemetry. Cada chamada LLM, cada retrieval RAG, cada tool use vira um span numa árvore visualizável:</p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 720 280" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="trace-root" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#2E4FFF;stop-opacity:1"/>
+          <stop offset="100%" style="stop-color:#1E3CC9;stop-opacity:1"/>
+        </linearGradient>
+        <linearGradient id="trace-l1" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#4267FF;stop-opacity:1"/>
+          <stop offset="100%" style="stop-color:#2E4FFF;stop-opacity:1"/>
+        </linearGradient>
+        <linearGradient id="trace-success" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#00B5A0;stop-opacity:1"/>
+          <stop offset="100%" style="stop-color:#008B7A;stop-opacity:1"/>
+        </linearGradient>
+      </defs>
+
+      <rect x="20" y="20" width="680" height="30" rx="3" fill="url(#trace-root)"/>
+      <text x="30" y="40" font-family="Space Grotesk" font-size="11" font-weight="600" fill="#FFFFFF">classify_call (root) — 2.3s</text>
+      <text x="650" y="40" font-family="Space Grotesk" font-size="9" fill="#BFD3FF" text-anchor="end">SUCCESS</text>
+
+      <rect x="50" y="60" width="630" height="24" rx="3" fill="url(#trace-l1)"/>
+      <text x="60" y="76" font-family="Inter" font-size="10" fill="#FFFFFF">retrieve_rag_examples (Supabase) — 340ms</text>
+      <text x="650" y="76" font-family="Inter" font-size="9" fill="#BFD3FF" text-anchor="end">3 docs</text>
+
+      <rect x="80" y="92" width="580" height="24" rx="3" fill="rgba(123,154,255,0.6)"/>
+      <text x="90" y="108" font-family="Inter" font-size="10" fill="#FFFFFF">embed_query (OpenAI) — 180ms</text>
+
+      <rect x="80" y="120" width="580" height="24" rx="3" fill="rgba(123,154,255,0.6)"/>
+      <text x="90" y="136" font-family="Inter" font-size="10" fill="#FFFFFF">vector_search (pgvector) — 80ms</text>
+
+      <rect x="50" y="150" width="630" height="24" rx="3" fill="url(#trace-l1)"/>
+      <text x="60" y="166" font-family="Inter" font-size="10" fill="#FFFFFF">format_system_prompt (template@v11) — 5ms</text>
+
+      <rect x="50" y="178" width="630" height="24" rx="3" fill="url(#trace-l1)"/>
+      <text x="60" y="194" font-family="Inter" font-size="10" fill="#FFFFFF">openai.chat.completions (gpt-4.1-nano) — 1.7s</text>
+      <text x="650" y="194" font-family="Inter" font-size="9" fill="#BFD3FF" text-anchor="end">$0.0012</text>
+
+      <rect x="50" y="206" width="630" height="24" rx="3" fill="url(#trace-l1)"/>
+      <text x="60" y="222" font-family="Inter" font-size="10" fill="#FFFFFF">parse_structured_output — 12ms</text>
+
+      <rect x="50" y="234" width="630" height="24" rx="3" fill="url(#trace-success)"/>
+      <text x="60" y="250" font-family="Space Grotesk" font-size="10" font-weight="600" fill="#FFFFFF">decision: LIGAR | nivel=Morno | min=120</text>
+    </svg>
+    <div class="diagram-caption">Trace ilustrativo de uma execução do classificador. Cada barra é um span com input/output/duração/custo capturados.</div>
+  </div>
+
+  <h2>Champion/Challenger para prompts</h2>
+
+  <p>Aqui está o insight mais subestimado. A MindFlow já implementa um grupo de controle de 5% no Call Predict. <strong>O mesmo padrão funciona para prompts</strong>: 90% do tráfego usa o prompt champion, 10% testa um challenger, e métricas comparativas (taxa de classificação correta, custo médio por execução, latência) são automaticamente coletadas.</p>
+
+  <p>Quando o challenger mostra ganho consistente, promove-se via reassign de alias. Sem deploy, sem rebuild.</p>
+
+  <h3>Por cliente, por agente</h3>
+
+  <p>Como a MindFlow opera com múltiplos clientes (Sócios Mind, Gatekeeper, etc.), aliases permitem segmentação fina:</p>
+
+  <table class="table-compact">
+    <thead>
+      <tr><th>Alias do prompt</th><th>Aponta para</th><th>Uso</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>classificador@production</code></td><td>versão 11</td><td>Default global</td></tr>
+      <tr><td><code>classificador@socios_mind</code></td><td>versão 11</td><td>Cliente "Sócios Mind"</td></tr>
+      <tr><td><code>classificador@gatekeeper</code></td><td>versão 9 (customizada)</td><td>Cliente com requisitos diferentes</td></tr>
+      <tr><td><code>classificador@challenger</code></td><td>versão 12 (em teste)</td><td>10% do tráfego, em A/B</td></tr>
+      <tr><td><code>classificador@cliente_novo</code></td><td>versão 11 + customizações</td><td>Onboarding de cliente novo</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout accent">
+    <div class="callout-title">Implicação comercial</div>
+    <p>Quando o time comercial vai vender para um cliente novo, a frase <em>"customizamos o prompt para sua operação e mantemos o histórico de cada versão, com rollback de 30 segundos"</em> é diferenciador real. <strong>Em mercados regulados (financeiro, jurídico, saúde) isso pode ser exigência contratual.</strong></p>
+  </div>
+</section>
+
+
+<!-- ==================== PARTE III · 3.3 PORTARIA ==================== -->
+<section class="chapter">
+  <header class="chapter-header">
+    <div class="chapter-eyebrow">Parte III · Aplicação por produto</div>
+    <h1 class="chapter-title">Portaria Inteligente — Multi-modal &amp; LGPD by design</h1>
+    <p class="chapter-lede">O novo produto da MindFlow vai forçar o uso de modelos de visão, áudio e LLM no mesmo sistema. MLflow não é opcional aqui — é fundação.</p>
+  </header>
+
+  <h2>3.3 Por que portaria muda a equação</h2>
+
+  <p>Os dois produtos atuais (Call Predict e agentes) operam num stack relativamente homogêneo: XGBoost de um lado, LLMs do outro. A portaria vai introduzir uma diversidade que muda a discussão:</p>
+
+  <table>
+    <thead>
+      <tr><th>Componente</th><th>Tecnologia provável</th><th>Por que MLflow é necessário</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Detecção de pessoa</strong></td>
+        <td>YOLO v11, RT-DETR (PyTorch)</td>
+        <td>Modelos retreinados conforme câmeras novas. Versionamento crítico.</td>
+      </tr>
+      <tr>
+        <td><strong>Reconhecimento facial</strong></td>
+        <td>InsightFace, FaceNet</td>
+        <td>Threshold de similaridade muda por prédio. MLflow versiona o threshold junto com o modelo.</td>
+      </tr>
+      <tr>
+        <td><strong>OCR de placas</strong></td>
+        <td>PaddleOCR, Tesseract custom</td>
+        <td>Modelo fine-tuned por região (placas Mercosul vs antigas).</td>
+      </tr>
+      <tr>
+        <td><strong>Detecção de eventos sonoros</strong></td>
+        <td>Whisper + classificador custom</td>
+        <td>Gritos, vidro quebrando, etc. Modelo evolui com falsos positivos do campo.</td>
+      </tr>
+      <tr>
+        <td><strong>Agente conversacional (interfone)</strong></td>
+        <td>GPT-4 + tools</td>
+        <td>Prompts versionados por prédio, com regras diferentes.</td>
+      </tr>
+      <tr>
+        <td><strong>Decisão final autorizar/negar</strong></td>
+        <td>Lógica de orquestração + XGBoost de anomalia</td>
+        <td>Estágio final, com auditoria obrigatória.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>A cascata se repete — agora multi-modal</h2>
+
+  <p>O padrão arquitetural do Call Predict (filtro barato antes de cálculo caro) <strong>aplica-se diretamente na portaria</strong>. Cada estágio versionado independentemente no MLflow:</p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 720 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr3" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L9,3 z" fill="#7B9AFF"/>
+        </marker>
+      </defs>
+
+      <rect x="10" y="60" width="120" height="60" rx="6" fill="rgba(46,79,255,0.08)" stroke="#7B9AFF"/>
+      <text x="70" y="85" text-anchor="middle" font-family="Space Grotesk" font-size="10" fill="#E0E2EF" font-weight="600">Câmera</text>
+      <text x="70" y="100" text-anchor="middle" font-family="Inter" font-size="9" fill="#8e8fa2">stream contínuo</text>
+
+      <line x1="130" y1="90" x2="155" y2="90" stroke="#7B9AFF" stroke-width="1.2" marker-end="url(#arr3)"/>
+
+      <rect x="158" y="60" width="120" height="60" rx="6" fill="rgba(46,79,255,0.14)" stroke="#7B9AFF"/>
+      <text x="218" y="80" text-anchor="middle" font-family="Space Grotesk" font-size="10" fill="#E0E2EF" font-weight="600">Motion / Person</text>
+      <text x="218" y="94" text-anchor="middle" font-family="Inter" font-size="9" fill="#8e8fa2">edge (barato)</text>
+      <text x="218" y="108" text-anchor="middle" font-family="Space Grotesk" font-size="8" fill="#4edcc5">motion_v3@prod</text>
+
+      <line x1="278" y1="90" x2="303" y2="90" stroke="#7B9AFF" stroke-width="1.2" marker-end="url(#arr3)"/>
+
+      <rect x="306" y="60" width="120" height="60" rx="6" fill="rgba(46,79,255,0.2)" stroke="#7B9AFF"/>
+      <text x="366" y="80" text-anchor="middle" font-family="Space Grotesk" font-size="10" fill="#E0E2EF" font-weight="600">Reconhecimento</text>
+      <text x="366" y="94" text-anchor="middle" font-family="Inter" font-size="9" fill="#8e8fa2">cloud (caro)</text>
+      <text x="366" y="108" text-anchor="middle" font-family="Space Grotesk" font-size="8" fill="#4edcc5">face_v7@prod</text>
+
+      <line x1="426" y1="90" x2="451" y2="90" stroke="#7B9AFF" stroke-width="1.2" marker-end="url(#arr3)"/>
+
+      <rect x="454" y="60" width="120" height="60" rx="6" fill="rgba(0,181,160,0.15)" stroke="#4edcc5"/>
+      <text x="514" y="80" text-anchor="middle" font-family="Space Grotesk" font-size="10" fill="#E0E2EF" font-weight="600">Decisão</text>
+      <text x="514" y="94" text-anchor="middle" font-family="Inter" font-size="9" fill="#8e8fa2">orquestração</text>
+      <text x="514" y="108" text-anchor="middle" font-family="Space Grotesk" font-size="8" fill="#4edcc5">policy_v2@prod</text>
+
+      <line x1="574" y1="90" x2="599" y2="90" stroke="#4edcc5" stroke-width="1.2" marker-end="url(#arr3)"/>
+
+      <rect x="602" y="60" width="110" height="60" rx="6" fill="url(#grad-teal)"/>
+      <text x="657" y="84" text-anchor="middle" font-family="Space Grotesk" font-size="10" fill="#FFFFFF" font-weight="600">Autorizar</text>
+      <text x="657" y="100" text-anchor="middle" font-family="Space Grotesk" font-size="10" fill="#FFFFFF" font-weight="600">/Negar</text>
+
+      <text x="360" y="160" text-anchor="middle" font-family="Inter" font-size="9.5" fill="#8e8fa2" font-style="italic">Cada estágio é um modelo versionado no MLflow. Trocar versão = reassign de alias.</text>
+    </svg>
+  </div>
+
+  <h2>LGPD: a vantagem competitiva oculta</h2>
+
+  <p>Portaria opera com <strong>dados biométricos</strong> (rosto = categoria especial pela LGPD, artigo 11) e <strong>decisões automatizadas</strong> que afetam pessoas (autorizar ou negar entrada). A LGPD, no artigo 20, garante ao titular o direito a:</p>
+
+  <ol>
+    <li>Solicitar revisão de decisões tomadas unicamente com base em tratamento automatizado;</li>
+    <li>Receber informações claras e adequadas sobre os critérios e procedimentos usados.</li>
+  </ol>
+
+  <p>Na prática, se um morador é negado pela IA, a MindFlow precisa conseguir responder com precisão jurídica: <em>"essa decisão foi tomada pela versão 7 do modelo de reconhecimento facial, treinado em 12/03/2026 sobre dataset X, com precisão Y, sob o limiar Z, registrada com o run-id W."</em></p>
+
+  <div class="callout success">
+    <div class="callout-title">A tabela <code>model_executions</code> + MLflow = audit trail completo</div>
+    <p>A combinação já dá conta dos requisitos da LGPD. Cada decisão tem:<br>
+    <strong>(1)</strong> <code>mlflow_run_id</code> → ao código exato + dataset de treino<br>
+    <strong>(2)</strong> <code>mlflow_model_version</code> → ao binário exato e sua signature<br>
+    <strong>(3)</strong> Input e output da inferência → ao contexto da decisão<br>
+    <strong>(4)</strong> Métricas registradas no MLflow → à precisão conhecida do modelo</p>
+  </div>
+
+  <h3>Insight comercial</h3>
+
+  <p>Síndicos e administradoras de condomínio são notoriamente cautelosos com tecnologia que envolve dados pessoais. <strong>Audit trail completo é argumento de venda</strong>. Concorrentes que não tiverem isso vão depender de "confie em nós". A MindFlow pode mostrar.</p>
+</section>
+
+
+<!-- ==================== PARTE IV — ROADMAP ==================== -->
+<section class="chapter">
+  <header class="chapter-header">
+    <div class="chapter-eyebrow">Parte IV · Implementação</div>
+    <h1 class="chapter-title">Roadmap em seis fases</h1>
+    <p class="chapter-lede">A migração não acontece num único movimento — e nem deveria. Começar pelo Call Predict como piloto controla risco e gera aprendizado antes de expandir.</p>
+  </header>
+
+  <h2>4.1 Plano de seis fases</h2>
+
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-phase">Fase 1 · Fundação <span class="timeline-duration">1 semana</span></div>
+      <div class="timeline-title">Infraestrutura MLflow no EasyPanel</div>
+      <p>Subir os três containers (MLflow Server, Postgres dedicado, MinIO S3-compatible). Configurar HTTPS via mesmo padrão dos outros serviços. Definir backup automático do Postgres. Criar usuário e gerar tokens de acesso.</p>
+      <p class="small"><strong>Entregável:</strong> URL de produção acessível, UI funcional, primeiro experimento de smoke test.</p>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-phase">Fase 2 · Migração Call Predict <span class="timeline-duration">1 semana</span></div>
+      <div class="timeline-title">Backfill dos 2 modelos XGBoost + refactor do worker</div>
+      <p>Script de backfill registra os modelos atuais (<code>xgboost_LS_model.pkl</code> e <code>xgboost_model_TP_V1.pkl</code>) com signatures, exemplos de input e métricas conhecidas. Cria aliases <code>@production</code>. Refatora <code>worker.py</code> para carregar via MLflow. Adiciona colunas de linhagem em <code>model_executions</code>.</p>
+      <p class="small"><strong>Entregável:</strong> Call Predict rodando em produção com modelos servidos pelo MLflow.</p>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-phase">Fase 3 · Pipeline de retreino <span class="timeline-duration">1-2 semanas</span></div>
+      <div class="timeline-title">Automatizar geração de challengers</div>
+      <p>Notebook de retreino que extrai <code>model_executions</code> JOIN <code>Retell_calls_Mindflow</code>, aplica sample weights (exploration vs exploitation) e temporal split, treina com <code>mlflow.xgboost.autolog()</code>, e registra como challenger. Setup de retreino mensal automatizado (n8n ou Airflow).</p>
+      <p class="small"><strong>Entregável:</strong> Pipeline reproduzível que pode ser disparado on-demand ou em schedule.</p>
+    </div>
+
+    <div class="timeline-item future">
+      <div class="timeline-phase">Fase 4 · Prompt Registry <span class="timeline-duration">1 semana</span></div>
+      <div class="timeline-title">Migrar prompts do Supabase para MLflow</div>
+      <p>Importar prompts atuais da tabela <code>Prompts</code>. Estabelecer convenção de aliases por cliente. Adaptar workflows n8n para puxar prompts via API MLflow (com cache local). Estabelecer fluxo de revisão de novas versões.</p>
+      <p class="small"><strong>Entregável:</strong> Prompts versionados, diff visual, rollback de 30 segundos.</p>
+    </div>
+
+    <div class="timeline-item future">
+      <div class="timeline-phase">Fase 5 · Tracing de agentes <span class="timeline-duration">1-2 semanas</span></div>
+      <div class="timeline-title">Habilitar observabilidade nos agentes</div>
+      <p>Ativar <code>mlflow.openai.autolog()</code> nos workflows de classificação. Configurar tracing OpenTelemetry para integração com Retell quando possível. Treinar time de operações na UI de traces.</p>
+      <p class="small"><strong>Entregável:</strong> Cada execução de agente rastreável passo a passo, com custo e latência.</p>
+    </div>
+
+    <div class="timeline-item future">
+      <div class="timeline-phase">Fase 6 · Portaria (preparação) <span class="timeline-duration">2 semanas (ao longo do desenvolvimento)</span></div>
+      <div class="timeline-title">Padrões para os modelos de visão e áudio</div>
+      <p>Estabelecer convenções de nomes, aliases, signatures para PyTorch/ONNX. Configurar artifact store para modelos pesados (visão pode ter 200MB+). Templates de retreinamento. Documentação interna.</p>
+      <p class="small"><strong>Entregável:</strong> Plataforma pronta para os primeiros modelos da portaria já entrarem versionados.</p>
+    </div>
+  </div>
+
+  <h3>Dependências críticas</h3>
+
+  <table>
+    <thead>
+      <tr><th>Fase</th><th>Depende de</th><th>Bloqueador potencial</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Fase 1</td><td>Acesso EasyPanel, credenciais</td><td>Nenhum</td></tr>
+      <tr><td>Fase 2</td><td>Fase 1 concluída</td><td>Acesso aos notebooks Colab originais para extrair input examples</td></tr>
+      <tr><td>Fase 3</td><td>Fase 2 + acesso ao Supabase</td><td>Volume de dados em <code>model_executions</code> para treino significativo</td></tr>
+      <tr><td>Fase 4</td><td>Fase 1 (não depende de 2/3)</td><td>Coordenação com time de prompts</td></tr>
+      <tr><td>Fase 5</td><td>Fase 4 ideal mas não obrigatório</td><td>Suporte da Retell AI para tracing nativo</td></tr>
+      <tr><td>Fase 6</td><td>Decisões arquiteturais do produto portaria</td><td>Definição se inferência será edge ou cloud</td></tr>
+    </tbody>
+  </table>
+
+  <h2>4.2 Arquitetura proposta</h2>
+
+  <div class="diagram">
+    <svg viewBox="0 0 720 380" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr4" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L9,3 z" fill="#7B9AFF"/>
+        </marker>
+      </defs>
+
+      <rect x="20" y="20" width="680" height="340" rx="6" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.1)" stroke-dasharray="4,3"/>
+      <text x="35" y="40" font-family="Space Grotesk" font-size="11" font-weight="600" fill="#8e8fa2" letter-spacing="0.1em">EASYPANEL · MESMO CLUSTER DOS DEMAIS SERVIÇOS</text>
+
+      <rect x="40" y="60" width="320" height="180" rx="6" fill="rgba(46,79,255,0.06)" stroke="#7B9AFF"/>
+      <text x="200" y="80" text-anchor="middle" font-family="Space Grotesk" font-size="12" font-weight="600" fill="#FFFFFF">Stack MLflow</text>
+
+      <rect x="55" y="95" width="90" height="50" rx="4" fill="rgba(46,79,255,0.12)"/>
+      <text x="100" y="115" text-anchor="middle" font-family="Space Grotesk" font-size="9.5" font-weight="600" fill="#7B9AFF">MLflow</text>
+      <text x="100" y="128" text-anchor="middle" font-family="Inter" font-size="9" fill="#E0E2EF">Server</text>
+      <text x="100" y="140" text-anchor="middle" font-family="Inter" font-size="7.5" fill="#8e8fa2">port 5000</text>
+
+      <rect x="155" y="95" width="90" height="50" rx="4" fill="rgba(46,79,255,0.12)"/>
+      <text x="200" y="115" text-anchor="middle" font-family="Space Grotesk" font-size="9.5" font-weight="600" fill="#7B9AFF">Postgres</text>
+      <text x="200" y="128" text-anchor="middle" font-family="Inter" font-size="9" fill="#E0E2EF">backend</text>
+      <text x="200" y="140" text-anchor="middle" font-family="Inter" font-size="7.5" fill="#8e8fa2">metadata</text>
+
+      <rect x="255" y="95" width="90" height="50" rx="4" fill="rgba(46,79,255,0.12)"/>
+      <text x="300" y="115" text-anchor="middle" font-family="Space Grotesk" font-size="9.5" font-weight="600" fill="#7B9AFF">MinIO</text>
+      <text x="300" y="128" text-anchor="middle" font-family="Inter" font-size="9" fill="#E0E2EF">artifacts</text>
+      <text x="300" y="140" text-anchor="middle" font-family="Inter" font-size="7.5" fill="#8e8fa2">S3-compat</text>
+
+      <text x="200" y="170" text-anchor="middle" font-family="Inter" font-size="9" fill="#8e8fa2">UI: https://mlflow-mindflow.bkpxmb.easypanel.host</text>
+      <text x="200" y="185" text-anchor="middle" font-family="Inter" font-size="9" fill="#8e8fa2">API REST + autenticação por token</text>
+
+      <text x="200" y="215" text-anchor="middle" font-family="Inter" font-size="8.5" fill="#4d5570">~$20-40/mês de infra incremental</text>
+      <text x="200" y="227" text-anchor="middle" font-family="Inter" font-size="8.5" fill="#4d5570">backup automático Postgres + MinIO</text>
+
+      <rect x="380" y="60" width="300" height="80" rx="6" fill="rgba(0,181,160,0.06)" stroke="#4edcc5"/>
+      <text x="530" y="80" text-anchor="middle" font-family="Space Grotesk" font-size="11" font-weight="600" fill="#4edcc5">Produtos MindFlow (clients)</text>
+
+      <rect x="395" y="92" width="85" height="40" rx="4" fill="rgba(0,181,160,0.12)"/>
+      <text x="437" y="110" text-anchor="middle" font-family="Space Grotesk" font-size="9" font-weight="600" fill="#4edcc5">Call Predict</text>
+      <text x="437" y="124" text-anchor="middle" font-family="Inter" font-size="8" fill="#8e8fa2">FastAPI + ARQ</text>
+
+      <rect x="490" y="92" width="85" height="40" rx="4" fill="rgba(0,181,160,0.12)"/>
+      <text x="532" y="110" text-anchor="middle" font-family="Space Grotesk" font-size="9" font-weight="600" fill="#4edcc5">Agentes n8n</text>
+      <text x="532" y="124" text-anchor="middle" font-family="Inter" font-size="8" fill="#8e8fa2">Retell + GPT</text>
+
+      <rect x="585" y="92" width="85" height="40" rx="4" fill="rgba(255,181,71,0.1)"/>
+      <text x="627" y="110" text-anchor="middle" font-family="Space Grotesk" font-size="9" font-weight="600" fill="#FFB547">Portaria</text>
+      <text x="627" y="124" text-anchor="middle" font-family="Inter" font-size="8" fill="#8e8fa2">futuro</text>
+
+      <line x1="360" y1="100" x2="395" y2="115" stroke="#7B9AFF" stroke-width="1" marker-end="url(#arr4)"/>
+
+      <rect x="380" y="160" width="300" height="80" rx="6" fill="rgba(123,154,255,0.06)" stroke="#7B9AFF"/>
+      <text x="530" y="180" text-anchor="middle" font-family="Space Grotesk" font-size="11" font-weight="600" fill="#7B9AFF">Treinamento (cientistas)</text>
+
+      <rect x="395" y="192" width="135" height="40" rx="4" fill="rgba(123,154,255,0.12)"/>
+      <text x="462" y="210" text-anchor="middle" font-family="Space Grotesk" font-size="9" font-weight="600" fill="#7B9AFF">Colab / Jupyter</text>
+      <text x="462" y="224" text-anchor="middle" font-family="Space Grotesk" font-size="8" fill="#4edcc5">mlflow.autolog()</text>
+
+      <rect x="540" y="192" width="135" height="40" rx="4" fill="rgba(123,154,255,0.12)"/>
+      <text x="607" y="210" text-anchor="middle" font-family="Space Grotesk" font-size="9" font-weight="600" fill="#7B9AFF">Pipeline retreino</text>
+      <text x="607" y="224" text-anchor="middle" font-family="Space Grotesk" font-size="8" fill="#4edcc5">n8n schedule</text>
+
+      <line x1="360" y1="150" x2="395" y2="200" stroke="#7B9AFF" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#arr4)"/>
+
+      <rect x="40" y="270" width="320" height="70" rx="6" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.15)"/>
+      <text x="200" y="290" text-anchor="middle" font-family="Space Grotesk" font-size="11" font-weight="600" fill="#E0E2EF">Supabase (não muda)</text>
+      <text x="200" y="308" text-anchor="middle" font-family="Inter" font-size="9" fill="#8e8fa2">workflow_executions · workflow_step_executions</text>
+      <text x="200" y="322" text-anchor="middle" font-family="Inter" font-size="9" fill="#8e8fa2">model_executions (+ mlflow_run_id, mlflow_model_version)</text>
+
+    </svg>
+  </div>
+</section>
+
+
+<!-- ==================== PARTE IV — FINANCEIRO + RISCOS ==================== -->
+<section class="chapter">
+  <header class="chapter-header">
+    <div class="chapter-eyebrow">Parte IV · Implementação</div>
+    <h1 class="chapter-title">Análise financeira &amp; riscos</h1>
+    <p class="chapter-lede">O custo de não fazer cresce com cada cliente novo e cada produto novo. O custo de fazer está bem estimado.</p>
+  </header>
+
+  <h2>4.3 Análise financeira</h2>
+
+  <h3>Custos diretos de infraestrutura</h3>
+
+  <p>A estimativa abaixo considera self-hosting no EasyPanel (mesmo padrão dos serviços atuais). Valores em USD; conversão aproximada para BRL ao câmbio de R$ 5,50.</p>
+
+  <table>
+    <thead>
+      <tr><th>Item</th><th>Especificação</th><th>Custo mensal (USD)</th><th>Custo mensal (BRL)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Container MLflow Server</td><td>1 vCPU, 2GB RAM</td><td>$8</td><td>R$ 44</td></tr>
+      <tr><td>Container Postgres</td><td>1 vCPU, 1GB RAM, 20GB storage</td><td>$10</td><td>R$ 55</td></tr>
+      <tr><td>Container MinIO</td><td>1 vCPU, 1GB RAM, 50GB storage</td><td>$12</td><td>R$ 66</td></tr>
+      <tr><td>Backups automatizados</td><td>Snapshots diários, retenção 30d</td><td>$5</td><td>R$ 28</td></tr>
+      <tr><td><strong>Total mensal</strong></td><td></td><td><strong>$35</strong></td><td><strong>R$ 193</strong></td></tr>
+      <tr><td><strong>Total anual</strong></td><td></td><td><strong>$420</strong></td><td><strong>R$ 2.316</strong></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Custos de implementação (one-time)</h3>
+
+  <table>
+    <thead>
+      <tr><th>Fase</th><th>Esforço estimado</th><th>Comentário</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Fase 1 — Fundação</td><td>1 semana · 1 dev</td><td>DevOps, configuração de containers</td></tr>
+      <tr><td>Fase 2 — Migração Call Predict</td><td>1 semana · 1 dev backend</td><td>Refactor pontual, baixo risco</td></tr>
+      <tr><td>Fase 3 — Pipeline retreino</td><td>1-2 semanas · 1 cientista</td><td>Aproveita conhecimento existente</td></tr>
+      <tr><td>Fase 4 — Prompt Registry</td><td>1 semana · 1 dev backend</td><td>Inclui adaptação dos workflows n8n</td></tr>
+      <tr><td>Fase 5 — Tracing agentes</td><td>1-2 semanas · 1 dev</td><td>Maior parte é setup + treinamento de time</td></tr>
+      <tr><td>Fase 6 — Preparação portaria</td><td>2 semanas (paralelo com produto)</td><td>Não-bloqueante</td></tr>
+      <tr><td><strong>Total bruto</strong></td><td><strong>~8 semanas de esforço, 1 pessoa em paralelo</strong></td><td>Reais ~4-5 semanas com 2 pessoas</td></tr>
+    </tbody>
+  </table>
+
+  <h3>ROI esperado</h3>
+
+  <p>Pesquisa da Deloitte aponta ROI médio de 28% para organizações com MLOps maduro, podendo chegar a 149% em casos otimizados. Para a MindFlow, três vetores de retorno são tangíveis:</p>
+
+  <div class="stat-grid cols-3">
+    <div class="stat">
+      <div class="stat-value success">10×</div>
+      <div class="stat-label">Velocidade de deploy</div>
+      <div class="stat-detail">De 1-3 dias para 5 minutos</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">~30%</div>
+      <div class="stat-label">Redução em retreinos</div>
+      <div class="stat-detail">Comparação de versões automática</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value accent">Novo</div>
+      <div class="stat-label">Argumento de venda B2B</div>
+      <div class="stat-detail">Audit trail completo, LGPD-ready</div>
+    </div>
+  </div>
+
+  <p>Numa visão conservadora: <strong>se MLflow evitar uma única regressão de modelo em produção por ano</strong> (que custaria horas de debug + possível impacto em campanhas de cliente), o custo anual de infra já está pago várias vezes.</p>
+
+  <h2>4.4 Riscos e mitigação</h2>
+
+  <table>
+    <thead>
+      <tr><th style="width:25%">Risco</th><th style="width:15%">Probabilidade</th><th style="width:15%">Impacto</th><th>Mitigação</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>MLflow indisponível trava o worker no startup</td>
+        <td>Baixa</td>
+        <td>Alto</td>
+        <td>Fallback no <code>worker.py</code> para carregar <code>.pkl</code> local da última versão conhecida. Implementar healthcheck.</td>
+      </tr>
+      <tr>
+        <td>Categorias divergentes entre treino e inferência</td>
+        <td>Média</td>
+        <td>Médio</td>
+        <td>Usar <code>infer_signature</code> sempre. Validar inferência em CI antes de promover challenger.</td>
+      </tr>
+      <tr>
+        <td>Custos de armazenamento crescem com tempo</td>
+        <td>Média</td>
+        <td>Baixo</td>
+        <td>Política de retenção (manter últimas N versões + production indefinidamente). MinIO suporta lifecycle policies.</td>
+      </tr>
+      <tr>
+        <td>Curva de aprendizado do time</td>
+        <td>Alta</td>
+        <td>Médio</td>
+        <td>Documentação interna; primeiro mês com revisão obrigatória de todo registro. UI é intuitiva.</td>
+      </tr>
+      <tr>
+        <td>Open source MLflow não tem RBAC nativo</td>
+        <td>Alta (fato)</td>
+        <td>Baixo enquanto time pequeno</td>
+        <td>VPC/firewall do EasyPanel + token único por aplicação. Revisitar se time crescer &gt;10 pessoas.</td>
+      </tr>
+      <tr>
+        <td>Bug em refactor do worker quebra produção</td>
+        <td>Baixa</td>
+        <td>Alto</td>
+        <td>Deploy gradual: rodar MLflow em paralelo por 1 semana antes de cortar o joblib.</td>
+      </tr>
+      <tr>
+        <td>Mudança de versão major do MLflow no futuro</td>
+        <td>Baixa-Média</td>
+        <td>Médio</td>
+        <td>Linux Foundation tem track record de versionamento conservador. Pinning explícito de versão.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+
+<!-- ==================== PARTE V — INSIGHTS ==================== -->
+<section class="chapter">
+  <header class="chapter-header">
+    <div class="chapter-eyebrow">Parte V · Estratégia</div>
+    <h1 class="chapter-title">Sete insights que mudam a tese</h1>
+    <p class="chapter-lede">Os argumentos abaixo são os que mais importam — e os menos óbvios.</p>
+  </header>
+
+  <div class="insight">
+    <div class="insight-num">INSIGHT 01</div>
+    <h4>MLflow não é "ferramenta de dev" — é plataforma de produto</h4>
+    <p>Pensar em MLflow como utilitário para cientistas de dados subestima o valor. <strong>Bem implementado, ele vira infraestrutura compartilhada entre todos os produtos da MindFlow</strong> — Call Predict, agentes, portaria, futuros. O CAC do próximo produto cai porque a parte "como vamos versionar e auditar isso?" já está resolvida.</p>
+  </div>
+
+  <div class="insight">
+    <div class="insight-num">INSIGHT 02</div>
+    <h4>O ritual atual de "PR + relatório" é exatamente o que MLflow elimina</h4>
+    <p>O PDF de arquitetura ML descreve que "nenhum modelo pode ir a produção sem PR contendo relatório anexado". Esse ritual existe porque <strong>hoje não há outro lugar onde a métrica do modelo viva de forma confiável</strong>. Com MLflow, o run É o relatório. Matriz de confusão, ROC-AUC, threshold ideal — tudo capturado automaticamente. Code review continua existindo, mas para o <em>código</em>, não para repassar números à mão.</p>
+  </div>
+
+  <div class="insight">
+    <div class="insight-num">INSIGHT 03</div>
+    <h4>Champion/Challenger generaliza o "5% de exploration" para todos os produtos</h4>
+    <p>O Call Predict já tem grupo de controle de 5%. Esse é, conceitualmente, champion vs. exploration. <strong>MLflow permite replicar exatamente o mesmo padrão para prompts</strong> — 90% do tráfego no prompt champion, 10% testando challenger, comparação automática. Sem MLflow, esse padrão precisaria ser reimplementado em cada produto. Com MLflow, vira convenção compartilhada.</p>
+  </div>
+
+  <div class="insight">
+    <div class="insight-num">INSIGHT 04</div>
+    <h4>A vantagem comercial de auditoria é desproporcional ao custo</h4>
+    <p>Para o time comercial, frases como <em>"cada decisão de IA é rastreável até o treino exato, e fazemos rollback em 30 segundos"</em> são diferenciador real. Em mercados onde a MindFlow vai entrar — administradoras de condomínio (LGPD), grandes empresas com TI exigente, possivelmente financeiro/jurídico no futuro — <strong>isso pode ser eliminatório no processo de venda</strong>. O custo da plataforma é trivial; o custo de perder uma venda por falta dessa capacidade não é.</p>
+  </div>
+
+  <div class="insight">
+    <div class="insight-num">INSIGHT 05</div>
+    <h4>Cuidado: MLflow não substitui tudo, mas o que substitui é estratégico</h4>
+    <p>MLflow <strong>não substitui</strong> observabilidade de produção (Grafana, Datadog), CI/CD, ou monitoramento de infra. <strong>Substitui parcialmente</strong> LangFuse/LangSmith para LLM tracing. O cenário híbrido <em>(MLflow para modelos clássicos + prompts + agentes; LangFuse só para tracing de altíssimo volume)</em> também é defensável e pode ser adotado se a complexidade dos agentes crescer muito.</p>
+  </div>
+
+  <div class="insight">
+    <div class="insight-num">INSIGHT 06</div>
+    <h4>Timing é favorável: implementar antes da portaria sair do papel</h4>
+    <p>Subir MLflow em um produto único (Call Predict) é baixo risco. Subir simultaneamente com o produto de portaria (novo, com 5 tipos de modelo, com requisitos LGPD) é alto risco. <strong>Aproveitar o Call Predict como piloto agora significa ter a plataforma rodando, com time treinado, quando portaria chegar.</strong> Inverter essa ordem custa caro.</p>
+  </div>
+
+  <div class="insight">
+    <div class="insight-num">INSIGHT 07</div>
+    <h4>Open source com licença permissiva é proteção estratégica</h4>
+    <p>MLflow é Apache 2.0, mantido pela Linux Foundation. Isso significa: <strong>sem vendor lock-in, sem mudança de pricing surpresa, sem cláusulas de saída</strong>. LangFuse foi adquirida pela ClickHouse em 2025 — exemplo recente de incerteza sobre roadmap quando uma ferramenta open source troca de mãos. MLflow não tem dono comercial único; é projeto de fundação. Para uma empresa B2B que precisa garantir continuidade aos seus clientes, isso é tese de longo prazo.</p>
+  </div>
+</section>
+
+
+<!-- ==================== CONCLUSÃO ==================== -->
+<section class="chapter">
+  <header class="chapter-header">
+    <div class="chapter-eyebrow">Conclusão</div>
+    <h1 class="chapter-title">Próximos passos imediatos</h1>
+    <p class="chapter-lede">Implementar MLflow agora é a decisão mais barata que a MindFlow pode tomar para escalar sua operação de IA sem dívida técnica.</p>
+  </header>
+
+  <h2>O caminho mais simples para começar</h2>
+
+  <p>Não é necessário aprovar todo o roadmap de uma vez. <strong>O movimento mínimo que destrava todo o resto é a Fase 1</strong>: subir os três containers no EasyPanel. Custa ~R$ 200/mês de infra e uma semana de trabalho. A partir daí, cada fase seguinte é decisão independente.</p>
+
+  <p>A ordem sugerida nas próximas duas semanas:</p>
+
+  <ol>
+    <li><strong>Dia 1-2:</strong> Validar acesso EasyPanel, criar plano de containers (MLflow + Postgres + MinIO). Definir domínio (<code>mlflow-mindflow.bkpxmb.easypanel.host</code>).</li>
+    <li><strong>Dia 3-5:</strong> Subir e validar a infraestrutura. Smoke test: criar primeiro experimento "hello world".</li>
+    <li><strong>Dia 6-8:</strong> Script de backfill dos dois modelos atuais. Validar que carregam corretamente via <code>mlflow.xgboost.load_model</code>.</li>
+    <li><strong>Dia 9-10:</strong> Refactor do <code>worker.py</code>. Deploy em staging, validar inferências idênticas às atuais.</li>
+    <li><strong>Dia 11-14:</strong> Cutover gradual para produção. Monitorar 1 semana antes de remover fallback <code>.pkl</code>.</li>
+  </ol>
+
+  <p>Após esses 14 dias, a MindFlow terá <strong>Call Predict rodando 100% via MLflow</strong>, e estará pronta para qualquer das outras fases conforme prioridade do negócio.</p>
+
+  <div class="pull-quote">
+    "O melhor momento para plantar uma árvore foi há 20 anos. O segundo melhor momento é agora."
+    <cite>— Provérbio chinês, frequentemente citado em contextos de dívida técnica.</cite>
+  </div>
+
+  <p>MLflow não é uma árvore que demora 20 anos para dar fruto. Os primeiros frutos vêm em 14 dias. Os frutos compostos — quando a portaria, novos agentes e novos clientes se beneficiarem da mesma base — vêm pelos anos seguintes.</p>
+
+  <hr class="fancy">
+
+  <h2>Referências e fontes consultadas</h2>
+
+  <p class="small">Documentação consultada entre maio de 2026, priorizando fontes oficiais (Linux Foundation, MLflow.org, Databricks) e análises técnicas independentes recentes.</p>
+
+  <h3>Documentação oficial MLflow</h3>
+  <ul>
+    <li><strong>MLflow Self-Hosting Overview.</strong> Linux Foundation. <code>mlflow.org/docs/latest/self-hosting/</code></li>
+    <li><strong>MLflow 3 for GenAI.</strong> Documentação oficial. <code>mlflow.org/docs/3.6.0/genai/mlflow-3/</code></li>
+    <li><strong>Prompt Registry for LLMs &amp; Agents.</strong> <code>mlflow.org/prompt-registry</code></li>
+    <li><strong>Model Registry Workflows.</strong> <code>mlflow.org/docs/latest/ml/model-registry/workflow/</code></li>
+    <li><strong>LLM Tracing and Agent Observability.</strong> <code>mlflow.org/docs/latest/genai/tracing/</code></li>
+    <li><strong>MLflow XGBoost Integration.</strong> <code>mlflow.org/docs/latest/ml/traditional-ml/xgboost/</code></li>
+  </ul>
+
+  <h3>Análises e comparações</h3>
+  <ul>
+    <li><strong>MLflow in 2025: The New Backbone of Enterprise MLOps.</strong> Sparity, 2025.</li>
+    <li><strong>Compare LangSmith vs. Langfuse vs. MLflow in 2025.</strong> Slashdot.</li>
+    <li><strong>Open Source Langfuse Alternative? MLflow vs Langfuse.</strong> mlflow.org.</li>
+    <li><strong>The Real Cost of Self-Hosting MLflow.</strong> Neptune.ai.</li>
+    <li><strong>Practical AgentOps: Getting Started with MLflow 3.</strong> Open Data Science.</li>
+    <li><strong>7 Infra Best Practices for Running MLflow Cost-Effectively.</strong> Cast AI.</li>
+  </ul>
+
+  <h3>Compliance e governança</h3>
+  <ul>
+    <li><strong>MLOps Governance: Audit Trails, Compliance &amp; Explainability.</strong> WeTransCloud.</li>
+    <li><strong>The AI Audit Trail: Compliance and Transparency with LLM Observability.</strong> Medium, Kuldeep Paul.</li>
+    <li><strong>LGPD — Lei nº 13.709/2018, especialmente artigos 11 e 20</strong> (categorias especiais de dados pessoais; decisões automatizadas).</li>
+    <li><strong>Agent Decision Audit and Explainability.</strong> FINOS AI Governance Framework.</li>
+  </ul>
+
+  <h3>Documentação interna MindFlow (consultada)</h3>
+  <ul>
+    <li><strong>[Call Predict] Documento de Arquitetura e Decisão de Machine Learning (MLSDD).</strong> Ryan Ferrari, 10/04/2026.</li>
+    <li><strong>Arquitetura Técnica — Call Predict (EDW).</strong> <code>docs/architecture.md</code></li>
+    <li><strong>Workflow: call_predict.</strong> <code>docs/workflow.md</code></li>
+    <li><strong>Metadados de Machine Learning — Call Predict.</strong> <code>docs/ml_metadata.md</code></li>
+    <li><strong>Guia de Estrutura de Dados — Supabase.</strong> <code>docs/supabase_data_guide.md</code></li>
+    <li><strong>Convenções de Código.</strong> <code>docs/conventions.md</code></li>
+    <li><strong>Repositório GitHub:</strong> <code>github.com/Sparkozzy/call_predict</code></li>
+  </ul>
+
+</section>
+
+</body>
+</html>

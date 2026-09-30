@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html class="dark" lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Disparo de Ligação | MindFlow</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --blue:  #2E4FFF;
+  --teal:  #00B5A0;
+  --blue2: #7B9AFF;
+  --bg:    #04060E;
+}
+
+body {
+  background: var(--bg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: 52px;
+  overflow-x: hidden;
+  font-family: 'Inter', sans-serif;
+  color: #2D3448;
+  -webkit-font-smoothing: antialiased;
+}
+
+#neural-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.navbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  background: rgba(4,6,14,0.65);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  z-index: 50;
+}
+
+.logo-mark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: #fff;
+}
+
+@property --ba {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes spin-border { to { --ba: 360deg; } }
+
+.card {
+  --ba: 0deg;
+  background:
+    linear-gradient(rgba(8,12,24,0.72), rgba(8,12,24,0.72)) padding-box,
+    conic-gradient(
+      from var(--ba),
+      rgba(46,79,255,0)   0%,
+      rgba(46,79,255,.75) 15%,
+      rgba(0,181,160,.75) 38%,
+      rgba(46,79,255,.75) 62%,
+      rgba(0,181,160,.55) 80%,
+      rgba(46,79,255,0)  100%
+    ) border-box;
+  border: 1px solid transparent;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 16px;
+  overflow: hidden;
+  width: 100%;
+  max-width: 540px;
+  padding: 44px 44px 40px;
+  box-shadow: 0 32px 64px rgba(0,0,0,.55);
+  position: relative;
+  animation: spin-border 9s linear infinite, cardIn .65s cubic-bezier(.16,1,.3,1) both;
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.card-header { text-align: center; margin-bottom: 36px; }
+.card-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 28px; font-weight: 600;
+  letter-spacing: -0.025em;
+  color: #fff; margin-bottom: 6px;
+}
+.card-sub { font-size: 14px; color: #8e8fa2; }
+
+.form { display: flex; flex-direction: column; gap: 16px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px; font-weight: 500;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #8e8fa2;
+  margin-left: 2px;
+}
+
+.input-wrap { position: relative; display: flex; align-items: center; }
+
+.input-ico {
+  position: absolute; left: 12px;
+  font-family: 'Material Symbols Outlined';
+  font-size: 16px;
+  color: #444656;
+  pointer-events: none;
+  user-select: none;
+  font-variation-settings: 'FILL' 0, 'wght' 300;
+}
+
+.label-hint {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: #4d5570;
+  margin-left: 4px;
+}
+
+input {
+  width: 100%;
+  height: 46px;
+  background: rgba(255,255,255,1);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 10px;
+  color: #2D3448;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  padding: 0 14px;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+input.has-icon { padding-left: 38px; }
+input.mono {
+  font-family: 'Space Grotesk', monospace;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: #4edcc5;
+}
+input::placeholder { color: #9ba0b0; }
+input:focus {
+  border-color: rgba(46,79,255,.75);
+  box-shadow: 0 0 0 3px rgba(46,79,255,.14);
+}
+input:hover:not(:focus) { border-color: rgba(46,79,255,.3); }
+input.input-error {
+  border-color: rgba(255, 78, 106, 0.6);
+  box-shadow: 0 0 0 3px rgba(255, 78, 106, 0.15);
+}
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #2D3448;
+  -webkit-box-shadow: 0 0 0px 1000px rgba(255,255,255,1) inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* ── Scheduler toggle ── */
+.schedule-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all .2s;
+  user-select: none;
+}
+.schedule-toggle:hover {
+  background: rgba(46,79,255,0.08);
+  border-color: rgba(46,79,255,0.3);
+}
+.schedule-toggle-ico {
+  font-family: 'Material Symbols Outlined';
+  font-size: 18px;
+  color: #7B9AFF;
+  font-variation-settings: 'FILL' 0, 'wght' 300;
+}
+.schedule-toggle-text {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #8e8fa2;
+  flex: 1;
+}
+.schedule-toggle-text span {
+  color: #7B9AFF;
+  font-weight: 600;
+}
+.schedule-toggle-arrow {
+  font-family: 'Material Symbols Outlined';
+  font-size: 16px;
+  color: #4d5570;
+  font-variation-settings: 'FILL' 0, 'wght' 300;
+  transition: transform .25s;
+}
+.schedule-toggle-arrow.open { transform: rotate(180deg); }
+
+/* ── Mindflow Premium Motion Panel (In & Out) ── */
+.scheduler-panel {
+  display: flex; /* Mantemos flex para a estrutura interna */
+  flex-direction: column;
+  gap: 0;
+  padding: 0 20px; /* Padding vertical zerado inicialmente */
+  background: rgba(4,6,14,0.6);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  
+  /* Estratégia para animação de fechamento */
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transform: translateY(-12px) scale(0.97);
+  
+  transition: 
+    max-height 500ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 400ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 400ms cubic-bezier(0.16, 1, 0.3, 1),
+    padding 500ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.scheduler-panel.open {
+  max-height: 600px; /* Valor alto o suficiente para o conteúdo */
+  opacity: 1;
+  padding: 20px;
+  pointer-events: all;
+  transform: translateY(0) scale(1);
+}
+
+/* ── Time Slots Fade System ── */
+#timeSlotsWrap {
+  max-height: 0; /* Altura zero para esconder o espaço */
+  opacity: 0;
+  overflow: hidden; /* Garante que nada "vaze" para fora */
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: 
+    max-height 600ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 400ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 500ms cubic-bezier(0.16, 1, 0.3, 1),
+    margin-top 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#timeSlotsWrap.visible {
+  max-height: 320px; /* Altura suficiente para os botões de horário */
+  opacity: 1;
+  visibility: visible;
+  margin-top: 24px; /* O espaço entre o calendário e as horas surge aqui */
+  transform: translateY(0);
+}
+
+/* ── Mindflow Motion: Minimalist Ready State ── */
+.btn {
+  /* Garante que qualquer mudança no botão seja fluida */
+  transition: 
+    background 400ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 400ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 400ms cubic-bezier(0.16, 1, 0.3, 1),
+    filter 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn.ready, .btn.ready-immediate, .btn.ready-scheduled {
+  filter: brightness(1.12) saturate(1.1);
+  box-shadow: 0 8px 24px rgba(46, 79, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+@keyframes btnPulse {
+  0% { box-shadow: 0 0 15px rgba(78, 220, 197, 0.3); transform: scale(1); }
+  50% { box-shadow: 0 0 45px rgba(78, 220, 197, 0.6); transform: scale(1.02); }
+  100% { box-shadow: 0 0 15px rgba(78, 220, 197, 0.3); transform: scale(1); }
+}
+
+/* ── Mindflow Validation Alert ── */
+.validation-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  background: rgba(255, 78, 106, 0.08); /* Fundo vermelho suave */
+  border: 1px solid rgba(255, 78, 106, 0.2);
+  border-radius: 10px;
+  color: #ff4e6a; /* Cor de erro harmonizada com o tema escuro */
+
+  /* Estrutura para expansão suave */
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transform: translateY(-5px) scale(0.98);
+  transition: 
+    max-height 400ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    padding 400ms cubic-bezier(0.16, 1, 0.3, 1),
+    margin-bottom 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.validation-alert.show {
+  max-height: 80px; /* Expande o suficiente para o texto */
+  opacity: 1;
+  padding: 12px 16px;
+  margin-bottom: 12px; /* Empurra o botão de disparo para baixo */
+  transform: translateY(0) scale(1);
+}
+
+.alert-ico {
+  font-size: 18px;
+  font-variation-settings: 'FILL' 1, 'wght' 400;
+}
+
+.alert-text {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* Calendar */
+.cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.cal-month {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #e0e2ef;
+  letter-spacing: -0.01em;
+}
+.cal-nav {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'Material Symbols Outlined';
+  font-size: 18px;
+  color: #4d5570;
+  font-variation-settings: 'FILL' 0, 'wght' 300;
+  padding: 4px;
+  border-radius: 6px;
+  transition: color .15s, background .15s;
+  line-height: 1;
+}
+.cal-nav:hover { color: #e0e2ef; background: rgba(255,255,255,0.06); }
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.cal-weekday {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #4d5570;
+  text-align: center;
+  padding: 4px 0;
+}
+.cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: #8e8fa2;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all .15s;
+  border: 1px solid transparent;
+}
+.cal-day:hover:not(.empty):not(.past) {
+  background: rgba(46,79,255,0.15);
+  color: #e0e2ef;
+  border-color: rgba(46,79,255,0.3);
+}
+.cal-day.today {
+  color: #7B9AFF;
+  font-weight: 600;
+  border-color: rgba(123,154,255,0.3);
+}
+.cal-day.selected {
+  background: linear-gradient(135deg, #2E4FFF, #00B5A0);
+  color: #fff;
+  font-weight: 600;
+  border-color: transparent;
+}
+.cal-day.past { color: #2a2d3a; cursor: default; }
+.cal-day.empty { cursor: default; }
+
+/* Time slots */
+.time-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #4d5570;
+  margin-bottom: 2px;
+}
+.time-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.time-slot {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: #8e8fa2;
+  padding: 6px 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  cursor: pointer;
+  background: rgba(255,255,255,0.03);
+  transition: all .15s;
+}
+.time-slot:hover {
+  background: rgba(46,79,255,0.12);
+  border-color: rgba(46,79,255,0.35);
+  color: #e0e2ef;
+}
+.time-slot.selected {
+  background: linear-gradient(135deg, rgba(46,79,255,0.3), rgba(0,181,160,0.3));
+  border-color: rgba(0,181,160,0.5);
+  color: #4edcc5;
+  font-weight: 600;
+}
+
+/* Selected datetime display */
+.schedule-summary {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(0,181,160,0.08);
+  border: 1px solid rgba(0,181,160,0.2);
+  border-radius: 8px;
+}
+.schedule-summary.visible { display: flex; }
+.schedule-summary-ico {
+  font-family: 'Material Symbols Outlined';
+  font-size: 14px;
+  color: #4edcc5;
+  font-variation-settings: 'FILL' 0, 'wght' 300;
+}
+.schedule-summary-text {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  color: #4edcc5;
+  letter-spacing: 0.02em;
+}
+
+/* ── Divider ── */
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.09), transparent);
+  margin: 4px 0;
+}
+
+/* ── Button ── */
+.btn {
+  width: 100%; height: 52px;
+  background: linear-gradient(135deg, var(--blue) 0%, var(--teal) 100%);
+  border: none; border-radius: 10px;
+  color: #fff;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px; font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  margin-top: 8px;
+  transition: box-shadow .25s, opacity .2s, transform .12s;
+}
+.btn:hover:not(:disabled) { box-shadow: 0 0 28px rgba(46,79,255,.4); }
+.btn:active:not(:disabled) { transform: scale(.985); }
+.btn:disabled { opacity: .6; cursor: not-allowed; }
+.btn .ico {
+  font-family: 'Material Symbols Outlined';
+  font-size: 18px;
+  font-variation-settings: 'FILL' 0, 'wght' 400;
+}
+
+.status { margin-top: 22px; display: flex; justify-content: center; }
+.pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 18px;
+  border-radius: 9999px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px; font-weight: 500;
+  letter-spacing: 0.09em; text-transform: uppercase;
+  transition: all .35s ease;
+}
+.pill-ready  { background: rgba(78,220,197,.07); border: 1px solid rgba(78,220,197,.25); color: #4edcc5; }
+.pill-call   { background: rgba(46,79,255,.10);  border: 1px solid rgba(46,79,255,.30); color: #7B9AFF; }
+.pill-done   { background: rgba(78,220,197,.1);  border: 1px solid rgba(78,220,197,.35); color: #4edcc5; }
+
+.dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; animation: dotpulse 2.2s ease-in-out infinite; }
+.dot-teal { background: #4edcc5; box-shadow: 0 0 6px #4edcc5; }
+.dot-blue { background: #7B9AFF; box-shadow: 0 0 6px #7B9AFF; }
+@keyframes dotpulse {
+  0%,100% { opacity:1; transform:scale(1); }
+  50%      { opacity:.4; transform:scale(.75); }
+}
+
+main {
+  position: relative; z-index: 1;
+  flex: 1;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px 16px;
+  width: 100%;
+}
+
+/* ── Mindflow Phone Prefix: Masterful Hover Reveal ── */
+
+/* Scoped styles para garantir integridade visual */
+.phone-master-field .input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* O container da bandeira e do texto oculto */
+.prefix-reveal-wrapper {
+    position: absolute;
+    left: 10px;
+    display: flex;
+    align-items: center;
+    
+    /* Design do mini frame premium */
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.03); /* quase invisível inicial */
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    
+    cursor: help; /* Indica ao usuário que há informação extra */
+    z-index: 2; /* Acima do input */
+    
+    /* Transição suave para o efeito de expansão e brilho */
+    transition: 
+        background 0.4s ease, 
+        border 0.4s ease, 
+        box-shadow 0.4s ease, 
+        left 0.4s ease;
+}
+
+/* Estado de Hover: O frame ganha vida e expande */
+.prefix-reveal-wrapper:hover {
+    background: rgba(255, 255, 255, 0.08); /* sutilmente mais visível */
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    left: 8px; /* pequeno movimento charmoso para a esquerda */
+}
+
+/* O Ícone Minimalista da Bandeira (SVG) */
+.flag-icon {
+    display: flex; /* Alinha o SVG perfeitamente */
+    align-items: center;
+    justify-content: center;
+    width: 18px; /* Controla o tamanho do ícone */
+    height: 12px; /* Mantém a proporção da bandeira */
+    
+    margin-right: 0px; /* Começa com espaço zero */
+    filter: grayscale(0.2); /* Reduz levemente a saturação inicial */
+    
+    /* Transições independentes para o SVG */
+    transition: margin-right 0.4s ease, filter 0.4s ease, width 0.4s ease;
+}
+
+/* Garante que o SVG preencha o container .flag-icon */
+.flag-icon svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Estado de Hover da Bandeira */
+.prefix-reveal-wrapper:hover .flag-icon {
+    margin-right: 8px; /* Cria espaço para o texto que vai nascer */
+    filter: grayscale(0); /* Bandeira ganha cor total */
+}
+
+/* O Texto do DDI (+55): O Segredo Revelado */
+.prefix-text {
+    display: inline-block;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #a0a5b5; /* Cor secundária elegante para o DDI */
+    letter-spacing: 0.02em;
+    
+    /* TÉCNICA DE REVELAÇÃO MASTERFUL */
+    max-width: 0; /* Começa com largura zero (oculto) */
+    opacity: 0; /* Começa invisível */
+    overflow: hidden; /* Oculta o conteúdo enquanto colapsado */
+    white-space: nowrap; /* Mantém o +55 em uma linha */
+    
+    /* Transições independentes para um efeito mais orgânico */
+    transition: max-width 0.4s ease, opacity 0.3s ease, margin-left 0.4s ease;
+}
+
+/* Estado de Hover: O DDI nasce suavemente next to the flag */
+.prefix-reveal-wrapper:hover .prefix-text {
+    max-width: 40px; /* Expande para a largura exata do texto */
+    opacity: 1; /* Revela o texto */
+    margin-left: 2px; /* pequeno espaçamento final */
+}
+
+/* O INPUT DO TELEFONE: Ajuste Anatômico */
+.master-phone-input {
+    /* Começa com espaço apenas para a bandeira minimalista */
+    padding-left: 55px !important; 
+    
+    /* Transição suave para o padding quando o prefixo expandir */
+    transition: padding-left 0.4s ease, border-color 0.4s ease; 
+}
+
+/* TÉCNICA AVANÇADA (Mastery): Mudar o padding interno do input QUANDO o prefixo estiver em hover */
+/* Nota: Requer suporte a :has() (navegadores modernos). Como é uma interface para automação premium, assumimos o suporte ou deixamos o design fluir. */
+.phone-master-field .input-wrap:has(.prefix-reveal-wrapper:hover) .master-phone-input {
+    padding-left: 98px !important; /* Aumenta o padding para acomodar o '+55' revelado */
+}
+
+/* ── Acessibilidade: focus-visible ── */
+.schedule-toggle:focus-visible {
+  outline: 2px solid rgba(123, 154, 255, 0.75);
+  outline-offset: 2px;
+}
+.cal-day:focus-visible:not(.empty):not(.past) {
+  outline: 2px solid rgba(46, 79, 255, 0.85);
+  outline-offset: 1px;
+  border-radius: 8px;
+}
+.time-slot:focus-visible {
+  outline: 2px solid rgba(0, 181, 160, 0.8);
+  outline-offset: 2px;
+}
+.advanced-toggle:focus-visible {
+  outline: 2px solid rgba(123, 154, 255, 0.7);
+  outline-offset: 2px;
+}
+
+/* ── Disclosure progressivo (Configurações da IA) ── */
+.advanced-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+  transition: background .2s, border-color .2s;
+}
+.advanced-toggle:hover {
+  background: rgba(123,154,255,0.06);
+  border-color: rgba(123,154,255,0.22);
+}
+.advanced-toggle-ico {
+  font-family: 'Material Symbols Outlined';
+  font-size: 15px;
+  color: #4d5570;
+  font-variation-settings: 'FILL' 0, 'wght' 300;
+}
+.advanced-toggle-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  color: #4d5570;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  flex: 1;
+}
+.advanced-toggle-arrow {
+  font-family: 'Material Symbols Outlined';
+  font-size: 15px;
+  color: #4d5570;
+  font-variation-settings: 'FILL' 0, 'wght' 300;
+  transition: transform .25s cubic-bezier(.16,1,.3,1);
+}
+.advanced-toggle-arrow.open { transform: rotate(180deg); }
+
+.advanced-panel {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition:
+    max-height 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 320ms cubic-bezier(0.16, 1, 0.3, 1),
+    padding 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.advanced-panel.open {
+  max-height: 160px;
+  opacity: 1;
+  padding-top: 14px;
+}
+
+/* ── Responsividade Mobile ── */
+@media (max-width: 600px) {
+  .card {
+    padding: 32px 20px 28px;
+  }
+  .card-title { font-size: 24px; }
+  .field-row {
+    grid-template-columns: 1fr;
+    gap: 16px; /* Mantém o mesmo espaçamento vertical dos outros campos */
+  }
+  .navbar { padding: 0 16px; }
+  main { padding: 16px 8px; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="neural-canvas"></canvas>
+
+<nav class="navbar">
+  <a class="logo-mark" href="#">
+    <svg width="28" height="28" viewBox="1255 225 485 450" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;flex-shrink:0"><path fill="white" transform="translate(0 -1604)" d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z"/></svg>
+    <svg height="22" viewBox="530 745 1945 360" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;flex-shrink:0"><path fill="white" transform="translate(0 -1604)" d="M1479.61 2368.25L1517.74 2368.25L1517.51 2687.85L1479.48 2687.89C1479.52 2678.56 1479.38 2672.65 1478.94 2663.35C1476.02 2658.69 1456.89 2675.85 1451.6 2678.72C1406.96 2702.97 1363.56 2697.62 1320.38 2667.34C1192.38 2557.43 1355.7 2366.92 1479.31 2485.3L1479.61 2368.25ZM1409.55 2656.67C1430.48 2653.41 1457.64 2642.26 1471.86 2613.07C1487.34 2581.3 1481.19 2539.66 1462.79 2516.65C1443.01 2491.9 1414.8 2481.8 1391.08 2485.73C1277.23 2502.82 1296.53 2664.41 1409.55 2656.67Z"/><path fill="white" transform="translate(0 -1604)" d="M1945.14 2449.24C1982.13 2445.92 2019.48 2455.23 2050.21 2491.51C2099.37 2550.97 2081.5 2632.36 2033.13 2668.24C2012.12 2683.83 1999.15 2687.68 1976.32 2692.86C1935.29 2694.67 1898.43 2691.03 1863.2 2648.74C1828.03 2606.27 1827 2537.01 1862.85 2494.41C1889.41 2462.84 1913.93 2454.83 1945.14 2449.24ZM1874.49 2573.05C1885.2 2649 1930.75 2657.77 1968.13 2656.51C1981.97 2653.64 1991.4 2651.59 2004.13 2643.2C2055.51 2609.35 2049.08 2526.6 2000.07 2497.62C1981.5 2486.63 1969.43 2484.68 1949.73 2485.82C1915.94 2493.17 1884.01 2507.18 1874.49 2573.05Z"/><path fill="white" transform="translate(0 -1604)" d="M730.789 2495.2C755.41 2462.12 780.94 2449.08 811.813 2448.86C833.954 2448.71 863.277 2456.99 879.134 2486.8C884.658 2497.21 888.528 2510.04 890.347 2523.98C894.054 2551.21 892.549 2653.03 892.457 2687.4L853.587 2687.34C853.378 2650.23 857.517 2524.89 846.818 2510.14C810.708 2460.38 744.823 2484.77 739.735 2576.07L739.65 2687.57L700.73 2687.59C700.595 2649.75 705.869 2530.84 691.58 2505.44C669.808 2469.53 616.642 2485.38 598.393 2520.89C581.653 2553.46 586.828 2643.28 587.016 2687.87L548.265 2687.82L548.298 2454.53C559.842 2454.48 573.861 2452.16 584.977 2454.83C588.228 2459.91 587.568 2468.01 587.96 2477.32C593.241 2476.98 611.801 2461.92 620.155 2457.97C633.29 2451.77 638.111 2451.09 651.988 2449.4C654.588 2449.17 657.191 2449.08 659.794 2449.13C687.529 2449.75 711.068 2458.86 730.789 2495.2Z"/><path fill="white" transform="translate(0 -1604)" d="M2233.04 2454.18L2275.59 2454.41C2297.41 2501.54 2323.75 2562.63 2344.02 2612.01C2359.46 2569.82 2392.75 2497.11 2410.98 2454.75L2451.22 2454.66L2438.73 2483.54L2382.65 2612.99C2374.07 2632.79 2359.3 2669.41 2349.95 2684.69C2348.27 2685.54 2339.54 2687.64 2338.37 2685.32C2314.41 2637.47 2292.36 2584.76 2270.02 2534.24C2255.79 2565.84 2241.69 2597.62 2227.72 2629.58C2220.34 2646.29 2210.14 2671.07 2201.81 2685.46C2196.22 2687.53 2195.73 2687.05 2189.96 2685.3C2182.06 2672.43 2093.67 2463.46 2092.21 2454.58L2130.13 2454.31C2150.82 2505.59 2174.46 2559.35 2195.92 2610.11C2213.28 2572.89 2232.72 2526.44 2249.02 2487.93C2244.56 2477.56 2237.92 2464.39 2233.04 2454.18Z"/><path fill="white" transform="translate(0 -1604)" d="M1137.48 2449.32C1138.71 2449.21 1139.94 2449.13 1141.18 2449.08C1245.93 2445.24 1232.36 2547.5 1232.88 2687.81L1193.94 2687.82C1193.67 2640.44 1195.92 2586.08 1192.76 2539.84C1188.36 2475.33 1137.74 2480.06 1112.16 2490.45C1053.77 2511.38 1066.09 2605.6 1066.3 2687.4L1027.87 2687.59L1027.72 2454.68L1066.3 2454.87L1066.74 2485.84C1092.98 2459.2 1107.46 2453.49 1137.48 2449.32Z"/><path fill="white" transform="translate(0 -1604)" d="M1627.7 2363.2C1645.85 2360.21 1674.85 2369.68 1692.72 2376.64L1692.75 2413.88C1677.23 2407.41 1641.9 2385.52 1629.43 2407.45C1623.1 2418.58 1624.91 2439.83 1625.39 2454.67C1653.23 2455.64 1681.46 2455.58 1709.33 2455.96L1709.4 2489.45C1681.39 2489.4 1653.39 2489.09 1625.38 2488.49L1625.32 2520.5L1625.28 2687.71L1587.02 2687.71L1586.95 2489.39L1557.24 2489.25L1557.1 2454.6L1586.81 2454.72C1586.34 2390.05 1587.97 2371.7 1627.7 2363.2Z"/><path fill="white" transform="translate(0 -1604)" d="M1758.55 2369.67L1797.02 2369.51L1796.72 2687.47L1758.6 2687.36L1758.55 2369.67Z"/><path fill="white" transform="translate(0 -1604)" d="M939.123 2454.44L977.913 2454.48L977.762 2687.61L939.08 2687.62C938.324 2611.78 938.775 2530.28 939.123 2454.44Z"/><path fill="white" transform="translate(0 -1604)" d="M952.952 2363.16C986.762 2360.45 1003.1 2404.64 964.268 2419.56C928.358 2422.49 915.136 2374.36 952.952 2363.16Z"/></svg>
+  </a>
+  <span class="material-symbols-outlined" style="color:#444656;font-size:20px;cursor:pointer;transition:color .15s;font-variation-settings:'wght' 300" onmouseover="this.style.color='#e0e2ef'" onmouseout="this.style.color='#444656'">settings</span>
+</nav>
+
+<main>
+  <div class="card">
+
+    <div class="card-header">
+      <div style="margin-bottom:24px">
+        <svg width="196" viewBox="530 220 1945 890" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto"><path fill="white" transform="translate(0 -1604)" d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z"/><path fill="white" transform="translate(0 -1604)" d="M1479.61 2368.25L1517.74 2368.25L1517.51 2687.85L1479.48 2687.89C1479.52 2678.56 1479.38 2672.65 1478.94 2663.35C1476.02 2658.69 1456.89 2675.85 1451.6 2678.72C1406.96 2702.97 1363.56 2697.62 1320.38 2667.34C1192.38 2557.43 1355.7 2366.92 1479.31 2485.3L1479.61 2368.25ZM1409.55 2656.67C1430.48 2653.41 1457.64 2642.26 1471.86 2613.07C1487.34 2581.3 1481.19 2539.66 1462.79 2516.65C1443.01 2491.9 1414.8 2481.8 1391.08 2485.73C1277.23 2502.82 1296.53 2664.41 1409.55 2656.67Z"/><path fill="white" transform="translate(0 -1604)" d="M1945.14 2449.24C1982.13 2445.92 2019.48 2455.23 2050.21 2491.51C2099.37 2550.97 2081.5 2632.36 2033.13 2668.24C2012.12 2683.83 1999.15 2687.68 1976.32 2692.86C1935.29 2694.67 1898.43 2691.03 1863.2 2648.74C1828.03 2606.27 1827 2537.01 1862.85 2494.41C1889.41 2462.84 1913.93 2454.83 1945.14 2449.24ZM1874.49 2573.05C1885.2 2649 1930.75 2657.77 1968.13 2656.51C1981.97 2653.64 1991.4 2651.59 2004.13 2643.2C2055.51 2609.35 2049.08 2526.6 2000.07 2497.62C1981.5 2486.63 1969.43 2484.68 1949.73 2485.82C1915.94 2493.17 1884.01 2507.18 1874.49 2573.05Z"/><path fill="white" transform="translate(0 -1604)" d="M730.789 2495.2C755.41 2462.12 780.94 2449.08 811.813 2448.86C833.954 2448.71 863.277 2456.99 879.134 2486.8C884.658 2497.21 888.528 2510.04 890.347 2523.98C894.054 2551.21 892.549 2653.03 892.457 2687.4L853.587 2687.34C853.378 2650.23 857.517 2524.89 846.818 2510.14C810.708 2460.38 744.823 2484.77 739.735 2576.07L739.65 2687.57L700.73 2687.59C700.595 2649.75 705.869 2530.84 691.58 2505.44C669.808 2469.53 616.642 2485.38 598.393 2520.89C581.653 2553.46 586.828 2643.28 587.016 2687.87L548.265 2687.82L548.298 2454.53C559.842 2454.48 573.861 2452.16 584.977 2454.83C588.228 2459.91 587.568 2468.01 587.96 2477.32C593.241 2476.98 611.801 2461.92 620.155 2457.97C633.29 2451.77 638.111 2451.09 651.988 2449.4C654.588 2449.17 657.191 2449.08 659.794 2449.13C687.529 2449.75 711.068 2458.86 730.789 2495.2Z"/><path fill="white" transform="translate(0 -1604)" d="M2233.04 2454.18L2275.59 2454.41C2297.41 2501.54 2323.75 2562.63 2344.02 2612.01C2359.46 2569.82 2392.75 2497.11 2410.98 2454.75L2451.22 2454.66L2438.73 2483.54L2382.65 2612.99C2374.07 2632.79 2359.3 2669.41 2349.95 2684.69C2348.27 2685.54 2339.54 2687.64 2338.37 2685.32C2314.41 2637.47 2292.36 2584.76 2270.02 2534.24C2255.79 2565.84 2241.69 2597.62 2227.72 2629.58C2220.34 2646.29 2210.14 2671.07 2201.81 2685.46C2196.22 2687.53 2195.73 2687.05 2189.96 2685.3C2182.06 2672.43 2093.67 2463.46 2092.21 2454.58L2130.13 2454.31C2150.82 2505.59 2174.46 2559.35 2195.92 2610.11C2213.28 2572.89 2232.72 2526.44 2249.02 2487.93C2244.56 2477.56 2237.92 2464.39 2233.04 2454.18Z"/><path fill="white" transform="translate(0 -1604)" d="M1137.48 2449.32C1138.71 2449.21 1139.94 2449.13 1141.18 2449.08C1245.93 2445.24 1232.36 2547.5 1232.88 2687.81L1193.94 2687.82C1193.67 2640.44 1195.92 2586.08 1192.76 2539.84C1188.36 2475.33 1137.74 2480.06 1112.16 2490.45C1053.77 2511.38 1066.09 2605.6 1066.3 2687.4L1027.87 2687.59L1027.72 2454.68L1066.3 2454.87L1066.74 2485.84C1092.98 2459.2 1107.46 2453.49 1137.48 2449.32Z"/><path fill="white" transform="translate(0 -1604)" d="M1627.7 2363.2C1645.85 2360.21 1674.85 2369.68 1692.72 2376.64L1692.75 2413.88C1677.23 2407.41 1641.9 2385.52 1629.43 2407.45C1623.1 2418.58 1624.91 2439.83 1625.39 2454.67C1653.23 2455.64 1681.46 2455.58 1709.33 2455.96L1709.4 2489.45C1681.39 2489.4 1653.39 2489.09 1625.38 2488.49L1625.32 2520.5L1625.28 2687.71L1587.02 2687.71L1586.95 2489.39L1557.24 2489.25L1557.1 2454.6L1586.81 2454.72C1586.34 2390.05 1587.97 2371.7 1627.7 2363.2Z"/><path fill="white" transform="translate(0 -1604)" d="M1758.55 2369.67L1797.02 2369.51L1796.72 2687.47L1758.6 2687.36L1758.55 2369.67Z"/><path fill="white" transform="translate(0 -1604)" d="M939.123 2454.44L977.913 2454.48L977.762 2687.61L939.08 2687.62C938.324 2611.78 938.775 2530.28 939.123 2454.44Z"/><path fill="white" transform="translate(0 -1604)" d="M952.952 2363.16C986.762 2360.45 1003.1 2404.64 964.268 2419.56C928.358 2422.49 915.136 2374.36 952.952 2363.16Z"/></svg>
+      </div>
+      <h1 class="card-title">Disparo de Ligação</h1>
+      <p class="card-sub">Inicie uma chamada com o seu agente de voz da Mindflow</p>
+    </div>
+
+    <form class="form" id="callForm" onsubmit="handleSubmit(event)" novalidate>
+
+      <div class="field">
+        <label for="nome">Nome Completo</label>
+        <div class="input-wrap">
+          <span class="input-ico">person</span>
+          <input class="has-icon" id="nome" name="nome" placeholder="Ex: Maria Silva" type="text" required />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="empresa">Empresa</label>
+        <div class="input-wrap">
+          <span class="input-ico">business</span>
+          <input class="has-icon" id="empresa" name="empresa" placeholder="Ex: Tech Corp" type="text" />
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field phone-master-field">
+  <label for="telefone">Telefone</label>
+  <div class="input-wrap">
+    
+    <div class="prefix-reveal-wrapper" title="Código do Brasil: +55">
+        <span class="flag-icon">
+    <svg viewBox="0 0 100 66" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100" height="66" fill="#009739"/> <polygon points="50,5 95,33 50,61 5,33" fill="#FEDD00"/> <circle cx="50" cy="33" r="18" fill="#012169"/> </svg>
+</span> 
+        <span class="prefix-text">+55</span> 
+    </div>
+    
+    <input class="master-phone-input" id="telefone" name="telefone" placeholder="(11) 98765-4321" type="tel" maxlength="15" required />
+    
+  </div>
+</div>
+        <div class="field">
+          <label for="email">E-mail</label>
+          <div class="input-wrap">
+            <span class="input-ico">mail</span>
+            <input class="has-icon" id="email" name="email" placeholder="contato@empresa.com" type="email" />
+          </div>
+        </div>
+      </div>
+
+      <div class="advanced-toggle" id="advancedToggle" role="button" tabindex="0" aria-expanded="false" aria-controls="advancedPanel" onclick="toggleAdvanced()">
+        <span class="advanced-toggle-ico">settings</span>
+        <span class="advanced-toggle-label">Configurações da IA</span>
+        <span class="advanced-toggle-arrow" id="advancedArrow">expand_more</span>
+      </div>
+
+      <div class="advanced-panel" id="advancedPanel" aria-hidden="true">
+        <div class="field-row">
+          <div class="field">
+            <label for="agent_id">Agent ID</label>
+            <div class="input-wrap">
+              <span class="input-ico">terminal</span>
+              <input class="has-icon mono" id="agent_id" name="agent_id" placeholder="AG-0000-BR" type="text" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="prompt_id">Prompt ID</label>
+            <div class="input-wrap">
+              <span class="input-ico">code</span>
+              <input class="has-icon mono" id="prompt_id" name="prompt_id" placeholder="PR-QUALIFY-00" type="text" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- ── AGENDAMENTO ── -->
+      <div class="field">
+        <label>Agendamento <span class="label-hint">· opcional</span></label>
+
+        <div class="schedule-toggle" id="scheduleToggle" onclick="toggleScheduler()" role="button" tabindex="0" aria-expanded="false" aria-controls="schedulerPanel">
+          <span class="schedule-toggle-ico">calendar_month</span>
+          <span class="schedule-toggle-text" id="toggleText"><span>Clique para agendar uma ligação</span></span>
+          <span class="schedule-toggle-arrow" id="toggleArrow">expand_more</span>
+        </div>
+
+        <div class="schedule-summary" id="scheduleSummary">
+          <span class="schedule-summary-ico">schedule</span>
+          <span class="schedule-summary-text" id="summaryText">—</span>
+        </div>
+
+        <div class="scheduler-panel" id="schedulerPanel">
+
+          <div class="cal-header">
+            <button type="button" class="cal-nav" onclick="changeMonth(-1)">chevron_left</button>
+            <span class="cal-month" id="calMonth">—</span>
+            <button type="button" class="cal-nav" onclick="changeMonth(1)">chevron_right</button>
+          </div>
+
+          <div class="cal-grid" id="calGrid"></div>
+
+          <div id="timeSlotsWrap">
+            <div class="time-label">Horário</div>
+            <div class="time-slots" id="timeSlots"></div>
+          </div>
+
+        </div>
+      </div>
+
+<div class="validation-alert" id="validationAlert">
+  <span class="material-symbols-outlined alert-ico">error</span>
+  <span class="alert-text" id="alertText">Preencha os campos corretamente.</span>
+</div>
+
+      <button class="btn" id="submitBtn" type="submit">
+        <span class="ico" id="btnIco">call</span>
+        <span id="btnLabel">Iniciar Ligação</span>
+      </button>
+
+    </form>
+
+    <div class="status">
+      <div class="pill pill-ready" id="pill">
+        <div class="dot dot-teal" id="dot"></div>
+        <span id="pillText">Sistema Pronto</span>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+/* ── Calendar ── */
+const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const WEEKDAYS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const TIMES = ['08:00','09:00','10:00','11:00','13:00','14:00','15:00','16:00','17:00','18:00'];
+
+let calDate = new Date();
+let selectedDay = null;
+let selectedTime = null;
+
+function toggleScheduler() {
+  const panel = document.getElementById('schedulerPanel');
+  const arrow = document.getElementById('toggleArrow');
+  const isOpen = panel.classList.contains('open');
+
+  panel.classList.toggle('open', !isOpen);
+  arrow.classList.toggle('open', !isOpen);
+
+  if (!isOpen) {
+    calDate = new Date();
+    renderCalendar();
+    renderTimeSlots();
+
+    // Faz o scroll suave usando o botão como âncora fixa
+    setTimeout(() => {
+      const toggle = document.getElementById('scheduleToggle');
+      
+      // Pegamos a posição do botão que você clicou
+      const toggleTop = toggle.getBoundingClientRect().top + window.pageYOffset;
+      
+      // Miramos um pouco abaixo do botão (offset de ~200px) 
+      // Isso garante que o botão e o calendário fiquem perfeitamente centralizados
+      const scrollTarget = toggleTop - (window.innerHeight / 2) + 200;
+
+      window.scrollTo({
+        top: scrollTarget,
+        behavior: 'smooth'
+      });
+    }, 150);
+  }
+}
+
+function changeMonth(dir) {
+  calDate.setMonth(calDate.getMonth() + dir);
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const grid  = document.getElementById('calGrid');
+  const label = document.getElementById('calMonth');
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  const y = calDate.getFullYear();
+  const m = calDate.getMonth();
+  label.textContent = `${MONTHS[m]} ${y}`;
+
+  const firstDay = new Date(y, m, 1).getDay();
+  const daysInMonth = new Date(y, m+1, 0).getDate();
+
+  let html = WEEKDAYS.map(d => `<div class="cal-weekday">${d}</div>`).join('');
+
+  for (let i = 0; i < firstDay; i++) html += `<div class="cal-day empty"></div>`;
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const thisDate = new Date(y, m, d);
+    thisDate.setHours(0,0,0,0);
+    const isPast    = thisDate < today;
+    const isToday   = thisDate.getTime() === today.getTime();
+    const isSel     = selectedDay && thisDate.getTime() === selectedDay.getTime();
+    let cls = 'cal-day';
+    if (isPast)   cls += ' past';
+    if (isToday)  cls += ' today';
+    if (isSel)    cls += ' selected';
+    const onclick = isPast ? '' : `onclick="selectDay(${y},${m},${d})"`;
+    const a11y   = (!isPast) ? `role="button" tabindex="0"` : '';
+    html += `<div class="${cls}" ${onclick} ${a11y}>${d}</div>`;
+  }
+
+  grid.innerHTML = html;
+}
+
+function selectDay(y, m, d) {
+  selectedDay  = new Date(y, m, d);
+  selectedTime = null;
+  renderCalendar();
+  renderTimeSlots();
+  
+  // Esta é a linha que ativa o fade suave dos horários:
+  document.getElementById('timeSlotsWrap').classList.add('visible');
+  
+  updateSummary();
+}
+
+function renderTimeSlots() {
+  const wrap = document.getElementById('timeSlots');
+  wrap.innerHTML = TIMES.map(t => {
+    const isSel = t === selectedTime;
+    return `<div class="time-slot${isSel ? ' selected' : ''}" role="button" tabindex="0" onclick="selectTime('${t}')">${t}</div>`;
+  }).join('');
+}
+
+function selectTime(t) {
+  selectedTime = t;
+  renderTimeSlots();
+  updateSummary();
+}
+
+function updateSummary() {
+  const summary     = document.getElementById('scheduleSummary');
+  const summaryText = document.getElementById('summaryText');
+  const toggleText  = document.getElementById('toggleText');
+  const label       = document.getElementById('btnLabel');
+  const ico         = document.getElementById('btnIco');
+
+  if (selectedDay && selectedTime) {
+    const opts = { weekday:'short', day:'numeric', month:'short' };
+    const dateStr = selectedDay.toLocaleDateString('pt-BR', opts);
+    
+    summaryText.textContent = `✓ Confirmado — aguardando disparo`;
+    summary.classList.add('visible');
+    toggleText.innerHTML = `Agendado: <span>${dateStr} · ${selectedTime}</span>`;
+
+    // Atualiza os textos do botão para o modo agendamento
+    label.textContent = 'Agendar Ligação';
+    ico.textContent   = 'schedule_send';
+    
+  } else {
+    summary.classList.remove('visible');
+    
+    if (selectedDay) {
+      toggleText.innerHTML = `Dia selecionado · escolha o <span>horário</span>`;
+    } else {
+      toggleText.innerHTML = `Ligar <span>agora</span> · clique para agendar`;
+    }
+    
+    // Volta o botão para o texto original
+    label.textContent = 'Iniciar Ligação';
+    ico.textContent   = 'call';
+  }
+
+  // A MÁGICA: Chama a validação para decidir se o botão ganha o brilho minimalista
+  checkFormReady();
+}
+
+/* ── Submit ── */
+function setPill(cls, dotCls, text) {
+  document.getElementById('pill').className = 'pill ' + cls;
+  document.getElementById('dot').className  = 'dot ' + dotCls;
+  document.getElementById('pillText').textContent = text;
+}
+
+function handleSubmit(e) {
+  e.preventDefault();
+  
+  const nomeInput = document.getElementById('nome');
+  const telefoneInput = document.getElementById('telefone');
+  const nome = nomeInput.value.trim();
+  const telefoneNumeros = telefoneInput.value.replace(/\D/g, '');
+  const alertBox = document.getElementById('validationAlert');
+  const alertText = document.getElementById('alertText');
+
+  // Validações
+  const isNomeValid = nome.length >= 2;
+  const isTelefoneValid = telefoneNumeros.length === 10 || telefoneNumeros.length === 11;
+
+  // Feedback visual nos inputs
+  nomeInput.classList.toggle('input-error', !isNomeValid);
+  telefoneInput.classList.toggle('input-error', !isTelefoneValid);
+
+  let errorMsg = [];
+  if (!isNomeValid) errorMsg.push("• Por favor, insira um nome válido.");
+  if (!isTelefoneValid) errorMsg.push("• O telefone precisa estar completo (com DDD).");
+
+  // Ativa a gaveta de erro e cancela o envio
+  if (errorMsg.length > 0) {
+    alertText.innerHTML = errorMsg.join("<br>");
+    alertBox.classList.add('show');
+    return; 
+  }
+
+  // Esconde o alerta caso o usuário tenha corrigido o erro
+  alertBox.classList.remove('show');
+
+  // O DADO LIMPO PARA O SEU BACKEND PYTHON/N8N
+  const telefoneFinal = '+55' + telefoneNumeros; 
+  console.log("Payload pronto para envio:", telefoneFinal);
+
+  const btn   = document.getElementById('submitBtn');
+  const ico   = document.getElementById('btnIco');
+  const label = document.getElementById('btnLabel');
+  const isScheduled = selectedDay && selectedTime;
+
+  btn.disabled = true;
+  ico.textContent   = 'hourglass_empty';
+  label.textContent = isScheduled ? 'Agendando...' : 'Conectando...';
+  setPill('pill-call', 'dot-blue', isScheduled ? 'Agendando...' : 'Conectando...');
+
+  setTimeout(() => {
+    if (isScheduled) {
+      ico.textContent   = 'event_available';
+      label.textContent = 'Agendado!';
+      setPill('pill-done', 'dot-teal', 'Ligação agendada');
+    } else {
+      ico.textContent   = 'phone_in_talk';
+      label.textContent = 'Em Andamento';
+      setPill('pill-call', 'dot-blue', 'Ligação em andamento');
+    }
+  }, 2200);
+
+  setTimeout(() => {
+    btn.disabled      = false;
+    ico.textContent   = 'call';
+    label.textContent = 'Iniciar Ligação';
+    setPill('pill-ready', 'dot-teal', 'Sistema Pronto');
+    document.getElementById('callForm').reset();
+    selectedDay = selectedTime = null;
+    document.getElementById('scheduleSummary').classList.remove('visible');
+    document.getElementById('schedulerPanel').classList.remove('open');
+    document.getElementById('toggleArrow').classList.remove('open');
+    document.getElementById('toggleText').innerHTML = 'Ligar <span>agora</span> · clique para agendar';
+    
+    checkFormReady(); 
+  }, isScheduled ? 4000 : 9000);
+}
+
+// MÁSCARA AUTOMÁTICA DE TELEFONE — com cursor inteligente (sem salto para o final)
+document.getElementById('telefone').addEventListener('input', function (e) {
+  const input = e.target;
+  const cursorPos = input.selectionStart;
+  const digitsBeforeCursor = input.value.slice(0, cursorPos).replace(/\D/g, '').length;
+
+  let x = input.value.replace(/\D/g, '');
+  let newValue;
+
+  if (x.length === 0) {
+    newValue = '';
+  } else if (x.length <= 2) {
+    newValue = '(' + x;
+  } else if (x.length <= 6) {
+    newValue = '(' + x.substring(0, 2) + ') ' + x.substring(2);
+  } else if (x.length <= 10) {
+    newValue = '(' + x.substring(0, 2) + ') ' + x.substring(2, 6) + '-' + x.substring(6);
+  } else {
+    newValue = '(' + x.substring(0, 2) + ') ' + x.substring(2, 7) + '-' + x.substring(7, 11);
+  }
+
+  input.value = newValue;
+
+  // Reposiciona o cursor: encontra a posição após o N-ésimo dígito e avança formatação automática
+  let newCursorPos = newValue.length;
+  if (digitsBeforeCursor === 0) {
+    newCursorPos = 0;
+  } else {
+    let digitCount = 0;
+    for (let i = 0; i < newValue.length; i++) {
+      if (/\d/.test(newValue[i])) {
+        digitCount++;
+        if (digitCount === digitsBeforeCursor) {
+          newCursorPos = i + 1;
+          // Avança sobre caracteres de formatação inseridos automaticamente
+          while (newCursorPos < newValue.length && !/\d/.test(newValue[newCursorPos])) {
+            newCursorPos++;
+          }
+          break;
+        }
+      }
+    }
+  }
+
+  input.setSelectionRange(newCursorPos, newCursorPos);
+  checkFormReady();
+});
+
+function checkFormReady() {
+  const nome = document.getElementById('nome').value.trim();
+  const telefoneNumeros = document.getElementById('telefone').value.replace(/\D/g, ''); 
+  const btn = document.getElementById('submitBtn');
+
+  const isNomeValid = nome.length >= 2;
+  const isTelefoneValid = telefoneNumeros.length === 10 || telefoneNumeros.length === 11;
+  const isScheduled = selectedDay && selectedTime;
+
+  btn.classList.remove('ready-immediate', 'ready-scheduled');
+
+  if (isNomeValid && isTelefoneValid) {
+    if (isScheduled) {
+      btn.classList.add('ready-scheduled');
+    } else {
+      btn.classList.add('ready-immediate');
+    }
+  }
+}
+
+// Validação em tempo real + limpa borda de erro ao começar a corrigir
+document.getElementById('nome').addEventListener('input', function() {
+  this.classList.remove('input-error');
+  checkFormReady();
+});
+document.getElementById('telefone').addEventListener('input', checkFormReady);
+
+/* ── Acessibilidade por teclado ── */
+
+// scheduleToggle: Enter/Espaço abre o calendário
+document.getElementById('scheduleToggle').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    toggleScheduler();
+  }
+});
+
+// Calendário: delegação no grid (Enter/Espaço seleciona o dia)
+document.getElementById('calGrid').addEventListener('keydown', function(e) {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const day = e.target.closest('.cal-day');
+  if (day && !day.classList.contains('empty') && !day.classList.contains('past')) {
+    e.preventDefault();
+    day.click();
+  }
+});
+
+// Horários: delegação no container (Enter/Espaço seleciona o horário)
+document.getElementById('timeSlots').addEventListener('keydown', function(e) {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const slot = e.target.closest('.time-slot');
+  if (slot) {
+    e.preventDefault();
+    slot.click();
+  }
+});
+
+// advancedToggle: Enter/Espaço abre configurações da IA
+document.getElementById('advancedToggle').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    toggleAdvanced();
+  }
+});
+
+/* ── Disclosure progressivo: Configurações da IA ── */
+function toggleAdvanced() {
+  const panel  = document.getElementById('advancedPanel');
+  const arrow  = document.getElementById('advancedArrow');
+  const toggle = document.getElementById('advancedToggle');
+  const isOpen = panel.classList.contains('open');
+  panel.classList.toggle('open', !isOpen);
+  arrow.classList.toggle('open', !isOpen);
+  toggle.setAttribute('aria-expanded', String(!isOpen));
+  panel.setAttribute('aria-hidden', String(isOpen));
+}
+
+/* ── Sync aria-expanded no scheduleToggle ── */
+const _origToggle = toggleScheduler;
+toggleScheduler = function() {
+  _origToggle();
+  const panel  = document.getElementById('schedulerPanel');
+  const toggle = document.getElementById('scheduleToggle');
+  toggle.setAttribute('aria-expanded', String(panel.classList.contains('open')));
+};
+</script>
+
+<!-- ══════════════════════════════════════════
+     MINDFLOW — Dot Grid Wave Animation
+════════════════════════════════════════════ -->
+<script>
+(function () {
+  const cv  = document.getElementById('neural-canvas');
+  const ctx = cv.getContext('2d');
+  let W, H, t = 0;
+  let dots = [], mouse = { x: -9999, y: -9999 };
+
+  const BLUE = [46, 79, 255];
+  const TEAL = [0, 181, 160];
+  const GAP  = 38;
+
+  function rgba(rgb, a) {
+    return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a.toFixed(3)})`;
+  }
+
+  function resize() {
+    W = cv.width  = window.innerWidth;
+    H = cv.height = window.innerHeight;
+    buildGrid();
+  }
+
+  function buildGrid() {
+    dots = [];
+    const cols = Math.ceil(W / GAP) + 2;
+    const rows = Math.ceil(H / GAP) + 2;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        dots.push({
+          bx: c * GAP - GAP,
+          by: r * GAP - GAP,
+          phase: (c * 0.35 + r * 0.55) + Math.random() * 0.4,
+          colorPhase: Math.random() * Math.PI * 2,
+        });
+      }
+    }
+  }
+
+  const WAVES = [
+    { nx:0.18, ny:0.72, speed:0.00018, ox:0.0 },
+    { nx:0.82, ny:0.28, speed:0.00014, ox:2.1 },
+    { nx:0.50, ny:0.15, speed:0.00020, ox:4.2 },
+  ];
+
+  function waveAt(wx, wy, dx, dy) {
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    return Math.sin(dist * 0.022 - t * 0.045 + wx * 0.01 + wy * 0.01) *
+           Math.exp(-dist / (Math.min(W, H) * 0.55));
+  }
+
+  function frame() {
+    ctx.fillStyle = '#04060E';
+    ctx.fillRect(0, 0, W, H);
+    const time = t;
+
+    dots.forEach(d => {
+      let influence = 0;
+      WAVES.forEach(wv => {
+        const wx = (wv.nx + Math.sin(time * wv.speed + wv.ox) * 0.18) * W;
+        const wy = (0.5   + Math.cos(time * wv.speed + wv.ox) * 0.22) * H;
+        influence += waveAt(wx, wy, d.bx - wx, d.by - wy);
+      });
+      influence /= WAVES.length;
+
+      const x = d.bx + Math.sin(d.phase + time * 0.018) * 3.5 * influence * 4;
+      const y = d.by + Math.cos(d.phase + time * 0.014) * 3.5 * influence * 4;
+      const r = 0.9 + influence * 2.2;
+      if (r <= 0) return;
+
+      const colorMix = Math.sin(d.colorPhase + time * 0.008 + influence * 3) * 0.5 + 0.5;
+      const rgb = [
+        Math.round(BLUE[0] + (TEAL[0] - BLUE[0]) * colorMix),
+        Math.round(BLUE[1] + (TEAL[1] - BLUE[1]) * colorMix),
+        Math.round(BLUE[2] + (TEAL[2] - BLUE[2]) * colorMix),
+      ];
+
+      const mdx = d.bx - mouse.x;
+      const mdy = d.by - mouse.y;
+      const mouseGlow = Math.max(0, 1 - Math.sqrt(mdx*mdx + mdy*mdy) / 140);
+      const brightness = 0.06 + Math.max(0, influence) * 0.55 + mouseGlow * 0.6;
+
+      const glow = ctx.createRadialGradient(x, y, 0, x, y, r * 5);
+      glow.addColorStop(0,   rgba(rgb, brightness * 0.5));
+      glow.addColorStop(0.4, rgba(rgb, brightness * 0.12));
+      glow.addColorStop(1,   rgba(rgb, 0));
+      ctx.beginPath(); ctx.arc(x, y, r * 5, 0, Math.PI * 2);
+      ctx.fillStyle = glow; ctx.fill();
+
+      ctx.beginPath(); ctx.arc(x, y, Math.max(0.3, r), 0, Math.PI * 2);
+      ctx.fillStyle = rgba(rgb, 0.18 + Math.max(0, influence) * 0.65 + mouseGlow * 0.8);
+      ctx.fill();
+    });
+
+    t++;
+    requestAnimationFrame(frame);
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+  window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+  window.addEventListener('mouseleave', () => { mouse.x = -9999; mouse.y = -9999; });
+  frame();
+})();
+</script>
+
+<script>
+document.addEventListener('click', function(e) {
+  const panel   = document.getElementById('schedulerPanel');
+  const toggle  = document.getElementById('scheduleToggle');
+  const summary = document.getElementById('scheduleSummary');
+  if (!panel.contains(e.target) && !toggle.contains(e.target) && !summary.contains(e.target) && !e.target.classList.contains('cal-day')) {
+    panel.classList.remove('open');
+    document.getElementById('toggleArrow').classList.remove('open');
+  }
+});
+</script>
+
+</body>
+
+</html>

@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mindflow Design Agent — Pacote Operacional</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --ink:#080810;--page:#F6F4EF;--blue:#1A56DB;--mint:#00C9A7;
+  --amber:#F5A623;--red:#DC2626;--green:#16A34A;--muted:#6B7280;
+  --rule:#E4DFD8;--white:#FFFFFF;--surface:#F0EDE8;--code-bg:#0D0D1A;
+  --navy:#0A0F1E;--navy2:#0D1B3E;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--page);color:var(--ink);font-size:15px;line-height:1.7}
+
+.cover{background:var(--ink);padding:56px 64px 64px;position:relative;overflow:hidden}
+.cover::before{content:'';position:absolute;top:-200px;right:-100px;width:500px;height:500px;background:radial-gradient(circle,rgba(26,86,219,.12) 0%,transparent 65%);pointer-events:none}
+.cover::after{content:'';position:absolute;bottom:-150px;left:-80px;width:400px;height:400px;background:radial-gradient(circle,rgba(0,201,167,.07) 0%,transparent 65%);pointer-events:none}
+.cover-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:72px;z-index:1;position:relative}
+.cover-logo{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mint)}
+.cover-meta{font-family:'DM Mono',monospace;font-size:11px;color:#2D3748;text-align:right;line-height:1.9}
+.cover-kicker{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--mint);margin-bottom:20px;display:flex;align-items:center;gap:12px;position:relative;z-index:1}
+.cover-kicker::before{content:'';width:28px;height:1px;background:var(--mint);display:inline-block}
+.cover h1{font-family:'Syne',sans-serif;font-size:clamp(32px,4.5vw,58px);font-weight:800;line-height:.98;color:var(--white);margin-bottom:20px;letter-spacing:-.02em;position:relative;z-index:1}
+.cover h1 span{color:var(--blue)}
+.cover-sub{font-size:15px;color:#4B5563;line-height:1.65;max-width:600px;position:relative;z-index:1}
+.cover-bottom{margin-top:56px;padding-top:28px;border-top:1px solid #0D0D1A;display:flex;justify-content:space-between;align-items:flex-end;position:relative;z-index:1}
+.cover-v{font-family:'DM Mono',monospace;font-size:10px;color:#1F2937}
+.cover-stack{font-family:'DM Mono',monospace;font-size:10px;color:#374151;text-align:right;line-height:1.8}
+
+.doc{max-width:960px;margin:0 auto;padding:64px 40px}
+.ch{padding:64px 40px 48px}
+.ch.dark{background:var(--ink)}
+.ch.surface{background:var(--surface);border-bottom:1px solid var(--rule)}
+.ch.light{background:var(--white);border-bottom:1px solid var(--rule)}
+.ch.navy{background:var(--navy)}
+.ch-inner{max-width:960px;margin:0 auto}
+.ch-kicker{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:12px}
+.ch.dark .ch-kicker,.ch.navy .ch-kicker{color:var(--mint)}
+.ch.surface .ch-kicker,.ch.light .ch-kicker{color:var(--blue)}
+.ch-kicker::before{content:'';width:24px;height:1px;display:inline-block}
+.ch.dark .ch-kicker::before,.ch.navy .ch-kicker::before{background:var(--mint)}
+.ch.surface .ch-kicker::before,.ch.light .ch-kicker::before{background:var(--blue)}
+.ch h2{font-family:'Syne',sans-serif;font-size:clamp(26px,3.5vw,44px);font-weight:800;line-height:1.02;margin-bottom:14px}
+.ch.dark h2,.ch.navy h2{color:var(--white)}
+.ch.surface h2,.ch.light h2{color:var(--ink)}
+.ch-intro{font-size:15px;line-height:1.7;max-width:640px}
+.ch.dark .ch-intro,.ch.navy .ch-intro{color:#6B7280}
+.ch.surface .ch-intro,.ch.light .ch-intro{color:var(--muted)}
+
+h3{font-family:'Syne',sans-serif;font-size:19px;font-weight:700;margin:48px 0 12px;color:var(--ink)}
+h4{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin:26px 0 8px}
+p{color:#374151;margin-bottom:14px;line-height:1.7}
+p.lead{font-size:16px;color:var(--ink);margin-bottom:18px}
+strong{color:var(--ink);font-weight:600}
+.rule{height:1px;background:var(--rule);margin:44px 0}
+
+/* CODE BLOCKS */
+pre{background:var(--code-bg);color:#CDD6F4;padding:24px 28px;border-radius:10px;overflow-x:auto;margin:16px 0;font-family:'DM Mono',monospace;font-size:12.5px;line-height:1.75;border:1px solid #1A1A2E;white-space:pre-wrap;word-break:break-word}
+pre code{background:none;color:inherit;padding:0}
+code{font-family:'DM Mono',monospace;font-size:12px;background:#EEF2FF;color:var(--blue);padding:2px 6px;border-radius:3px}
+.hl{color:var(--mint)}
+.hl2{color:#F9A8D4}
+.hl3{color:var(--amber)}
+.comment{color:#374151}
+.val{color:#A5F3FC}
+.str{color:#86EFAC}
+.kw{color:#C4B5FD}
+
+/* CALLOUTS */
+.callout{border-radius:8px;padding:18px 22px;margin:18px 0;display:grid;grid-template-columns:22px 1fr;gap:14px;align-items:start}
+.callout.rule-c{background:var(--ink);border-left:4px solid var(--mint)}
+.callout.warn{background:#FFFBEB;border-left:4px solid var(--amber)}
+.callout.info{background:#EFF6FF;border-left:4px solid var(--blue)}
+.callout.danger{background:#FEF2F2;border-left:4px solid var(--red)}
+.callout-icon{font-size:15px;margin-top:2px}
+.callout-title{font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.12em;font-weight:500;margin-bottom:5px}
+.callout.rule-c .callout-title{color:var(--mint)}
+.callout.warn .callout-title{color:#92400E}
+.callout.info .callout-title{color:var(--blue)}
+.callout.danger .callout-title{color:var(--red)}
+.callout p{margin:0;font-size:13px}
+.callout.rule-c p{color:#9CA3AF}
+
+/* GRIDS */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:16px 0}
+.card{background:var(--white);border:1px solid var(--rule);border-radius:10px;padding:20px}
+.card.dark{background:var(--ink);border-color:#1A1A2E}
+.card.navy{background:var(--navy);border-color:#1A1A2E}
+.card.surface{background:var(--surface)}
+.card.mint{background:rgba(0,201,167,.06);border-color:rgba(0,201,167,.25)}
+.card h4{margin-top:0}
+.card p{margin:0;font-size:13px;line-height:1.5}
+.card.dark p,.card.navy p{color:#6B7280}
+
+/* TABLES */
+table.spec{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+table.spec th{background:var(--ink);color:var(--white);font-family:'DM Mono',monospace;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.1em;padding:11px 14px;text-align:left}
+table.spec td{padding:10px 14px;border-bottom:1px solid var(--rule);color:#374151;vertical-align:top;line-height:1.5}
+table.spec tr:nth-child(even) td{background:var(--surface)}
+table.spec tr:last-child td{border-bottom:none}
+table.spec td:first-child{font-family:'DM Mono',monospace;font-size:11px;color:var(--blue);font-weight:500}
+
+/* SCORE RUBRIC */
+.rubric{margin:16px 0}
+.rubric-dim{background:var(--white);border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:10px}
+.rubric-header{background:var(--ink);padding:12px 18px;display:flex;justify-content:space-between;align-items:center}
+.rubric-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--white)}
+.rubric-weight{font-family:'DM Mono',monospace;font-size:10px;color:var(--mint)}
+.rubric-body{display:grid;grid-template-columns:repeat(5,1fr);gap:0}
+.rubric-score{padding:12px 10px;border-right:1px solid var(--rule);text-align:center}
+.rubric-score:last-child{border-right:none}
+.rubric-score-n{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:4px}
+.rubric-score-n.s1{color:var(--red)}
+.rubric-score-n.s2{color:#F97316}
+.rubric-score-n.s3{color:var(--amber)}
+.rubric-score-n.s4{color:#84CC16}
+.rubric-score-n.s5{color:var(--green)}
+.rubric-score-desc{font-size:11px;color:#6B7280;line-height:1.35}
+.rubric-action{padding:10px 18px;background:var(--surface);border-top:1px solid var(--rule);font-size:12.5px;color:#374151}
+.rubric-action strong{color:var(--red)}
+
+/* PIPELINE DIAGRAM */
+.pipeline{display:flex;gap:0;overflow-x:auto;margin:20px 0;padding-bottom:4px}
+.pipe-step{flex-shrink:0;background:var(--navy);border:1px solid #1A2744;padding:16px 18px;min-width:140px;position:relative}
+.pipe-step:first-child{border-radius:8px 0 0 8px}
+.pipe-step:last-child{border-radius:0 8px 8px 0}
+.pipe-step.active{background:rgba(26,86,219,.15);border-color:var(--blue)}
+.pipe-arrow{flex-shrink:0;display:flex;align-items:center;padding:0 8px;color:#1A2744;font-size:18px;background:var(--navy);border-top:1px solid #1A2744;border-bottom:1px solid #1A2744}
+.pipe-step:last-child + .pipe-arrow{display:none}
+.pipe-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--mint);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.pipe-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--white);margin-bottom:4px}
+.pipe-desc{font-size:11px;color:#4B5563;line-height:1.35}
+
+/* FEW SHOT */
+.fewshot{margin:20px 0}
+.fs-item{border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:16px}
+.fs-header{background:var(--surface);padding:12px 18px;display:flex;justify-content:space-between;align-items:center}
+.fs-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--ink)}
+.fs-tags{display:flex;gap:8px}
+.fs-tag{font-family:'DM Mono',monospace;font-size:9px;padding:3px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.08em}
+.fs-tag.blue{background:#EFF6FF;color:var(--blue)}
+.fs-tag.mint{background:#F0FDFB;color:#0D7A63}
+.fs-in{background:var(--code-bg);padding:16px 20px;border-bottom:1px solid #1A1A2E}
+.fs-in-label{font-family:'DM Mono',monospace;font-size:9px;color:#374151;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+.fs-out{background:#050810;padding:16px 20px}
+.fs-out-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--mint);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+.fs-reasoning{background:#111827;padding:14px 18px;border-top:1px solid #1A1A2E}
+.fs-reasoning-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--amber);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.fs-reasoning p{font-size:12px;color:#6B7280;margin:0;line-height:1.5}
+
+@media(max-width:768px){
+  .cover{padding:36px 24px 48px}
+  .ch{padding:48px 24px 40px}
+  .doc{padding:44px 20px}
+  .grid-2,.grid-3{grid-template-columns:1fr}
+  .rubric-body{grid-template-columns:1fr 1fr}
+  .pipeline{flex-direction:column}
+  .pipe-arrow{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-top">
+    <div class="cover-logo">Mindflow</div>
+    <div class="cover-meta">DESIGN-AGENT-OPS-v1.0<br>PACOTE OPERACIONAL<br>MASTRA · TYPESCRIPT · PUPPETEER</div>
+  </div>
+  <div class="cover-kicker">Agente de Design — Operacional</div>
+  <h1>Do briefing ao<br><span>HTML renderizável.</span></h1>
+  <p class="cover-sub">System prompt completo, schema de input/output, 3 exemplos few-shot com raciocínio explícito, e rubrica de auto-avaliação. Tudo que o agente de design precisa além dos documentos de especificação para produzir carrosséis Mindflow de qualidade consistente.</p>
+  <div class="cover-bottom">
+    <div class="cover-v">DESIGN-AGENT-OPS-v1.0</div>
+    <div class="cover-stack">Stack: Mastra · TypeScript · Claude API · Puppeteer<br>Input: DesignBriefing (JSON) · Output: SlideHTML[]</div>
+  </div>
+</div>
+
+<!-- SEÇÃO 1: ONDE ESTE AGENTE VIVE NO PIPELINE -->
+<div class="ch dark" id="s1">
+  <div class="ch-inner">
+    <div class="ch-kicker">Seção 1 · Contexto no Pipeline</div>
+    <h2>O Lugar do Agente<br>de Design</h2>
+    <p class="ch-intro">O agente de design não é o primeiro nem o último no pipeline. Ele recebe output estruturado do agente de copywriting e entrega HTML renderizável para o Puppeteer. Entender este contexto é pré-requisito para o system prompt.</p>
+  </div>
+</div>
+<div class="doc">
+
+  <div class="pipeline">
+    <div class="pipe-step">
+      <div class="pipe-label">01</div>
+      <div class="pipe-name">Strategy</div>
+      <div class="pipe-desc">Tema, ICP, objetivo, pilar editorial</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">
+      <div class="pipe-label">02</div>
+      <div class="pipe-name">Copywriter</div>
+      <div class="pipe-desc">Gera copy por slide: headline, corpo, dado, CTA</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step active">
+      <div class="pipe-label">03 — AQUI</div>
+      <div class="pipe-name">Design Agent</div>
+      <div class="pipe-desc">Recebe DesignBriefing, produz SlideHTML[]</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">
+      <div class="pipe-label">04</div>
+      <div class="pipe-name">Puppeteer</div>
+      <div class="pipe-desc">Renderiza HTML → PNG 1080×1350px</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">
+      <div class="pipe-label">05</div>
+      <div class="pipe-name">QA / Aprovação</div>
+      <div class="pipe-desc">Telegram gate para revisão humana</div>
+    </div>
+  </div>
+
+  <h3>Responsabilidade do Agente de Design</h3>
+  <p><strong>Recebe:</strong> um <code>DesignBriefing</code> estruturado com o copy de cada slide já escrito pelo agente anterior.</p>
+  <p><strong>Decide:</strong> qual layout, quais camadas, quais assets, quais tokens de cor e tipografia para cada slide — baseado nos documentos de especificação (DRS, VCS, Suplementos).</p>
+  <p><strong>Produz:</strong> um array de <code>SlideHTML</code> — HTML+CSS completo por slide, pronto para o Puppeteer renderizar em 1080×1350px.</p>
+  <p><strong>Não decide:</strong> o conteúdo do copy (vem do agente anterior), a aprovação final (vai para revisão humana), a publicação (outro agente downstream).</p>
+
+</div>
+
+<!-- SEÇÃO 2: SCHEMAS TYPESCRIPT -->
+<div class="ch surface" id="s2">
+  <div class="ch-inner">
+    <div class="ch-kicker">Seção 2 · Schemas de Input/Output</div>
+    <h2>DesignBriefing →<br>SlideHTML[]</h2>
+    <p class="ch-intro">Os tipos TypeScript que definem o contrato do agente. O input é estruturado pelo agente anterior — nunca texto livre. O output é HTML string por slide — nunca JSON de specs abstratas.</p>
+  </div>
+</div>
+<div class="doc">
+
+  <h3>2.1 Input — DesignBriefing</h3>
+
+<pre><code><span class="comment">// types/design-briefing.ts</span>
+<span class="comment">// Gerado pelo agente de Copywriting, consumido pelo Design Agent</span>
+
+<span class="kw">export type</span> <span class="hl">SlideType</span> =
+  | <span class="str">'cover'</span>        <span class="comment">// Capa — LAYOUT-01</span>
+  | <span class="str">'data'</span>         <span class="comment">// Dado numérico — LAYOUT-02</span>
+  | <span class="str">'split-data'</span>   <span class="comment">// Dado + foto — LAYOUT-03</span>
+  | <span class="str">'photo-full'</span>   <span class="comment">// Foto full-bleed — LAYOUT-04</span>
+  | <span class="str">'chips'</span>        <span class="comment">// Lista de chips — LAYOUT-05</span>
+  | <span class="str">'argument'</span>     <span class="comment">// Argumento editorial — LAYOUT-06</span>
+  | <span class="str">'cta'</span>;         <span class="comment">// CTA final — LAYOUT-07</span>
+
+<span class="kw">export type</span> <span class="hl">AccentColor</span> = <span class="str">'blue'</span> | <span class="str">'mint'</span> | <span class="str">'amber'</span>;
+<span class="kw">export type</span> <span class="hl">BackgroundMode</span> = <span class="str">'dark'</span> | <span class="str">'light'</span> | <span class="str">'cta-blue'</span>;
+<span class="kw">export type</span> <span class="hl">PhotoTreatment</span> = <span class="str">'brand-tint'</span> | <span class="str">'editorial'</span> | <span class="str">'bw-blue'</span> | <span class="str">'vignette'</span>;
+
+<span class="kw">export interface</span> <span class="hl">SlideCopy</span> {
+  <span class="comment">// Texto principal (âncora) — o elemento de maior escala</span>
+  anchor: {
+    text: <span class="str">string</span>;              <span class="comment">// ex: "73%" ou "Sua equipe trabalha mais."</span>
+    accentText?: <span class="str">string</span>;      <span class="comment">// parte em cor de accent — ex: "receita não cresce."</span>
+    isNumber: <span class="str">boolean</span>;        <span class="comment">// true = tratar como número (DM Mono + escala hero)</span>
+    unit?: <span class="str">string</span>;            <span class="comment">// se isNumber: "%" | "min" | "R$" | etc</span>
+  };
+
+  <span class="comment">// Suporte da âncora (contexto imediato)</span>
+  support?: {
+    text: <span class="str">string</span>;            <span class="comment">// ex: "das empresas mid-market perdem até 30%..."</span>
+    isBold: <span class="str">boolean</span>;         <span class="comment">// true = Syne Bold, false = DM Sans Regular</span>
+  };
+
+  <span class="comment">// Corpo de texto (zona SUPORTE, abaixo do separador)</span>
+  body?: <span class="str">string</span>;             <span class="comment">// ex: "Quando o fundador sai sem sistematizar..."</span>
+
+  <span class="comment">// Chips — só para slideType 'chips'</span>
+  chips?: Array<{
+    icon: <span class="str">string</span>;           <span class="comment">// "✓" | "→" | "⚡" — unicode simples, nunca emoji 3D</span>
+    text: <span class="str">string</span>;           <span class="comment">// max 5 palavras</span>
+  }>;
+
+  <span class="comment">// Dado com fonte — só para slideType 'data' e 'split-data'</span>
+  dataSource?: <span class="str">string</span>;       <span class="comment">// ex: "Estudo McKinsey 2024 — 1.200 empresas"</span>
+
+  <span class="comment">// Metadados de sistema</span>
+  categoryTag?: <span class="str">string</span>;      <span class="comment">// ex: "GESTÃO COMERCIAL · PILAR 2" (só na capa)</span>
+  sectionLabel?: <span class="str">string</span>;    <span class="comment">// ex: "O ARGUMENTO" | "EVIDÊNCIA" (slides 02+)</span>
+
+  <span class="comment">// CTA — só para slideType 'cta'</span>
+  ctaQuestion?: <span class="str">string</span>;     <span class="comment">// ex: "Quando foi a última vez que você mapeou..."</span>
+  ctaButton?: <span class="str">string</span>;       <span class="comment">// ex: "Vale uma conversa →"</span>
+}
+
+<span class="kw">export interface</span> <span class="hl">SlideAsset</span> {
+  type: <span class="str">'photo-person'</span> | <span class="str">'device-mockup'</span> | <span class="str">'chat-screenshot'</span> | <span class="str">'none'</span>;
+  url?: <span class="str">string</span>;              <span class="comment">// URL da imagem (já processada pelo pipeline)</span>
+  photoTreatment?: <span class="hl">PhotoTreatment</span>;
+  gazeDirection?: <span class="str">'left'</span> | <span class="str">'right'</span> | <span class="str">'camera'</span>;
+  <span class="comment">// gazeDirection: a direção que a pessoa na foto olha</span>
+  <span class="comment">// Deve apontar para o texto — validado pelo Design Agent</span>
+}
+
+<span class="kw">export interface</span> <span class="hl">SlideSpec</span> {
+  slideNumber: <span class="str">number</span>;       <span class="comment">// 1-based</span>
+  slideType: <span class="hl">SlideType</span>;
+  backgroundMode: <span class="hl">BackgroundMode</span>;
+  accentColor: <span class="hl">AccentColor</span>;
+  copy: <span class="hl">SlideCopy</span>;
+  asset: <span class="hl">SlideAsset</span>;
+  hasOverflow?: <span class="str">boolean</span>;    <span class="comment">// true = elemento sangra para fora do frame</span>
+  textureContent?: <span class="str">string</span>; <span class="comment">// texto para L1 textura — ex: "mindflow" | "73"</span>
+  trustElement?: <span class="str">'rating'</span> | <span class="str">'price-card'</span> | <span class="str">'chat-interface'</span> | <span class="str">'metric-card'</span> | <span class="str">'none'</span>;
+}
+
+<span class="kw">export interface</span> <span class="hl">DesignBriefing</span> {
+  <span class="comment">// Contexto do carrossel</span>
+  carouselId: <span class="str">string</span>;
+  topic: <span class="str">string</span>;             <span class="comment">// ex: "Gestão comercial B2B"</span>
+  icp: <span class="str">string</span>;               <span class="comment">// ex: "Donos de empresa 15-150 funcionários"</span>
+  objective: <span class="str">'educate'</span> | <span class="str">'convert'</span> | <span class="str">'viralize'</span>;
+  totalSlides: <span class="str">number</span>;
+
+  <span class="comment">// Os slides</span>
+  slides: <span class="hl">SlideSpec</span>[];
+
+  <span class="comment">// Assets globais disponíveis</span>
+  availablePhotos: Array<{
+    url: <span class="str">string</span>;
+    description: <span class="str">string</span>;
+    gazeDirection: <span class="str">'left'</span> | <span class="str">'right'</span> | <span class="str">'camera'</span>;
+  }>;
+}</code></pre>
+
+  <h3>2.2 Output — SlideHTML</h3>
+
+<pre><code><span class="comment">// types/slide-output.ts</span>
+
+<span class="kw">export interface</span> <span class="hl">SlideHTML</span> {
+  slideNumber: <span class="str">number</span>;
+  slideType: <span class="hl">SlideType</span>;
+  html: <span class="str">string</span>;              <span class="comment">// HTML completo — 1080×1350px, self-contained, base64 images</span>
+  <span class="comment">// Obrigatoriamente inclui: progress bar + swipe arrow (exceto último slide)</span>
+  <span class="comment">// Google Fonts import, todas as variáveis CSS em :root</span>
+
+  selfEvalScore: <span class="hl">SelfEvalResult</span>;
+  <span class="comment">// O agente avalia o próprio output antes de entregar</span>
+  <span class="comment">// Se qualquer dimensão &lt; 3: revisar e re-gerar antes de entregar</span>
+}
+
+<span class="kw">export type</span> <span class="hl">ReviewStatus</span> = <span class="str">'pending'</span> | <span class="str">'approved'</span> | <span class="str">'needs-revision'</span>;
+
+<span class="kw">export interface</span> <span class="hl">SelfEvalResult</span> {
+  hierarchy: <span class="str">number</span>;      <span class="comment">// 1-5: o olho sabe onde ir em 0,3s?</span>
+  tension: <span class="str">number</span>;        <span class="comment">// 1-5: o slide cria uma micro-pergunta?</span>
+  congruence: <span class="str">number</span>;    <span class="comment">// 1-5: forma reforça mensagem?</span>
+  system: <span class="str">number</span>;        <span class="comment">// 1-5: reconhecível como Mindflow sem logo?</span>
+  reduction: <span class="str">number</span>;     <span class="comment">// 1-5: sem elementos dispensáveis?</span>
+  overallScore: <span class="str">number</span>;  <span class="comment">// média das 5 dimensões</span>
+  flags: <span class="str">string</span>[];        <span class="comment">// lista de constraints violadas (deve estar vazia)</span>
+  revisionNeeded: <span class="str">boolean</span>; <span class="comment">// true se qualquer dimensão &lt; 3 ou flags.length &gt; 0</span>
+}
+
+<span class="kw">export interface</span> <span class="hl">DesignOutput</span> {
+  carouselId: <span class="str">string</span>;
+  slides: <span class="hl">SlideHTML</span>[];
+  sequenceValidation: {
+    densitySequence: Array<<span class="str">'high'</span> | <span class="str">'medium'</span> | <span class="str">'low'</span>>;
+    hasThreeHighConsecutive: <span class="str">boolean</span>; <span class="comment">// deve ser false</span>
+    temperatureConsistent: <span class="str">boolean</span>;  <span class="comment">// deve ser true</span>
+    ctaIsLastSlide: <span class="str">boolean</span>;         <span class="comment">// deve ser true</span>
+  };
+}</code></pre>
+
+  <h3>2.3 Integração Mastra — Tool Definition</h3>
+
+<pre><code><span class="comment">// agents/design-agent.ts</span>
+<span class="kw">import</span> { createAgent, createTool } <span class="kw">from</span> <span class="str">'@mastra/core'</span>;
+<span class="kw">import</span> { z } <span class="kw">from</span> <span class="str">'zod'</span>;
+
+<span class="kw">export const</span> <span class="hl">designAgent</span> = createAgent({
+  name: <span class="str">'mindflow-design-agent'</span>,
+  model: <span class="str">'claude-sonnet-4-5'</span>,
+  instructions: DESIGN_AGENT_SYSTEM_PROMPT, <span class="comment">// ver Seção 3</span>
+
+  tools: {
+    <span class="comment">// Tool para auto-avaliação — força o agente a estruturar</span>
+    <span class="comment">// o output de forma validável pelo TypeScript</span>
+    evaluateSlide: createTool({
+      id: <span class="str">'evaluate-slide'</span>,
+      description: <span class="str">'Avalia o HTML gerado contra as 5 dimensões de qualidade e os 10 hard constraints. Deve ser chamado antes de entregar cada slide.'</span>,
+      inputSchema: z.object({
+        slideHtml: z.string(),
+        slideType: z.string(),
+        slideNumber: z.number(),
+      }),
+      outputSchema: z.object({
+        hierarchy: z.number().min(1).max(5),
+        tension: z.number().min(1).max(5),
+        congruence: z.number().min(1).max(5),
+        system: z.number().min(1).max(5),
+        reduction: z.number().min(1).max(5),
+        flags: z.array(z.string()),
+        revisionNeeded: z.boolean(),
+      }),
+      execute: <span class="kw">async</span> ({ context }) => {
+        <span class="comment">// Implementação: o agente chama a si mesmo com um prompt</span>
+        <span class="comment">// de avaliação estruturada — ou um LLM-as-judge separado</span>
+        <span class="comment">// Ver Seção 4 (Self-Eval) para o prompt de avaliação</span>
+      },
+    }),
+  },
+});</code></pre>
+
+</div>
+
+<!-- SEÇÃO 3: SYSTEM PROMPT -->
+<div class="ch dark" id="s3">
+  <div class="ch-inner">
+    <div class="ch-kicker">Seção 3 · System Prompt</div>
+    <h2>O Que o Agente<br>Precisa Saber</h2>
+    <p class="ch-intro">O system prompt completo. Calibrado para Claude Sonnet no Mastra. Referencia os documentos de especificação como fonte de verdade — o agente não "sabe" as regras, ele as consulta. Inclui o protocolo de execução step-by-step.</p>
+  </div>
+</div>
+<div class="doc">
+
+  <div class="callout warn">
+    <div class="callout-icon">⚠</div>
+    <div>
+      <div class="callout-title">Como injetar os documentos de especificação</div>
+      <p>Os documentos DRS, VCS v1.0, Supl.01 e Supl.02 devem ser injetados no contexto do agente como documentos de referência — não como parte do system prompt. No Mastra, isso é feito via <code>context documents</code> ou como tool de consulta. O system prompt referencia esses documentos por nome. Injetar os 4 documentos inteiros no system prompt excederia o contexto e degradaria a qualidade.</p>
+    </div>
+  </div>
+
+  <h3>System Prompt Completo</h3>
+
+<pre><code><span class="comment">// MINDFLOW DESIGN AGENT — SYSTEM PROMPT v1.0</span>
+<span class="comment">// Injetar como instructions no createAgent do Mastra</span>
+
+<span class="kw">export const</span> <span class="hl">DESIGN_AGENT_SYSTEM_PROMPT</span> = <span class="str">`
+Você é o Design Agent do pipeline editorial da Mindflow.
+
+## IDENTIDADE E MISSÃO
+
+Você transforma briefings de design estruturados em HTML+CSS renderizável
+pelo Puppeteer. Você não escreve copy — o copy já vem pronto no
+DesignBriefing. Você decide como compor visualmente cada slide: qual layout,
+quais camadas, quais assets, quais tokens de cor e tipografia.
+
+Sua única medida de sucesso é: o HTML que você gera, quando renderizado em
+1080×1350px, produz um slide que passa nas 5 dimensões de qualidade e nos
+10 hard constraints do sistema de design Mindflow.
+
+## DOCUMENTOS DE REFERÊNCIA
+
+Você tem acesso a 4 documentos de especificação. Consulte-os na ordem:
+
+1. VCS-SUPPLEMENT-02 (Seção 16): primeiro, valide o copy recebido contra
+   as regras de micro-copy. Se o copy violar as regras, flag no output.
+   Você não reescreve o copy — você sinaliza o problema.
+
+2. VCS-v1.0 (Seção 5): selecione o layout baseado no slideType recebido.
+   O layout define a estrutura de zonas e camadas do slide.
+
+3. VCS-v1.0 (Seções 3 e 4): aplique os tokens de cor, tipografia e assets.
+   Nunca use valores não-tokenizados — todo pixel tem um token.
+
+4. VCS-SUPPLEMENT-01 (Seções 10-13): aplique alinhamento, escala tipográfica,
+   fluxo visual e continuidade entre slides.
+
+5. VCS-SUPPLEMENT-02 (Seções 14-15, 17-19): aplique tratamento fotográfico,
+   UI trust elements, ritmo de densidade e linguagem geométrica.
+
+6. DRS-v2.0 (Parte VII): aplique o checklist de raciocínio completo.
+
+## PROTOCOLO DE EXECUÇÃO — OBRIGATÓRIO
+
+Para CADA slide no DesignBriefing, execute nesta ordem:
+
+### STEP 1: LEITURA E VALIDAÇÃO DO INPUT
+- Leia o SlideSpec completo
+- Identifique: slideType, backgroundMode, accentColor, copy, asset
+- Verifique: o copy respeita os limites de palavras do tipo de slide?
+- Se não: registre o flag mas continue — não reescreva o copy
+
+### STEP 2: SELEÇÃO DE LAYOUT
+- slideType → layout correspondente (tabela em VCS-v1.0 Seção 5)
+- Identifique as zonas e camadas que o layout usa
+- Verifique: o asset disponível tem gazeDirection correto para o layout?
+  - Se gazeDirection aponta na direção errada: use CSS transform:scaleX(-1)
+  - Se não há asset e o layout requer foto: degradar para LAYOUT-02 (sem foto)
+
+### STEP 3: DEFINIÇÃO DE TOKENS
+- Background: backgroundMode → token de cor correspondente
+  - 'dark' → var(--bg-midnight) ou var(--bg-navy) (escolher pelo conteúdo)
+  - 'light' → var(--bg-paper) [NUNCA var fora do sistema]
+  - 'cta-blue' → var(--bg-cta) [obrigatório para slideType 'cta']
+- Accent: accentColor → token de cor
+  - 'mint' → var(--color-mint) [dados positivos]
+  - 'amber' → var(--color-amber) [dados de dor/urgência]
+  - 'blue' → var(--color-blue) [estrutural/CTA/padrão]
+- Tipografia: papel do elemento → token de tamanho + peso
+
+### STEP 4: COMPOSIÇÃO DO HTML
+Estrutura obrigatória de todo slide:
+
+\`\`\`html
+<div class="slide [layout-class]" style="
+  width: 1080px;
+  height: 1350px;
+  position: relative;
+  overflow: hidden;
+  background: [bg-token];
+  font-family: 'DM Sans', sans-serif;
+">
+  <!-- L0: background (já definido no style acima) -->
+
+  <!-- L1: textura (se textureContent presente) -->
+  <!-- L2: estrutura (blocos de cor, formas geométricas) -->
+  <!-- L3: âncora visual (foto, número, objeto) -->
+  <!-- L4: conteúdo tipográfico -->
+    <!-- SYS-TOP: logo/slide-number + section-label -->
+    <!-- ZONA ÂNCORA: elemento principal -->
+    <!-- ZONA SUPORTE: contexto, corpo, chips -->
+    <!-- SYS-BOT: handle + seta/CTA -->
+</div>
+\`\`\`
+
+Regras críticas de posicionamento:
+- Margem horizontal de segurança: 72px em todos os conteúdos
+- Alinhamento: ESQUERDA em 95% dos casos (ver VCS-SUPL-01 Seção 10)
+- Logo/waveform: top:36px, left:64px, width:120px (capa e CTA)
+- Número de slide: top:40px, left:64px, DM Mono 14px, opacity:0.5 (slides 2+)
+- Section label: top:40px, right:64px, DM Mono, mint, uppercase (quando presente)
+- Handle "mindflow.ia": bottom:40px, left:64px, DM Mono 15px
+
+### STEP 5: TRATAMENTO DO ASSET
+- Se asset.type === 'photo-person':
+  - Aplicar CSS filter correspondente ao photoTreatment
+  - Verificar gazeDirection vs posição do texto
+  - Aplicar object-fit:cover + object-position correto
+- Se asset.type === 'device-mockup':
+  - Aplicar especificação de ASSET-02 (VCS Seção 4.2)
+- Se asset.type === 'none':
+  - Usar textura tipográfica (L1) como terceiro plano mínimo
+  - NUNCA entregar slide com apenas L0+L4 (2 camadas)
+
+### STEP 6: VERIFICAÇÃO DE HARD CONSTRAINTS
+Antes de finalizar o HTML, verificar os 10 constraints:
+- C01: O slide tem mínimo 3 camadas? (exceto CTA)
+- C02: Background tem temperatura fria?
+- C03: Há exatamente 1 elemento âncora na zona ÂNCORA?
+- C04: O slide CTA tem exatamente 1 CTA?
+- C05: Há algum emoji 3D/clipart?
+- C06: Há mais de 1 gradiente?
+- C07: Há mais de 1 cor de accent?
+- C08: Há texto sobre foto sem tratamento?
+- C09: Há fonte fora do sistema (Syne/DM Sans/DM Mono)?
+- C10: Há afirmação sem dado específico?
+
+Se qualquer constraint for violada: corrigir antes de avançar.
+
+### STEP 7: SELF-EVALUATION
+Chamar a tool evaluateSlide com o HTML gerado.
+Se revisionNeeded === true: revisar e re-gerar o slide.
+Máximo 2 revisões por slide — após 2 tentativas, entregar com flag.
+
+### STEP 8: OUTPUT
+Retornar SlideHTML com html + selfEvalScore completo.
+
+## REGRAS ABSOLUTAS
+
+1. Nunca use valores de cor, tamanho ou font fora dos tokens definidos no VCS
+2. Nunca reescreva o copy — sinalize problemas no flag do SelfEvalResult
+3. Nunca entregue slide com revisionNeeded:true sem tentar revisão
+4. O handle "mindflow.ia" aparece em TODOS os slides, sempre
+5. A temperatura do background é SEMPRE fria — nunca warm
+6. O último slide SEMPRE usa backgroundMode 'cta-blue'
+7. Todo asset de foto recebe tratamento — nunca foto sem overlay
+
+## COMPONENTES OBRIGATÓRIOS EM TODOS OS SLIDES
+
+### Progress Bar (bottom de todo slide)
+Mostra posição no carrossel. Faz parte da imagem exportada — não é UI do wrapper.
+
+```html
+<!-- Progress bar — sempre o último elemento dentro do slide div, z-index:10 -->
+<div style="position:absolute;bottom:0;left:0;right:0;padding:16px 72px 24px;z-index:10;display:flex;align-items:center;gap:12px;">
+  <div style="flex:1;height:3px;background:[TRACK_COLOR];border-radius:2px;overflow:hidden;">
+    <div style="height:100%;width:[PCT]%;background:[FILL_COLOR];border-radius:2px;"></div>
+  </div>
+  <span style="font-family:'DM Mono',monospace;font-size:11px;color:[LABEL_COLOR];font-weight:500;">[N]/[TOTAL]</span>
+</div>
+```
+- Dark slides: TRACK=#ffffff1f, FILL=#ffffff, LABEL=#ffffff66
+- Light slides: TRACK=#00000014, FILL=#1A56DB, LABEL=#0000004d
+- CTA slide (último): width=100% (barra completa)
+- PCT = (slideNumber / totalSlides) * 100
+
+### Swipe Arrow (todos os slides EXCETO o último)
+```html
+<!-- Swipe arrow — direita do slide, z-index:9, OMITIR no último slide -->
+<div style="position:absolute;right:0;top:0;bottom:0;width:48px;z-index:9;display:flex;align-items:center;justify-content:center;background:linear-gradient(to right,transparent,[ARROW_BG]);">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <path d="M9 6l6 6-6 6" stroke="[ARROW_STROKE]" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+</div>
+```
+- Dark slides: ARROW_BG=rgba(255,255,255,0.08), ARROW_STROKE=rgba(255,255,255,0.35)
+- Light slides: ARROW_BG=rgba(0,0,0,0.06), ARROW_STROKE=rgba(0,0,0,0.25)
+- OMITIR completamente no último slide (slideNumber === totalSlides)
+
+## REGRAS DE EMBED DE IMAGEM — CRÍTICO
+
+Todo asset de foto deve ser embeddado como base64 data URI. NUNCA usar
+path relativo ou URL externa — quebra no contexto de renderização.
+
+NUNCA: <img src="foto.jpg"> ou background: url('foto.jpg')
+SEMPRE: <img src="data:image/jpeg;base64,[BASE64_STRING]">
+
+O agente que converte o path para base64 antes de gerar o HTML:
+```python
+import base64
+from pathlib import Path
+
+img_path = Path("/path/to/image.jpg")
+# Verificar formato real com `file` command — extensão pode mentir
+mime = "image/jpeg"  # ou "image/png"
+b64 = base64.b64encode(img_path.read_bytes()).decode()
+data_uri = f"data:{mime};base64,{b64}"
+```
+
+Usar SEMPRE <img> tag com object-fit:cover, NUNCA background:url() com base64
+(background+base64 de >500KB causa crash do parser do browser).
+
+O HTML completo SEMPRE gerado via Python Path.write_text() — nunca via
+shell heredoc ($ e backticks na string base64 são interpolados e corrompem).
+
+## CONTEXTO DE RENDERIZAÇÃO
+
+O Puppeteer renderiza com viewport 1080×1350px, device_scale_factor padrão.
+O HTML deve ser self-contained: Google Fonts no head, todas as variáveis
+CSS em :root. Imagens como base64 data URI (ver regras acima).
+O slide container tem position:relative e overflow:hidden (exceto
+slides com hasOverflow:true, que usam overflow:visible).
+Aguardar 3000ms após page.setContent() para Google Fonts carregar antes
+de capturar screenshot.
+`</span>;</code></pre>
+
+</div>
+
+<!-- SEÇÃO 4: FEW-SHOT EXAMPLES -->
+<div class="ch light" id="s4">
+  <div class="ch-inner">
+    <div class="ch-kicker">Seção 4 · Exemplos Few-Shot</div>
+    <h2>Input → Raciocínio<br>→ Output</h2>
+    <p class="ch-intro">Três exemplos completos com o raciocínio explícito do agente. Estes exemplos são injetados no contexto do agente junto com o system prompt — eles demonstram o processo de decisão, não apenas o resultado.</p>
+  </div>
+</div>
+<div class="doc">
+
+  <div class="callout info">
+    <div class="callout-icon">ℹ</div>
+    <div>
+      <div class="callout-title">Como usar os few-shot examples</div>
+      <p>No Mastra, injetar estes exemplos como mensagens <code>user</code>/<code>assistant</code> antes da mensagem real, ou como parte do contexto de memória do agente. O raciocínio explícito entre &lt;thinking&gt; tags ensina o agente a consultar os documentos — não a memorizar regras.</p>
+    </div>
+  </div>
+
+  <div class="fewshot">
+
+    <!-- EXAMPLE 1 -->
+    <div class="fs-item">
+      <div class="fs-header">
+        <div class="fs-title">Exemplo 1 — Slide de Capa com Tensão</div>
+        <div class="fs-tags">
+          <span class="fs-tag blue">slideType: cover</span>
+          <span class="fs-tag mint">LAYOUT-01</span>
+        </div>
+      </div>
+      <div class="fs-in">
+        <div class="fs-in-label">Input — SlideSpec</div>
+<pre><code>{
+  slideNumber: 1,
+  slideType: <span class="str">"cover"</span>,
+  backgroundMode: <span class="str">"dark"</span>,
+  accentColor: <span class="str">"blue"</span>,
+  copy: {
+    anchor: {
+      text: <span class="str">"Sua equipe trabalha mais."</span>,
+      accentText: <span class="str">"A receita não cresce."</span>,
+      isNumber: <span class="val">false</span>
+    },
+    categoryTag: <span class="str">"GESTÃO COMERCIAL · PILAR 2"</span>
+  },
+  asset: { type: <span class="str">"none"</span> },
+  textureContent: <span class="str">"mindflow"</span>
+}</code></pre>
+      </div>
+      <div class="fs-reasoning">
+        <div class="fs-reasoning-label">Raciocínio do Agente</div>
+        <p>
+          slideType 'cover' → LAYOUT-01. Copy tem âncora de 2 linhas com accentText separado — é um headline de tensão em duas partes. Nenhum asset disponível → L3 será vazio (espaço negativo como âncora, conforme DRS Princípio 04). textureContent "mindflow" → L1 com textura tipográfica em 7% opacidade. Background dark → var(--bg-midnight). Accent blue → a accentText vai em var(--color-blue). Alinhamento: esquerda (VCS Supl.01 Seção 10 — headline com 2 partes não é âncora solitária). categoryTag → SYS-TOP zona, DM Mono uppercase, mint. "arraste →" → SYS-BOT esquerda. "mindflow.ia" → SYS-BOT direita. Verificando constraints: 3+ camadas? L0+L1+L4 = 3 ✓. Background frio? midnight ✓. 1 accent? blue apenas ✓. Nenhum emoji? ✓.
+        </p>
+      </div>
+      <div class="fs-out">
+        <div class="fs-out-label">Output — HTML do Slide</div>
+<pre><code><span class="comment">&lt;!-- Slide 1: Cover --&gt;</span>
+<span class="hl">&lt;div</span> style=<span class="str">"
+  width:1080px; height:1350px;
+  position:relative; overflow:hidden;
+  background:#0A0A0F;
+  font-family:'DM Sans',sans-serif;
+"</span>&gt;
+
+  <span class="comment">&lt;!-- L1: Textura tipográfica --&gt;</span>
+  <span class="hl">&lt;div</span> style=<span class="str">"
+    position:absolute; inset:0;
+    z-index:1; pointer-events:none; overflow:hidden;
+  "</span>&gt;
+    <span class="hl">&lt;span</span> style=<span class="str">"
+      font-family:'Syne',sans-serif;
+      font-size:280px; font-weight:800;
+      opacity:0.07; color:#ffffff;
+      position:absolute;
+      bottom:-40px; right:-60px;
+      line-height:1; letter-spacing:-0.04em;
+      white-space:nowrap; user-select:none;
+    "</span>&gt;mindflow<span class="hl">&lt;/span&gt;</span>
+  <span class="hl">&lt;/div&gt;</span>
+
+  <span class="comment">&lt;!-- L4: Conteúdo --&gt;</span>
+  <span class="hl">&lt;div</span> style=<span class="str">"position:absolute; inset:0; z-index:4;"</span>&gt;
+
+    <span class="comment">&lt;!-- SYS-TOP: logo waveform --&gt;</span>
+    <span class="hl">&lt;img</span>
+      src=<span class="str">"/assets/mindflow-waveform-white.svg"</span>
+      alt=<span class="str">"Mindflow"</span>
+      style=<span class="str">"
+        position:absolute; top:36px; left:64px;
+        width:120px; height:auto;
+      "</span>
+    /&gt;
+
+    <span class="comment">&lt;!-- Category tag --&gt;</span>
+    <span class="hl">&lt;span</span> style=<span class="str">"
+      position:absolute; top:742px; left:72px;
+      font-family:'DM Mono',monospace;
+      font-size:16px; font-weight:500;
+      letter-spacing:0.14em; text-transform:uppercase;
+      color:#00C9A7;
+    "</span>&gt;GESTÃO COMERCIAL · PILAR 2<span class="hl">&lt;/span&gt;</span>
+
+    <span class="comment">&lt;!-- Headline âncora --&gt;</span>
+    <span class="hl">&lt;div</span> style=<span class="str">"
+      position:absolute;
+      top:790px; left:72px; right:72px;
+    "</span>&gt;
+      <span class="comment">&lt;!-- Linha 1: branca --&gt;</span>
+      <span class="hl">&lt;div</span> style=<span class="str">"
+        font-family:'Syne',sans-serif;
+        font-size:88px; font-weight:800;
+        color:#FFFFFF;
+        line-height:0.96; letter-spacing:-0.03em;
+        margin-bottom:4px;
+      "</span>&gt;Sua equipe trabalha mais.<span class="hl">&lt;/div&gt;</span>
+      <span class="comment">&lt;!-- Linha 2: accent azul --&gt;</span>
+      <span class="hl">&lt;div</span> style=<span class="str">"
+        font-family:'Syne',sans-serif;
+        font-size:88px; font-weight:800;
+        color:#1A56DB;
+        line-height:0.96; letter-spacing:-0.03em;
+      "</span>&gt;A receita não cresce.<span class="hl">&lt;/div&gt;</span>
+    <span class="hl">&lt;/div&gt;</span>
+
+    <span class="comment">&lt;!-- SYS-BOT --&gt;</span>
+    <span class="hl">&lt;span</span> style=<span class="str">"
+      position:absolute; bottom:40px; left:72px;
+      font-family:'DM Mono',monospace;
+      font-size:15px; color:#374151; letter-spacing:0.06em;
+    "</span>&gt;arraste →<span class="hl">&lt;/span&gt;</span>
+    <span class="hl">&lt;span</span> style=<span class="str">"
+      position:absolute; bottom:40px; right:64px;
+      font-family:'DM Mono',monospace;
+      font-size:15px; color:#374151; letter-spacing:0.06em;
+    "</span>&gt;mindflow.ia<span class="hl">&lt;/span&gt;</span>
+
+  <span class="hl">&lt;/div&gt;</span>
+<span class="hl">&lt;/div&gt;</span></code></pre>
+      </div>
+    </div>
+
+    <!-- EXAMPLE 2 -->
+    <div class="fs-item">
+      <div class="fs-header">
+        <div class="fs-title">Exemplo 2 — Slide de Dado Numérico</div>
+        <div class="fs-tags">
+          <span class="fs-tag blue">slideType: data</span>
+          <span class="fs-tag mint">LAYOUT-02</span>
+        </div>
+      </div>
+      <div class="fs-in">
+        <div class="fs-in-label">Input — SlideSpec</div>
+<pre><code>{
+  slideNumber: 2,
+  slideType: <span class="str">"data"</span>,
+  backgroundMode: <span class="str">"dark"</span>,
+  accentColor: <span class="str">"mint"</span>,
+  copy: {
+    anchor: {
+      text: <span class="str">"73"</span>,
+      unit: <span class="str">"%"</span>,
+      isNumber: <span class="val">true</span>,
+      accentText: <span class="val">undefined</span>
+    },
+    support: {
+      text: <span class="str">"das empresas mid-market perdem até 30% da receita em transições de liderança mal planejadas"</span>,
+      isBold: <span class="val">true</span>
+    },
+    dataSource: <span class="str">"Estudo McKinsey 2024 — 1.200 empresas latino-americanas com faturamento entre R$50M–R$500M"</span>,
+    sectionLabel: <span class="str">"O DADO"</span>
+  },
+  asset: { type: <span class="str">"none"</span> },
+  textureContent: <span class="str">"73"</span>
+}</code></pre>
+      </div>
+      <div class="fs-reasoning">
+        <div class="fs-reasoning-label">Raciocínio do Agente</div>
+        <p>
+          slideType 'data' → LAYOUT-02. anchor.isNumber:true → número enorme em DM Mono, cor mint, var(--size-number-hero) = 200px. accentColor 'mint' → número em #00C9A7 (dado positivo/impacto). Mas contexto é de perda — devo usar amber? Não: o sinal semântico vem do accentColor no briefing, não da minha interpretação. O agente de copywriting decidiu usar mint. Respeitar. textureContent "73" → L1 textura: "73" gigante em 8% opacidade atrás do número. Separador azul entre número e contexto. support.isBold:true → Syne Bold 40px. dataSource → DM Mono 14px muted, abaixo do support. sectionLabel "O DADO" → SYS-TOP direita, mint. Número de slide "02" → SYS-TOP esquerda. Verificando: 3 camadas? L0+L1+L4 = 3 ✓. Alinhamento do número: âncora solitária no contexto de número isolado → centralizado é válido (CENTRAL-04). Mas contexto imediato está abaixo → esquerda. Implementar: número left-aligned (o texto contextual abaixo já cria o eixo esquerdo).
+        </p>
+      </div>
+      <div class="fs-out">
+        <div class="fs-out-label">Output — HTML do Slide (estrutura)</div>
+<pre><code><span class="comment">&lt;!-- Slide 2: Data --&gt;</span>
+<span class="hl">&lt;div</span> style=<span class="str">"
+  width:1080px; height:1350px;
+  position:relative; overflow:hidden;
+  background:#0D1B3E;
+"</span>&gt;
+
+  <span class="comment">&lt;!-- L1: número como textura de fundo --&gt;</span>
+  <span class="hl">&lt;span</span> style=<span class="str">"
+    position:absolute; top:-40px; left:40px;
+    font-family:'Syne',sans-serif;
+    font-size:520px; font-weight:800;
+    color:#ffffff; opacity:0.06;
+    line-height:1; letter-spacing:-0.04em;
+    z-index:1; pointer-events:none; user-select:none;
+  "</span>&gt;73<span class="hl">&lt;/span&gt;</span>
+
+  <span class="comment">&lt;!-- L4: Conteúdo --&gt;</span>
+  <span class="hl">&lt;div</span> style=<span class="str">"position:absolute; inset:0; z-index:4;"</span>&gt;
+
+    <span class="comment">&lt;!-- SYS-TOP --&gt;</span>
+    <span class="hl">&lt;span</span> style=<span class="str">"
+      position:absolute; top:40px; left:64px;
+      font-family:'DM Mono',monospace; font-size:14px;
+      color:#374151; opacity:0.5; letter-spacing:0.06em;
+    "</span>&gt;02<span class="hl">&lt;/span&gt;</span>
+    <span class="hl">&lt;span</span> style=<span class="str">"
+      position:absolute; top:40px; right:64px;
+      font-family:'DM Mono',monospace; font-size:16px;
+      font-weight:500; letter-spacing:0.14em;
+      text-transform:uppercase; color:#00C9A7;
+    "</span>&gt;O DADO<span class="hl">&lt;/span&gt;</span>
+
+    <span class="comment">&lt;!-- Número âncora --&gt;</span>
+    <span class="hl">&lt;div</span> style=<span class="str">"
+      position:absolute; top:350px; left:72px;
+      display:flex; align-items:baseline; gap:8px;
+    "</span>&gt;
+      <span class="hl">&lt;span</span> style=<span class="str">"
+        font-family:'Syne',sans-serif;
+        font-size:200px; font-weight:800;
+        color:#00C9A7; line-height:0.88;
+        letter-spacing:-0.04em;
+      "</span>&gt;73<span class="hl">&lt;/span&gt;</span>
+      <span class="hl">&lt;span</span> style=<span class="str">"
+        font-family:'DM Mono',monospace;
+        font-size:72px; font-weight:400;
+        color:#00C9A7; line-height:1;
+        letter-spacing:-0.02em;
+      "</span>&gt;%<span class="hl">&lt;/span&gt;</span>
+    <span class="hl">&lt;/div&gt;</span>
+
+    <span class="comment">&lt;!-- Separador --&gt;</span>
+    <span class="hl">&lt;div</span> style=<span class="str">"
+      position:absolute; top:600px; left:72px;
+      width:64px; height:2px; background:#1A56DB;
+    "</span>&gt;<span class="hl">&lt;/div&gt;</span>
+
+    <span class="comment">&lt;!-- Support text --&gt;</span>
+    <span class="hl">&lt;div</span> style=<span class="str">"
+      position:absolute; top:636px; left:72px; right:72px;
+      font-family:'Syne',sans-serif;
+      font-size:36px; font-weight:700;
+      color:#FFFFFF; line-height:1.15;
+      letter-spacing:-0.01em;
+    "</span>&gt;das empresas mid-market perdem até 30% da receita em transições de liderança mal planejadas<span class="hl">&lt;/div&gt;</span>
+
+    <span class="comment">&lt;!-- Data source --&gt;</span>
+    <span class="hl">&lt;div</span> style=<span class="str">"
+      position:absolute; top:830px; left:72px; right:72px;
+      font-family:'DM Mono',monospace;
+      font-size:14px; color:#4B5563; line-height:1.5;
+    "</span>&gt;Estudo McKinsey 2024 — 1.200 empresas latino-americanas com faturamento entre R$50M–R$500M<span class="hl">&lt;/div&gt;</span>
+
+    <span class="comment">&lt;!-- SYS-BOT --&gt;</span>
+    <span class="hl">&lt;span</span> style=<span class="str">"
+      position:absolute; bottom:40px; left:64px;
+      font-family:'DM Mono',monospace;
+      font-size:15px; color:#374151; letter-spacing:0.06em;
+    "</span>&gt;mindflow.ia<span class="hl">&lt;/span&gt;</span>
+
+  <span class="hl">&lt;/div&gt;</span>
+<span class="hl">&lt;/div&gt;</span></code></pre>
+      </div>
+    </div>
+
+    <!-- EXAMPLE 3 -->
+    <div class="fs-item">
+      <div class="fs-header">
+        <div class="fs-title">Exemplo 3 — Slide CTA Final</div>
+        <div class="fs-tags">
+          <span class="fs-tag blue">slideType: cta</span>
+          <span class="fs-tag mint">LAYOUT-07</span>
+        </div>
+      </div>
+      <div class="fs-in">
+        <div class="fs-in-label">Input — SlideSpec</div>
+<pre><code>{
+  slideNumber: 5,
+  slideType: <span class="str">"cta"</span>,
+  backgroundMode: <span class="str">"cta-blue"</span>,
+  accentColor: <span class="str">"mint"</span>,
+  copy: {
+    anchor: { text: <span class="str">""</span>, isNumber: <span class="val">false</span> },
+    ctaQuestion: <span class="str">"Quando foi a última vez que você mapeou quem na sua empresa é insubstituível?"</span>,
+    ctaButton: <span class="str">"Vale uma conversa →"</span>
+  },
+  asset: { type: <span class="str">"none"</span> }
+}</code></pre>
+      </div>
+      <div class="fs-reasoning">
+        <div class="fs-reasoning-label">Raciocínio do Agente</div>
+        <p>
+          slideType 'cta' → LAYOUT-07. backgroundMode 'cta-blue' → var(--bg-cta) = #1A56DB. É o último slide — mudança de cor é o sinal de conversão. accentColor 'mint' → o botão será em #00C9A7 (contraste máximo sobre azul). ctaQuestion como âncora: headline em branco, Syne ExtraBold. Não centralizado — apesar de ser CTA, a pergunta tem 12 palavras e está mais para argumento que âncora solitária. Esquerda. ctaButton → pill em mint, texto em dark (#080810). Logo waveform aparece neste slide em branco (30% opacidade) como elemento de continuidade. Tagline "mindflow.ia · IA que conversa. E converte." no SYS-BOT. Zero outros elementos — constraints C04 (1 CTA): ✓. Verificar C01 (3 camadas): L0 (azul sólido) + L4 = 2 camadas. Preciso de L1. Adicionar waveform em L1 como textura semitransparente em background. Agora 3 camadas ✓.
+        </p>
+      </div>
+      <div class="fs-out">
+        <div class="fs-out-label">Output — HTML do Slide (estrutura)</div>
+<pre><code><span class="comment">&lt;!-- Slide 5: CTA --&gt;</span>
+<span class="hl">&lt;div</span> style=<span class="str">"
+  width:1080px; height:1350px;
+  position:relative; overflow:hidden;
+  background:#1A56DB;
+"</span>&gt;
+
+  <span class="comment">&lt;!-- L1: waveform como textura --&gt;</span>
+  <span class="hl">&lt;img</span>
+    src=<span class="str">"/assets/mindflow-waveform-white.svg"</span>
+    style=<span class="str">"
+      position:absolute; z-index:1;
+      top:-80px; right:-100px;
+      width:600px; opacity:0.06;
+      pointer-events:none;
+    "</span>
+  /&gt;
+
+  <span class="comment">&lt;!-- L4: Conteúdo --&gt;</span>
+  <span class="hl">&lt;div</span> style=<span class="str">"position:absolute; inset:0; z-index:4;"</span>&gt;
+
+    <span class="comment">&lt;!-- Logo waveform proeminente --&gt;</span>
+    <span class="hl">&lt;img</span>
+      src=<span class="str">"/assets/mindflow-waveform-white.svg"</span>
+      style=<span class="str">"
+        position:absolute; top:36px; left:64px;
+        width:180px; opacity:0.28;
+      "</span>
+    /&gt;
+
+    <span class="comment">&lt;!-- CTA Question --&gt;</span>
+    <span class="hl">&lt;div</span> style=<span class="str">"
+      position:absolute;
+      top:480px; left:72px; right:72px;
+      font-family:'Syne',sans-serif;
+      font-size:72px; font-weight:800;
+      color:#FFFFFF; line-height:1.0;
+      letter-spacing:-0.02em;
+    "</span>&gt;Quando foi a última vez que você mapeou quem na sua empresa é insubstituível?<span class="hl">&lt;/div&gt;</span>
+
+    <span class="comment">&lt;!-- CTA Button --&gt;</span>
+    <span class="hl">&lt;div</span> style=<span class="str">"
+      position:absolute; top:900px; left:72px;
+      display:inline-block;
+      background:#00C9A7;
+      border-radius:100px;
+      padding:24px 48px;
+      font-family:'DM Sans',sans-serif;
+      font-size:22px; font-weight:600;
+      color:#080810; letter-spacing:0;
+      white-space:nowrap;
+    "</span>&gt;Vale uma conversa →<span class="hl">&lt;/div&gt;</span>
+
+    <span class="comment">&lt;!-- SYS-BOT: linha + tagline --&gt;</span>
+    <span class="hl">&lt;div</span> style=<span class="str">"
+      position:absolute; bottom:60px; left:64px; right:64px;
+    "</span>&gt;
+      <span class="hl">&lt;div</span> style=<span class="str">"
+        width:48px; height:1px;
+        background:rgba(255,255,255,0.2);
+        margin-bottom:10px;
+      "</span>&gt;<span class="hl">&lt;/div&gt;</span>
+      <span class="hl">&lt;span</span> style=<span class="str">"
+        font-family:'DM Mono',monospace;
+        font-size:14px; color:rgba(255,255,255,0.4);
+        letter-spacing:0.06em;
+      "</span>&gt;mindflow.ia · IA que conversa. E converte.<span class="hl">&lt;/span&gt;</span>
+    <span class="hl">&lt;/div&gt;</span>
+
+  <span class="hl">&lt;/div&gt;</span>
+<span class="hl">&lt;/div&gt;</span></code></pre>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SEÇÃO 5: SELF-EVALUATION RUBRIC -->
+<div class="ch surface" id="s5">
+  <div class="ch-inner">
+    <div class="ch-kicker">Seção 5 · Rubrica de Auto-Avaliação</div>
+    <h2>Como o Agente Avalia<br>o Próprio Output</h2>
+    <p class="ch-intro">O prompt de auto-avaliação que o agente usa para pontuar cada slide antes de entregar. Pode ser implementado como uma segunda chamada ao Claude com este prompt, ou como um LLM-as-judge separado na pipeline Mastra.</p>
+  </div>
+</div>
+<div class="doc">
+
+  <h3>5.1 Prompt de Auto-Avaliação</h3>
+
+<pre><code><span class="comment">// SELF-EVAL PROMPT — segunda chamada ao LLM</span>
+<span class="comment">// Input: o HTML gerado + o SlideSpec original</span>
+<span class="comment">// Output: SelfEvalResult estruturado (JSON)</span>
+
+<span class="kw">export const</span> <span class="hl">SELF_EVAL_PROMPT</span> = <span class="str">`
+Você é um avaliador de qualidade de design para posts de carrossel Mindflow.
+Avalie o HTML fornecido contra os critérios abaixo.
+Retorne APENAS JSON válido no formato especificado. Sem texto adicional.
+
+## CRITÉRIOS DE AVALIAÇÃO
+
+### 1. HIERARQUIA (1-5)
+Pergunta: Em 0,3 segundos visualizando o slide renderizado, onde vai o olho?
+1 = Não consigo identificar o elemento âncora
+2 = Consigo identificar mas com esforço (>1 segundo)
+3 = Identifico em ~0,5 segundos
+4 = Identifico em ~0,3 segundos sem esforço
+5 = Inequívoco — âncora domina, tudo mais é subordinado
+
+### 2. TENSÃO (1-5)
+Pergunta: O slide cria uma micro-pergunta que leva o usuário a querer mais?
+1 = Declaração neutra sem tensão (ex: "Somos uma empresa de IA")
+2 = Leve interesse mas sem tensão real
+3 = Cria curiosidade moderada
+4 = Cria pergunta clara que o carrossel responde
+5 = Tensão irresistível — impossível não querer o próximo slide
+
+### 3. CONGRUÊNCIA (1-5)
+Pergunta: A estética visual reforça a mensagem do copy?
+1 = Estética contradiz a mensagem (ex: emojis em conteúdo corporativo)
+2 = Estética é neutra — não ajuda nem atrapalha
+3 = Estética compatível com a mensagem
+4 = Estética amplifica a mensagem de forma clara
+5 = Forma e conteúdo são inseparáveis — a mensagem não funcionaria com outra estética
+
+### 4. SISTEMA (1-5)
+Pergunta: Sem ver o logo "Mindflow", reconheço isso como Mindflow?
+1 = Poderia ser de qualquer marca
+2 = Tem alguns elementos Mindflow mas sem identidade clara
+3 = Parece da família mas não tenho certeza
+4 = Claramente Mindflow pela temperatura, tipografia e estrutura
+5 = Inconfundível — temperatura fria, Syne ExtraBold, DM Mono, margem 72px
+
+### 5. REDUÇÃO (1-5)
+Pergunta: Há algum elemento que poderia ser removido sem perda?
+1 = 3+ elementos dispensáveis
+2 = 2 elementos dispensáveis
+3 = 1 elemento dispensável
+4 = Tudo tem função mas há 1 elemento que poderia ser simplificado
+5 = Nada a remover — cada elemento é necessário
+
+## VERIFICAÇÃO DE HARD CONSTRAINTS
+
+Verifique cada um (true = violado, false = ok):
+- C01_less_than_3_layers: o slide tem menos de 3 camadas visíveis?
+- C02_warm_background: o background tem temperatura quente (hue 20-80°)?
+- C03_two_anchors: há dois elementos competindo como âncora visual?
+- C04_two_ctas: há mais de 1 CTA no slide? (apenas verificar em slideType 'cta')
+- C05_decorative_emoji: há emojis 3D ou clipart decorativo?
+- C06_gradient_on_gradient: há mais de 1 gradiente sobreposto?
+- C07_two_accents: há duas cores de accent diferentes no mesmo slide?
+- C08_text_on_photo_untreated: há texto diretamente sobre foto sem overlay/container?
+- C09_wrong_font: há alguma fonte além de Syne, DM Sans, DM Mono?
+- C10_vague_claim: há alguma afirmação de resultado sem número específico?
+
+## FORMATO DE OUTPUT (JSON)
+
+{
+  "hierarchy": <1-5>,
+  "tension": <1-5>,
+  "congruence": <1-5>,
+  "system": <1-5>,
+  "reduction": <1-5>,
+  "overallScore": <média das 5>,
+  "flags": [<lista de constraints violadas, ex: "C02_warm_background">],
+  "revisionNeeded": <true se qualquer dimensão < 3 OU flags.length > 0>,
+  "revisionNotes": "<o que revisar, se revisionNeeded for true>"
+}
+
+## HTML PARA AVALIAR:
+[INSERIR HTML AQUI]
+
+## SLIDESPEC ORIGINAL:
+[INSERIR SLIDESPEC JSON AQUI]
+`</span>;</code></pre>
+
+  <h3>5.2 A Rubrica Visual — 5 Dimensões</h3>
+
+  <div class="rubric">
+    <div class="rubric-dim">
+      <div class="rubric-header">
+        <div class="rubric-name">Hierarquia</div>
+        <div class="rubric-weight">Peso 25%</div>
+      </div>
+      <div class="rubric-body">
+        <div class="rubric-score">
+          <div class="rubric-score-n s1">1</div>
+          <div class="rubric-score-desc">Não há âncora identificável</div>
+        </div>
+        <div class="rubric-score">
+          <div class="rubric-score-n s2">2</div>
+          <div class="rubric-score-desc">Âncora existe mas com esforço</div>
+        </div>
+        <div class="rubric-score">
+          <div class="rubric-score-n s3">3</div>
+          <div class="rubric-score-desc">Identifico em ~0,5s</div>
+        </div>
+        <div class="rubric-score">
+          <div class="rubric-score-n s4">4</div>
+          <div class="rubric-score-desc">Âncora clara em 0,3s</div>
+        </div>
+        <div class="rubric-score">
+          <div class="rubric-score-n s5">5</div>
+          <div class="rubric-score-desc">Âncora domina inequivocamente</div>
+        </div>
+      </div>
+      <div class="rubric-action"><strong>Se score &lt; 3:</strong> aumentar tamanho da âncora em mínimo 1 nível de escala; reduzir tamanho dos elementos secundários.</div>
+    </div>
+
+    <div class="rubric-dim">
+      <div class="rubric-header">
+        <div class="rubric-name">Tensão</div>
+        <div class="rubric-weight">Peso 25%</div>
+      </div>
+      <div class="rubric-body">
+        <div class="rubric-score">
+          <div class="rubric-score-n s1">1</div>
+          <div class="rubric-score-desc">Declaração neutra sem pergunta</div>
+        </div>
+        <div class="rubric-score">
+          <div class="rubric-score-n s2">2</div>
+          <div class="rubric-score-desc">Leve interesse, sem tensão</div>
+        </div>
+        <div class="rubric-score">
+          <div class="rubric-score-n s3">3</div>
+          <div class="rubric-score-desc">Curiosidade moderada</div>
+        </div>
+        <div class="rubric-score">
+          <div class="rubric-score-n s4">4</div>
+          <div class="rubric-score-desc">Pergunta clara criada</div>
+        </div>
+        <div class="rubric-score">
+          <div class="rubric-score-n s5">5</div>
+          <div class="rubric-score-desc">Tensão irresistível</div>
+        </div>
+      </div>
+      <div class="rubric-action"><strong>Se score &lt; 3:</strong> verificar se o copy da capa é afirmação (reformular como tensão) ou se o dado do slide 2 tem fonte específica (adicionar).</div>
+    </div>
+
+    <div class="rubric-dim">
+      <div class="rubric-header">
+        <div class="rubric-name">Congruência</div>
+        <div class="rubric-weight">Peso 20%</div>
+      </div>
+      <div class="rubric-body">
+        <div class="rubric-score"><div class="rubric-score-n s1">1</div><div class="rubric-score-desc">Estética contradiz mensagem</div></div>
+        <div class="rubric-score"><div class="rubric-score-n s2">2</div><div class="rubric-score-desc">Estética neutra</div></div>
+        <div class="rubric-score"><div class="rubric-score-n s3">3</div><div class="rubric-score-desc">Compatível</div></div>
+        <div class="rubric-score"><div class="rubric-score-n s4">4</div><div class="rubric-score-desc">Amplifica a mensagem</div></div>
+        <div class="rubric-score"><div class="rubric-score-n s5">5</div><div class="rubric-score-desc">Forma e conteúdo inseparáveis</div></div>
+      </div>
+      <div class="rubric-action"><strong>Se score &lt; 3:</strong> identificar o elemento dissonante (cor errada para o conteúdo, forma que não combina com tom) e remover ou substituir.</div>
+    </div>
+
+    <div class="rubric-dim">
+      <div class="rubric-header">
+        <div class="rubric-name">Sistema</div>
+        <div class="rubric-weight">Peso 15%</div>
+      </div>
+      <div class="rubric-body">
+        <div class="rubric-score"><div class="rubric-score-n s1">1</div><div class="rubric-score-desc">Poderia ser qualquer marca</div></div>
+        <div class="rubric-score"><div class="rubric-score-n s2">2</div><div class="rubric-score-desc">Alguns elementos Mindflow</div></div>
+        <div class="rubric-score"><div class="rubric-score-n s3">3</div><div class="rubric-score-desc">Parece da família</div></div>
+        <div class="rubric-score"><div class="rubric-score-n s4">4</div><div class="rubric-score-desc">Claramente Mindflow</div></div>
+        <div class="rubric-score"><div class="rubric-score-n s5">5</div><div class="rubric-score-desc">Inconfundível</div></div>
+      </div>
+      <div class="rubric-action"><strong>Se score &lt; 3:</strong> verificar temperatura do background, família tipográfica, margem horizontal (72px), e posição do handle.</div>
+    </div>
+
+    <div class="rubric-dim">
+      <div class="rubric-header">
+        <div class="rubric-name">Redução</div>
+        <div class="rubric-weight">Peso 15%</div>
+      </div>
+      <div class="rubric-body">
+        <div class="rubric-score"><div class="rubric-score-n s1">1</div><div class="rubric-score-desc">3+ elementos dispensáveis</div></div>
+        <div class="rubric-score"><div class="rubric-score-n s2">2</div><div class="rubric-score-desc">2 elementos dispensáveis</div></div>
+        <div class="rubric-score"><div class="rubric-score-n s3">3</div><div class="rubric-score-desc">1 elemento dispensável</div></div>
+        <div class="rubric-score"><div class="rubric-score-n s4">4</div><div class="rubric-score-desc">Quase ótimo</div></div>
+        <div class="rubric-score"><div class="rubric-score-n s5">5</div><div class="rubric-score-desc">Nada a remover</div></div>
+      </div>
+      <div class="rubric-action"><strong>Se score &lt; 3:</strong> aplicar teste de redução — remover o elemento mais decorativo e verificar se o slide fica mais forte. Se sim, remover.</div>
+    </div>
+  </div>
+
+  <h3>5.3 Threshold de Entrega</h3>
+
+  <table class="spec">
+    <thead><tr><th>Score Overall</th><th>Flags</th><th>Ação</th></tr></thead>
+    <tbody>
+      <tr><td>≥ 4.0</td><td>Nenhum</td><td class="ok">✓ Entregar</td></tr>
+      <tr><td>3.0 – 3.9</td><td>Nenhum</td><td>Entregar com nota de melhoria para revisão humana</td></tr>
+      <tr><td>qualquer</td><td>1 ou mais</td><td>Corrigir constraint violada e re-avaliar. Máx 2 tentativas.</td></tr>
+      <tr><td>&lt; 3.0</td><td>qualquer</td><td>Re-gerar o slide completo. Máx 2 tentativas. Se ainda &lt; 3.0: entregar com flag de revisão humana obrigatória.</td></tr>
+    </tbody>
+  </table>
+
+</div>
+
+<!-- SEÇÃO 6: CHECKLIST DE IMPLANTAÇÃO -->
+<div class="ch dark" id="s6">
+  <div class="ch-inner">
+    <div class="ch-kicker">Seção 6 · Implantação no Mastra</div>
+    <h2>O Que Passar em<br>Cada Sessão</h2>
+    <p class="ch-intro">O que incluir no contexto do agente em cada chamada, e como estruturar o Mastra para que o Design Agent consulte os documentos corretamente.</p>
+  </div>
+</div>
+<div class="doc">
+
+  <h3>6.1 O Que Passar no Contexto — Lista Completa</h3>
+
+  <table class="spec">
+    <thead><tr><th>Item</th><th>Como passar</th><th>Obrigatório?</th><th>Tamanho aprox.</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>System Prompt (Seção 3)</td>
+        <td><code>instructions</code> no createAgent</td>
+        <td class="ok">✓ Sim</td>
+        <td>~3.5k tokens</td>
+      </tr>
+      <tr>
+        <td>Few-shot examples (Seção 4)</td>
+        <td>Mensagens user/assistant antes do input real, ou via Mastra memory</td>
+        <td class="ok">✓ Sim</td>
+        <td>~8k tokens</td>
+      </tr>
+      <tr>
+        <td>VCS-SUPPLEMENT-02 Seção 16 (templates de copy)</td>
+        <td>Context document injetado no início da sessão</td>
+        <td class="ok">✓ Sim</td>
+        <td>~6k tokens</td>
+      </tr>
+      <tr>
+        <td>VCS v1.0 Seções 3, 4, 5 (tokens, assets, layouts)</td>
+        <td>Context document ou tool de consulta</td>
+        <td class="ok">✓ Sim</td>
+        <td>~12k tokens</td>
+      </tr>
+      <tr>
+        <td>VCS-SUPPLEMENT-01 Seções 10-13 (alinhamento, fluxo, continuidade)</td>
+        <td>Context document</td>
+        <td class="ok">✓ Sim</td>
+        <td>~8k tokens</td>
+      </tr>
+      <tr>
+        <td>VCS-SUPPLEMENT-02 Seções 14-15, 17-19 (grid, foto, UI, geometria)</td>
+        <td>Context document</td>
+        <td class="ok">✓ Sim</td>
+        <td>~10k tokens</td>
+      </tr>
+      <tr>
+        <td>DRS v2.0 completo</td>
+        <td>Opcional — via tool de consulta quando agente precisar do porquê</td>
+        <td>Opcional</td>
+        <td>~25k tokens</td>
+      </tr>
+      <tr>
+        <td>Self-eval prompt (Seção 5)</td>
+        <td>Tool <code>evaluateSlide</code> no Mastra</td>
+        <td class="ok">✓ Sim</td>
+        <td>~2k tokens por chamada</td>
+      </tr>
+      <tr>
+        <td>DesignBriefing (input real)</td>
+        <td>Mensagem user no turn da chamada</td>
+        <td class="ok">✓ Sim</td>
+        <td>~1-3k tokens por carrossel</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout rule-c">
+    <div class="callout-icon">◈</div>
+    <div>
+      <div class="callout-title">Estratégia de contexto recomendada</div>
+      <p>O DRS completo (25k tokens) é caro para injetar em cada chamada. Estratégia recomendada: criar uma tool <code>queryDesignPrinciples(query: string)</code> que faz semantic search nos documentos e retorna apenas os trechos relevantes para o slide sendo gerado. O sistema prompt instrui o agente a usar essa tool quando precisar justificar uma decisão de design — não para cada slide automaticamente.</p>
+    </div>
+  </div>
+
+  <h3>6.2 Estrutura de Arquivos Recomendada no Repositório</h3>
+
+<pre><code>apps/api/src/agents/
+├── design/
+│   ├── design-agent.ts          <span class="comment">// createAgent com system prompt</span>
+│   ├── system-prompt.ts         <span class="comment">// DESIGN_AGENT_SYSTEM_PROMPT (Seção 3)</span>
+│   ├── self-eval-prompt.ts      <span class="comment">// SELF_EVAL_PROMPT (Seção 5)</span>
+│   └── few-shot-examples.ts     <span class="comment">// exemplos few-shot (Seção 4)</span>
+│
+├── types/
+│   ├── design-briefing.ts       <span class="comment">// DesignBriefing, SlideSpec (Seção 2.1)</span>
+│   └── slide-output.ts          <span class="comment">// SlideHTML, DesignOutput (Seção 2.2)</span>
+│
+└── docs/                        <span class="comment">// documentos de especificação como strings</span>
+    ├── vcs-v1-sections-3-5.md   <span class="comment">// tokens + assets + layouts</span>
+    ├── vcs-supl01-s10-13.md     <span class="comment">// alinhamento + fluxo + continuidade</span>
+    └── vcs-supl02-s14-19.md     <span class="comment">// grid + copy + UI + geometria</span></code></pre>
+
+  <h3>6.3 O Que Passa Entre os Agentes — Fluxo de Dados</h3>
+
+<pre><code><span class="comment">// Pipeline completo — fluxo de dados</span>
+
+<span class="comment">// AGENTE COPYWRITER → DESIGN AGENT</span>
+<span class="comment">// O copywriter entrega um DesignBriefing estruturado</span>
+<span class="comment">// O design agent NÃO recebe texto livre</span>
+
+<span class="kw">const</span> briefing: <span class="hl">DesignBriefing</span> = <span class="kw">await</span> copywriterAgent.generate({
+  topic: <span class="str">"gestão de knowledge em empresas mid-market"</span>,
+  icp: <span class="str">"donos de empresa 20-100 funcionários"</span>,
+  objective: <span class="str">"educate"</span>,
+  pillar: 2,
+});
+
+<span class="comment">// DESIGN AGENT → DesignOutput (HTML gerado, NÃO renderizado ainda)</span>
+<span class="kw">const</span> designOutput: <span class="hl">DesignOutput</span> = <span class="kw">await</span> designAgent.generate({
+  messages: [{ role: <span class="str">'user'</span>, content: JSON.stringify(briefing) }],
+});
+
+<span class="comment">// → ETAPA DE REVIEW antes do export (ver 6.4)</span>
+<span class="comment">// → EXPORT só após aprovação explícita (ver 6.5)</span></code></pre>
+
+  <h3>6.4 Protocolo de Review — Preview → Aprovação → Export</h3>
+  <p>O Design Agent nunca exporta diretamente. O fluxo obrigatório tem 3 etapas que nunca são puladas.</p>
+
+  <div class="callout rule-c">
+    <div class="callout-icon">◈</div>
+    <div>
+      <div class="callout-title">Regra Absoluta de Review</div>
+      <p>O agente NUNCA salta direto para export. Sempre gera o HTML primeiro, envia preview para aprovação, aguarda confirmação explícita ("pode exportar", "aprovado", "exporta"), e só então executa o export. Aprovação implícita — silêncio, "ok", "parece bom" — não conta. Se houver pedido de ajuste: corrigir APENAS os slides mencionados. Nunca regenerar o carrossel inteiro por feedback pontual.</p>
+    </div>
+  </div>
+
+<pre><code><span class="comment">// ETAPA 1: Design Agent gera HTML — NÃO renderiza PNG</span>
+<span class="comment">// Retorna DesignOutput com slides[].html completo</span>
+
+<span class="comment">// ETAPA 2: Renderizar preview em baixa resolução para revisão humana</span>
+<span class="kw">async function</span> <span class="hl">renderPreview</span>(slideHtml: <span class="str">string</span>, slideNumber: <span class="str">number</span>): Promise&lt;Buffer&gt; {
+  <span class="kw">const</span> browser = <span class="kw">await</span> puppeteer.launch();
+  <span class="kw">const</span> page = <span class="kw">await</span> browser.newPage();
+
+  <span class="comment">// Preview em 420×525 — mesma proporção 4:5, rápido de gerar</span>
+  <span class="kw">await</span> page.setViewport({ width: <span class="val">420</span>, height: <span class="val">525</span>, deviceScaleFactor: <span class="val">1</span> });
+
+  <span class="comment">// Escalar slide de 1080→420 via CSS sem reflow</span>
+  <span class="kw">const</span> scaledHtml = slideHtml.replace(
+    <span class="str">'width:1080px;height:1350px'</span>,
+    <span class="str">'width:1080px;height:1350px;transform:scale(0.389);transform-origin:top left;overflow:hidden'</span>
+  );
+  <span class="kw">await</span> page.setContent(scaledHtml, { waitUntil: <span class="str">'networkidle0'</span> });
+  <span class="kw">await</span> page.waitForTimeout(<span class="val">1500</span>);
+
+  <span class="kw">const</span> buffer = <span class="kw">await</span> page.screenshot({
+    clip: { x: <span class="val">0</span>, y: <span class="val">0</span>, width: <span class="val">420</span>, height: <span class="val">525</span> }
+  });
+  <span class="kw">await</span> browser.close();
+  <span class="kw">return</span> buffer <span class="kw">as</span> Buffer;
+}
+
+<span class="comment">// Enviar todos os previews para o Telegram Gate</span>
+<span class="kw">for</span> (<span class="kw">const</span> slide <span class="kw">of</span> designOutput.slides) {
+  <span class="kw">const</span> preview = <span class="kw">await</span> renderPreview(slide.html, slide.slideNumber);
+  <span class="kw">await</span> sendToTelegramPreview(preview, {
+    slideNumber: slide.slideNumber,
+    evalScore: slide.selfEvalScore.overallScore,
+    flags: slide.selfEvalScore.flags,
+  });
+}
+
+<span class="comment">// Aguardar aprovação explícita antes de prosseguir</span>
+<span class="comment">// Mensagem no Telegram: "Quais slides precisam de ajuste antes de exportar?"</span>
+<span class="comment">// Se resposta = lista de slides → corrigir só esses, re-enviar preview dos corrigidos</span>
+<span class="comment">// Se resposta = "pode exportar" / "aprovado" / "exporta" → ETAPA 3</span></code></pre>
+
+  <h3>6.5 Script de Export Final — Puppeteer 1080×1350px</h3>
+
+<pre><code><span class="comment">// ETAPA 3: Export após aprovação explícita</span>
+<span class="comment">// Renderizar cada slide em resolução final 1080×1350px</span>
+
+<span class="kw">async function</span> <span class="hl">exportSlide</span>(
+  slideHtml: <span class="str">string</span>,
+  slideNumber: <span class="str">number</span>,
+  outputDir: <span class="str">string</span>
+): Promise&lt;void&gt; {
+  <span class="kw">const</span> browser = <span class="kw">await</span> puppeteer.launch();
+  <span class="kw">const</span> page = <span class="kw">await</span> browser.newPage();
+
+  <span class="comment">// Viewport = tamanho final — sem scaling, sem reflow</span>
+  <span class="kw">await</span> page.setViewport({ width: <span class="val">1080</span>, height: <span class="val">1350</span>, deviceScaleFactor: <span class="val">1</span> });
+
+  <span class="kw">await</span> page.setContent(slideHtml, { waitUntil: <span class="str">'networkidle0'</span> });
+  <span class="kw">await</span> page.waitForTimeout(<span class="val">3000</span>);
+  <span class="comment">// ↑ OBRIGATÓRIO: Google Fonts precisa de tempo para carregar</span>
+  <span class="comment">// Reduzir para &lt;3000ms resulta em fonts fallback no PNG final</span>
+
+  <span class="kw">const</span> filename = `slide_${String(slideNumber).padStart(<span class="val">2</span>, <span class="str">'0'</span>)}.png`;
+  <span class="kw">await</span> page.screenshot({
+    path: `${outputDir}/${filename}`,
+    clip: { x: <span class="val">0</span>, y: <span class="val">0</span>, width: <span class="val">1080</span>, height: <span class="val">1350</span> },
+    type: <span class="str">'png'</span>,
+  });
+
+  <span class="kw">await</span> browser.close();
+  console.log(<span class="str">`✓ Exportado ${filename}`</span>);
+}
+
+<span class="comment">// Exportar todos os slides aprovados</span>
+<span class="kw">const</span> outputDir = <span class="str">`/outputs/carousel_${briefing.carouselId}`</span>;
+<span class="kw">for</span> (<span class="kw">const</span> slide <span class="kw">of</span> designOutput.slides) {
+  <span class="kw">await</span> exportSlide(slide.html, slide.slideNumber, outputDir);
+}
+console.log(<span class="str">`✓ Carrossel completo: ${designOutput.slides.length} slides exportados`</span>);</code></pre>
+
+  <h3>6.6 Pitfalls de Export — Tabela de Erros Comuns</h3>
+  <table class="spec">
+    <thead><tr><th>Erro</th><th>Consequência</th><th>Correção</th></tr></thead>
+    <tbody>
+      <tr><td>Usar path relativo em &lt;img src&gt;</td><td>Imagem quebrada — path só funciona na pasta exata do HTML</td><td>Sempre base64 data URI</td></tr>
+      <tr><td>background:url() com base64 &gt;500KB</td><td>Crash do parser do browser — página não renderiza</td><td>Usar &lt;img&gt; tag com object-fit:cover</td></tr>
+      <tr><td>Gerar HTML via shell heredoc</td><td>$ e backticks na string base64 são interpolados — string corrompida</td><td>Python Path.write_text() ou Node fs.writeFile()</td></tr>
+      <tr><td>Assumir .png = PNG (extensão pode mentir)</td><td>MIME type errado — imagem não renderiza</td><td>Rodar `file` command para detectar formato real</td></tr>
+      <tr><td>waitForTimeout &lt; 3000ms</td><td>Google Fonts não carregou — fonts fallback no export</td><td>Sempre ≥3000ms após setContent()</td></tr>
+      <tr><td>Não omitir swipe arrow no último slide</td><td>Último slide parece que tem mais conteúdo — UX incorreta</td><td>Verificar slideNumber === totalSlides antes de adicionar arrow</td></tr>
+      <tr><td>Progress bar com valor hardcoded</td><td>Barra mostra posição errada em todos os slides</td><td>Sempre calcular PCT = (slideNumber / totalSlides) × 100</td></tr>
+      <tr><td>Exportar sem aprovação humana</td><td>PNG com erro vai para publicação sem revisão</td><td>Sempre passar pelo Telegram Gate antes do export</td></tr>
+    </tbody>
+  </table>
+
+</div>
+
+<!-- FOOTER -->
+<div style="background:var(--ink);padding:48px 40px">
+  <div style="max-width:960px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid #0D0D1A;padding-top:32px">
+      <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:#1F2937">mindflow.</div>
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:#1F2937;text-align:right;line-height:1.9">
+        DESIGN-AGENT-OPS-v1.1<br>
+        SYSTEM PROMPT · SCHEMAS TS · FEW-SHOT · SELF-EVAL<br>
+        REVIEW PROTOCOL · EXPORT SCRIPT · PUPPETEER
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

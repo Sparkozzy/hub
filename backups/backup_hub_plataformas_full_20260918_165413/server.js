@@ -6,7 +6,6 @@ const cors = require('cors');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 const { rateLimit } = require('express-rate-limit');
-const ExcelJS = require('exceljs');
 
 // ============================================================
 // VALIDAÇÃO DE AMBIENTE
@@ -58,18 +57,10 @@ const liveSseClients = new Map();
 const callToExecutionMap = new Map();
 
 function broadcastSseEvent(executionId, data) {
+  const clients = liveSseClients.get(executionId);
+  if (!clients || clients.size === 0) return;
   const payload = `data: ${JSON.stringify(data)}\n\n`;
-  const targets = new Set();
-
-  if (executionId && liveSseClients.has(executionId)) {
-    for (const c of liveSseClients.get(executionId)) targets.add(c);
-  }
-  if (data && data.call_id && liveSseClients.has(data.call_id)) {
-    for (const c of liveSseClients.get(data.call_id)) targets.add(c);
-  }
-
-  if (targets.size === 0) return;
-  for (const clientRes of targets) {
+  for (const clientRes of clients) {
     try {
       clientRes.write(payload);
     } catch (err) {
@@ -214,7 +205,7 @@ const loginLimiter = rateLimit({
 // ============================================================
 function requireAuth(req, res, next) {
   if (req.session?.user) return next();
-  const publicPaths = ['/', '/api/', '/redefinir-senha', '/dev-login', '/dev-client-login', '/hub', '/dashboard', '/disparo', '/projetos', '/cliente', '/dashboard-style.css', '/dashboard-app.js'];
+  const publicPaths = ['/', '/api/', '/redefinir-senha', '/dev-login', '/dev-client-login', '/hub', '/dashboard', '/disparo', '/cliente', '/dashboard-style.css', '/dashboard-app.js'];
   if (publicPaths.some(p => req.path === p || req.path.startsWith('/api/'))) return next();
   if (/\.(html|css|js)$/.test(req.path)) return res.redirect('/');
   res.status(401).json({ error: 'Unauthorized' });
@@ -452,15 +443,6 @@ app.get(['/disparo', '/disparo.html'], (req, res) => {
   res.setHeader('Expires', '0');
   res.setHeader('Surrogate-Control', 'no-store');
   res.sendFile(path.join(__dirname, 'disparo.html'));
-});
-
-app.get(['/projetos', '/projetos.html'], (req, res) => {
-  if (!req.session?.user) return res.redirect('/');
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-  res.setHeader('Surrogate-Control', 'no-store');
-  res.sendFile(path.join(__dirname, 'projetos.html'));
 });
 
 app.get('/cliente', (req, res) => {
@@ -869,27 +851,6 @@ async function syncRetellAgents() {
     if (!retellRes.ok) throw new Error(`Retell API: ${retellRes.status}`);
 
     const agentsRaw = await retellRes.json();
-
-    // Auto-configura o webhook_url público nos Agentes da Retell para garantir o envio de eventos live
-    const targetWebhookUrl = process.env.APP_URL ? `${process.env.APP_URL}/api/webhooks/retell` : 'https://hub.mindflow.com.br/api/webhooks/retell';
-    for (const aRaw of (agentsRaw || [])) {
-      if (aRaw.agent_id && aRaw.webhook_url !== targetWebhookUrl) {
-        try {
-          await fetch(`https://api.retellai.com/update-agent/${aRaw.agent_id}`, {
-            method: 'PATCH',
-            headers: {
-              'Authorization': `Bearer ${RETELL_API_KEY}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ webhook_url: targetWebhookUrl }),
-            signal: AbortSignal.timeout(5000)
-          });
-          console.log(`[SyncAgents] Webhook configurado com sucesso para o agente ${aRaw.agent_id}`);
-        } catch (wErr) {
-          console.warn(`[SyncAgents] Falha ao configurar webhook do agente ${aRaw.agent_id}:`, wErr.message);
-        }
-      }
-    }
 
     // Dedup por agent_id
     const seen = new Map();
@@ -1692,32 +1653,14 @@ app.get('/api/calls', async (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
   try {
     const clientDb = getActiveClientDb(req);
-    const limit = parseInt(req.query.limit) || 1000;
-    const cols = 'id, created_at, Nome, Numero, status, call_id, agent_id, agent_name, transcript, recording_url, disconnection_reason, from_number, to_number, Duracao, Marcada';
-    
-    let query = clientDb
+    const { data, error } = await clientDb
       .from('Retell_calls_Mindflow')
-      .select(cols)
-      .order('id', { ascending: false })
-      .limit(limit);
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50);
 
-    const startDate = (req.query.start_date || req.query.startDate || '').trim();
-    const endDate = (req.query.end_date || req.query.endDate || '').trim();
-    const agent = (req.query.agent || '').trim();
-
-    if (startDate) {
-      query = query.gte('created_at', startDate);
-    }
-    if (endDate) {
-      query = query.lte('created_at', endDate + 'T23:59:59');
-    }
-    if (agent && agent !== 'all' && agent !== 'Todos os Agentes') {
-      query = query.eq('agent_id', agent);
-    }
-
-    const { data, error } = await query;
     if (error) throw error;
-    return res.json({ data: data || [], calls: data || [], pages: 1, page: 1 });
+    return res.json(data);
   } catch (err) {
     console.error('[BFF] Erro ao buscar chamadas:', err.message);
     return res.status(500).json({ error: 'Erro ao buscar chamadas.' });
@@ -1858,402 +1801,6 @@ app.get('/api/export-calls', async (req, res) => {
     console.error('[BFF] Erro ao gerar CSV:', err);
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     return res.status(500).send(`Erro ao gerar arquivo CSV: ${err.message}`);
-  }
-});
-
-async function generateMindFlowExcelBuffer(items, isWhatsApp = false, clientName = 'MINDFLOW', periodText = 'Período Completo', isLimited = false) {
-    const wb = new ExcelJS.Workbook();
-    wb.creator = 'MindFlow Platform';
-    wb.lastModifiedBy = 'MindFlow Platform';
-    wb.created = new Date();
-
-    // ---------------------------------------------------------
-    // SHEET 1: RESUMO EXECUTIVO
-    // ---------------------------------------------------------
-    const ws1 = wb.addWorksheet('Resumo Executivo', {
-        views: [{ showGridLines: true }]
-    });
-
-    ws1.columns = [
-        { width: 34 },
-        { width: 16 },
-        { width: 34 },
-        { width: 16 },
-        { width: 34 },
-        { width: 16 }
-    ];
-
-    // Title Row 1
-    ws1.mergeCells('A1:F1');
-    const titleCell1 = ws1.getCell('A1');
-    titleCell1.value = `DASHBOARD EXECUTIVO - OPERAÇÃO ${clientName.toUpperCase()} (${isWhatsApp ? 'WHATSAPP' : 'LIGAÇÕES'})`;
-    titleCell1.font = { name: 'Century Gothic', size: 14, bold: true, color: { argb: 'FF00B5A0' } };
-    titleCell1.alignment = { vertical: 'middle', horizontal: 'left' };
-    ws1.getRow(1).height = 32;
-
-    // Period / Safety Notice Row 2
-    ws1.mergeCells('A2:F2');
-    const periodCell = ws1.getCell('A2');
-    periodCell.value = isLimited
-        ? `📌 Nota de Exportação: Exibindo os ${items.length} registros mais recentes da operação. Para um recorte específico, selecione o período no filtro do Dashboard.`
-        : `📅 Período Filtrado: ${periodText} (${items.length} registros exportados)`;
-    periodCell.font = { name: 'Century Gothic', size: 9, italic: true, color: { argb: 'FF475569' } };
-    periodCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
-    periodCell.alignment = { vertical: 'middle', horizontal: 'left' };
-    ws1.getRow(2).height = 22;
-
-    const totalItems = items.length;
-    const uniquePhones = new Set(items.map(c => c.lead_phone || c.from_number || c.to_number || c.numero || c.phone)).size;
-    
-    let highCalls = 0;
-    let medCalls = 0;
-    let lowCalls = 0;
-    const reasonCounts = {};
-
-    items.forEach(c => {
-        const dur = c.duration || c.duration_seconds || c.call_length_seconds || (c.duracao_atendimento_minutos ? c.duracao_atendimento_minutos * 60 : 0);
-        const reason = c.disconnection_reason || (c.reuniao_marcada ? 'Reunião Marcada' : 'Atendimento Concluído');
-        reasonCounts[reason] = (reasonCounts[reason] || 0) + 1;
-
-        if (dur >= 45) highCalls++;
-        else if (dur >= 15) medCalls++;
-        else lowCalls++;
-    });
-
-    const conversionRate = totalItems > 0 ? (highCalls + medCalls) / totalItems : 0;
-    const estimatedValue = (highCalls * 2500) + (medCalls * 500);
-
-    // KPI Cards Block 1
-    ws1.getRow(4).values = ['TOTAL DE REGISTROS', '', 'LEADS ÚNICOS', '', 'VOLUME COMERCIAL ESTIMADO', ''];
-    ws1.getRow(5).values = [totalItems, '', uniquePhones, '', estimatedValue, ''];
-
-    // KPI Cards Block 2
-    ws1.getRow(6).values = ['INTERESSE ALTO (SUCESSO)', '', 'INTERESSE MÉDIO', '', 'TAXA DE CONVERSÃO ÚTIL', ''];
-    ws1.getRow(7).values = [highCalls, '', medCalls, '', conversionRate, ''];
-
-    // Style KPI Cards
-    const kpiTitleRows = [4, 6];
-    kpiTitleRows.forEach(r => {
-        ws1.getRow(r).height = 20;
-        ['A', 'C', 'E'].forEach(col => {
-            const cell = ws1.getCell(`${col}${r}`);
-            cell.font = { name: 'Century Gothic', size: 9, bold: true, color: { argb: 'FF64748B' } };
-            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
-            cell.alignment = { vertical: 'middle', horizontal: 'center' };
-        });
-    });
-
-    const kpiValRows = [5, 7];
-    kpiValRows.forEach(r => {
-        ws1.getRow(r).height = 26;
-        ['A', 'C', 'E'].forEach(col => {
-            const cell = ws1.getCell(`${col}${r}`);
-            cell.font = { name: 'Century Gothic', size: 14, bold: true, color: { argb: 'FF0F172A' } };
-            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
-            cell.alignment = { vertical: 'middle', horizontal: 'center' };
-            cell.border = {
-                bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
-                left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
-                right: { style: 'thin', color: { argb: 'FFE2E8F0' } }
-            };
-        });
-    });
-
-    ws1.getCell('E5').numFmt = '"R$ "#,##0';
-    ws1.getCell('E7').numFmt = '0.0%';
-
-    // Breakdown Title
-    ws1.getRow(9).values = ['Detalhamento do Status das Chamadas (Motivos / CRM)'];
-    ws1.getCell('A9').font = { name: 'Century Gothic', size: 11, bold: true, color: { argb: 'FF1E293B' } };
-
-    // Breakdown Header
-    ws1.getRow(10).values = ['Status / Motivo', 'Quantidade', 'Percentual'];
-    const bHeaderRow = ws1.getRow(10);
-    bHeaderRow.height = 22;
-    ['A', 'B', 'C'].forEach(col => {
-        const cell = ws1.getCell(`${col}10`);
-        cell.font = { name: 'Century Gothic', size: 9, bold: true, color: { argb: 'FFFFFFFF' } };
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF00B5A0' } };
-        cell.alignment = { vertical: 'middle', horizontal: col === 'A' ? 'left' : 'center' };
-    });
-
-    // Breakdown Rows
-    let currentRow = 11;
-    Object.entries(reasonCounts).sort((a, b) => b[1] - a[1]).forEach(([reason, count]) => {
-        const pct = totalItems > 0 ? count / totalItems : 0;
-        const row = ws1.getRow(currentRow);
-        row.values = [reason, count, pct];
-        row.height = 20;
-
-        const isEven = currentRow % 2 === 0;
-        const bg = isEven ? 'FFF8FAFC' : 'FFFFFFFF';
-
-        ws1.getCell(`A${currentRow}`).alignment = { vertical: 'middle', horizontal: 'left' };
-        ws1.getCell(`B${currentRow}`).alignment = { vertical: 'middle', horizontal: 'center' };
-        ws1.getCell(`C${currentRow}`).alignment = { vertical: 'middle', horizontal: 'center' };
-        ws1.getCell(`C${currentRow}`).numFmt = '0.0%';
-
-        ['A', 'B', 'C'].forEach(col => {
-            const cell = ws1.getCell(`${col}${currentRow}`);
-            cell.font = { name: 'Century Gothic', size: 9 };
-            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } };
-        });
-
-        currentRow++;
-    });
-
-    // ---------------------------------------------------------
-    // SHEET 2: BASE DE REGISTROS
-    // ---------------------------------------------------------
-    const ws2 = wb.addWorksheet(isWhatsApp ? 'Base WhatsApp' : 'Base de Ligações', {
-        views: [{ showGridLines: true }]
-    });
-
-    if (isWhatsApp) {
-        ws2.columns = [
-            { header: 'Telefone', key: 'phone', width: 20 },
-            { header: 'Nome do Lead', key: 'lead_name', width: 24 },
-            { header: 'Última Mensagem', key: 'last_msg', width: 45 },
-            { header: 'Etapa CRM', key: 'stage', width: 20 },
-            { header: 'Reunião Marcada', key: 'meeting', width: 18 },
-            { header: 'TMA (minutos)', key: 'tma', width: 16 }
-        ];
-    } else {
-        ws2.columns = [
-            { header: 'ID Ligação', key: 'id', width: 12 },
-            { header: 'Cliente', key: 'lead_name', width: 22 },
-            { header: 'Telefone', key: 'phone', width: 20 },
-            { header: 'Data/Hora', key: 'date', width: 18 },
-            { header: 'Duração', key: 'duration', width: 12 },
-            { header: 'Nome Agente', key: 'agent', width: 24 },
-            { header: 'Motivo Desconexão', key: 'reason', width: 22 },
-            { header: 'Nível Interesse', key: 'interest', width: 16 },
-            { header: 'Valor Estimado', key: 'value', width: 16 },
-            { header: 'Prioridade', key: 'priority', width: 16 },
-            { header: 'Transcrição da Ligação', key: 'transcript', width: 50 },
-            { header: 'Link Gravação', key: 'recording', width: 40 }
-        ];
-    }
-
-    ws2.spliceRows(1, 0, []);
-    ws2.spliceRows(1, 0, []);
-    ws2.spliceRows(1, 0, []);
-
-    const maxColLetter = isWhatsApp ? 'F' : 'L';
-    ws2.mergeCells(`A1:${maxColLetter}1`);
-    const titleCell2 = ws2.getCell('A1');
-    titleCell2.value = `RELATÓRIO DE PERFORMANCE DE ${isWhatsApp ? 'WHATSAPP' : 'LIGAÇÕES'} - ${clientName.toUpperCase()}`;
-    titleCell2.font = { name: 'Century Gothic', size: 13, bold: true, color: { argb: 'FF00B5A0' } };
-    titleCell2.alignment = { vertical: 'middle', horizontal: 'left' };
-    ws2.getRow(1).height = 28;
-
-    if (!isWhatsApp) {
-        ws2.getRow(2).values = [
-            'Legenda de Cores:',
-            'Interesse ALTO (Conversa/Interesse +45s)',
-            'Interesse MÉDIO (Hook +15s)',
-            'Sem Retorno / Baixo (<15s)'
-        ];
-        ws2.getCell('A2').font = { name: 'Century Gothic', size: 9, bold: true, color: { argb: 'FF64748B' } };
-        ws2.getCell('B2').font = { name: 'Century Gothic', size: 9, bold: true, color: { argb: 'FF10B981' } };
-        ws2.getCell('C2').font = { name: 'Century Gothic', size: 9, bold: true, color: { argb: 'FFF59E0B' } };
-        ws2.getCell('D2').font = { name: 'Century Gothic', size: 9, color: { argb: 'FF94A3B8' } };
-    }
-
-    const headerRow2 = ws2.getRow(4);
-    if (isWhatsApp) {
-        headerRow2.values = ['Telefone', 'Nome do Lead', 'Última Mensagem', 'Etapa CRM', 'Reunião Marcada', 'TMA (minutos)'];
-    } else {
-        headerRow2.values = [
-            'ID Ligação', 'Cliente', 'Telefone', 'Data/Hora', 'Duração',
-            'Nome Agente', 'Motivo Desconexão', 'Nível Interesse',
-            'Valor Estimado', 'Prioridade', 'Transcrição da Ligação', 'Link Gravação'
-        ];
-    }
-    headerRow2.height = 24;
-
-    ws2.getRow(4).eachCell((cell) => {
-        cell.font = { name: 'Century Gothic', size: 9, bold: true, color: { argb: 'FFFFFFFF' } };
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF00B5A0' } };
-        cell.alignment = { vertical: 'middle', horizontal: 'center' };
-    });
-
-    items.forEach((c, idx) => {
-        const rowIdx = 5 + idx;
-        const row = ws2.getRow(rowIdx);
-        row.height = 22;
-
-        const isEven = idx % 2 === 0;
-        const bg = isEven ? 'FFF8FAFC' : 'FFFFFFFF';
-
-        if (isWhatsApp) {
-            const phoneRaw = c.numero || c.phone || '';
-            const phoneFmt = phoneRaw ? `+55 ${phoneRaw.replace(/^\+?55/, '').trim()}` : '-';
-
-            row.values = [
-                phoneFmt,
-                c.nome || c.lead_name || 'Sem Nome',
-                c.ultima_msgm_texto || c.last_message || '-',
-                c.etapa_crm || '-',
-                c.reuniao_marcada ? 'Sim' : 'Não',
-                c.duracao_atendimento_minutos != null ? c.duracao_atendimento_minutos : '-'
-            ];
-
-            row.eachCell({ includeEmpty: true }, (cell, colNum) => {
-                cell.font = { name: 'Century Gothic', size: 9 };
-                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } };
-                if ([1, 4, 5, 6].includes(colNum)) {
-                    cell.alignment = { vertical: 'middle', horizontal: 'center' };
-                } else if (colNum === 3) {
-                    cell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
-                } else {
-                    cell.alignment = { vertical: 'middle', horizontal: 'left' };
-                }
-            });
-        } else {
-            const dur = c.duration || c.duration_seconds || c.call_length_seconds || 0;
-            const durStr = `${Math.floor(dur / 60)}:${String(dur % 60).padStart(2, '0')}`;
-            
-            let interest = 'BAIXO';
-            let valEst = 0;
-            let priority = 'SEM RETORNO';
-
-            if (dur >= 45) {
-                interest = 'ALTO';
-                valEst = 2500;
-                priority = 'ALTA';
-            } else if (dur >= 15) {
-                interest = 'MEDIO';
-                valEst = 500;
-                priority = 'NORMAL';
-            }
-
-            const phoneRaw = c.lead_phone || c.from_number || c.to_number || c.numero || '';
-            const phoneFmt = phoneRaw ? `+55 ${phoneRaw.replace(/^\+?55/, '').trim()}` : '-';
-
-            let dateFormatted = '-';
-            if (c.created_at || c.start_timestamp) {
-                const d = new Date(c.created_at || c.start_timestamp);
-                if (!isNaN(d.getTime())) {
-                    dateFormatted = d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR').slice(0, 5);
-                }
-            }
-
-            row.values = [
-                c.call_id || (totalItems - idx),
-                c.lead_name || c.nome || 'Cliente',
-                phoneFmt,
-                dateFormatted,
-                durStr,
-                c.agent_name || c.agent_id || 'Agente MindFlow',
-                c.disconnection_reason || 'Concluída',
-                interest,
-                valEst,
-                priority,
-                c.transcript ? cleanTranscriptForCsv(c.transcript) : '',
-                c.recording_url || ''
-            ];
-
-            row.eachCell({ includeEmpty: true }, (cell, colNum) => {
-                cell.font = { name: 'Century Gothic', size: 9 };
-                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } };
-                
-                if ([1, 4, 5, 8, 10].includes(colNum)) {
-                    cell.alignment = { vertical: 'middle', horizontal: 'center' };
-                } else if (colNum === 9) {
-                    cell.alignment = { vertical: 'middle', horizontal: 'right' };
-                    cell.numFmt = '"R$ "#,##0';
-                } else if (colNum === 11) {
-                    cell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
-                } else {
-                    cell.alignment = { vertical: 'middle', horizontal: 'left' };
-                }
-
-                if (colNum === 8) {
-                    if (interest === 'ALTO') {
-                        cell.font = { name: 'Century Gothic', size: 9, bold: true, color: { argb: 'FF10B981' } };
-                    } else if (interest === 'MEDIO') {
-                        cell.font = { name: 'Century Gothic', size: 9, bold: true, color: { argb: 'FFF59E0B' } };
-                    } else {
-                        cell.font = { name: 'Century Gothic', size: 9, color: { argb: 'FF94A3B8' } };
-                    }
-                }
-            });
-        }
-    });
-
-    return await wb.xlsx.writeBuffer();
-}
-
-app.get('/api/export-excel', async (req, res) => {
-  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
-
-  try {
-    const isWhatsApp = req.query.tab === 'whatsapp';
-    const clientId = req.session.user.active_client || '2';
-    
-    const startDate = (req.query.start_date || req.query.startDate || '').trim();
-    const endDate = (req.query.end_date || req.query.endDate || '').trim();
-    const agent = (req.query.agent || '').trim();
-    const isFiltered = Boolean(startDate || endDate || (agent && agent !== 'all'));
-
-    let periodText = 'Todo o Histórico (2.000 mais recentes)';
-    if (startDate && endDate) {
-      periodText = `${startDate.split('-').reverse().join('/')} a ${endDate.split('-').reverse().join('/')}`;
-    } else if (startDate) {
-      periodText = `A partir de ${startDate.split('-').reverse().join('/')}`;
-    }
-
-    const safeLimit = isFiltered ? 5000 : 2000;
-    let items = [];
-
-    const endpointPath = isWhatsApp ? '/whatsapp/chats' : '/calls';
-    const qs = new URLSearchParams(req.query).toString();
-
-    try {
-      const response = await fetch(`${DASHBOARD_API_URL}${endpointPath}?page=1&limit=${safeLimit}${qs ? '&' + qs : ''}`, {
-        headers: { 'X-Client-ID': String(clientId) },
-        signal: AbortSignal.timeout(15000),
-      });
-      if (response.ok) {
-        const result = await response.json();
-        items = result.data || result.calls || result.chats || (Array.isArray(result) ? result : []);
-      }
-    } catch (errBackend) {
-      console.warn('[Export Excel] hub_backend error, falling back to Supabase:', errBackend.message);
-    }
-
-    if (!items.length && !isWhatsApp) {
-      try {
-        const clientDb = getActiveClientDb(req);
-        const cols = 'id, created_at, Nome, Numero, status, call_id, agent_id, agent_name, transcript, recording_url, disconnection_reason, from_number, to_number, Duracao, Marcada';
-        let query = clientDb.from('Retell_calls_Mindflow').select(cols).order('id', { ascending: false }).limit(safeLimit);
-        
-        if (startDate) query = query.gte('created_at', startDate);
-        if (endDate) query = query.lte('created_at', endDate + 'T23:59:59');
-        if (agent && agent !== 'all' && agent !== 'Todos os Agentes') query = query.eq('agent_id', agent);
-
-        const { data, error } = await query;
-        if (error) console.error('[Export Excel Supabase Error]:', error);
-        if (data && data.length) items = data;
-      } catch (e) {
-        console.error('[Export Excel Supabase Catch]:', e);
-      }
-    }
-
-    if (!items.length) {
-      return res.status(404).send('Nenhum registro encontrado para gerar a planilha Excel.');
-    }
-
-    const buffer = await generateMindFlowExcelBuffer(items, isWhatsApp, 'MINDFLOW', periodText, !isFiltered);
-
-    const filename = `mindflow_relatorio_${isWhatsApp ? 'whatsapp' : 'ligacoes'}_${new Date().toISOString().slice(0, 10)}.xlsx`;
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    return res.send(buffer);
-  } catch (err) {
-    console.error('[Export Excel Error]:', err);
-    return res.status(500).send(`Erro ao gerar planilha Excel: ${err.message}`);
   }
 });
 

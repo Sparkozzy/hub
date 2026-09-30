@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MindFlow — Apresentação Institucional</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+    body{font-family:'Inter',sans-serif;background:#04060E;color:#fff;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+    :root{--blue:#2E4FFF;--teal:#00B5A0;--blue2:#7B9AFF;--bg:#04060E;--muted:#8E8FA2;--surface:rgba(8,12,24,0.72);--border-card:rgba(255,255,255,0.08);--border-subtle:rgba(255,255,255,0.06)}
+    @page{size:1920px 1080px landscape;margin:0}
+    .slide{width:1920px;height:1080px;page-break-after:always;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:80px 100px;background:var(--bg)}
+    .slide-inner{width:100%;max-width:1400px;position:relative;z-index:1;display:flex;flex-direction:column;justify-content:center;min-height:0}
+    .slide-inner.centered{align-items:center;text-align:center}
+    .text-center{text-align:center}
+    .mb-8{margin-bottom:8px}
+    .mb-12{margin-bottom:12px}
+    .mb-16{margin-bottom:16px}
+    .mb-24{margin-bottom:24px}
+    .mb-32{margin-bottom:32px}
+    .mt-32{margin-top:32px}
+    .display{font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:clamp(48px,5vw,80px);line-height:1.05;letter-spacing:-0.03em}
+    .display-em{background:linear-gradient(135deg,var(--blue2),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .heading-xl{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:clamp(36px,4vw,56px);line-height:1.1;letter-spacing:-0.025em}
+    .heading-lg{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:clamp(24px,2.5vw,40px);line-height:1.15}
+    .body-lg{font-size:clamp(15px,1.1vw,20px);line-height:1.6;color:rgba(255,255,255,0.8)}
+    .hero-tagline{font-family:'Space Grotesk',sans-serif;font-size:clamp(12px,1vw,16px);font-weight:500;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+    .label-accent{font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;background:linear-gradient(135deg,var(--blue2),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;display:inline-block}
+    .label{font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.09em;text-transform:uppercase;color:var(--muted)}
+    .slide::before{content:'';position:absolute;top:-250px;right:-150px;width:800px;height:800px;background:radial-gradient(circle,rgba(46,79,255,0.09)0%,rgba(123,154,255,0.03)30%,transparent 70%);border-radius:50%;pointer-events:none}
+    .slide::after{content:'';position:absolute;bottom:-350px;left:-150px;width:900px;height:900px;background:radial-gradient(circle,rgba(0,181,160,0.07)0%,rgba(46,79,255,0.02)30%,transparent 70%);border-radius:50%;pointer-events:none;z-index:0}
+    .neural-bg{position:absolute;inset:0;pointer-events:none;z-index:0;background-image:radial-gradient(circle at 15% 80%,rgba(46,79,255,0.10)0%,transparent 45%),radial-gradient(circle at 85% 20%,rgba(0,181,160,0.08)0%,transparent 45%),radial-gradient(circle at 50% 10%,rgba(123,154,255,0.05)0%,transparent 40%),radial-gradient(circle at 70% 70%,rgba(0,181,160,0.04)0%,transparent 35%)}
+    .neural-grid{position:absolute;inset:0;pointer-events:none;z-index:0;background-image:radial-gradient(circle,rgba(255,255,255,0.04)1px,transparent 1px);background-size:28px 28px}
+    .neural-grid::after{content:"";position:absolute;inset:0;background-image:radial-gradient(circle,rgba(46,79,255,0.05)1px,transparent 1px);background-size:56px 56px;opacity:0.5;mask-image:radial-gradient(ellipse at center,black 40%,transparent 80%);-webkit-mask-image:radial-gradient(ellipse at center,black 40%,transparent 80%)}
+    .neural-grid::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0,rgba(46,79,255,0.015) 1px,transparent 1px,transparent 56px),repeating-linear-gradient(0deg,transparent 0,rgba(0,181,160,0.015) 1px,transparent 1px,transparent 56px);opacity:0.3;mask-image:radial-gradient(ellipse at center,black 30%,transparent 75%);-webkit-mask-image:radial-gradient(ellipse at center,black 30%,transparent 75%)}
+    .bg-accent{position:absolute;inset:0;pointer-events:none;z-index:0;background:linear-gradient(180deg,transparent 0%,rgba(46,79,255,0.02) 50%,transparent 100%),linear-gradient(90deg,transparent 0%,rgba(0,181,160,0.01) 50%,transparent 100%)}
+    .fluid-waves{position:absolute;inset:0;z-index:0;pointer-events:none;width:100%;height:100%}
+    .slide-vignette{position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 55%,rgba(4,6,14,0.4) 100%)}
+    .slide-accent-line{position:absolute;top:0;left:0;right:0;height:2px;z-index:1;pointer-events:none;background:linear-gradient(90deg,transparent 5%,rgba(46,79,255,0.12) 20%,rgba(0,181,160,0.12) 80%,transparent 95%)}
+    .slide-vignette{position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 55%,rgba(4,6,14,0.35) 100%)}
+    .slide-deco-circle{position:absolute;width:400px;height:400px;border:1px solid rgba(46,79,255,0.04);border-radius:50%;pointer-events:none;z-index:0}
+    .slide-deco-circle.tl{top:-120px;left:-120px}
+    .slide-deco-circle.br{bottom:-120px;right:-120px;border-color:rgba(0,181,160,0.04)}
+    .slide-deco-bar{position:absolute;top:0;bottom:0;width:1px;z-index:0;pointer-events:none;background:linear-gradient(180deg,transparent,rgba(46,79,255,0.04),rgba(0,181,160,0.04),transparent)}
+    .slide-deco-bar.left{left:48px}
+    .slide-deco-bar.right{right:48px}
+    .m-watermark{position:absolute;bottom:60px;left:60px;z-index:0;opacity:0.04;pointer-events:none;filter:blur(0.5px);transition:opacity 0.3s}
+    .slide-number{position:absolute;bottom:36px;right:60px;font-family:'Space Grotesk',sans-serif;font-size:12px;color:rgba(255,255,255,0.12);letter-spacing:0.05em;z-index:2}
+    .divider{width:72px;height:3px;background:linear-gradient(90deg,var(--blue),var(--teal));border-radius:2px}
+    .divider.center{margin-left:auto;margin-right:auto}
+
+    .card-glass{background:linear-gradient(rgba(8,12,24,0.72),rgba(8,12,24,0.72)) padding-box,conic-gradient(from 0deg,#2E4FFF 0%,#00B5A0 25%,#2E4FFF 50%,#00B5A0 75%,transparent 87.5%,#2E4FFF 100%) border-box;border:1px solid transparent;backdrop-filter:blur(12px);border-radius:16px;padding:44px;box-shadow:0 32px 64px rgba(0,0,0,.55)}
+    .card-simple{background:rgba(255,255,255,0.02);border:1px solid var(--border-card);border-radius:14px;padding:28px}
+    .card-simple:hover{border-color:rgba(46,79,255,0.3)}
+
+    .accent-bar{width:100%;height:3px;background:linear-gradient(90deg,var(--blue),var(--teal));opacity:0.6;border-radius:2px}
+
+    .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}
+    .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+    .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:10px 22px;background:rgba(255,255,255,0.03);border:1px solid var(--border-card);border-radius:100px;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:500;color:rgba(255,255,255,0.7)}
+
+    /* SLIDE 1 - CAPA */
+    #slide-1 .slide-inner{align-items:center;text-align:center}
+    #slide-1 .display{font-size:clamp(56px,6vw,96px)}
+    .hero-sub{font-size:clamp(14px,1vw,18px);color:rgba(255,255,255,0.45);margin-top:20px;line-height:1.6}
+    #slide-1 .logo-svg{width:180px;margin-bottom:56px}
+
+    /* SLIDE 2 - PROBLEMA */
+    .problem-grid{display:grid;grid-template-columns:1.1fr 0.9fr;gap:48px;align-items:start}
+    .problem-stat-card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px;display:flex;align-items:center;gap:16px;position:relative}
+    .problem-stat-card .bar{position:absolute;top:0;left:0;width:3px;height:100%;border-radius:0 2px 2px 0}
+    .problem-stat-card .bar.b1{background:var(--blue)}
+    .problem-stat-card .bar.b2{background:var(--teal)}
+    .problem-stat-card .bar.b3{background:#FF4D4D}
+    .ps-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px}
+    .ps-icon.i1{background:rgba(46,79,255,0.12);color:var(--blue2)}
+    .ps-icon.i2{background:rgba(0,181,160,0.12);color:var(--teal)}
+    .ps-icon.i3{background:rgba(255,77,77,0.12);color:#FF4D4D}
+    .ps-value{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:12px;letter-spacing:0.08em;text-transform:uppercase}
+    .ps-desc{font-size:13px;color:rgba(255,255,255,0.5);line-height:1.45}
+    .hero-num{font-family:'Space Grotesk',sans-serif;font-size:clamp(56px,6vw,100px);font-weight:800;line-height:1;background:linear-gradient(135deg,var(--blue2),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-0.05em}
+    .hero-num-label{font-size:clamp(14px,1vw,16px);color:rgba(255,255,255,0.6);line-height:1.4;max-width:260px;background:linear-gradient(135deg,var(--blue2),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+    /* SLIDE 4 - PHASES */
+    .phase-card{background:rgba(255,255,255,0.02);border:1px solid var(--border-card);border-radius:16px;padding:36px;position:relative}
+    .phase-number{font-family:'Space Grotesk',sans-serif;font-size:48px;font-weight:800;background:linear-gradient(135deg,var(--blue2),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;opacity:0.4;position:absolute;top:16px;right:20px}
+    .phase-icon-box{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,rgba(46,79,255,0.15),rgba(0,181,160,0.15));display:flex;align-items:center;justify-content:center;font-size:22px}
+
+    /* SLIDE 5 - DIFFS */
+    .diff-card{background:rgba(255,255,255,0.02);border:1px solid var(--border-card);border-radius:14px;padding:28px;text-align:center}
+    .diff-icon-box{width:52px;height:52px;border-radius:14px;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:24px;background:linear-gradient(135deg,rgba(46,79,255,0.12),rgba(0,181,160,0.12))}
+
+    /* SLIDE 6 - MODULES */
+    .module-card{background:rgba(255,255,255,0.02);border:1px solid var(--border-card);border-radius:16px;padding:24px 28px;position:relative;overflow:hidden;text-align:center}
+    .module-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue),var(--teal));opacity:0.6}
+    .module-tag{font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;color:var(--teal);margin-bottom:4px;display:inline-block;padding:2px 0;line-height:1.4}
+    .module-card h4{min-height:2em;display:flex;align-items:flex-end;justify-content:center;margin-bottom:4px}
+    .module-card ul{list-style:none;margin-top:8px}
+    .module-card ul li{font-size:13px;color:rgba(255,255,255,0.5);padding:4px 0}
+    .module-card ul li::before{content:'— ';color:var(--blue2)}
+    .module-card-highlight{background:linear-gradient(135deg,rgba(46,79,255,0.06)0%,rgba(0,181,160,0.06)100%);border-color:rgba(46,79,255,0.25);box-shadow:0 0 48px rgba(46,79,255,0.08),inset 0 1px 0 rgba(255,255,255,0.04)}
+    .module-card-highlight .module-tag{color:#fff;background:linear-gradient(135deg,var(--blue),var(--teal));padding:1px 8px;border-radius:3px;font-size:10px}
+    .module-card-highlight::before{opacity:1;box-shadow:0 0 16px rgba(46,79,255,0.3)}
+
+    /* SLIDE 7 - DASHBOARD */
+    .dash-card{background:rgba(255,255,255,0.03);border:1px solid var(--border-card);border-radius:14px;padding:24px;text-align:center}
+    .dash-value{font-family:'Space Grotesk',sans-serif;font-size:40px;font-weight:800;line-height:1;margin-bottom:4px}
+    .dash-label{font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.09em;text-transform:uppercase;color:var(--muted)}
+    .dash-bar-row{display:flex;align-items:center;gap:16px;padding:12px 0;border-bottom:1px solid var(--border-subtle)}
+    .dash-bar-label{font-size:14px;color:rgba(255,255,255,0.5);min-width:120px}
+    .dash-bar-track{flex:1;height:8px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden}
+    .dash-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--blue),var(--teal))}
+
+        /* SLIDE 10 - SECTORS */
+    .sector-pill{padding:16px 32px;background:rgba(255,255,255,0.03);border:1px solid var(--border-card);border-radius:999px;font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:500;color:rgba(255,255,255,0.7);display:inline-flex;align-items:center;gap:8px}
+
+    /* SLIDE 11 - INDICATORS */
+    .indicator-card{background:rgba(255,255,255,0.02);border:1px solid var(--border-card);border-radius:16px;padding:32px;display:flex;align-items:center;gap:24px}
+    .indicator-num{font-family:'Space Grotesk',sans-serif;font-size:clamp(36px,3vw,52px);font-weight:800;line-height:1;flex-shrink:0;background:linear-gradient(135deg,var(--blue2),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+    /* SLIDE 12 - TIMELINE */
+    .timeline{display:flex;gap:0;margin-top:48px;position:relative;max-width:900px;margin-left:auto;margin-right:auto}
+    .timeline::before{content:'';position:absolute;top:28px;left:10%;right:10%;height:2px;background:linear-gradient(90deg,var(--blue),var(--teal),var(--blue2),var(--blue));background-size:300% 100%;opacity:0.4}
+    .tl-step{flex:1;text-align:center;position:relative;padding-top:56px}
+    .tl-step::before{content:'';position:absolute;top:20px;left:50%;transform:translateX(-50%);width:16px;height:16px;border-radius:50%;background:var(--blue);border:3px solid var(--blue);z-index:2;box-shadow:0 0 12px rgba(46,79,255,0.25)}
+    .tl-week{font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;color:var(--teal);letter-spacing:0.07em;text-transform:uppercase;margin-bottom:8px}
+    .tl-title{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:18px;margin-bottom:6px}
+    .tl-desc{font-size:13px;color:rgba(255,255,255,0.5)}
+
+    /* SLIDE 13 - FAQ */
+    .faq-item{background:rgba(255,255,255,0.02);border:1px solid var(--border-card);border-radius:12px;padding:24px;text-align:center}
+    .faq-q{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;margin-bottom:6px;display:flex;align-items:center;gap:10px;justify-content:center}
+    .faq-a{font-size:14px;color:rgba(255,255,255,0.5);line-height:1.6;max-width:680px;margin:12px auto 0}
+
+    /* SLIDE 14 - CONTATO */
+    #slide-14 .neural-bg{background-image:radial-gradient(circle at 25% 40%,rgba(46,79,255,0.18)0%,transparent 50%),radial-gradient(circle at 75% 60%,rgba(0,181,160,0.14)0%,transparent 50%),radial-gradient(circle at 50% 20%,rgba(123,154,255,0.1)0%,transparent 50%)}
+    #slide-14 .neural-grid{background-image:radial-gradient(circle,rgba(255,255,255,0.08)1px,transparent 1px);background-size:40px 40px;opacity:0.5}
+    #slide-14 .contact-glow{position:absolute;top:50%;left:50%;width:1000px;height:1000px;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(46,79,255,0.08)0%,rgba(0,181,160,0.04)35%,transparent 70%);border-radius:50%;pointer-events:none;z-index:0}
+    .qr-hero{width:200px;height:200px;border:1px solid rgba(255,255,255,0.1);border-radius:20px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.02);box-shadow:0 0 60px rgba(46,79,255,0.08),0 0 120px rgba(0,181,160,0.04);position:relative}
+    .qr-hero::before{content:'';position:absolute;inset:-8px;border-radius:24px;background:linear-gradient(135deg,rgba(46,79,255,0.1),rgba(0,181,160,0.06));z-index:-1;filter:blur(12px)}
+    .qr-hero .material-symbols-outlined{font-size:72px;color:rgba(255,255,255,0.15)}
+    .contact-person{display:inline-flex;align-items:center;gap:20px}
+    .contact-person .avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,rgba(46,79,255,0.15),rgba(0,181,160,0.15));border:2px solid rgba(46,79,255,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 32px rgba(46,79,255,0.1)}
+    .contact-person .avatar svg{width:36px;height:36px}
+    .contact-pills{display:flex;flex-direction:column;align-items:center;gap:12px}
+    .contact-pill{display:flex;align-items:center;justify-content:center;padding:14px 28px;border:1px solid var(--border-card);border-radius:12px;background:rgba(8,12,24,0.5);text-decoration:none;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:500;color:rgba(255,255,255,0.7);min-width:320px;position:relative;transition:all 0.2s}
+    .contact-pill .ico{position:absolute;left:16px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .contact-pill:hover{border-color:rgba(46,79,255,0.25);background:rgba(46,79,255,0.06)}
+    .contact-pill .ico{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
+
+    /* ── BLOP VARIATIONS PER SLIDE ── */
+    /* Slide 2 — Problema: blops bottom-left */
+    #slide-2 .neural-bg{background-image:radial-gradient(circle at 10% 85%,rgba(46,79,255,0.08)0%,transparent 50%),radial-gradient(circle at 30% 60%,rgba(0,181,160,0.06)0%,transparent 45%),radial-gradient(circle at 5% 20%,rgba(123,154,255,0.03)0%,transparent 40%),radial-gradient(circle at 60% 90%,rgba(0,181,160,0.03)0%,transparent 35%)}
+    /* Slide 3 — Por que: centered spread */
+    #slide-3 .neural-bg{background-image:radial-gradient(circle at 50% 50%,rgba(46,79,255,0.06)0%,transparent 55%),radial-gradient(circle at 30% 70%,rgba(0,181,160,0.04)0%,transparent 50%),radial-gradient(circle at 70% 30%,rgba(123,154,255,0.03)0%,transparent 45%),radial-gradient(circle at 50% 20%,rgba(0,181,160,0.02)0%,transparent 40%)}
+    /* Slide 4 — Como funciona: top-right bias */
+    #slide-4 .neural-bg{background-image:radial-gradient(circle at 80% 15%,rgba(46,79,255,0.08)0%,transparent 50%),radial-gradient(circle at 65% 30%,rgba(0,181,160,0.05)0%,transparent 45%),radial-gradient(circle at 90% 60%,rgba(123,154,255,0.03)0%,transparent 40%),radial-gradient(circle at 40% 10%,rgba(0,181,160,0.03)0%,transparent 35%)}
+    /* Slide 5 — Diferenciais: bottom spread */
+    #slide-5 .neural-bg{background-image:radial-gradient(circle at 25% 90%,rgba(46,79,255,0.07)0%,transparent 50%),radial-gradient(circle at 75% 85%,rgba(0,181,160,0.05)0%,transparent 50%),radial-gradient(circle at 50% 70%,rgba(123,154,255,0.04)0%,transparent 45%),radial-gradient(circle at 85% 95%,rgba(0,181,160,0.03)0%,transparent 35%)}
+    /* Slide 6 — Arquitetura: left bias */
+    #slide-6 .neural-bg{background-image:radial-gradient(circle at 15% 50%,rgba(46,79,255,0.08)0%,transparent 50%),radial-gradient(circle at 30% 70%,rgba(0,181,160,0.06)0%,transparent 45%),radial-gradient(circle at 10% 30%,rgba(123,154,255,0.04)0%,transparent 40%),radial-gradient(circle at 50% 80%,rgba(0,181,160,0.03)0%,transparent 35%)}
+    /* Slide 7 — Dashboard: right bias */
+    #slide-7 .neural-bg{background-image:radial-gradient(circle at 85% 40%,rgba(46,79,255,0.07)0%,transparent 50%),radial-gradient(circle at 70% 60%,rgba(0,181,160,0.05)0%,transparent 45%),radial-gradient(circle at 90% 80%,rgba(123,154,255,0.03)0%,transparent 40%),radial-gradient(circle at 60% 30%,rgba(0,181,160,0.03)0%,transparent 35%)}
+    /* Slide 8 — Casos 01-02: bottom center */
+    #slide-8 .neural-bg{background-image:radial-gradient(circle at 50% 90%,rgba(46,79,255,0.08)0%,transparent 50%),radial-gradient(circle at 35% 75%,rgba(0,181,160,0.05)0%,transparent 45%),radial-gradient(circle at 65% 85%,rgba(123,154,255,0.04)0%,transparent 40%),radial-gradient(circle at 50% 60%,rgba(0,181,160,0.02)0%,transparent 35%)}
+    /* Slide 9 — Casos 03-04: top spread */
+    #slide-9 .neural-bg{background-image:radial-gradient(circle at 40% 10%,rgba(46,79,255,0.07)0%,transparent 50%),radial-gradient(circle at 60% 20%,rgba(0,181,160,0.05)0%,transparent 45%),radial-gradient(circle at 30% 30%,rgba(123,154,255,0.03)0%,transparent 40%),radial-gradient(circle at 70% 15%,rgba(0,181,160,0.03)0%,transparent 35%)}
+    /* Slide 10 — Operações: wide spread */
+    #slide-10 .neural-bg{background-image:radial-gradient(circle at 20% 30%,rgba(46,79,255,0.05)0%,transparent 50%),radial-gradient(circle at 80% 70%,rgba(0,181,160,0.04)0%,transparent 50%),radial-gradient(circle at 50% 50%,rgba(123,154,255,0.03)0%,transparent 45%),radial-gradient(circle at 80% 20%,rgba(0,181,160,0.02)0%,transparent 40%)}
+    /* Slide 11 — Indicadores: center glow */
+    #slide-11 .neural-bg{background-image:radial-gradient(circle at 50% 50%,rgba(46,79,255,0.09)0%,transparent 55%),radial-gradient(circle at 40% 60%,rgba(0,181,160,0.06)0%,transparent 50%),radial-gradient(circle at 60% 40%,rgba(123,154,255,0.04)0%,transparent 45%),radial-gradient(circle at 50% 70%,rgba(0,181,160,0.03)0%,transparent 40%)}
+    /* Slide 12 — Implementação: top-left bias */
+    #slide-12 .neural-bg{background-image:radial-gradient(circle at 15% 15%,rgba(46,79,255,0.08)0%,transparent 50%),radial-gradient(circle at 30% 30%,rgba(0,181,160,0.05)0%,transparent 45%),radial-gradient(circle at 10% 50%,rgba(123,154,255,0.03)0%,transparent 40%),radial-gradient(circle at 40% 10%,rgba(0,181,160,0.03)0%,transparent 35%)}
+    /* Slide 13 — FAQ: subtle bottom */
+    #slide-13 .neural-bg{background-image:radial-gradient(circle at 50% 85%,rgba(46,79,255,0.05)0%,transparent 50%),radial-gradient(circle at 40% 70%,rgba(0,181,160,0.03)0%,transparent 45%),radial-gradient(circle at 60% 80%,rgba(123,154,255,0.02)0%,transparent 40%),radial-gradient(circle at 50% 95%,rgba(0,181,160,0.02)0%,transparent 35%)}
+
+    /* ── PRESENTATION DECK LAYOUT & RESPONSIVENESS ── */
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+      background: #04060E;
+      font-family: 'Inter', sans-serif;
+    }
+    
+    .deck-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      background: rgba(4, 6, 14, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+    }
+    .deck-header .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+    .deck-header .brand svg {
+      height: 24px;
+      width: auto;
+    }
+    
+    .deck-viewport {
+      position: fixed;
+      top: 56px;
+      bottom: 60px;
+      left: 0;
+      right: 0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .slide {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 1920px;
+      height: 1080px;
+      margin-top: -540px;
+      margin-left: -960px;
+      opacity: 0;
+      visibility: hidden;
+      transform-origin: center center;
+      transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.4s;
+      page-break-after: unset;
+    }
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      z-index: 10;
+    }
+    .slide.prev-slide {
+      transform: scale(0.95) translateY(-30px);
+    }
+    .slide.next-slide {
+      transform: scale(0.95) translateY(30px);
+    }
+
+    .deck-footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: rgba(4, 6, 14, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+    }
+    
+    @media print {
+      @page {
+        size: 1920px 1080px landscape;
+        margin: 0;
+      }
+      *, *::before, *::after {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        box-shadow: none !important;
+        filter: none !important;
+        text-shadow: none !important;
+      }
+      .card-glass {
+        background: rgba(8, 12, 24, 0.95) !important;
+        border: 1px solid rgba(46, 79, 255, 0.3) !important;
+      }
+      html, body {
+        width: 1920px !important;
+        height: auto !important;
+        overflow: visible !important;
+        background: #04060E !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .deck-header, .deck-footer {
+        display: none !important;
+      }
+      .deck-viewport {
+        position: static !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 1920px !important;
+        height: auto !important;
+        overflow: visible !important;
+        display: block !important;
+      }
+      .slide {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        width: 1920px !important;
+        height: 1080px !important;
+        margin: 0 !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: none !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        display: flex !important;
+      }
+    }
+    
+    .nav-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      outline: none;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: rgba(46, 79, 255, 0.25);
+      border-color: rgba(46, 79, 255, 0.5);
+      color: #fff;
+    }
+    .nav-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+    .deck-dots {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .deck-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .deck-dot:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
+    .deck-dot.active {
+      width: 28px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #2E4FFF, #00B5A0);
+    }
+    .deck-counter {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.4);
+      letter-spacing: 0.05em;
+      min-width: 50px;
+      text-align: center;
+    }
+    .deck-counter .cur {
+      color: #fff;
+      font-weight: 700;
+    }
+
+    @media (max-width: 768px) {
+      .deck-header { height: 50px; padding: 0 14px; }
+      .deck-footer { height: 54px; padding: 0 14px; }
+      .deck-viewport { top: 50px; bottom: 54px; }
+      .nav-btn { width: 34px; height: 34px; }
+      .deck-dots { gap: 4px; }
+      .deck-dot { width: 5px; height: 5px; }
+      .deck-dot.active { width: 22px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="deck-header">
+    <div class="brand">
+      <svg viewBox="530 220 1945 890" height="24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g transform="translate(0 -1604)">
+          <path d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z" fill="white"/>
+          <path d="M1479.61 2368.25L1517.74 2368.25L1517.51 2687.85L1479.48 2687.89C1479.52 2678.56 1479.38 2672.65 1478.94 2663.35C1476.02 2658.69 1456.89 2675.85 1451.6 2678.72C1406.96 2702.97 1363.56 2697.62 1320.38 2667.34C1192.38 2557.43 1355.7 2366.92 1479.31 2485.3L1479.61 2368.25ZM1409.55 2656.67C1430.48 2653.41 1457.64 2642.26 1471.86 2613.07C1487.34 2581.3 1481.19 2539.66 1462.79 2516.65C1443.01 2491.9 1414.8 2481.8 1391.08 2485.73C1277.23 2502.82 1296.53 2664.41 1409.55 2656.67Z" fill="white"/>
+          <path d="M1945.14 2449.24C1982.13 2445.92 2019.48 2455.23 2050.21 2491.51C2099.37 2550.97 2081.5 2632.36 2033.13 2668.24C2012.12 2683.83 1999.15 2687.68 1976.32 2692.86C1935.29 2694.67 1898.43 2691.03 1863.2 2648.74C1828.03 2606.27 1827 2537.01 1862.85 2494.41C1889.41 2462.84 1913.93 2454.83 1945.14 2449.24ZM1874.49 2573.05C1885.2 2649 1930.75 2657.77 1968.13 2656.51C1981.97 2653.64 1991.4 2651.59 2004.13 2643.2C2055.51 2609.35 2049.08 2526.6 2000.07 2497.62C1981.5 2486.63 1969.43 2484.68 1949.73 2485.82C1915.94 2493.17 1884.01 2507.18 1874.49 2573.05Z" fill="white"/>
+          <path d="M730.789 2495.2C755.41 2462.12 780.94 2449.08 811.813 2448.86C833.954 2448.71 863.277 2456.99 879.134 2486.8C884.658 2497.21 888.528 2510.04 890.347 2523.98C894.054 2551.21 892.549 2653.03 892.457 2687.4L853.587 2687.34C853.378 2650.23 857.517 2524.89 846.818 2510.14C810.708 2460.38 744.823 2484.77 739.735 2576.07L739.65 2687.57L700.73 2687.59C700.595 2649.75 705.869 2530.84 691.58 2505.44C669.808 2469.53 616.642 2485.38 598.393 2520.89C581.653 2553.46 586.828 2643.28 587.016 2687.87L548.265 2687.82L548.298 2454.53C559.842 2454.48 573.861 2452.16 584.977 2454.83C588.228 2459.91 587.568 2468.01 587.96 2477.32C593.241 2476.98 611.801 2461.92 620.155 2457.97C633.29 2451.77 638.111 2451.09 651.988 2449.4C654.588 2449.17 657.191 2449.08 659.794 2449.13C687.529 2449.75 711.068 2458.86 730.789 2495.2Z" fill="white"/>
+          <path d="M2233.04 2454.18L2275.59 2454.41C2297.41 2501.54 2323.75 2562.63 2344.02 2612.01C2359.46 2569.82 2392.75 2497.11 2410.98 2454.75L2451.22 2454.66L2438.73 2483.54L2382.65 2612.99C2374.07 2632.79 2359.3 2669.41 2349.95 2684.69C2348.27 2685.54 2339.54 2687.64 2338.37 2685.32C2314.41 2637.47 2292.36 2584.76 2270.02 2534.24C2255.79 2565.84 2241.69 2597.62 2227.72 2629.58C2220.34 2646.29 2210.14 2671.07 2201.81 2685.46C2196.22 2687.53 2195.73 2687.05 2189.96 2685.3C2182.06 2672.43 2093.67 2463.46 2092.21 2454.58L2130.13 2454.31C2150.82 2505.59 2174.46 2559.35 2195.92 2610.11C2213.28 2572.89 2232.72 2526.44 2249.02 2487.93C2244.56 2477.56 2237.92 2464.39 2233.04 2454.18Z" fill="white"/>
+          <path d="M1137.48 2449.32C1138.71 2449.21 1139.94 2449.13 1141.18 2449.08C1245.93 2445.24 1232.36 2547.5 1232.88 2687.81L1193.94 2687.82C1193.67 2640.44 1195.92 2586.08 1192.76 2539.84C1188.36 2475.33 1137.74 2480.06 1112.16 2490.45C1053.77 2511.38 1066.09 2605.6 1066.3 2687.4L1027.87 2687.59L1027.72 2454.68L1066.3 2454.87L1066.74 2485.84C1092.98 2459.2 1107.46 2453.49 1137.48 2449.32Z" fill="white"/>
+          <path d="M1627.7 2363.2C1645.85 2360.21 1674.85 2369.68 1692.72 2376.64L1692.75 2413.88C1677.23 2407.41 1641.9 2385.52 1629.43 2407.45C1623.1 2418.58 1624.91 2439.83 1625.39 2454.67C1653.23 2455.64 1681.46 2455.58 1709.33 2455.96L1709.4 2489.45C1681.39 2489.4 1653.39 2489.09 1625.38 2488.49L1625.32 2520.5L1625.28 2687.71L1587.02 2687.71L1586.95 2489.39L1557.24 2489.25L1557.1 2454.6L1586.81 2454.72C1586.34 2390.05 1587.97 2371.7 1627.7 2363.2Z" fill="white"/>
+          <path d="M1758.55 2369.67L1797.02 2369.51L1796.72 2687.47L1758.6 2687.36L1758.55 2369.67Z" fill="white"/>
+          <path d="M939.123 2454.44L977.913 2454.48L977.762 2687.61L939.08 2687.62C938.324 2611.78 938.775 2530.28 939.123 2454.44Z" fill="white"/>
+          <path d="M952.952 2363.16C986.762 2360.45 1003.1 2404.64 964.268 2419.56C928.358 2422.49 915.136 2374.36 952.952 2363.16Z" fill="white"/>
+        </g>
+      </svg>
+    </div>
+  </header>
+
+  <div class="deck-viewport" id="deck-viewport">
+
+  <!-- SLIDE 1: CAPA -->
+  <section class="slide" id="slide-1">
+    <div class="neural-bg"></div>
+    <div class="neural-grid"></div>
+    <div class="bg-accent"></div>
+    <div class="m-watermark"><svg viewBox="1255 225 485 450" width="60" height="60" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="white" transform="translate(0 -1604)" d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z"/></svg></div>
+    <div class="slide-accent-line"></div>
+    <div class="slide-inner centered">
+      <div class="logo-svg">
+        <svg viewBox="530 220 1945 890" width="180" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <g transform="translate(0 -1604)">
+            <path d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z" fill="white"/>
+            <path d="M1479.61 2368.25L1517.74 2368.25L1517.51 2687.85L1479.48 2687.89C1479.52 2678.56 1479.38 2672.65 1478.94 2663.35C1476.02 2658.69 1456.89 2675.85 1451.6 2678.72C1406.96 2702.97 1363.56 2697.62 1320.38 2667.34C1192.38 2557.43 1355.7 2366.92 1479.31 2485.3L1479.61 2368.25ZM1409.55 2656.67C1430.48 2653.41 1457.64 2642.26 1471.86 2613.07C1487.34 2581.3 1481.19 2539.66 1462.79 2516.65C1443.01 2491.9 1414.8 2481.8 1391.08 2485.73C1277.23 2502.82 1296.53 2664.41 1409.55 2656.67Z" fill="white"/>
+            <path d="M1945.14 2449.24C1982.13 2445.92 2019.48 2455.23 2050.21 2491.51C2099.37 2550.97 2081.5 2632.36 2033.13 2668.24C2012.12 2683.83 1999.15 2687.68 1976.32 2692.86C1935.29 2694.67 1898.43 2691.03 1863.2 2648.74C1828.03 2606.27 1827 2537.01 1862.85 2494.41C1889.41 2462.84 1913.93 2454.83 1945.14 2449.24ZM1874.49 2573.05C1885.2 2649 1930.75 2657.77 1968.13 2656.51C1981.97 2653.64 1991.4 2651.59 2004.13 2643.2C2055.51 2609.35 2049.08 2526.6 2000.07 2497.62C1981.5 2486.63 1969.43 2484.68 1949.73 2485.82C1915.94 2493.17 1884.01 2507.18 1874.49 2573.05Z" fill="white"/>
+            <path d="M730.789 2495.2C755.41 2462.12 780.94 2449.08 811.813 2448.86C833.954 2448.71 863.277 2456.99 879.134 2486.8C884.658 2497.21 888.528 2510.04 890.347 2523.98C894.054 2551.21 892.549 2653.03 892.457 2687.4L853.587 2687.34C853.378 2650.23 857.517 2524.89 846.818 2510.14C810.708 2460.38 744.823 2484.77 739.735 2576.07L739.65 2687.57L700.73 2687.59C700.595 2649.75 705.869 2530.84 691.58 2505.44C669.808 2469.53 616.642 2485.38 598.393 2520.89C581.653 2553.46 586.828 2643.28 587.016 2687.87L548.265 2687.82L548.298 2454.53C559.842 2454.48 573.861 2452.16 584.977 2454.83C588.228 2459.91 587.568 2468.01 587.96 2477.32C593.241 2476.98 611.801 2461.92 620.155 2457.97C633.29 2451.77 638.111 2451.09 651.988 2449.4C654.588 2449.17 657.191 2449.08 659.794 2449.13C687.529 2449.75 711.068 2458.86 730.789 2495.2Z" fill="white"/>
+            <path d="M2233.04 2454.18L2275.59 2454.41C2297.41 2501.54 2323.75 2562.63 2344.02 2612.01C2359.46 2569.82 2392.75 2497.11 2410.98 2454.75L2451.22 2454.66L2438.73 2483.54L2382.65 2612.99C2374.07 2632.79 2359.3 2669.41 2349.95 2684.69C2348.27 2685.54 2339.54 2687.64 2338.37 2685.32C2314.41 2637.47 2292.36 2584.76 2270.02 2534.24C2255.79 2565.84 2241.69 2597.62 2227.72 2629.58C2220.34 2646.29 2210.14 2671.07 2201.81 2685.46C2196.22 2687.53 2195.73 2687.05 2189.96 2685.3C2182.06 2672.43 2093.67 2463.46 2092.21 2454.58L2130.13 2454.31C2150.82 2505.59 2174.46 2559.35 2195.92 2610.11C2213.28 2572.89 2232.72 2526.44 2249.02 2487.93C2244.56 2477.56 2237.92 2464.39 2233.04 2454.18Z" fill="white"/>
+            <path d="M1137.48 2449.32C1138.71 2449.21 1139.94 2449.13 1141.18 2449.08C1245.93 2445.24 1232.36 2547.5 1232.88 2687.81L1193.94 2687.82C1193.67 2640.44 1195.92 2586.08 1192.76 2539.84C1188.36 2475.33 1137.74 2480.06 1112.16 2490.45C1053.77 2511.38 1066.09 2605.6 1066.3 2687.4L1027.87 2687.59L1027.72 2454.68L1066.3 2454.87L1066.74 2485.84C1092.98 2459.2 1107.46 2453.49 1137.48 2449.32Z" fill="white"/>
+            <path d="M1627.7 2363.2C1645.85 2360.21 1674.85 2369.68 1692.72 2376.64L1692.75 2413.88C1677.23 2407.41 1641.9 2385.52 1629.43 2407.45C1623.1 2418.58 1624.91 2439.83 1625.39 2454.67C1653.23 2455.64 1681.46 2455.58 1709.33 2455.96L1709.4 2489.45C1681.39 2489.4 1653.39 2489.09 1625.38 2488.49L1625.32 2520.5L1625.28 2687.71L1587.02 2687.71L1586.95 2489.39L1557.24 2489.25L1557.1 2454.6L1586.81 2454.72C1586.34 2390.05 1587.97 2371.7 1627.7 2363.2Z" fill="white"/>
+            <path d="M1758.55 2369.67L1797.02 2369.51L1796.72 2687.47L1758.6 2687.36L1758.55 2369.67Z" fill="white"/>
+            <path d="M939.123 2454.44L977.913 2454.48L977.762 2687.61L939.08 2687.62C938.324 2611.78 938.775 2530.28 939.123 2454.44Z" fill="white"/>
+            <path d="M952.952 2363.16C986.762 2360.45 1003.1 2404.64 964.268 2419.56C928.358 2422.49 915.136 2374.36 952.952 2363.16Z" fill="white"/>
+          </g>
+        </svg>
+      </div>
+      <div style="margin-bottom:28px;display:flex;justify-content:center;">
+        <div class="divider center"></div>
+      </div>
+      <p class="hero-tagline">IA que vende com maestria</p>
+      <h1 class="display">Seu <span class="display-em">time de vendas</span><br>que nunca dorme</h1>
+      <p class="hero-sub">A MindFlow não é um chatbot. É a sua equipe de vendas — construída para o mercado brasileiro,<br>com a infraestrutura que outras IAs não têm.</p>
+      <p style="margin-top:56px;font-size:11px;color:rgba(255,255,255,0.12);font-family:'Space Grotesk',sans-serif;letter-spacing:0.12em;text-transform:uppercase;">Apresentação Institucional</p>
+    </div>
+    <span class="slide-number">01 / 14</span>
+  </section>
+
+  <!-- SLIDE 2: O PROBLEMA -->
+  <section class="slide" id="slide-2">
+    <div class="neural-bg"></div>
+    <div class="neural-grid"></div>
+    <div class="bg-accent"></div>
+    <svg class="fluid-waves" viewBox="0 0 1920 1080" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="ws2a" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#2E4FFF" stop-opacity="0"/><stop offset="30%" stop-color="#2E4FFF" stop-opacity="0.12"/><stop offset="70%" stop-color="#00B5A0" stop-opacity="0.12"/><stop offset="100%" stop-color="#00B5A0" stop-opacity="0"/></linearGradient>
+        <linearGradient id="ws2b" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#7B9AFF" stop-opacity="0"/><stop offset="40%" stop-color="#7B9AFF" stop-opacity="0.08"/><stop offset="100%" stop-color="#2E4FFF" stop-opacity="0"/></linearGradient>
+      </defs>
+      <path d="M0 970 Q 300 880 600 950 T 1200 910 T 1800 960 T 1920 940 L 1920 1080 L 0 1080 Z" fill="url(#ws2a)" opacity="0.18"/>
+    </svg>
+    <div class="m-watermark"><svg viewBox="1255 225 485 450" width="60" height="60" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="white" transform="translate(0 -1604)" d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z"/></svg></div>
+    <div class="slide-accent-line"></div>
+    <div class="slide-inner" style="max-width:1200px;">
+      <div style="display:grid;grid-template-columns:1.1fr 0.9fr;gap:48px;align-items:start;">
+        <div>
+          <span class="label-accent mb-8">O Problema</span>
+          <div style="margin:12px 0 20px;"><div class="divider"></div></div>
+          <h2 class="heading-xl mb-32">Seu time já não consegue<br>conversar com todos os<br>leads que aparecem.</h2>
+        </div>
+        <div style="position:relative;padding:80px 0 0 32px;">
+          <div style="position:absolute;left:0;top:80px;bottom:0;width:1px;background:rgba(255,255,255,0.06);"></div>
+          <div class="hero-num" style="font-size:clamp(64px,7vw,120px);">&lt;5<span style="font-size:clamp(36px,4vw,64px);">min</span></div>
+          <div class="hero-num-label" style="margin-top:12px;">É o tempo máximo que separa um lead quente<br>de uma oportunidade perdida.</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:48px;">
+        <div class="problem-stat-card"><div class="bar b3"></div>
+          <div class="ps-icon i3"><span class="material-symbols-outlined" style="font-size:20px;">call_received</span></div>
+          <div><div class="ps-value" style="color:#FF4D4D;margin-bottom:3px;">Lead não atendido<br>vira frio</div><div class="ps-desc">Em menos de 5 minutos. Velocidade é conversão — cada minuto custa oportunidades.</div></div>
+        </div>
+        <div class="problem-stat-card"><div class="bar b3"></div>
+          <div class="ps-icon i3"><span class="material-symbols-outlined" style="font-size:20px;">call_made</span></div>
+          <div><div class="ps-value" style="color:#FF4D4D;margin-bottom:3px;">Lead sem cadência<br>vira churn</div><div class="ps-desc">Sem sequência estruturada, o lead conquistado se perde. Follow-up constante é o que fecha.</div></div>
+        </div>
+        <div class="problem-stat-card"><div class="bar b3"></div>
+          <div class="ps-icon i3"><span class="material-symbols-outlined" style="font-size:20px;">schedule</span></div>
+          <div><div class="ps-value" style="color:#FF4D4D;margin-bottom:3px;">Hora útil do time<br>virou luxo</div><div class="ps-desc">Enquanto seu time vende, a IA qualifica. Enquanto seu time fecha, a IA nutre.</div></div>
+        </div>
+      </div>
+    </div>
+    <span class="slide-number">02 / 14</span>
+  </section>
+
+  <!-- SLIDE 3: POR QUE MINDFLOW -->
+  <section class="slide" id="slide-3">
+    <div class="neural-bg"></div>
+    <div class="neural-grid"></div>
+    <div class="bg-accent"></div>
+    <svg class="fluid-waves" viewBox="0 0 1920 1080" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="ws3a" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#2E4FFF" stop-opacity="0"/><stop offset="30%" stop-color="#2E4FFF" stop-opacity="0.08"/><stop offset="70%" stop-color="#00B5A0" stop-opacity="0.08"/><stop offset="100%" stop-color="#00B5A0" stop-opacity="0"/></linearGradient>
+      </defs>
+      <path d="M0 140 C 300 60, 600 200, 960 120 S 1500 220, 1920 100 L 1920 0 L 0 0 Z" fill="url(#ws3a)" opacity="0.12"/>
+    </svg>
+    <div class="m-watermark"><svg viewBox="1255 225 485 450" width="60" height="60" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="white" transform="translate(0 -1604)" d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z"/></svg></div>
+    <div class="slide-accent-line"></div>
+    <div class="slide-inner centered">
+      <span class="label-accent mb-8">Por que MindFlow</span>
+      <div style="margin:12px auto 20px;"><div class="divider center"></div></div>
+      <h2 class="display mb-12">Não é um chatbot.<br><span class="display-em">É sua equipe de vendas.</span></h2>
+      <p class="body-lg" style="max-width:640px;margin:0 auto 32px;color:var(--muted);">Construímos para o mercado brasileiro, com a infraestrutura que outras IAs não têm.</p>
+      <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:40px;">
+        <span class="pill" style="border-color:rgba(46,79,255,0.2);background:rgba(46,79,255,0.06);"><span class="material-symbols-outlined" style="font-size:16px;color:var(--blue2);">record_voice_over</span> Voz brasileira nativa</span>
+        <span class="pill" style="border-color:rgba(0,181,160,0.2);background:rgba(0,181,160,0.06);"><span class="material-symbols-outlined" style="font-size:16px;color:var(--teal);">psychology</span> SPIN + GPCT em tempo real</span>
+        <span class="pill" style="border-color:rgba(46,79,255,0.2);background:rgba(46,79,255,0.06);"><span class="material-symbols-outlined" style="font-size:16px;color:var(--blue2);">integration_instructions</span> CRM nativo</span>
+        <span class="pill" style="border-color:rgba(0,181,160,0.2);background:rgba(0,181,160,0.06);"><span class="material-symbols-outlined" style="font-size:16px;color:var(--teal);">verified</span> LGPD por design</span>
+      </div>
+      <div style="width:60%;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent);margin:0 auto 32px;"></div>
+      <div style="display:flex;gap:48px;justify-content:center;">
+        <div><p style="font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:800;background:linear-gradient(135deg,var(--blue2),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">&lt;5%</p><p style="font-size:13px;color:rgba(255,255,255,0.35);margin-top:4px;">percebem ser IA</p></div>
+        <div style="width:1px;background:rgba(255,255,255,0.12);"></div>
+        <div><p style="font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:800;color:var(--teal);">24/7</p><p style="font-size:13px;color:rgba(255,255,255,0.35);margin-top:4px;">operação contínua</p></div>
+        <div style="width:1px;background:rgba(255,255,255,0.12);"></div>
+        <div><p style="font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:800;color:var(--blue2);">LGPD</p><p style="font-size:13px;color:rgba(255,255,255,0.35);margin-top:4px;">compliance-first</p></div>
+      </div>
+    </div>
+    <span class="slide-number">03 / 14</span>
+  </section>
+
+  <!-- SLIDE 4: COMO FUNCIONA -->
+  <section class="slide" id="slide-4">
+    <div class="neural-bg"></div>
+    <div class="neural-grid"></div>
+    <div class="bg-accent"></div>
+    <svg class="fluid-waves" viewBox="0 0 1920 1080" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="ws4a" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#2E4FFF" stop-opacity="0"/><stop offset="30%" stop-color="#2E4FFF" stop-opacity="0.1"/><stop offset="70%" stop-color="#00B5A0" stop-opacity="0.1"/><stop offset="100%" stop-color="#00B5A0" stop-opacity="0"/></linearGradient>
+        <linearGradient id="ws4b" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#7B9AFF" stop-opacity="0"/><stop offset="40%" stop-color="#7B9AFF" stop-opacity="0.06"/><stop offset="100%" stop-color="#2E4FFF" stop-opacity="0"/></linearGradient>
+      </defs>
+      <path d="M0 200 C 200 80, 400 280, 700 180 S 1100 300, 1400 200 S 1700 320, 1920 220 L 1920 0 L 0 0 Z" fill="url(#ws4a)" opacity="0.15"/>
+      <path d="M0 270 C 250 160, 500 340, 800 250 S 1200 370, 1600 280 S 1800 380, 1920 300 L 1920 0 L 0 0 Z" fill="url(#ws4b)" opacity="0.1"/>
+    </svg>
+    <div class="m-watermark"><svg viewBox="1255 225 485 450" width="60" height="60" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="white" transform="translate(0 -1604)" d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z"/></svg></div>
+    <div class="slide-accent-line"></div>
+    <div class="slide-inner centered">
+      <span class="label-accent mb-8">Como Funciona</span>
+      <div style="margin:12px auto 20px;"><div class="divider center"></div></div>
+      <h2 class="heading-xl mb-12">Nosso time constrói. <span class="display-em">O seu vende.</span></h2>
+      <p class="body-lg" style="max-width:600px;color:var(--muted);">Três fases. Da imersão à operação. Do genérico até você.</p>
+      <div class="grid-3" style="margin-top:44px;">
+        <div class="phase-card" style="display:flex;flex-direction:column;align-items:center;">
+          <div style="display:flex;align-items:center;gap:10px;width:100%;justify-content:center;"><div class="phase-icon-box"><span class="material-symbols-outlined" style="font-size:22px;color:var(--blue2);">travel_explore</span></div><div class="phase-number" style="position:static;opacity:1;font-size:32px;">01</div></div>
+          <h4 style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:18px;margin:12px 0 6px;text-align:center;">Mergulho</h4>
+          <p style="font-size:14px;color:rgba(255,255,255,0.55);line-height:1.6;text-align:center;">Entendemos o pitch, o ICP, os CRMs e as objeções reais. Nada de suposições — tudo validado com seu time.</p>
+        </div>
+        <div class="phase-card" style="display:flex;flex-direction:column;align-items:center;">
+          <div style="display:flex;align-items:center;gap:10px;width:100%;justify-content:center;"><div class="phase-icon-box"><span class="material-symbols-outlined" style="font-size:22px;color:var(--teal);">build</span></div><div class="phase-number" style="position:static;opacity:1;font-size:32px;">02</div></div>
+          <h4 style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:18px;margin:12px 0 6px;text-align:center;">Construção</h4>
+          <p style="font-size:14px;color:rgba(255,255,255,0.55);line-height:1.6;text-align:center;">Voz, tom, cadência e integrações. Nada genérico. A IA é treinada com seus scripts reais de vendas.</p>
+        </div>
+        <div class="phase-card" style="display:flex;flex-direction:column;align-items:center;">
+          <div style="display:flex;align-items:center;gap:10px;width:100%;justify-content:center;"><div class="phase-icon-box"><span class="material-symbols-outlined" style="font-size:22px;color:var(--blue2);">monitoring</span></div><div class="phase-number" style="position:static;opacity:1;font-size:32px;">03</div></div>
+          <h4 style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:18px;margin:12px 0 6px;text-align:center;">Operação</h4>
+          <p style="font-size:14px;color:rgba(255,255,255,0.55);line-height:1.6;text-align:center;">A cada ciclo refinamos performance e scripts. Otimização contínua baseada em dados reais de conversação.</p>
+        </div>
+      </div>
+    </div>
+    <span class="slide-number">04 / 14</span>
+  </section>
+
+  <!-- SLIDE 5: DIFERENCIAIS -->
+  <section class="slide" id="slide-5">
+    <div class="neural-bg"></div>
+    <div class="neural-grid"></div>
+    <div class="bg-accent"></div>
+    <svg class="fluid-waves" viewBox="0 0 1920 1080" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="ws5a" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#2E4FFF" stop-opacity="0"/><stop offset="30%" stop-color="#2E4FFF" stop-opacity="0.1"/><stop offset="70%" stop-color="#00B5A0" stop-opacity="0.1"/><stop offset="100%" stop-color="#00B5A0" stop-opacity="0"/></linearGradient>
+        <linearGradient id="ws5b" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#7B9AFF" stop-opacity="0"/><stop offset="40%" stop-color="#7B9AFF" stop-opacity="0.06"/><stop offset="100%" stop-color="#2E4FFF" stop-opacity="0"/></linearGradient>
+      </defs>
+      <path d="M0 950 C 150 870, 350 930, 550 890 S 900 950, 1200 900 S 1550 960, 1920 920 L 1920 1080 L 0 1080 Z" fill="url(#ws5b)" opacity="0.15"/>
+      <path d="M0 130 C 250 50, 500 180, 800 100 S 1200 200, 1600 120 S 1800 210, 1920 150 L 1920 0 L 0 0 Z" fill="url(#ws5a)" opacity="0.1"/>
+    </svg>
+    <div class="m-watermark"><svg viewBox="1255 225 485 450" width="60" height="60" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="white" transform="translate(0 -1604)" d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z"/></svg></div>
+    <div class="slide-accent-line"></div>
+    <div class="slide-inner centered">
+      <span class="label-accent mb-8">Diferenciais</span>
+      <div style="margin:12px auto 20px;"><div class="divider center"></div></div>
+      <h2 class="heading-xl mb-12">Construímos para o<br><span class="display-em">mercado brasileiro.</span></h2>
+      <p class="body-lg" style="max-width:600px;color:var(--muted);">Voz brasileira, cadência humana. Ninguém desliga achando que era robô.</p>
+      <div class="grid-3" style="margin-top:44px;">
+        <div class="diff-card"><div class="diff-icon-box"><span class="material-symbols-outlined" style="font-size:24px;color:var(--blue2);">record_voice_over</span></div><h4 style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;margin-bottom:8px;">Voz Brasileira</h4><p style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.5;">Regionalismos e entonação natural. A IA entende e fala como uma pessoa real.</p></div>
+        <div class="diff-card"><div class="diff-icon-box"><span class="material-symbols-outlined" style="font-size:24px;color:var(--teal);">psychology</span></div><h4 style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;margin-bottom:8px;">SPIN + GPCT</h4><p style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.5;">Aplica frameworks reais de vendas. Identifica dor e adapta discurso em tempo real.</p></div>
+        <div class="diff-card"><div class="diff-icon-box"><span class="material-symbols-outlined" style="font-size:24px;color:var(--blue2);">phone_iphone</span></div><h4 style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;margin-bottom:8px;">WhatsApp + Telefone</h4><p style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.5;">Liga e responde via operadoras reais com números dedicados. Omnichannel real.</p></div>
+        <div class="diff-card"><div class="diff-icon-box"><span class="material-symbols-outlined" style="font-size:24px;color:var(--teal);">integration_instructions</span></div><h4 style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;margin-bottom:8px;">CRM Nativo</h4><p style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.5;">HubSpot, Pipedrive, Salesforce. Leads classificados e prontos para o próximo passo.</p></div>
+        <div class="diff-card"><div class="diff-icon-box"><span class="material-symbols-outlined" style="font-size:24px;color:var(--blue2);">verified</span></div><h4 style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;margin-bottom:8px;">LGPD por Design</h4><p style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.5;">Criptografia e opt-out imediato. Compliance total desde o dia 1.</p></div>
+        <div class="diff-card"><div class="diff-icon-box"><span class="material-symbols-outlined" style="font-size:24px;color:var(--teal);">description</span></div><h4 style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;margin-bottom:8px;">Auditável</h4><p style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.5;">Transcrição e gravação total. Transparência completa da operação.</p></div>
+      </div>
+    </div>
+    <span class="slide-number">05 / 14</span>
+  </section>
+
+  <!-- SLIDE 6: ARQUITETURA MODULAR -->
+  <section class="slide" id="slide-6">
+    <div class="neural-bg"></div>
+    <div class="neural-grid"></div>
+    <div class="bg-accent"></div>
+    <svg class="fluid-waves" viewBox="0 0 1920 1080" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="ws6a" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#2E4FFF" stop-opacity="0"/><stop offset="30%" stop-color="#2E4FFF" stop-opacity="0.12"/><stop offset="70%" stop-color="#00B5A0" stop-opacity="0.12"/><stop offset="100%" stop-color="#00B5A0" stop-opacity="0"/></linearGradient>
+        <linearGradient id="ws6b" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#7B9AFF" stop-opacity="0"/><stop offset="40%" stop-color="#7B9AFF" stop-opacity="0.08"/><stop offset="100%" stop-color="#2E4FFF" stop-opacity="0"/></linearGradient>
+      </defs>
+      <path d="M0 180 C 150 60, 300 250, 550 150 S 900 300, 1200 190 S 1550 320, 1920 220 L 1920 0 L 0 0 Z" fill="url(#ws6a)" opacity="0.15"/>
+      <path d="M0 240 C 200 130, 400 300, 680 220 S 1050 350, 1400 260 S 1700 380, 1920 290 L 1920 0 L 0 0 Z" fill="url(#ws6b)" opacity="0.1"/>
+    </svg>
+    <div class="m-watermark"><svg viewBox="1255 225 485 450" width="60" height="60" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="white" transform="translate(0 -1604)" d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z"/></svg></div>
+    <div class="slide-accent-line"></div>
+    <div class="slide-inner centered">
+      <span class="label-accent mb-8">Arquitetura Modular</span>
+      <div style="margin:12px auto 20px;"><div class="divider center"></div></div>
+      <h2 class="heading-xl">Configurado para a sua<br><span class="display-em">operação.</span></h2>
+      <div class="grid-3" style="margin-top:44px;">
+        <div class="module-card"><span class="module-tag">Inbound</span><h4 style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:22px;">Receptivo</h4><p style="font-size:14px;color:rgba(255,255,255,0.55);line-height:1.6;">Atende leads de campanhas e WhatsApp incoming em segundos. Qualifica e agenda reuniões automaticamente.</p><ul><li>Resposta em &lt;30s</li><li>Qualificação automática</li><li>Agenda no CRM</li></ul></div>
+        <div class="module-card"><span class="module-tag">Outbound</span><h4 style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:22px;">Prospecção ativa</h4><p style="font-size:14px;color:rgba(255,255,255,0.55);line-height:1.6;">Ligação para listas frias ou mornas com cadência multicanal. Follow-up constante até a conversão.</p><ul><li>Cadência multicanal</li><li>Follow-up automático</li><li>Reativação de leads</li></ul></div>
+        <div class="module-card module-card-highlight"><span class="module-tag">Completa</span><h4 style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:22px;">Operação total</h4><p style="font-size:14px;color:rgba(255,255,255,0.55);line-height:1.6;">Pipeline comercial end-to-end. Nutrição, fechamento e pós-venda integrados em uma única infraestrutura.</p><ul><li>Pipeline end-to-end</li><li>Pós-venda integrado</li><li>Escala sob demanda</li></ul></div>
+      </div>
+    </div>
+    <span class="slide-number">06 / 14</span>
+  </section>
+
+  <!-- SLIDE 7: DASHBOARD -->
+  <section class="slide" id="slide-7">
+    <div class="neural-bg"></div>
+    <div class="neural-grid"></div>
+    <div class="bg-accent"></div>
+    <svg class="fluid-waves" viewBox="0 0 1920 1080" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="ws7a" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#2E4FFF" stop-opacity="0"/><stop offset="30%" stop-color="#2E4FFF" stop-opacity="0.1"/><stop offset="70%" stop-color="#00B5A0" stop-opacity="0.1"/><stop offset="100%" stop-color="#00B5A0" stop-opacity="0"/></linearGradient>
+      </defs>
+      <path d="M0 170 C 250 60, 500 220, 800 140 S 1200 270, 1600 170 S 1800 280, 1920 210 L 1920 0 L 0 0 Z" fill="url(#ws7a)" opacity="0.12"/>
+    </svg>
+    <div class="m-watermark"><svg viewBox="1255 225 485 450" width="60" height="60" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="white" transform="translate(0 -1604)" d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z"/></svg></div>
+    <div class="slide-accent-line"></div>
+    <div class="slide-inner" style="max-width:1300px;">
+      <div style="display:flex;gap:56px;align-items:stretch;">
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;">
+          <span class="label-accent mb-8" style="display:block;">Inteligência de Operação</span>
+      <div style="margin:12px 0 20px;"><div class="divider"></div></div>
+      <h2 class="heading-xl" style="margin-bottom:20px;">Dados que<br>transformam sua<br><span class="display-em">operação</span></h2>
+          <p class="body-lg" style="color:rgba(255,255,255,0.55);line-height:1.7;margin-bottom:28px;">
+            Acesse dashboards personalizados com métricas de desempenho, tendências de conversão e insights da operação — tudo atualizado em tempo real.
+          </p>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;">
+            <span class="pill" style="border-color:rgba(46,79,255,0.2);background:rgba(46,79,255,0.06);font-size:13px;padding:8px 18px;"><span class="material-symbols-outlined" style="font-size:14px;">monitoring</span> Métricas em tempo real</span>
+            <span class="pill" style="border-color:rgba(0,181,160,0.2);background:rgba(0,181,160,0.06);font-size:13px;padding:8px 18px;"><span class="material-symbols-outlined" style="font-size:14px;">assessment</span> Relatórios automatizados</span>
+            <span class="pill" style="border-color:rgba(46,79,255,0.2);background:rgba(46,79,255,0.06);font-size:13px;padding:8px 18px;"><span class="material-symbols-outlined" style="font-size:14px;">download</span> Exportação de dados</span>
+            <span class="pill" style="border-color:rgba(0,181,160,0.2);background:rgba(0,181,160,0.06);font-size:13px;padding:8px 18px;"><span class="material-symbols-outlined" style="font-size:14px;">notifications_active</span> Alertas inteligentes</span>
+          </div>
+        </div>
+        <div style="flex:1;display:flex;align-items:center;">
+          <div class="card-glass" style="width:100%;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+              <span class="label" style="font-size:10px;">RESUMO DO MÊS</span>
+              <span style="font-family:'Space Grotesk',sans-serif;font-size:11px;color:var(--teal);letter-spacing:0.05em;">MAIO 2026</span>
+            </div>
+            <div class="grid-4" style="gap:12px;">
+              <div class="dash-card" style="padding:16px;"><p class="dash-value" style="font-size:28px;color:var(--blue2);">1.847</p><p class="dash-label">Ligações</p></div>
+              <div class="dash-card" style="padding:16px;"><p class="dash-value" style="font-size:28px;color:var(--teal);">89</p><p class="dash-label">Agendadas</p></div>
+              <div class="dash-card" style="padding:16px;"><p class="dash-value" style="font-size:28px;color:var(--blue2);">412</p><p class="dash-label">Qualificadas</p></div>
+              <div class="dash-card" style="padding:16px;"><p class="dash-value" style="font-size:28px;color:var(--teal);">22%</p><p class="dash-label">Conversão</p></div>
+            </div>
+            <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border-subtle);display:flex;gap:20px;flex-wrap:wrap;">
+              <span style="font-size:12px;color:var(--muted);"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle;margin-right:3px;">schedule</span> 24/7 inclusive feriados</span>
+              <span style="font-size:12px;color:var(--muted);"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle;margin-right:3px;">bolt</span> &lt;30s resposta a lead</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <span class="slide-number">07 / 14</span>
+  </section>
+
+  <!-- SLIDE 8: CASOS - CONTATO & QUALIFICAÇÃO -->
+  <section class="slide" id="slide-8">
+    <div class="neural-bg"></div>
+    <div class="neural-grid"></div>
+    <div class="bg-accent"></div>
+    <svg class="fluid-waves" viewBox="0 0 1920 1080" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="ws8a" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#2E4FFF" stop-opacity="0"/><stop offset="30%" stop-color="#2E4FFF" stop-opacity="0.1"/><stop offset="70%" stop-color="#00B5A0" stop-opacity="0.1"/><stop offset="100%" stop-color="#00B5A0" stop-opacity="0"/></linearGradient>
+        <linearGradient id="ws8b" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#7B9AFF" stop-opacity="0"/><stop offset="40%" stop-color="#7B9AFF" stop-opacity="0.06"/><stop offset="100%" stop-color="#2E4FFF" stop-opacity="0"/></linearGradient>
+      </defs>
+      <path d="M0 960 Q 280 880 560 940 T 1120 910 T 1680 960 T 1920 930 L 1920 1080 L 0 1080 Z" fill="url(#ws8a)" opacity="0.15"/>
+      <path d="M0 1020 Q 380 940 700 990 T 1340 960 T 1920 990 L 1920 1080 L 0 1080 Z" fill="url(#ws8b)" opacity="0.1"/>
+    </svg>
+    <div class="m-watermark"><svg viewBox="1255 225 485 450" width="60" height="60" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="white" transform="translate(0 -1604)" d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z"/></svg></div>
+    <div class="slide-accent-line"></div>
+    <div class="slide-inner centered">
+      <span class="label-accent mb-8">Casos de Uso • Fase 01-02</span>
+      <div style="margin:12px auto 20px;"><div class="divider center"></div></div>
+      <h2 class="heading-xl mb-12">Contato &amp; <span class="display-em">Qualificação</span></h2>
+      <p class="body-lg" style="max-width:600px;color:var(--muted);">Em cada etapa do seu ciclo comercial, a MindFlow entrega velocidade e precisão.</p>
+      <div class="grid-2" style="margin-top:44px;text-align:center;max-width:1000px;margin-left:auto;margin-right:auto;">
+        <div class="card-simple"><div class="case-phase" style="font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;background:linear-gradient(135deg,var(--blue2),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;">Fase 01 — Contato</div><h4 style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:20px;margin-bottom:8px;">Resposta imediata</h4><p style="font-size:14px;color:rgba(255,255,255,0.55);line-height:1.6;">A IA liga em segundos após o formulário. Velocidade é conversão.</p></div>
+        <div class="card-simple"><div class="case-phase" style="font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;background:linear-gradient(135deg,var(--blue2),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;">Fase 02 — Qualificação</div><h4 style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:20px;margin-bottom:8px;">SPIN e GPCT em tempo real</h4><p style="font-size:14px;color:rgba(255,255,255,0.55);line-height:1.6;">Conversas técnicas com frameworks reais. A IA aplica o pitch exatamente como sua empresa faria.</p></div>
+      </div>
+    </div>
+    <span class="slide-number">08 / 14</span>
+  </section>
+
+  <!-- SLIDE 9: CASOS - CADÊNCIA & PÓS-VENDA -->
+  <section class="slide" id="slide-9">
+    <div class="neural-bg"></div>
+    <div class="neural-grid"></div>
+    <div class="bg-accent"></div>
+    <svg class="fluid-waves" viewBox="0 0 1920 1080" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="ws9a" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#2E4FFF" stop-opacity="0"/><stop offset="30%" stop-color="#2E4FFF" stop-opacity="0.1"/><stop offset="70%" stop-color="#00B5A0" stop-opacity="0.1"/><stop offset="100%" stop-color="#00B5A0" stop-opacity="0"/></linearGradient>
+      </defs>
+      <path d="M0 120 C 200 200, 400 50, 700 180 S 1100 60, 1400 170 S 1700 80, 1920 140 L 1920 0 L 0 0 Z" fill="url(#ws9a)" opacity="0.12"/>
+    </svg>
+    <div class="m-watermark"><svg viewBox="1255 225 485 450" width="60" height="60" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="white" transform="translate(0 -1604)" d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z"/></svg></div>
+    <div class="slide-accent-line"></div>
+    <div class="slide-inner centered">
+      <span class="label-accent mb-8">Casos de Uso • Fases 03-04</span>
+      <div style="margin:12px auto 20px;"><div class="divider center"></div></div>
+      <h2 class="heading-xl">Cadência, Fechamento<br><span class="display-em">e Retenção</span></h2>
+      <div class="grid-2" style="margin-top:44px;text-align:center;max-width:1000px;margin-left:auto;margin-right:auto;">
+        <div class="card-simple"><div class="case-phase" style="font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;background:linear-gradient(135deg,var(--blue2),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;">Fase 03 — Cadência</div><h4 style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:20px;margin-bottom:8px;">Nutrição contínua</h4><p style="font-size:14px;color:rgba(255,255,255,0.55);line-height:1.6;">Lead não atendeu? WhatsApp automático com contexto. Transbordo inteligente com resumo total da IA.</p></div>
+        <div class="card-simple"><div class="case-phase" style="font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;background:linear-gradient(135deg,var(--blue2),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;">Fase 04 — Pós-venda</div><h4 style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:20px;margin-bottom:8px;">Retenção</h4><p style="font-size:14px;color:rgba(255,255,255,0.55);line-height:1.6;">Atendimento sem URA. Reativação de clientes dormentes e defesa de carteira.</p></div>
+      </div>
+    </div>
+    <span class="slide-number">09 / 14</span>
+  </section>
+
+  <!-- SLIDE 10: OPERAÇÕES ATIVAS -->
+  <section class="slide" id="slide-10">
+    <div class="neural-bg"></div>
+    <div class="neural-grid"></div>
+    <div class="bg-accent"></div>
+    <svg class="fluid-waves" viewBox="0 0 1920 1080" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="ws10a" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#2E4FFF" stop-opacity="0"/><stop offset="30%" stop-color="#2E4FFF" stop-opacity="0.08"/><stop offset="70%" stop-color="#00B5A0" stop-opacity="0.08"/><stop offset="100%" stop-color="#00B5A0" stop-opacity="0"/></linearGradient>
+        <linearGradient id="ws10b" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#7B9AFF" stop-opacity="0"/><stop offset="40%" stop-color="#7B9AFF" stop-opacity="0.04"/><stop offset="100%" stop-color="#2E4FFF" stop-opacity="0"/></linearGradient>
+      </defs>
+      <path d="M0 980 Q 250 900 500 960 T 1000 930 T 1500 970 T 1920 950 L 1920 1080 L 0 1080 Z" fill="url(#ws10a)" opacity="0.12"/>
+      <path d="M0 1030 Q 350 960 680 1010 T 1350 980 T 1920 1000 L 1920 1080 L 0 1080 Z" fill="url(#ws10b)" opacity="0.08"/>
+    </svg>
+    <div class="m-watermark"><svg viewBox="1255 225 485 450" width="60" height="60" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="white" transform="translate(0 -1604)" d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z"/></svg></div>
+    <div class="slide-accent-line"></div>
+    <div class="slide-inner centered">
+      <span class="label-accent mb-8">Operações Ativas</span>
+      <div style="margin:12px auto 20px;"><div class="divider center"></div></div>
+      <h2 class="heading-xl mb-12">Operações rodando em<br><span class="display-em">setores estratégicos</span></h2>
+      <p class="body-lg" style="max-width:500px;color:var(--muted);margin-bottom:44px;">A MindFlow já opera em diversos segmentos, com resultados comprovados.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:14px;justify-content:center;max-width:900px;margin:0 auto;">
+        <span class="sector-pill"><span class="material-symbols-outlined" style="font-size:20px;color:var(--blue2);">account_balance</span> Cooperativas de crédito</span>
+        <span class="sector-pill"><span class="material-symbols-outlined" style="font-size:20px;color:var(--teal);">apartment</span> Condomínios</span>
+        <span class="sector-pill"><span class="material-symbols-outlined" style="font-size:20px;color:var(--blue2);">inventory_2</span> Provedores regionais</span>
+        <span class="sector-pill"><span class="material-symbols-outlined" style="font-size:20px;color:var(--teal);">trending_up</span> Assessorias de investimento</span>
+        <span class="sector-pill"><span class="material-symbols-outlined" style="font-size:20px;color:var(--blue2);">location_on</span> Portarias virtuais</span>
+        <span class="sector-pill"><span class="material-symbols-outlined" style="font-size:20px;color:var(--teal);">local_hospital</span> Planos de saúde regionais</span>
+      </div>
+    </div>
+    <span class="slide-number">10 / 14</span>
+  </section>
+
+  <!-- SLIDE 11: INDICADORES -->
+  <section class="slide" id="slide-11">
+    <div class="neural-bg"></div>
+    <div class="neural-grid"></div>
+    <div class="bg-accent"></div>
+    <svg class="fluid-waves" viewBox="0 0 1920 1080" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="ws11a" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#2E4FFF" stop-opacity="0"/><stop offset="30%" stop-color="#2E4FFF" stop-opacity="0.1"/><stop offset="70%" stop-color="#00B5A0" stop-opacity="0.1"/><stop offset="100%" stop-color="#00B5A0" stop-opacity="0"/></linearGradient>
+        <linearGradient id="ws11b" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#7B9AFF" stop-opacity="0"/><stop offset="40%" stop-color="#7B9AFF" stop-opacity="0.06"/><stop offset="100%" stop-color="#2E4FFF" stop-opacity="0"/></linearGradient>
+      </defs>
+      <path d="M0 140 C 250 40, 500 190, 800 110 S 1200 230, 1600 140 S 1820 250, 1920 180 L 1920 0 L 0 0 Z" fill="url(#ws11a)" opacity="0.12"/>
+      <path d="M0 970 Q 280 880 560 950 T 1120 910 T 1680 960 T 1920 940 L 1920 1080 L 0 1080 Z" fill="url(#ws11b)" opacity="0.15"/>
+    </svg>
+    <div class="m-watermark"><svg viewBox="1255 225 485 450" width="60" height="60" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="white" transform="translate(0 -1604)" d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z"/></svg></div>
+    <div class="slide-accent-line"></div>
+    <div class="slide-inner centered">
+      <span class="label-accent mb-8">Indicadores</span>
+      <div style="margin:12px auto 20px;"><div class="divider center"></div></div>
+      <h2 class="heading-xl">O que muda quando<br>o <span class="display-em">Kaique</span> entra em operação</h2>
+      <div class="grid-2" style="max-width:1000px;margin:44px auto 0;">
+        <div class="indicator-card"><div class="indicator-num">+247%</div><div style="text-align:right;"><h4 style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:18px;margin-bottom:4px;">Mais conversas qualificadas</h4><p style="font-size:14px;color:rgba(255,255,255,0.5);">Com a mesma equipe, sem contratar mais pessoas.</p></div></div>
+        <div class="indicator-card"><div class="indicator-num">24/7</div><div style="text-align:right;padding-left:12px;"><h4 style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:18px;margin-bottom:4px;">Operação contínua</h4><p style="font-size:14px;color:rgba(255,255,255,0.5);">Incluindo fins de semana e feriados.</p></div></div>
+        <div class="indicator-card"><div class="indicator-num">-63%</div><div style="text-align:right;"><h4 style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:18px;margin-bottom:4px;">Redução no custo por reunião</h4><p style="font-size:14px;color:rgba(255,255,255,0.5);">Menos desperdício, mais reuniões qualificadas.</p></div></div>
+        <div class="indicator-card"><div class="indicator-num">&lt;30s</div><div style="text-align:right;"><h4 style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:18px;margin-bottom:4px;">Resposta a lead inbound</h4><p style="font-size:14px;color:rgba(255,255,255,0.5);">O lead quente é atendido em segundos, não horas.</p></div></div>
+      </div>
+    </div>
+    <span class="slide-number">11 / 14</span>
+  </section>
+
+  <!-- SLIDE 12: IMPLEMENTAÇÃO -->
+  <section class="slide" id="slide-12">
+    <div class="neural-bg"></div>
+    <div class="neural-grid"></div>
+    <div class="bg-accent"></div>
+    <svg class="fluid-waves" viewBox="0 0 1920 1080" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="ws12a" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#2E4FFF" stop-opacity="0"/><stop offset="30%" stop-color="#2E4FFF" stop-opacity="0.12"/><stop offset="70%" stop-color="#00B5A0" stop-opacity="0.12"/><stop offset="100%" stop-color="#00B5A0" stop-opacity="0"/></linearGradient>
+        <linearGradient id="ws12b" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#7B9AFF" stop-opacity="0"/><stop offset="40%" stop-color="#7B9AFF" stop-opacity="0.08"/><stop offset="100%" stop-color="#2E4FFF" stop-opacity="0"/></linearGradient>
+      </defs>
+      <path d="M0 200 C 200 80, 450 250, 750 140 S 1150 290, 1500 180 S 1750 310, 1920 230 L 1920 0 L 0 0 Z" fill="url(#ws12a)" opacity="0.15"/>
+      <path d="M0 270 C 250 160, 500 310, 800 230 S 1200 350, 1600 260 S 1820 370, 1920 300 L 1920 0 L 0 0 Z" fill="url(#ws12b)" opacity="0.1"/>
+    </svg>
+    <div class="m-watermark"><svg viewBox="1255 225 485 450" width="60" height="60" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="white" transform="translate(0 -1604)" d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z"/></svg></div>
+    <div class="slide-accent-line"></div>
+    <div class="slide-inner centered">
+      <span class="label-accent mb-8">Implementação</span>
+      <div style="margin:12px auto 20px;"><div class="divider center"></div></div>
+      <h2 class="heading-xl">Em <span class="display-em">2 a 4 semanas</span><br>sua IA opera como se<br>fosse sua melhor vendedora</h2>
+      <div class="timeline" style="margin-top:44px;">
+        <div class="tl-step"><div class="tl-week">Semana 1</div><div class="tl-title">Kickoff</div><div class="tl-desc">Alinhamento e definição de KPIs</div></div>
+        <div class="tl-step"><div class="tl-week">Semana 1-2</div><div class="tl-title">Mergulho</div><div class="tl-desc">Análise de CRM, pitch e objeções</div></div>
+        <div class="tl-step"><div class="tl-week">Semana 2-3</div><div class="tl-title">Construção</div><div class="tl-desc">Configuração de voz e integrações</div></div>
+        <div class="tl-step"><div class="tl-week">Semana 3-4</div><div class="tl-title">Soft Launch</div><div class="tl-desc">Testes e ajustes finos</div></div>
+      </div>
+    </div>
+    <span class="slide-number">12 / 14</span>
+  </section>
+
+  <!-- SLIDE 13: PRÓXIMOS PASSOS -->
+  <section class="slide" id="slide-13">
+    <div class="neural-bg"></div>
+    <div class="neural-grid"></div>
+    <div class="bg-accent"></div>
+    <svg class="fluid-waves" viewBox="0 0 1920 1080" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="ws13a" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#2E4FFF" stop-opacity="0"/><stop offset="30%" stop-color="#2E4FFF" stop-opacity="0.08"/><stop offset="70%" stop-color="#00B5A0" stop-opacity="0.08"/><stop offset="100%" stop-color="#00B5A0" stop-opacity="0"/></linearGradient>
+      </defs>
+      <path d="M0 980 C 150 920, 300 960, 500 930 S 800 970, 1050 940 S 1350 980, 1650 950 S 1800 970, 1920 960 L 1920 1080 L 0 1080 Z" fill="url(#ws13a)" opacity="0.1"/>
+    </svg>
+    <div class="m-watermark"><svg viewBox="1255 225 485 450" width="60" height="60" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="white" transform="translate(0 -1604)" d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z"/></svg></div>
+    <div class="slide-accent-line"></div>
+    <div class="slide-inner centered">
+      <span class="label-accent mb-8" style="letter-spacing:0.18em;">PRÓXIMOS PASSOS</span>
+      <div style="margin:12px auto 20px;"><div class="divider center"></div></div>
+      <h2 class="display mb-24" style="max-width:960px;margin-left:auto;margin-right:auto;font-size:clamp(44px,4.5vw,76px);">Uma ligação vale mais<br>que <span class="display-em">mil demos.</span></h2>
+      <p class="body-lg" style="max-width:680px;margin:0 auto 40px;color:rgba(255,255,255,0.7);line-height:1.6;">
+        Em 30 segundos você vai ouvir exatamente o que o seu próximo lead vai ouvir. Prove a IA que seus clientes vão experimentar.
+      </p>
+      <div>
+        <button onclick="goToSlide(13)" style="display:inline-flex;align-items:center;gap:10px;padding:16px 36px;background:linear-gradient(135deg,#2E4FFF,#00B5A0);border:none;border-radius:12px;font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;color:#fff;cursor:pointer;box-shadow:0 8px 32px rgba(46,79,255,0.3);transition:transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+          TESTAR IA <span class="material-symbols-outlined" style="font-size:20px;">expand_more</span>
+        </button>
+      </div>
+    </div>
+    <span class="slide-number">13 / 14</span>
+  </section>
+
+  <!-- SLIDE 14: CONTATO -->
+  <section class="slide" id="slide-14">
+    <div class="neural-bg"></div>
+    <div class="neural-grid"></div>
+    <div class="bg-accent"></div>
+    <div class="contact-glow"></div>
+    <div class="m-watermark" style="opacity:0.08;"><svg viewBox="1255 225 485 450" width="60" height="60" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="white" transform="translate(0 -1604)" d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z"/></svg></div>
+    <div class="slide-accent-line"></div>
+    <div class="slide-inner centered">
+      <p class="hero-tagline" style="font-size:12px;margin-bottom:12px;margin-top:-80px;">Fale com um especialista da MindFlow</p>
+      <div style="margin:12px auto 20px;"><div class="divider center"></div></div>
+      <h2 class="heading-xl" style="margin-bottom:36px;">Transforme o seu<br><span class="display-em">negócio</span></h2>
+      <div style="display:flex;align-items:center;justify-content:center;gap:64px;padding-top:40px;">
+        <div style="display:flex;flex-direction:column;align-items:center;">
+          <div class="contact-person" style="margin-bottom:24px;">
+            <div class="avatar">
+              <svg viewBox="1255 225 485 450" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="white" transform="translate(0 -1604)" d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z"/></svg>
+            </div>
+            <div style="text-align:left;">
+              <p style="font-size:12px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;font-family:'Space Grotesk',sans-serif;margin-bottom:6px;">Fale com</p>
+              <p style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:28px;letter-spacing:-0.02em;line-height:1.2;">Renato Paranhos</p>
+              <p style="font-size:15px;color:rgba(255,255,255,0.35);margin-top:4px;">Diretor Comercial</p>
+            </div>
+          </div>
+          <div class="contact-pills">
+            <a class="contact-pill" href="tel:+5541996852463" style="background:linear-gradient(135deg,rgba(46,79,255,0.08),rgba(0,181,160,0.08));border:1px solid rgba(46,79,255,0.15);box-shadow:0 8px 32px rgba(46,79,255,0.08);min-width:400px;padding:18px 32px;">
+              <div class="ico" style="background:linear-gradient(135deg,rgba(46,79,255,0.2),rgba(0,181,160,0.2));"><span class="material-symbols-outlined" style="font-size:20px;color:#fff;">call</span></div>
+              <span style="font-size:20px;font-weight:600;color:#fff;letter-spacing:-0.01em;">(41) 99685-2463</span>
+            </a>
+            <a class="contact-pill" href="mailto:renato.paranhos@iatize-ia.com" style="background:linear-gradient(135deg,rgba(46,79,255,0.08),rgba(0,181,160,0.08));border:1px solid rgba(46,79,255,0.15);box-shadow:0 8px 32px rgba(46,79,255,0.08);min-width:400px;padding:18px 32px;">
+              <div class="ico" style="background:linear-gradient(135deg,rgba(46,79,255,0.2),rgba(0,181,160,0.2));"><span class="material-symbols-outlined" style="font-size:20px;color:#fff;">mail</span></div>
+              <span style="font-size:20px;font-weight:600;color:#fff;letter-spacing:-0.01em;">renato.paranhos@iatize-ia.com</span>
+            </a>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;">
+          <a href="https://front-form-form-leads.bkpxmb.easypanel.host" target="_blank" style="display:block; width:180px; height:180px; background:#fff; border-radius:16px; padding:12px; margin-bottom:12px; border:1px solid rgba(255,255,255,0.1); transition:transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='scale(1.03)';this.style.boxShadow='0 0 24px rgba(46,79,255,0.25)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 37 37" shape-rendering="crispEdges" style="width:100%;height:100%;display:block;"><path fill="#ffffff" d="M0 0h37v37H0z"/><path stroke="#04060E" d="M2 2.5h7m1 0h3m8 0h3m1 0h2m1 0h7M2 3.5h1m5 0h1m1 0h1m1 0h2m2 0h1m1 0h2m4 0h2m2 0h1m5 0h1M2 4.5h1m1 0h3m1 0h1m5 0h5m1 0h1m1 0h1m3 0h1m1 0h1m1 0h3m1 0h1M2 5.5h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h1m2 0h1m2 0h2m2 0h1m1 0h1m1 0h1m1 0h3m1 0h1M2 6.5h1m1 0h3m1 0h1m3 0h4m2 0h3m2 0h1m2 0h1m1 0h1m1 0h3m1 0h1M2 7.5h1m5 0h1m2 0h2m3 0h4m8 0h1m5 0h1M2 8.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M10 9.5h2m4 0h4m1 0h1m2 0h1m1 0h1M2 10.5h1m1 0h2m1 0h3m4 0h1m1 0h2m1 0h2m2 0h1m1 0h2m1 0h1m2 0h1m1 0h2M3 11.5h1m1 0h3m5 0h1m1 0h1m2 0h5m2 0h1m2 0h2m1 0h4M3 12.5h2m2 0h3m2 0h1m1 0h2m4 0h1m1 0h1m1 0h2m2 0h4m1 0h2M2 13.5h1m4 0h1m1 0h2m2 0h1m5 0h1m2 0h1m1 0h3m2 0h1m1 0h1m1 0h1M4 14.5h5m3 0h1m3 0h3m6 0h3m1 0h3M6 15.5h1m2 0h2m5 0h1m5 0h1m3 0h2m1 0h1m1 0h3M3 16.5h1m1 0h1m1 0h2m1 0h1m3 0h1m1 0h1m3 0h2m1 0h1m2 0h1m1 0h3M2 17.5h1m2 0h1m1 0h1m2 0h1m1 0h2m1 0h3m4 0h2m2 0h3m2 0h2M2 18.5h1m2 0h5m1 0h2m2 0h1m6 0h4m1 0h2m1 0h3M3 19.5h1m1 0h1m1 0h1m1 0h1m1 0h5m1 0h1m4 0h7m1 0h2m2 0h1M3 20.5h4m1 0h2m2 0h1m2 0h4m1 0h1m1 0h1m1 0h1m4 0h2m1 0h2M3 21.5h1m2 0h1m2 0h8m2 0h2m5 0h2m2 0h1m2 0h1M2 22.5h1m4 0h3m1 0h1m1 0h1m4 0h1m3 0h2m1 0h1m5 0h4M2 23.5h2m2 0h2m1 0h2m6 0h3m1 0h2m2 0h1m1 0h2m2 0h1m2 0h1M4 24.5h1m3 0h2m1 0h5m1 0h1m1 0h2m2 0h3m1 0h2m1 0h1m2 0h2M3 25.5h2m1 0h2m1 0h2m1 0h1m2 0h3m2 0h1m6 0h3m1 0h1m2 0h1M2 26.5h1m1 0h11m4 0h1m4 0h1m1 0h5M10 27.5h4m3 0h2m2 0h6m3 0h2M2 28.5h7m1 0h3m1 0h2m3 0h4m1 0h3m1 0h1m1 0h1M2 29.5h1m5 0h1m1 0h1m2 0h2m1 0h5m1 0h2m1 0h2m3 0h3m1 0h1M2 30.5h1m1 0h3m1 0h1m2 0h3m1 0h2m1 0h4m1 0h8m1 0h1m1 0h1M2 31.5h1m1 0h3m1 0h1m1 0h1m3 0h2m2 0h2m2 0h1m1 0h1m1 0h1m2 0h1m4 0h1M2 32.5h1m1 0h3m1 0h1m1 0h2m2 0h1m1 0h3m3 0h1m3 0h4M2 33.5h1m5 0h1m2 0h1m4 0h1m2 0h1m1 0h1m4 0h1m2 0h3m2 0h1M2 34.5h7m1 0h2m2 0h2m2 0h3m2 0h1m1 0h1m4 0h1m1 0h1"/></svg>
+          </a>
+          <p style="font-family:'Space Grotesk',sans-serif;font-size:12px;color:var(--muted);letter-spacing:0.05em;">Aponte a câmera e teste a IA gratuitamente</p>
+        </div>
+      </div>
+    </div>
+    <span class="slide-number">14 / 14</span>
+  </section>
+
+  </div> <!-- /deck-viewport -->
+
+  <footer class="deck-footer">
+    <button class="nav-btn" id="prev-btn" title="Anterior (Seta para cima)"><span class="material-symbols-outlined">expand_less</span></button>
+    <div class="deck-dots" id="deck-dots"></div>
+    <div class="deck-counter"><span class="cur" id="cur-slide">01</span>/14</div>
+    <button class="nav-btn" id="next-btn" title="Próximo (Seta para baixo)"><span class="material-symbols-outlined">expand_more</span></button>
+  </footer>
+
+  <script>
+    (function() {
+      const slides = Array.from(document.querySelectorAll('.slide'));
+      const dotsContainer = document.getElementById('deck-dots');
+      const curSlideEl = document.getElementById('cur-slide');
+      const prevBtn = document.getElementById('prev-btn');
+      const nextBtn = document.getElementById('next-btn');
+      const viewport = document.getElementById('deck-viewport');
+      
+      let currentIndex = 0;
+      const totalSlides = slides.length;
+      let isTransitioning = false;
+
+      // Create 14 dots
+      slides.forEach((_, idx) => {
+        const dot = document.createElement('div');
+        dot.className = 'deck-dot' + (idx === 0 ? ' active' : '');
+        dot.addEventListener('click', () => goToSlide(idx));
+        dotsContainer.appendChild(dot);
+      });
+
+      const dots = Array.from(dotsContainer.children);
+
+      function fitSlides() {
+        const vw = window.innerWidth;
+        const vh = viewport.clientHeight;
+        const scaleX = vw / 1920;
+        const scaleY = vh / 1080;
+        const scale = Math.min(scaleX, scaleY);
+
+        slides.forEach((slide) => {
+          slide.style.transform = `scale(${scale})`;
+        });
+      }
+
+      function updateDeckUI() {
+        slides.forEach((slide, idx) => {
+          slide.classList.remove('active', 'prev-slide', 'next-slide');
+          if (idx === currentIndex) {
+            slide.classList.add('active');
+          } else if (idx < currentIndex) {
+            slide.classList.add('prev-slide');
+          } else {
+            slide.classList.add('next-slide');
+          }
+        });
+
+        dots.forEach((dot, idx) => {
+          dot.classList.toggle('active', idx === currentIndex);
+        });
+
+        curSlideEl.textContent = String(currentIndex + 1).padStart(2, '0');
+        prevBtn.disabled = currentIndex === 0;
+        nextBtn.disabled = currentIndex === totalSlides - 1;
+      }
+
+      function goToSlide(index) {
+        if (index < 0 || index >= totalSlides || isTransitioning) return;
+        isTransitioning = true;
+        currentIndex = index;
+        updateDeckUI();
+        setTimeout(() => { isTransitioning = false; }, 400);
+      }
+      window.goToSlide = goToSlide;
+
+      prevBtn.addEventListener('click', () => goToSlide(currentIndex - 1));
+      nextBtn.addEventListener('click', () => goToSlide(currentIndex + 1));
+
+      // Keyboard navigation
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+          e.preventDefault();
+          goToSlide(currentIndex + 1);
+        } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft' || e.key === 'PageUp') {
+          e.preventDefault();
+          goToSlide(currentIndex - 1);
+        }
+      });
+
+      // Mouse Wheel navigation (debounced)
+      let wheelTimeout;
+      window.addEventListener('wheel', (e) => {
+        if (wheelTimeout) return;
+        if (e.deltaY > 20) {
+          goToSlide(currentIndex + 1);
+        } else if (e.deltaY < -20) {
+          goToSlide(currentIndex - 1);
+        }
+        wheelTimeout = setTimeout(() => { wheelTimeout = null; }, 500);
+      }, { passive: true });
+
+      // Touch swipe navigation
+      let touchStartY = 0;
+      window.addEventListener('touchstart', (e) => {
+        touchStartY = e.touches[0].clientY;
+      }, { passive: true });
+
+      window.addEventListener('touchend', (e) => {
+        const touchEndY = e.changedTouches[0].clientY;
+        const diffY = touchStartY - touchEndY;
+        if (Math.abs(diffY) > 40) {
+          if (diffY > 0) goToSlide(currentIndex + 1);
+          else goToSlide(currentIndex - 1);
+        }
+      }, { passive: true });
+
+      window.addEventListener('resize', fitSlides);
+      fitSlides();
+      updateDeckUI();
+    })();
+  </script>
+</body>
+</html>

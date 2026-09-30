@@ -1,0 +1,1946 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tavily × MindFlow — Possibilidades Estratégicas</title>
+  <meta name="description" content="Documento editorial sobre as possibilidades estratégicas de uso do Tavily para a MindFlow: pesquisa de identidade visual de marcas, geração de leads e inteligência competitiva.">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%221225 1800 545 510%22><path fill=%22%23FFFFFF%22 d=%22M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z%22/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0&display=swap"
+    rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue: #2E4FFF;
+      --teal: #00B5A0;
+      --blue2: #7B9AFF;
+      --bg: #04060E;
+      --bg-card: rgba(8, 12, 24, 0.72);
+      --muted: #8E8FA2;
+      --text: #E8E9F0;
+      --white: #FFFFFF;
+      --glow-blue: rgba(46, 79, 255, 0.15);
+      --glow-teal: rgba(0, 181, 160, 0.12);
+    }
+
+    @property --ba {
+      syntax: '<angle>';
+      initial-value: 0deg;
+      inherits: false;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ── Neural Canvas Background ── */
+    #neural-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── Navigation ── */
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      background: rgba(4, 6, 14, 0.7);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--white);
+    }
+
+    .nav-left svg.mark { width: 28px; height: 28px; flex-shrink: 0; }
+
+    .nav-wordmark {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      opacity: 0.92;
+    }
+
+    .nav-tag {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--teal);
+      opacity: 0.8;
+      font-weight: 500;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 28px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      transition: color 0.3s;
+    }
+
+    .nav-links a:hover { color: var(--white); }
+
+    /* ── Sections Base ── */
+    section {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 120px 60px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* ── Typography ── */
+    .section-tag {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--teal);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-tag::before {
+      content: '';
+      width: 28px;
+      height: 1px;
+      background: var(--teal);
+      flex-shrink: 0;
+    }
+
+    .headline {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.08;
+      color: var(--white);
+    }
+
+    .headline-xl { font-size: clamp(48px, 7vw, 96px); }
+    .headline-lg { font-size: clamp(36px, 5vw, 72px); }
+    .headline-md { font-size: clamp(28px, 3.5vw, 48px); }
+    .headline-sm { font-size: clamp(22px, 2.5vw, 32px); }
+
+    .body-text {
+      font-size: clamp(16px, 1.4vw, 20px);
+      color: var(--muted);
+      max-width: 680px;
+      margin-top: 24px;
+      line-height: 1.8;
+    }
+
+    .body-text strong { color: var(--white); font-weight: 600; }
+
+    .gradient-text {
+      background: linear-gradient(135deg, var(--blue) 0%, var(--teal) 50%, var(--blue2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .teal-text { color: var(--teal); }
+    .blue-text { color: var(--blue2); }
+
+    /* ── Hero Section ── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding-top: 56px;
+      position: relative;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, var(--glow-blue) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .hero .headline {
+      max-width: 1000px;
+    }
+
+    .hero .body-text {
+      max-width: 600px;
+      margin-inline: auto;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 18px;
+      border-radius: 100px;
+      border: 1px solid rgba(0, 181, 160, 0.25);
+      background: rgba(0, 181, 160, 0.06);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      color: var(--teal);
+      text-transform: uppercase;
+      margin-bottom: 32px;
+      animation: fadeInUp 0.8s ease-out both;
+    }
+
+    .hero-badge .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--teal);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero .headline { animation: fadeInUp 0.8s ease-out 0.15s both; }
+    .hero .body-text { animation: fadeInUp 0.8s ease-out 0.3s both; }
+
+    .scroll-indicator {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    .scroll-indicator .line {
+      width: 1px; height: 40px;
+      background: linear-gradient(to bottom, var(--teal), transparent);
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(8px); }
+    }
+
+    /* ── Divider ── */
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(46, 79, 255, 0.2), rgba(0, 181, 160, 0.2), transparent);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Feature Cards ── */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      margin-top: 56px;
+    }
+
+    .feature-card {
+      position: relative;
+      padding: 40px 36px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      transition: border-color 0.4s, transform 0.4s, box-shadow 0.4s;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: radial-gradient(ellipse at top left, var(--glow-blue) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.4s;
+      pointer-events: none;
+    }
+
+    .feature-card:hover {
+      border-color: rgba(46, 79, 255, 0.2);
+      transform: translateY(-4px);
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+    }
+
+    .feature-card:hover::before { opacity: 1; }
+
+    .card-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+      font-size: 24px;
+    }
+
+    .card-icon.blue {
+      background: rgba(46, 79, 255, 0.12);
+      color: var(--blue2);
+    }
+
+    .card-icon.teal {
+      background: rgba(0, 181, 160, 0.12);
+      color: var(--teal);
+    }
+
+    .card-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--white);
+      margin-bottom: 12px;
+    }
+
+    .card-desc {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    /* ── Deep Dive Sections ── */
+    .deep-section {
+      min-height: auto;
+      padding: 100px 60px;
+    }
+
+    .deep-section .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+    }
+
+    .deep-section .split.reverse { direction: rtl; }
+    .deep-section .split.reverse > * { direction: ltr; }
+
+    .deep-visual {
+      position: relative;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: var(--bg-card);
+    }
+
+    .deep-visual-inner {
+      padding: 40px;
+    }
+
+    .flow-diagram {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .flow-step {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.02);
+      transition: border-color 0.3s, background 0.3s;
+    }
+
+    .flow-step:hover {
+      border-color: rgba(46, 79, 255, 0.15);
+      background: rgba(46, 79, 255, 0.04);
+    }
+
+    .flow-step .step-num {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .flow-step .step-num.blue { background: rgba(46, 79, 255, 0.15); color: var(--blue2); }
+    .flow-step .step-num.teal { background: rgba(0, 181, 160, 0.15); color: var(--teal); }
+
+    .flow-step .step-text {
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .flow-step .step-text strong { color: var(--white); }
+
+    .flow-connector {
+      width: 1px;
+      height: 16px;
+      background: linear-gradient(to bottom, rgba(46, 79, 255, 0.3), rgba(0, 181, 160, 0.3));
+      margin-left: 36px;
+    }
+
+    /* ── Endpoint Table ── */
+    .endpoint-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 40px;
+      font-size: 14px;
+    }
+
+    .endpoint-table thead th {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-align: left;
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .endpoint-table tbody td {
+      padding: 18px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      vertical-align: top;
+    }
+
+    .endpoint-table tbody tr:hover {
+      background: rgba(46, 79, 255, 0.03);
+    }
+
+    .endpoint-name {
+      font-family: 'Space Grotesk', monospace;
+      font-weight: 600;
+      color: var(--blue2);
+      font-size: 14px;
+    }
+
+    .endpoint-desc { color: var(--text); }
+    .endpoint-use { color: var(--muted); font-size: 13px; }
+
+    /* ── Strategy Cards (numbered) ── */
+    .strategy-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin-top: 56px;
+    }
+
+    .strategy-card {
+      position: relative;
+      padding: 40px 32px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: var(--bg-card);
+      backdrop-filter: blur(8px);
+    }
+
+    .strategy-num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 56px;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 20px;
+      opacity: 0.12;
+    }
+
+    .strategy-num.blue { color: var(--blue); }
+    .strategy-num.teal { color: var(--teal); }
+
+    .strategy-card h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--white);
+      margin-bottom: 12px;
+      letter-spacing: -0.01em;
+    }
+
+    .strategy-card p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    /* ── Pipeline Visual ── */
+    .pipeline {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-top: 48px;
+      overflow-x: auto;
+      padding-bottom: 16px;
+    }
+
+    .pipeline-node {
+      padding: 20px 28px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: var(--bg-card);
+      text-align: center;
+      min-width: 180px;
+      flex-shrink: 0;
+      transition: border-color 0.3s;
+    }
+
+    .pipeline-node:hover { border-color: rgba(46, 79, 255, 0.2); }
+
+    .pipeline-node .node-label {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--white);
+      margin-bottom: 6px;
+    }
+
+    .pipeline-node .node-desc {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .pipeline-arrow {
+      width: 40px;
+      height: 1px;
+      background: linear-gradient(to right, var(--blue), var(--teal));
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .pipeline-arrow::after {
+      content: '→';
+      position: absolute;
+      right: -4px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--teal);
+      font-size: 14px;
+    }
+
+    /* ── Metric Blocks ── */
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      margin-top: 48px;
+    }
+
+    .metric {
+      text-align: center;
+      padding: 32px 20px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.015);
+    }
+
+    .metric-value {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .metric-label {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+
+    /* ── CTA Section ── */
+    .cta-section {
+      min-height: auto;
+      padding: 120px 60px;
+      text-align: center;
+      position: relative;
+    }
+
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 800px; height: 800px;
+      background: radial-gradient(circle, var(--glow-teal) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .cta-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 100px;
+      border: 1px solid rgba(46, 79, 255, 0.2);
+      background: rgba(46, 79, 255, 0.06);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--blue2);
+      margin-bottom: 28px;
+    }
+
+    /* ── Footer ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      padding: 32px 60px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    footer a {
+      color: var(--blue2);
+      text-decoration: none;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      section { padding: 80px 28px; }
+      .deep-section .split { grid-template-columns: 1fr; gap: 40px; }
+      .deep-section .split.reverse { direction: ltr; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .navbar { padding: 0 20px; }
+      .nav-links { display: none; }
+      footer { flex-direction: column; gap: 12px; text-align: center; }
+    }
+
+    @media (max-width: 600px) {
+      .headline-xl { font-size: 36px; }
+      .headline-lg { font-size: 28px; }
+      .card-grid { grid-template-columns: 1fr; }
+      .strategy-grid { grid-template-columns: 1fr; }
+      .pipeline { flex-direction: column; }
+      .pipeline-arrow { width: 1px; height: 24px; background: linear-gradient(to bottom, var(--blue), var(--teal)); }
+      .pipeline-arrow::after { content: '↓'; right: 50%; transform: translateX(50%); top: auto; bottom: -4px; }
+    }
+
+    /* ── Scroll Animation ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── Highlight Box ── */
+    .highlight-box {
+      padding: 32px 36px;
+      border-radius: 16px;
+      border-left: 3px solid var(--teal);
+      background: rgba(0, 181, 160, 0.04);
+      margin-top: 32px;
+    }
+
+    .highlight-box p {
+      font-size: 15px;
+      color: var(--text);
+      line-height: 1.8;
+    }
+
+    .highlight-box strong { color: var(--teal); }
+
+    /* ── Code Block ── */
+    .code-block {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 24px 28px;
+      margin-top: 24px;
+      font-family: 'Space Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      line-height: 1.8;
+      color: var(--text);
+      overflow-x: auto;
+    }
+
+    .code-block .keyword { color: var(--blue2); }
+    .code-block .string { color: var(--teal); }
+    .code-block .comment { color: var(--muted); font-style: italic; }
+
+    /* ── Use Case List ── */
+    .use-case-list {
+      list-style: none;
+      margin-top: 32px;
+    }
+
+    .use-case-list li {
+      padding: 16px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .use-case-list li:last-child { border-bottom: none; }
+
+    .use-case-list .bullet {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 8px;
+    }
+
+    .use-case-list .bullet.blue { background: var(--blue); }
+    .use-case-list .bullet.teal { background: var(--teal); }
+
+    .use-case-list .case-text {
+      font-size: 15px;
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    .use-case-list .case-text strong { color: var(--white); }
+  </style>
+</head>
+
+<body>
+
+  <!-- Neural Canvas -->
+  <canvas id="neural-canvas"></canvas>
+
+  <!-- ═══════════════════════════════════════
+       NAVBAR
+  ═══════════════════════════════════════ -->
+  <nav class="navbar">
+    <a href="#" class="nav-left">
+      <svg class="mark" viewBox="1225 1800 545 510" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z"
+          fill="white" />
+      </svg>
+      <span class="nav-wordmark">MindFlow</span>
+      <span class="nav-tag">× Tavily</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#brand-dna">Brand DNA</a></li>
+      <li><a href="#leads">Leads</a></li>
+      <li><a href="#content">Conteúdo</a></li>
+      <li><a href="#codebase">MindFlow Stack</a></li>
+      <li><a href="#innovations">Inovações</a></li>
+      <li><a href="#intelligence">Inteligência</a></li>
+      <li><a href="#next">Próximos Passos</a></li>
+    </ul>
+  </nav>
+
+  <!-- ═══════════════════════════════════════
+       HERO
+  ═══════════════════════════════════════ -->
+  <section class="hero" id="top">
+    <div class="hero-badge">
+      <span class="dot"></span>
+      Documento Estratégico Interno
+    </div>
+    <h1 class="headline headline-xl">
+      <span class="gradient-text">Tavily</span> como<br>
+      Motor de Inteligência<br>
+      da <span class="gradient-text">MindFlow</span>
+    </h1>
+    <p class="body-text" style="text-align: center;">
+      Um mapeamento completo das possibilidades estratégicas de uso do Tavily
+      para potencializar a <strong>IA de criação de conteúdo</strong>,
+      <strong>geração de leads</strong> e <strong>inteligência competitiva</strong> da MindFlow.
+    </p>
+    <div class="scroll-indicator">
+      <span>Explorar</span>
+      <div class="line"></div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ═══════════════════════════════════════
+       OVERVIEW — O Que É o Tavily
+  ═══════════════════════════════════════ -->
+  <section id="overview" class="deep-section">
+    <div class="container reveal">
+      <span class="section-tag">01 — Overview</span>
+      <h2 class="headline headline-lg">
+        O que é o <span class="teal-text">Tavily</span>?
+      </h2>
+      <p class="body-text">
+        Tavily é uma <strong>camada de acesso web projetada para agentes de IA</strong>.
+        Diferente de buscadores tradicionais, ele retorna dados já limpos, estruturados e
+        otimizados para LLMs — eliminando a necessidade de scraping manual, parsing HTML
+        e filtragem de conteúdo irrelevante.
+      </p>
+
+      <div class="highlight-box">
+        <p>
+          <strong>Para a MindFlow</strong>, isso significa que nossos agentes de IA podem
+          "ir à internet" de forma autônoma — pesquisar marcas, analisar concorrentes,
+          encontrar leads — tudo isso retornando dados prontos para consumo pela IA,
+          sem boilerplate e sem ruído.
+        </p>
+      </div>
+
+      <!-- Endpoints Table -->
+      <table class="endpoint-table">
+        <thead>
+          <tr>
+            <th>Endpoint</th>
+            <th>Função</th>
+            <th>Uso na MindFlow</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="endpoint-name">/search</td>
+            <td class="endpoint-desc">Busca web em tempo real, otimizada para IA</td>
+            <td class="endpoint-use">Pesquisa de tendências, benchmarks, referências de conteúdo</td>
+          </tr>
+          <tr>
+            <td class="endpoint-name">/extract</td>
+            <td class="endpoint-desc">Extrai conteúdo limpo de URLs específicas</td>
+            <td class="endpoint-use">Análise de sites de clientes, páginas de redes sociais, portfólios</td>
+          </tr>
+          <tr>
+            <td class="endpoint-name">/crawl</td>
+            <td class="endpoint-desc">Navega e indexa domínios inteiros</td>
+            <td class="endpoint-use">Mapeamento completo de presença digital de marcas</td>
+          </tr>
+          <tr>
+            <td class="endpoint-name">/map</td>
+            <td class="endpoint-desc">Descoberta inteligente de URLs em sites</td>
+            <td class="endpoint-use">Inventário de páginas de concorrentes e clientes</td>
+          </tr>
+          <tr>
+            <td class="endpoint-name">/research</td>
+            <td class="endpoint-desc">Pesquisa multi-step automatizada com relatório</td>
+            <td class="endpoint-use">Relatórios completos de análise de marca e mercado</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Metrics -->
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-value gradient-text">1000</div>
+          <div class="metric-label">Créditos / mês (free tier)</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value gradient-text">5</div>
+          <div class="metric-label">Endpoints especializados</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value gradient-text">~70%</div>
+          <div class="metric-label">Redução de tokens vs scraping manual</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value gradient-text">100%</div>
+          <div class="metric-label">Dados LLM-ready</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ═══════════════════════════════════════
+       BRAND DNA — Identidade Visual por Web Scraping
+  ═══════════════════════════════════════ -->
+  <section id="brand-dna">
+    <div class="container reveal">
+      <span class="section-tag">02 — Brand DNA Engine</span>
+      <h2 class="headline headline-lg">
+        Extrair a <span class="gradient-text">Essência</span><br>
+        de uma Marca
+      </h2>
+      <p class="body-text">
+        Antes de criar qualquer conteúdo com IA para um cliente, a MindFlow precisa
+        entender a <strong>"alma" da marca</strong>: tom de voz, paleta visual,
+        padrões estéticos, valores e posicionamento. O Tavily é o ponto de entrada
+        para esse processo.
+      </p>
+    </div>
+  </section>
+
+  <!-- Brand DNA — Split 1 -->
+  <section class="deep-section">
+    <div class="container reveal">
+      <div class="split">
+        <div>
+          <span class="section-tag">Pipeline de Extração</span>
+          <h3 class="headline headline-md">
+            Do Site ao<br><span class="teal-text">DNA da Marca</span>
+          </h3>
+          <p class="body-text">
+            Usando o <strong>Tavily Crawl + Extract</strong>, mapeamos todo o domínio do
+            cliente e extraímos conteúdo textual limpo. Esse conteúdo é então alimentado
+            a um LLM com prompt especializado para derivar os pilares de marca: tom de voz,
+            proposta de valor, temas recorrentes e personalidade.
+          </p>
+
+          <div class="highlight-box">
+            <p>
+              <strong>Limitação importante:</strong> O Tavily extrai conteúdo textual, não CSS/hex.
+              Para cores e tipografia, combinamos com screenshots automatizados via
+              Playwright + análise de visão computacional (GPT-4o Vision).
+            </p>
+          </div>
+        </div>
+
+        <div class="deep-visual">
+          <div class="deep-visual-inner">
+            <div class="flow-diagram">
+              <div class="flow-step">
+                <div class="step-num blue">01</div>
+                <div class="step-text"><strong>Tavily Crawl</strong> — Mapeia todas as páginas do domínio do cliente</div>
+              </div>
+              <div class="flow-connector"></div>
+              <div class="flow-step">
+                <div class="step-num blue">02</div>
+                <div class="step-text"><strong>Tavily Extract</strong> — Extrai conteúdo limpo (About, Serviços, Blog)</div>
+              </div>
+              <div class="flow-connector"></div>
+              <div class="flow-step">
+                <div class="step-num teal">03</div>
+                <div class="step-text"><strong>Screenshot via Playwright</strong> — Captura visual das páginas principais</div>
+              </div>
+              <div class="flow-connector"></div>
+              <div class="flow-step">
+                <div class="step-num teal">04</div>
+                <div class="step-text"><strong>LLM Analysis (texto)</strong> — Tom de voz, valores, posicionamento</div>
+              </div>
+              <div class="flow-connector"></div>
+              <div class="flow-step">
+                <div class="step-num blue">05</div>
+                <div class="step-text"><strong>Vision AI (visual)</strong> — Cores, tipografia, padrões visuais</div>
+              </div>
+              <div class="flow-connector"></div>
+              <div class="flow-step">
+                <div class="step-num teal">06</div>
+                <div class="step-text"><strong>Geração do Brand Kit (<code>brand/</code>)</strong> — Criação autônoma de <code>tom-de-voz.md</code>, <code>identidade-visual.md</code> e <code>regras-design.md</code></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Brand DNA — Split 2 (Social Media) -->
+  <section class="deep-section">
+    <div class="container reveal">
+      <div class="split reverse">
+        <div>
+          <span class="section-tag">Redes Sociais</span>
+          <h3 class="headline headline-md">
+            Entender a Marca<br>pelo <span class="blue-text">Instagram</span>
+          </h3>
+          <p class="body-text">
+            O Tavily pode pesquisar menções, hashtags e conteúdos públicos de redes sociais.
+            Porém, para dados estruturados do Instagram (posts, engagement, followers),
+            precisamos de uma <strong>estratégia híbrida</strong>.
+          </p>
+
+          <ul class="use-case-list">
+            <li>
+              <span class="bullet teal"></span>
+              <span class="case-text">
+                <strong>Tavily Search:</strong> Pesquisa menções públicas da marca em blogs,
+                notícias e plataformas abertas (Reddit, X/Twitter, TikTok)
+              </span>
+            </li>
+            <li>
+              <span class="bullet blue"></span>
+              <span class="case-text">
+                <strong>Tavily Extract:</strong> Extrai bio, descrições e links de perfis
+                públicos de redes sociais
+              </span>
+            </li>
+            <li>
+              <span class="bullet teal"></span>
+              <span class="case-text">
+                <strong>Meta Graph API + Apify:</strong> Para dados estruturados do Instagram
+                (posts, métricas, visual dos feeds) — complementa o Tavily
+              </span>
+            </li>
+            <li>
+              <span class="bullet blue"></span>
+              <span class="case-text">
+                <strong>Vision AI:</strong> Screenshots dos feeds para análise de paleta
+                cromática, grid visual e consistência estética
+              </span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="deep-visual">
+          <div class="deep-visual-inner">
+            <div style="text-align: center; padding: 20px 0;">
+              <div style="font-family: 'Space Grotesk'; font-size: 14px; color: var(--muted); margin-bottom: 24px; letter-spacing: 0.06em; text-transform: uppercase;">Pipeline de Análise Social</div>
+
+              <div class="pipeline" style="flex-direction: column;">
+                <div class="pipeline-node" style="width: 100%;">
+                  <div class="node-label">🔍 Tavily Search</div>
+                  <div class="node-desc">Menções, hashtags, sentimento</div>
+                </div>
+                <div class="pipeline-arrow" style="width: 1px; height: 24px; background: linear-gradient(to bottom, var(--blue), var(--teal));">
+                  <span style="position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); font-size: 12px;">↓</span>
+                </div>
+                <div class="pipeline-node" style="width: 100%;">
+                  <div class="node-label">📄 Tavily Extract</div>
+                  <div class="node-desc">Bio, links, descrições</div>
+                </div>
+                <div class="pipeline-arrow" style="width: 1px; height: 24px; background: linear-gradient(to bottom, var(--blue), var(--teal));">
+                  <span style="position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); font-size: 12px;">↓</span>
+                </div>
+                <div class="pipeline-node" style="width: 100%;">
+                  <div class="node-label">📸 Scraper Visual</div>
+                  <div class="node-desc">Apify / Playwright screenshots</div>
+                </div>
+                <div class="pipeline-arrow" style="width: 1px; height: 24px; background: linear-gradient(to bottom, var(--blue), var(--teal));">
+                  <span style="position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); font-size: 12px;">↓</span>
+                </div>
+                <div class="pipeline-node" style="width: 100%; border-color: rgba(0, 181, 160, 0.2);">
+                  <div class="node-label" style="color: var(--teal);">🧬 Brand DNA Profile</div>
+                  <div class="node-desc">Identidade Visual + Tom de Voz</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ═══════════════════════════════════════
+       LEADS — Prospecção de Leads Quentes
+  ═══════════════════════════════════════ -->
+  <section id="leads">
+    <div class="container reveal">
+      <span class="section-tag">03 — Lead Intelligence</span>
+      <h2 class="headline headline-lg">
+        Encontrar <span class="gradient-text">Leads Quentes</span><br>
+        na Internet
+      </h2>
+      <p class="body-text">
+        O Tavily pode funcionar como um <strong>motor de inteligência de prospecção</strong>
+        para a MindFlow. Identificar donos de empresa, gestores e diretores que possam
+        se interessar pelos nossos serviços de IA e automação.
+      </p>
+    </div>
+  </section>
+
+  <!-- Leads — Strategy Cards -->
+  <section class="deep-section">
+    <div class="container reveal">
+      <div class="split">
+        <div>
+          <span class="section-tag">Estratégia de Prospecção</span>
+          <h3 class="headline headline-md">
+            Discovery +<br><span class="teal-text">Enrichment</span>
+          </h3>
+          <p class="body-text">
+            A abordagem ideal combina <strong>Discovery</strong> (encontrar o lead) com
+            <strong>Enrichment</strong> (enriquecer com dados contextuais). O Tavily
+            é excelente no enrichment — quando temos o nome da empresa ou pessoa, ele
+            consegue buscar informações profundas em tempo real.
+          </p>
+
+          <ul class="use-case-list">
+            <li>
+              <span class="bullet teal"></span>
+              <span class="case-text">
+                <strong>Search por Nicho:</strong> "empresas de [setor] em [cidade] que precisam de marketing digital"
+                — retorna resultados contextualizados com URLs relevantes
+              </span>
+            </li>
+            <li>
+              <span class="bullet blue"></span>
+              <span class="case-text">
+                <strong>Enrichment de Leads:</strong> Dado um nome/empresa, pesquisa LinkedIn,
+                site, notícias recentes, funding, contratações — tudo estruturado para CRM
+              </span>
+            </li>
+            <li>
+              <span class="bullet teal"></span>
+              <span class="case-text">
+                <strong>Análise de Dor:</strong> Pesquisa sinais de que a empresa precisa de
+                serviços de IA — site desatualizado, baixa presença digital, posts pedindo ajuda
+              </span>
+            </li>
+            <li>
+              <span class="bullet blue"></span>
+              <span class="case-text">
+                <strong>Monitoramento de Oportunidades:</strong> Vagas de emprego abertas para
+                marketing/growth = sinal de investimento no setor
+              </span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="deep-visual">
+          <div class="deep-visual-inner">
+            <div class="flow-diagram">
+              <div class="flow-step">
+                <div class="step-num teal">01</div>
+                <div class="step-text"><strong>Definir ICP</strong> — Perfil Ideal de Cliente (setor, tamanho, localização)</div>
+              </div>
+              <div class="flow-connector"></div>
+              <div class="flow-step">
+                <div class="step-num blue">02</div>
+                <div class="step-text"><strong>Tavily Search</strong> — Buscar empresas e decisores por nicho</div>
+              </div>
+              <div class="flow-connector"></div>
+              <div class="flow-step">
+                <div class="step-num teal">03</div>
+                <div class="step-text"><strong>Tavily Extract</strong> — Extrair dados dos sites/perfis encontrados</div>
+              </div>
+              <div class="flow-connector"></div>
+              <div class="flow-step">
+                <div class="step-num blue">04</div>
+                <div class="step-text"><strong>LLM Scoring</strong> — IA qualifica lead (fit + sinal de dor + urgência)</div>
+              </div>
+              <div class="flow-connector"></div>
+              <div class="flow-step">
+                <div class="step-num teal">05</div>
+                <div class="step-text"><strong>Tavily Research</strong> — Deep dive no lead qualificado</div>
+              </div>
+              <div class="flow-connector"></div>
+              <div class="flow-step">
+                <div class="step-num blue">06</div>
+                <div class="step-text"><strong>Output → CRM</strong> — Lead enriquecido + pitch personalizado</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Leads — Automation Pipeline -->
+  <section class="deep-section">
+    <div class="container reveal">
+      <span class="section-tag">Automação com n8n</span>
+      <h3 class="headline headline-md">
+        Pipeline Automatizado de<br><span class="gradient-text">Prospecção</span>
+      </h3>
+      <p class="body-text">
+        Integrando Tavily com <strong>n8n</strong> (que já usamos na MindFlow), podemos criar
+        workflows automáticos de prospecção que rodam diariamente ou semanalmente.
+      </p>
+
+      <div class="pipeline">
+        <div class="pipeline-node">
+          <div class="node-label">⏰ Schedule</div>
+          <div class="node-desc">Trigger diário/semanal</div>
+        </div>
+        <div class="pipeline-arrow"></div>
+        <div class="pipeline-node">
+          <div class="node-label">🔍 Tavily</div>
+          <div class="node-desc">Busca por ICP</div>
+        </div>
+        <div class="pipeline-arrow"></div>
+        <div class="pipeline-node">
+          <div class="node-label">🧠 LLM</div>
+          <div class="node-desc">Qualificação</div>
+        </div>
+        <div class="pipeline-arrow"></div>
+        <div class="pipeline-node">
+          <div class="node-label">📊 Scoring</div>
+          <div class="node-desc">Priorização</div>
+        </div>
+        <div class="pipeline-arrow"></div>
+        <div class="pipeline-node">
+          <div class="node-label">💼 CRM</div>
+          <div class="node-desc">Airtable / Sheets</div>
+        </div>
+        <div class="pipeline-arrow"></div>
+        <div class="pipeline-node" style="border-color: rgba(0, 181, 160, 0.2);">
+          <div class="node-label" style="color: var(--teal);">📩 Outreach</div>
+          <div class="node-desc">Pitch personalizado</div>
+        </div>
+      </div>
+
+      <div class="highlight-box" style="margin-top: 40px;">
+        <p>
+          <strong>Dica estratégica:</strong> O pipeline pode usar o Tavily Research endpoint
+          para gerar um "briefing de abordagem" personalizado para cada lead — incluindo
+          notícias recentes da empresa, principais dores detectadas e sugestão de pitch.
+          Isso transforma cold outreach em <strong>warm outreach contextualizado</strong>.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ═══════════════════════════════════════
+       CONTENT AI — Uso na IA de Conteúdo
+  ═══════════════════════════════════════ -->
+  <section id="content">
+    <div class="container reveal">
+      <span class="section-tag">04 — Content Intelligence</span>
+      <h2 class="headline headline-lg">
+        IA de Conteúdo<br><span class="gradient-text">Alimentada por Tavily</span>
+      </h2>
+      <p class="body-text">
+        A IA de criação de conteúdo da MindFlow pode usar o Tavily em <strong>múltiplas fases</strong>
+        do processo criativo — desde a pesquisa de referências até a validação final.
+      </p>
+
+      <div class="strategy-grid">
+        <div class="strategy-card">
+          <div class="strategy-num blue">01</div>
+          <h3>Pesquisa de Referências</h3>
+          <p>
+            Antes de criar qualquer peça, a IA busca referências de conteúdo do mesmo
+            nicho usando Tavily Search. Analisa o que funciona, que formatos são mais
+            populares e quais temas estão em alta.
+          </p>
+        </div>
+
+        <div class="strategy-card">
+          <div class="strategy-num teal">02</div>
+          <h3>Análise de Tendências</h3>
+          <p>
+            Busca em tempo real as tendências do mercado, notícias recentes e eventos
+            relevantes para o nicho do cliente. Conteúdo contextualizado e relevante
+            tem 3x mais engajamento.
+          </p>
+        </div>
+
+        <div class="strategy-card">
+          <div class="strategy-num blue">03</div>
+          <h3>Benchmark Competitivo</h3>
+          <p>
+            Extrai e analisa o conteúdo dos concorrentes do cliente usando Tavily Crawl.
+            Identifica gaps de conteúdo, formatos não explorados e oportunidades de
+            diferenciação.
+          </p>
+        </div>
+
+        <div class="strategy-card">
+          <div class="strategy-num teal">04</div>
+          <h3>Validação de Copy</h3>
+          <p>
+            Após gerar conteúdo, usa Tavily Search para verificar se claims/dados citados
+            são precisos, evitando desinformação. Fact-checking automatizado integrado
+            ao pipeline.
+          </p>
+        </div>
+
+        <div class="strategy-card">
+          <div class="strategy-num blue">05</div>
+          <h3>Curadoria de Assuntos</h3>
+          <p>
+            Monitora fontes de conteúdo do nicho do cliente para sugerir pautas.
+            O Tavily Research pode gerar relatórios semanais com temas quentes para
+            o calendário editorial.
+          </p>
+        </div>
+
+        <div class="strategy-card">
+          <div class="strategy-num teal">06</div>
+          <h3>Localização Cultural</h3>
+          <p>
+            Para clientes em diferentes regiões, pesquisa eventos locais, feriados e
+            tendências regionais. Conteúdo localizado e culturalmente relevante gera
+            maior conexão com a audiência.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ═══════════════════════════════════════
+       COMPETITIVE INTELLIGENCE
+  ═══════════════════════════════════════ -->
+  <section id="intelligence">
+    <div class="container reveal">
+      <span class="section-tag">05 — Inteligência Competitiva</span>
+      <h2 class="headline headline-lg">
+        Monitoramento<br><span class="gradient-text">Competitivo Contínuo</span>
+      </h2>
+      <p class="body-text">
+        Além de alimentar a IA de conteúdo e a prospecção de leads, o Tavily pode servir
+        como <strong>radar de inteligência competitiva</strong> permanente para a MindFlow
+        e seus clientes.
+      </p>
+    </div>
+  </section>
+
+  <section class="deep-section">
+    <div class="container reveal">
+      <div class="split">
+        <div>
+          <span class="section-tag">Casos de Uso</span>
+          <h3 class="headline headline-md">
+            Radar de<br><span class="teal-text">Mercado</span>
+          </h3>
+
+          <ul class="use-case-list">
+            <li>
+              <span class="bullet teal"></span>
+              <span class="case-text">
+                <strong>Monitor de Preços:</strong> Crawler automático que verifica mudanças
+                de pricing em concorrentes e alerta via Slack/WhatsApp
+              </span>
+            </li>
+            <li>
+              <span class="bullet blue"></span>
+              <span class="case-text">
+                <strong>Tracking de Features:</strong> Monitora changelogs e páginas de produto
+                de concorrentes para detectar lançamentos
+              </span>
+            </li>
+            <li>
+              <span class="bullet teal"></span>
+              <span class="case-text">
+                <strong>Análise de Sentimento:</strong> Busca menções de marcas em fóruns,
+                redes sociais e review sites para medir percepção
+              </span>
+            </li>
+            <li>
+              <span class="bullet blue"></span>
+              <span class="case-text">
+                <strong>Hiring Signals:</strong> Monitora vagas abertas de concorrentes — se
+                estão contratando para IA/Growth, indica investimento no setor
+              </span>
+            </li>
+            <li>
+              <span class="bullet teal"></span>
+              <span class="case-text">
+                <strong>News Digest:</strong> Relatório diário/semanal de notícias do setor,
+                filtrado e sumarizado por LLM para o time da MindFlow
+              </span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="deep-visual">
+          <div class="deep-visual-inner">
+            <div style="font-family: 'Space Grotesk'; font-size: 14px; color: var(--muted); margin-bottom: 24px; letter-spacing: 0.06em; text-transform: uppercase; text-align: center;">Workflow n8n — Inteligência</div>
+
+            <div class="flow-diagram">
+              <div class="flow-step">
+                <div class="step-num teal">⏰</div>
+                <div class="step-text"><strong>Cron Trigger</strong> — Diário às 8h ou semanal segunda-feira</div>
+              </div>
+              <div class="flow-connector"></div>
+              <div class="flow-step">
+                <div class="step-num blue">🔍</div>
+                <div class="step-text"><strong>Tavily Search/Crawl</strong> — Busca atualizações em lista de concorrentes</div>
+              </div>
+              <div class="flow-connector"></div>
+              <div class="flow-step">
+                <div class="step-num teal">📊</div>
+                <div class="step-text"><strong>Diff Engine</strong> — Compara com versão anterior (detecta mudanças)</div>
+              </div>
+              <div class="flow-connector"></div>
+              <div class="flow-step">
+                <div class="step-num blue">🧠</div>
+                <div class="step-text"><strong>LLM Analysis</strong> — Classifica relevância e gera insight acionável</div>
+              </div>
+              <div class="flow-connector"></div>
+              <div class="flow-step">
+                <div class="step-num teal">📨</div>
+                <div class="step-text"><strong>Distribuição</strong> — Slack, Email, Airtable, Google Sheets</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ═══════════════════════════════════════
+       MINDFLOW CODEBASE INTEGRATION
+  ═══════════════════════════════════════ -->
+  <section id="codebase" class="deep-section">
+    <div class="container reveal">
+      <span class="section-tag">06 — Arquitetura Real (mindflow-editorial)</span>
+      <h2 class="headline headline-lg">
+        Integração com o<br><span class="gradient-text">Core do MindFlow Editorial</span>
+      </h2>
+      <p class="body-text">
+        Analisando a arquitetura real do repositório <strong>mindflow-editorial</strong>, o Tavily atua como a espinha dorsal de <strong>evidências e inteligência web</strong>. Ele se conecta diretamente com a API TypeScript em Node.js e alimenta o motor de rendering visual em Python.
+      </p>
+
+      <!-- Grid de Mapeamento dos Arquivos do Repo -->
+      <div class="strategy-grid" style="margin-top: 36px;">
+        <div class="strategy-card" style="border-color: rgba(46, 79, 255, 0.2);">
+          <div class="strategy-num blue">01</div>
+          <h3><code>apps/api/src/lib/tavily.ts</code></h3>
+          <p>
+            Client unificado do Tavily SDK. Centraliza as chamadas de busca (<code>buscarComTavily</code>), extração de URLs limpas e gerencia rate limits e timeouts.
+          </p>
+        </div>
+
+        <div class="strategy-card" style="border-color: rgba(0, 181, 160, 0.2);">
+          <div class="strategy-num teal">02</div>
+          <h3><code>src/lib/researcher-v2.ts</code></h3>
+          <p>
+            Executa a pesquisa R&D no <strong>Estágio 1</strong>. Envia buscas automatizadas para encontrar estatísticas de mercado, pesquisas acadêmicas e teses para o briefing.
+          </p>
+        </div>
+
+        <div class="strategy-card" style="border-color: rgba(46, 79, 255, 0.2);">
+          <div class="strategy-num blue">03</div>
+          <h3><code>src/lib/facts-gate.ts</code></h3>
+          <p>
+            O <strong>Gate dos Fatos (Estágio 4)</strong>. Antes da renderização visual, valida cada alegação ou dado estatístico citados no roteiro fazendo buscas cruzadas no Tavily.
+          </p>
+        </div>
+
+        <div class="strategy-card" style="border-color: rgba(0, 181, 160, 0.2);">
+          <div class="strategy-num teal">04</div>
+          <h3><code>src/lib/dor-viva.ts</code></h3>
+          <p>
+            Motor de escuta ativa. Usa o Tavily Search para rastrear comentários e discussões do nicho, extraindo <strong>dores vivas</strong> para pauta autônoma.
+          </p>
+        </div>
+
+        <div class="strategy-card" style="border-color: rgba(46, 79, 255, 0.2);">
+          <div class="strategy-num blue">05</div>
+          <h3><code>jobs/busca-cases-pipeline.ts</code></h3>
+          <p>
+            Job assíncrono de watchlist. Monitora continuamente referências visuais e benchmarks de concorrentes para inspirar novos roteiros.
+          </p>
+        </div>
+
+        <div class="strategy-card" style="border-color: rgba(0, 181, 160, 0.2);">
+          <div class="strategy-num teal">06</div>
+          <h3><code>brand/</code> & <code>mindflow_engine</code></h3>
+          <p>
+            Popula arquivos markdown de marca (<code>tom-de-voz.md</code>, <code>identidade-visual.md</code>) e injeta dados validados no motor Python de Motion.
+          </p>
+        </div>
+      </div>
+
+      <!-- Diagrama do Pipeline dos 5 Estágios -->
+      <div style="margin-top: 48px; padding: 32px; border-radius: 16px; background: rgba(8, 12, 24, 0.8); border: 1px solid rgba(255, 255, 255, 0.08);">
+        <h3 class="headline headline-md" style="font-size: 20px; text-align: center; margin-bottom: 24px;">
+          Fluxo Completo do Pipeline Editorial (<span class="teal-text">fluxo-estagios.ts</span>)
+        </h3>
+
+        <div class="pipeline">
+          <div class="pipeline-node">
+            <div class="node-label">Stage 0: Brand DNA</div>
+            <div class="node-desc">Tavily Crawl → <code>brand/</code> setup</div>
+          </div>
+          <div class="pipeline-arrow"></div>
+          <div class="pipeline-node">
+            <div class="node-label">Stage 1: Research</div>
+            <div class="node-desc"><code>researcher-v2.ts</code> (Tavily)</div>
+          </div>
+          <div class="pipeline-arrow"></div>
+          <div class="pipeline-node">
+            <div class="node-label">Stage 2: Dores Vivas</div>
+            <div class="node-desc"><code>dor-viva.ts</code> & Ideação</div>
+          </div>
+          <div class="pipeline-arrow"></div>
+          <div class="pipeline-node">
+            <div class="node-label">Stage 3: Copywriter</div>
+            <div class="node-desc">Roteirização & Hooks</div>
+          </div>
+          <div class="pipeline-arrow"></div>
+          <div class="pipeline-node">
+            <div class="node-label">Stage 4: Facts Gate</div>
+            <div class="node-desc"><code>facts-gate.ts</code> (Tavily Check)</div>
+          </div>
+          <div class="pipeline-arrow"></div>
+          <div class="pipeline-node" style="border-color: rgba(0, 181, 160, 0.3);">
+            <div class="node-label" style="color: var(--teal);">Stage 5: Render</div>
+            <div class="node-desc"><code>mindflow_engine</code> (Python)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Exemplo de Código TypeScript -->
+      <div style="margin-top: 36px;">
+        <h4 style="font-family: 'Space Grotesk'; font-size: 16px; color: var(--white); margin-bottom: 12px;">Exemplo de Código Real da API (TypeScript):</h4>
+        <div class="code-block">
+<span class="keyword">import</span> { buscarComTavily } <span class="keyword">from</span> <span class="string">'./lib/tavily'</span>;
+<span class="keyword">import</span> { validarFatosEEstatisticas } <span class="keyword">from</span> <span class="string">'./lib/facts-gate'</span>;
+
+<span class="comment">// 1. Pesquisa R&D de Tese para o Briefing (Stage 1)</span>
+<span class="keyword">export async function</span> <span class="blue-text">executarPesquisaEditorial</span>(topico: <span class="string">string</span>) {
+  <span class="keyword">const</span> resultados = <span class="keyword">await</span> buscarComTavily(
+    <span class="string">`estatisticas e estudos recentes sobre ${topico}`</span>,
+    <span class="string">'news'</span>
+  );
+  <span class="keyword">return</span> resultados.map(r => ({ titulo: r.title, url: r.url, snippet: r.content }));
+}
+
+<span class="comment">// 2. Fact-Checking no Gate dos Fatos (Stage 4)</span>
+<span class="keyword">export async function</span> <span class="teal-text">verificarAfirmativaNoGate</span>(alegacao: <span class="string">string</span>) {
+  <span class="keyword">const</span> verificacao = <span class="keyword">await</span> validarFatosEEstatisticas({ alegacao });
+  <span class="keyword">if</span> (!verificacao.valido) {
+    <span class="keyword">throw new Error</span>(<span class="string">`Claim reprovada no Facts Gate: ${verificacao.motivo}`</span>);
+  }
+}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ═══════════════════════════════════════
+       INNOVATIVE STRATEGIC ENGINES
+  ═══════════════════════════════════════ -->
+  <section id="innovations" class="deep-section">
+    <div class="container reveal">
+      <span class="section-tag">07 — Motores de Inovação Disruptiva</span>
+      <h2 class="headline headline-lg">
+        7 Direções Estratégicas<br><span class="gradient-text">para Escalar a MindFlow</span>
+      </h2>
+      <p class="body-text">
+        Mapeamento de <strong>7 novos produtos e modelos de automação</strong> derivados da integração do Tavily na plataforma MindFlow. Estas direções expandem a ferramenta de uma IA de mídia social para uma <strong>Plataforma Unificada de Inteligência, Prospecção e Produção Editorial Autônoma</strong>.
+      </p>
+
+      <div class="strategy-grid" style="margin-top: 40px; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));">
+        
+        <!-- Engine 1 -->
+        <div class="strategy-card" style="border-left: 4px solid var(--teal);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+            <div class="strategy-num teal" style="margin-bottom: 0;">01</div>
+            <span style="font-size: 11px; padding: 4px 10px; border-radius: 20px; background: rgba(0, 181, 160, 0.15); color: var(--teal); font-weight: 600; text-transform: uppercase;">Trend Hacking</span>
+          </div>
+          <h3>⚡ Radar de "Dores Vivas" em Tempo Real</h3>
+          <p>
+            O Tavily varre continuamente fóruns (Reddit, Quora, X, Reclame Aqui e comentários de posts da concorrência). Detecta <em>spikes</em> de frustração ou insatisfação com soluções de mercado e aciona o <code>dor-viva.ts</code> para entregar roteiros e vídeos de solução/resposta <strong>em minutos</strong>, antes de qualquer agência tradicional notar.
+          </p>
+          <div style="margin-top: 16px; font-size: 12px; color: var(--teal); font-weight: 500;">
+            🚀 Impacto: Reação a pautas quentes em < 15 min com engajamento 5x maior.
+          </div>
+        </div>
+
+        <!-- Engine 2 -->
+        <div class="strategy-card" style="border-left: 4px solid var(--blue);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+            <div class="strategy-num blue" style="margin-bottom: 0;">02</div>
+            <span style="font-size: 11px; padding: 4px 10px; border-radius: 20px; background: rgba(46, 79, 255, 0.15); color: var(--blue2); font-weight: 600; text-transform: uppercase;">Lead Magnet</span>
+          </div>
+          <h3>🏆 Brand DNA Score & Widget de Entrada</h3>
+          <p>
+            Widget embarcável no site da MindFlow. O prospect insere a URL ou Instagram da marca. O Tavily faz *Crawl + Extract* instantâneo de toda a presença digital da empresa em 15s. Visão Computacional + LLM analisam a coerência estética e geram um <strong>Relatório de Diagnóstico (0-100)</strong> com um vídeo-piloto demonstrativo.
+          </p>
+          <div style="margin-top: 16px; font-size: 12px; color: var(--blue2); font-weight: 500;">
+            📈 Impacto: Taxa de conversão de visitantes B2B para comercial > 35%.
+          </div>
+        </div>
+
+        <!-- Engine 3 -->
+        <div class="strategy-card" style="border-left: 4px solid var(--teal);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+            <div class="strategy-num teal" style="margin-bottom: 0;">03</div>
+            <span style="font-size: 11px; padding: 4px 10px; border-radius: 20px; background: rgba(0, 181, 160, 0.15); color: var(--teal); font-weight: 600; text-transform: uppercase;">Breaking News</span>
+          </div>
+          <h3>📰 Newsjacking Instantâneo com Facts Gate</h3>
+          <p>
+            Monitoramento de portais jornalísticos e agências regulatórias via Tavily News API. Ao surgir uma <em>breaking news</em> relevante no setor do cliente, o sistema extrai dados, valida no <code>facts-gate.ts</code> e renderiza o vídeo animado de opinião com vinheta jornalística em <strong>menos de 5 minutos</strong>.
+          </p>
+          <div style="margin-top: 16px; font-size: 12px; color: var(--teal); font-weight: 500;">
+            🥇 Impacto: Posiciona o cliente como 1ª autoridade do nicho a opinar.
+          </div>
+        </div>
+
+        <!-- Engine 4 -->
+        <div class="strategy-card" style="border-left: 4px solid var(--blue);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+            <div class="strategy-num blue" style="margin-bottom: 0;">04</div>
+            <span style="font-size: 11px; padding: 4px 10px; border-radius: 20px; background: rgba(46, 79, 255, 0.15); color: var(--blue2); font-weight: 600; text-transform: uppercase;">Autoridade</span>
+          </div>
+          <h3>📊 Proof & Authority Engine (Gráficos Verificados)</h3>
+          <p>
+            Durante a redação do roteiro, a IA busca estudos de autoridade (Statista, Gartner, PubMed, IBGE) via Tavily. O dado exato e a URL são auditados e repassados para a engine Python (`mindflow_engine`), que desenha automaticamente na tela um <strong>gráfico animado com selo de fonte verificada</strong>.
+          </p>
+          <div style="margin-top: 16px; font-size: 12px; color: var(--blue2); font-weight: 500;">
+            🛡️ Impacto: Elimina conteúdo raso e aumenta retenção em vídeo em +40%.
+          </div>
+        </div>
+
+        <!-- Engine 5 -->
+        <div class="strategy-card" style="border-left: 4px solid var(--teal);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+            <div class="strategy-num teal" style="margin-bottom: 0;">05</div>
+            <span style="font-size: 11px; padding: 4px 10px; border-radius: 20px; background: rgba(0, 181, 160, 0.15); color: var(--teal); font-weight: 600; text-transform: uppercase;">Benchmark Global</span>
+          </div>
+          <h3>🌐 Radar Global de Referências & Tropicalização</h3>
+          <p>
+            Filtros geopolíticos no Tavily para mapear formatos de mídia e hooks virais em mercados de vanguarda (EUA, Europa, Ásia). A IA descompõe a narrativa estrangeira, traduz e tropicaliza a tese para o contexto cultural brasileiro antes da concorrência nacional.
+          </p>
+          <div style="margin-top: 16px; font-size: 12px; color: var(--teal); font-weight: 500;">
+            💡 Impacto: Vantagem competitiva criativa de 6 a 12 meses frente ao mercado.
+          </div>
+        </div>
+
+        <!-- Engine 6 -->
+        <div class="strategy-card" style="border-left: 4px solid var(--blue);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+            <div class="strategy-num blue" style="margin-bottom: 0;">06</div>
+            <span style="font-size: 11px; padding: 4px 10px; border-radius: 20px; background: rgba(46, 79, 255, 0.15); color: var(--blue2); font-weight: 600; text-transform: uppercase;">Growth & Ads</span>
+          </div>
+          <h3>🔍 Ad Counter-Strategy Engine (Radar de Mudanças)</h3>
+          <p>
+            Watchlist agendada em landing pages e tabelas de preços dos concorrentes do cliente. Um *Diff Engine* detecta mudanças de oferta, reajustes de preços ou perda de features. A MindFlow gera na hora 3 variações de anúncios comparativos para explorar a vulnerabilidade recente.
+          </p>
+          <div style="margin-top: 16px; font-size: 12px; color: var(--blue2); font-weight: 500;">
+            🎯 Impacto: Proteção de market share e roubo direto de clientes da concorrência.
+          </div>
+        </div>
+
+        <!-- Engine 7 -->
+        <div class="strategy-card" style="border-left: 4px solid var(--teal); grid-column: 1 / -1;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+            <div class="strategy-num teal" style="margin-bottom: 0;">07</div>
+            <span style="font-size: 11px; padding: 4px 10px; border-radius: 20px; background: rgba(0, 181, 160, 0.15); color: var(--teal); font-weight: 600; text-transform: uppercase;">Enterprise Sales</span>
+          </div>
+          <h3>🎯 Dynamic Demo Generator (Prospecção Ultra-Personalizada)</h3>
+          <p>
+            Para o comercial da MindFlow ou clientes B2B. O vendedor insere a URL de um prospect enterprise. O Tavily pesquisa o histórico do CEO, declarações recentes e dores da empresa. A MindFlow gera um **vídeo promocional completo e exclusivo com as cores e logo do prospect**, enviado via direct/email.
+          </p>
+          <div style="margin-top: 16px; font-size: 12px; color: var(--teal); font-weight: 500;">
+            🔥 Impacto: Taxa de resposta de cold outreach > 45% (vs 2-3% do mercado).
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Resumo Estratégico em Highlight Box -->
+      <div class="highlight-box" style="margin-top: 48px; border-left-color: var(--blue);">
+        <p>
+          <strong>Visão Executiva:</strong> A combinação do Tavily com a stack atual do MindFlow transforma nossa solução de um simples "gerador de posts" em um **Ecossistema de Inteligência Operacional Automática**. Cada uma dessas 7 verticais pode se tornar um módulo monetizável da plataforma SaaS.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="divider"></div>
+  <section id="architecture" class="deep-section">
+    <div class="container reveal">
+      <span class="section-tag">06 — Arquitetura Proposta</span>
+      <h2 class="headline headline-lg">
+        Como Integrar<br><span class="gradient-text">na Stack MindFlow</span>
+      </h2>
+      <p class="body-text">
+        O Tavily se encaixa como uma <strong>camada de "percepção web"</strong> dentro da
+        arquitetura de IA da MindFlow. Toda vez que um agente precisa de informação externa,
+        o Tavily é o gateway.
+      </p>
+
+      <div class="card-grid">
+        <div class="feature-card">
+          <div class="card-icon teal">
+            <span class="material-symbols-outlined">travel_explore</span>
+          </div>
+          <div class="card-title">Web Perception Layer</div>
+          <div class="card-desc">
+            Camada abstrata que expõe search, extract e crawl como "sentidos"
+            para qualquer agente MindFlow. Um único SDK unificado.
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <div class="card-icon blue">
+            <span class="material-symbols-outlined">hub</span>
+          </div>
+          <div class="card-title">n8n Orchestration</div>
+          <div class="card-desc">
+            Workflows n8n que conectam Tavily com o restante da stack:
+            LLMs, CRM, ferramentas de design, schedulers e notificações.
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <div class="card-icon teal">
+            <span class="material-symbols-outlined">psychology</span>
+          </div>
+          <div class="card-title">Agent Memory</div>
+          <div class="card-desc">
+            Resultados do Tavily são armazenados em vector database (Supabase/Pinecone)
+            para criar memória de longo prazo sobre cada cliente e mercado.
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <div class="card-icon blue">
+            <span class="material-symbols-outlined">monitoring</span>
+          </div>
+          <div class="card-title">Usage Analytics</div>
+          <div class="card-desc">
+            Dashboard de monitoramento de créditos, queries mais frequentes e
+            performance das pesquisas. Otimizar ROI de cada API call.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ═══════════════════════════════════════
+       NEXT STEPS
+  ═══════════════════════════════════════ -->
+  <section id="next" class="cta-section">
+    <div class="container reveal" style="position: relative; z-index: 1;">
+      <div class="cta-badge">🚀 Ação Imediata</div>
+      <h2 class="headline headline-lg" style="max-width: 800px; margin-inline: auto;">
+        Próximos Passos<br><span class="gradient-text">Concretos</span>
+      </h2>
+
+      <div class="strategy-grid" style="text-align: left; margin-top: 48px;">
+        <div class="strategy-card">
+          <div class="strategy-num teal">01</div>
+          <h3>API Key & Setup</h3>
+          <p>
+            Criar conta no Tavily, obter API key e configurar no ambiente de dev.
+            Testar free tier (1000 créditos/mês) para validar os use cases
+            antes de investir.
+          </p>
+        </div>
+
+        <div class="strategy-card">
+          <div class="strategy-num blue">02</div>
+          <h3>PoC: Brand DNA</h3>
+          <p>
+            Construir um protótipo que recebe a URL de um cliente e gera um
+            "Brand DNA Report" completo usando Tavily + LLM + Vision AI.
+            Testar com 3 clientes reais.
+          </p>
+        </div>
+
+        <div class="strategy-card">
+          <div class="strategy-num teal">03</div>
+          <h3>PoC: Lead Engine</h3>
+          <p>
+            Criar workflow n8n que busca leads por nicho, enriquece com Tavily
+            e pontua com LLM. Validar com 1 semana de operação automática.
+          </p>
+        </div>
+
+        <div class="strategy-card">
+          <div class="strategy-num blue">04</div>
+          <h3>Integrar na IA de Conteúdo</h3>
+          <p>
+            Adicionar Tavily como "ferramenta" do agente de criação de conteúdo.
+            Implementar pesquisa de referências e fact-checking automáticos
+            no pipeline existente.
+          </p>
+        </div>
+
+        <div class="strategy-card">
+          <div class="strategy-num teal">05</div>
+          <h3>Monitor Competitivo</h3>
+          <p>
+            Configurar workflow de monitoramento competitivo com alertas
+            automáticos. Começar com 5 concorrentes-chave + news digest semanal.
+          </p>
+        </div>
+
+        <div class="strategy-card">
+          <div class="strategy-num blue">06</div>
+          <h3>Escalar & Otimizar</h3>
+          <p>
+            Analisar consumo de créditos, otimizar queries, avaliar upgrade
+            de plano. Construir dashboard de analytics para ROI do Tavily.
+          </p>
+        </div>
+      </div>
+
+      <div class="highlight-box" style="max-width: 800px; margin: 56px auto 0; text-align: center; border-left: none; border: 1px solid rgba(0, 181, 160, 0.15);">
+        <p style="font-size: 17px; max-width: 600px; margin-inline: auto;">
+          O Tavily não é apenas uma ferramenta — é uma <strong>extensão dos sentidos</strong>
+          da IA MindFlow. Cada endpoint é uma nova capacidade de percepção que torna
+          nossos agentes mais inteligentes, contextuais e eficazes.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       FOOTER
+  ═══════════════════════════════════════ -->
+  <footer>
+    <span>© 2026 MindFlow — Documento Estratégico Interno</span>
+    <span>Gerado em <a href="#">Setembro 2026</a> · Confidencial</span>
+  </footer>
+
+  <!-- ═══════════════════════════════════════
+       SCRIPTS
+  ═══════════════════════════════════════ -->
+  <script>
+    // ── Neural Canvas (same as MindFlow hub) ──
+    (function () {
+      const canvas = document.getElementById('neural-canvas');
+      const ctx = canvas.getContext('2d');
+      let width, height, nodes = [], animFrame;
+
+      function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      }
+
+      function createNodes(count) {
+        nodes = [];
+        for (let i = 0; i < count; i++) {
+          nodes.push({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            vx: (Math.random() - 0.5) * 0.3,
+            vy: (Math.random() - 0.5) * 0.3,
+            r: Math.random() * 1.5 + 0.5
+          });
+        }
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, width, height);
+
+        // Connections
+        for (let i = 0; i < nodes.length; i++) {
+          for (let j = i + 1; j < nodes.length; j++) {
+            const dx = nodes[i].x - nodes[j].x;
+            const dy = nodes[i].y - nodes[j].y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 150) {
+              ctx.strokeStyle = `rgba(46, 79, 255, ${0.06 * (1 - dist / 150)})`;
+              ctx.lineWidth = 0.5;
+              ctx.beginPath();
+              ctx.moveTo(nodes[i].x, nodes[i].y);
+              ctx.lineTo(nodes[j].x, nodes[j].y);
+              ctx.stroke();
+            }
+          }
+        }
+
+        // Nodes
+        for (const n of nodes) {
+          n.x += n.vx;
+          n.y += n.vy;
+          if (n.x < 0 || n.x > width) n.vx *= -1;
+          if (n.y < 0 || n.y > height) n.vy *= -1;
+
+          ctx.fillStyle = 'rgba(123, 154, 255, 0.25)';
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        animFrame = requestAnimationFrame(draw);
+      }
+
+      resize();
+      createNodes(60);
+      draw();
+      window.addEventListener('resize', () => {
+        resize();
+        createNodes(60);
+      });
+    })();
+
+    // ── Scroll Reveal ──
+    const revealElements = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.15 });
+
+    revealElements.forEach(el => observer.observe(el));
+
+    // ── Smooth scroll for nav links ──
+    document.querySelectorAll('.nav-links a').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const target = document.querySelector(link.getAttribute('href'));
+        if (target) target.scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+  </script>
+
+</body>
+
+</html>

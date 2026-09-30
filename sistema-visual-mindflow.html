@@ -1,0 +1,1812 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mindflow — Sistema de Composição Visual</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --ink:#080810;--page:#F6F4EF;--mid:#1C1C2A;--blue:#1A56DB;--mint:#00C9A7;
+  --amber:#F5A623;--red:#DC2626;--green:#16A34A;--muted:#6B7280;
+  --rule:#E4DFD8;--white:#FFFFFF;--surface:#F0EDE8;--code-bg:#0D0D1A;
+  --navy:#0A0F1E;--navy2:#0D1B3E;--charcoal:#1E1E2E;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--page);color:var(--ink);font-size:15px;line-height:1.7}
+
+/* COVER */
+.cover{background:var(--ink);min-height:100vh;display:grid;grid-template-rows:auto 1fr auto;padding:56px 64px;position:relative;overflow:hidden}
+.cover::before{content:'';position:absolute;top:-200px;right:-100px;width:600px;height:600px;background:radial-gradient(circle,rgba(26,86,219,.15) 0%,transparent 65%);pointer-events:none}
+.cover::after{content:'';position:absolute;bottom:-150px;left:-80px;width:450px;height:450px;background:radial-gradient(circle,rgba(0,201,167,.08) 0%,transparent 65%);pointer-events:none}
+.cover-top{display:flex;justify-content:space-between;align-items:flex-start;z-index:1;margin-bottom:60px}
+.cover-logo{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mint)}
+.cover-meta{font-family:'DM Mono',monospace;font-size:11px;color:#2D3748;text-align:right;line-height:1.9;letter-spacing:.06em}
+.cover-body{z-index:1}
+.cover-kicker{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--mint);margin-bottom:24px;display:flex;align-items:center;gap:14px}
+.cover-kicker::before{content:'';width:32px;height:1px;background:var(--mint);display:inline-block}
+.cover h1{font-family:'Syne',sans-serif;font-size:clamp(36px,5vw,68px);font-weight:800;line-height:.98;color:var(--white);margin-bottom:32px;letter-spacing:-.02em}
+.cover h1 span{display:block;color:var(--blue)}
+.cover-sub{font-size:16px;color:#6B7280;line-height:1.65;max-width:560px;margin-bottom:48px}
+.cover-chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:#0D1117;border:1px solid #1F2937;color:#4B5563;font-family:'DM Mono',monospace;font-size:10px;padding:5px 12px;border-radius:100px;letter-spacing:.08em}
+.cover-bottom{z-index:1;display:flex;justify-content:space-between;align-items:flex-end;padding-top:40px;border-top:1px solid #0D1117;margin-top:auto}
+.cover-v{font-family:'DM Mono',monospace;font-size:10px;color:#1F2937;letter-spacing:.08em}
+.cover-warn{font-size:12px;color:#374151;font-style:italic;max-width:400px;text-align:right;line-height:1.5}
+
+/* LAYOUT */
+.doc{max-width:960px;margin:0 auto;padding:72px 40px}
+.ch{padding:72px 40px 52px;position:relative}
+.ch.dark{background:var(--ink)}
+.ch.light{background:var(--white);border-bottom:1px solid var(--rule)}
+.ch.surface{background:var(--surface);border-bottom:1px solid var(--rule)}
+.ch.navy{background:var(--navy)}
+.ch-inner{max-width:960px;margin:0 auto}
+.ch-kicker{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:12px}
+.ch.dark .ch-kicker,.ch.navy .ch-kicker{color:var(--mint)}
+.ch.light .ch-kicker,.ch.surface .ch-kicker{color:var(--blue)}
+.ch-kicker::before{content:'';width:28px;height:1px;display:inline-block}
+.ch.dark .ch-kicker::before,.ch.navy .ch-kicker::before{background:var(--mint)}
+.ch.light .ch-kicker::before,.ch.surface .ch-kicker::before{background:var(--blue)}
+.ch h2{font-family:'Syne',sans-serif;font-size:clamp(28px,3.5vw,48px);font-weight:800;line-height:1.02;margin-bottom:16px;letter-spacing:-.01em}
+.ch.dark h2,.ch.navy h2{color:var(--white)}
+.ch.light h2,.ch.surface h2{color:var(--ink)}
+.ch-intro{font-size:15.5px;line-height:1.7;max-width:640px}
+.ch.dark .ch-intro,.ch.navy .ch-intro{color:#6B7280}
+.ch.light .ch-intro,.ch.surface .ch-intro{color:var(--muted)}
+
+/* TYPOGRAPHY */
+h3{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin:56px 0 14px;color:var(--ink);letter-spacing:-.01em}
+h4{font-family:'DM Mono',monospace;font-size:10.5px;font-weight:500;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin:32px 0 10px}
+p{color:#374151;margin-bottom:14px;line-height:1.7}
+p.lead{font-size:16.5px;color:var(--ink);margin-bottom:22px}
+strong{color:var(--ink);font-weight:600}
+.rule{height:1px;background:var(--rule);margin:48px 0}
+
+/* CODE */
+pre{background:var(--code-bg);color:#CDD6F4;padding:24px 28px;border-radius:10px;overflow-x:auto;margin:20px 0;font-family:'DM Mono',monospace;font-size:12.5px;line-height:1.7;border:1px solid #1A1A2E}
+pre code{background:none;color:inherit;padding:0;font-size:inherit}
+code{font-family:'DM Mono',monospace;font-size:12px;background:#EEF2FF;color:var(--blue);padding:2px 6px;border-radius:3px}
+.hl{color:var(--mint)}
+.hl2{color:#F9A8D4}
+.hl3{color:var(--amber)}
+.comment{color:#374151}
+.val{color:#A5F3FC}
+
+/* TAGS */
+.tag{display:inline-block;font-family:'DM Mono',monospace;font-size:9.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:3px}
+.tag.blue{background:#EFF6FF;color:var(--blue)}
+.tag.green{background:#F0FDF4;color:var(--green)}
+.tag.amber{background:#FFFBEB;color:#92400E}
+.tag.red{background:#FEF2F2;color:var(--red)}
+.tag.mint{background:#F0FDFB;color:#0D7A63}
+.tag.dark{background:var(--ink);color:#6B7280}
+.tag.white{background:rgba(255,255,255,.1);color:#9CA3AF;border:1px solid #1F2937}
+
+/* CALLOUTS */
+.callout{border-radius:8px;padding:18px 22px;margin:20px 0;display:grid;grid-template-columns:24px 1fr;gap:14px;align-items:start}
+.callout.info{background:#EFF6FF;border-left:4px solid var(--blue)}
+.callout.warn{background:#FFFBEB;border-left:4px solid var(--amber)}
+.callout.danger{background:#FEF2F2;border-left:4px solid var(--red)}
+.callout.rule{background:var(--ink);border-left:4px solid var(--mint)}
+.callout-icon{font-size:16px;margin-top:2px}
+.callout-title{font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.12em;font-weight:500;margin-bottom:5px}
+.callout.info .callout-title{color:var(--blue)}
+.callout.warn .callout-title{color:#92400E}
+.callout.danger .callout-title{color:var(--red)}
+.callout.rule .callout-title{color:var(--mint)}
+.callout p{margin:0;font-size:13.5px;color:#374151}
+.callout.rule p{color:#9CA3AF}
+
+/* GRID */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:16px 0}
+
+/* CARDS */
+.card{background:var(--white);border:1px solid var(--rule);border-radius:10px;padding:20px 22px}
+.card.dark{background:var(--ink);border-color:#1A1A2E}
+.card.surface{background:var(--surface);border-color:var(--rule)}
+.card.navy{background:var(--navy);border-color:#1A1A2E}
+.card.blue{background:var(--blue);border-color:var(--blue)}
+.card h4{margin-top:0}
+.card p{margin:0;font-size:13px;line-height:1.55}
+.card.dark p,.card.navy p{color:#6B7280}
+.card.blue p{color:rgba(255,255,255,.8)}
+.card.blue h4{color:rgba(255,255,255,.5)}
+
+/* TABLES */
+table.spec{width:100%;border-collapse:collapse;margin:20px 0;font-size:13px}
+table.spec th{background:var(--ink);color:var(--white);font-family:'DM Mono',monospace;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.1em;padding:11px 14px;text-align:left}
+table.spec td{padding:10px 14px;border-bottom:1px solid var(--rule);color:#374151;vertical-align:top;line-height:1.5}
+table.spec tr:nth-child(even) td{background:var(--surface)}
+table.spec tr:last-child td{border-bottom:none}
+table.spec td:first-child{font-family:'DM Mono',monospace;font-size:11px;color:var(--blue);font-weight:500}
+table.spec td.ok{color:var(--green);font-family:'DM Mono',monospace;font-size:11px}
+table.spec td.no{color:var(--red);font-family:'DM Mono',monospace;font-size:11px}
+
+/* ZONE DIAGRAM */
+.zone-diagram{background:var(--navy);border-radius:12px;padding:24px;margin:20px 0;position:relative}
+.zone-frame{width:200px;height:266px;background:#0D1B3E;border:1px solid #1A56DB;border-radius:4px;margin:0 auto;position:relative;display:block}
+.zone{position:absolute;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;text-align:center;line-height:1.3}
+.zone.system-top{top:0;left:0;right:0;height:12%;background:rgba(26,86,219,.12);color:#374151;border-bottom:1px dashed #1A2744}
+.zone.anchor{top:12%;left:0;right:0;height:38%;background:rgba(26,86,219,.06);color:var(--mint);border-bottom:1px dashed #1A2744}
+.zone.support{top:50%;left:0;right:0;height:28%;background:rgba(0,201,167,.04);color:#4B5563;border-bottom:1px dashed #1A2744}
+.zone.breath{top:78%;left:0;right:0;height:12%;background:rgba(255,255,255,.02);color:#2D3748}
+.zone.system-bot{top:90%;left:0;right:0;height:10%;background:rgba(26,86,219,.08);color:#374151}
+.zone-label{font-family:'DM Mono',monospace;font-size:10px;color:#4B5563;text-align:center;margin-top:12px;letter-spacing:.08em;text-transform:uppercase}
+
+/* LAYER DIAGRAM */
+.layer-stack{display:flex;flex-direction:column;gap:0;border-radius:10px;overflow:hidden;margin:20px 0}
+.layer{padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:1px solid rgba(255,255,255,.04)}
+.layer:last-child{border-bottom:none}
+.layer-0{background:#050508}
+.layer-1{background:#0A0A0F}
+.layer-2{background:#0D1117}
+.layer-3{background:#111827}
+.layer-4{background:#1F2937}
+.layer-id{font-family:'DM Mono',monospace;font-size:10px;color:var(--mint);letter-spacing:.1em;flex-shrink:0;width:80px}
+.layer-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--white);flex:1}
+.layer-desc{font-size:12px;color:#4B5563;flex:2}
+.layer-z{font-family:'DM Mono',monospace;font-size:10px;color:#374151;flex-shrink:0}
+
+/* ASSET TILES */
+.asset-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0}
+.asset-tile{background:var(--navy);border:1px solid #1A1A2E;border-radius:8px;padding:16px;position:relative}
+.asset-tile.allowed{border-color:rgba(0,201,167,.3)}
+.asset-tile.forbidden{border-color:rgba(220,38,38,.3);opacity:.7}
+.asset-tile-id{font-family:'DM Mono',monospace;font-size:9px;color:var(--mint);letter-spacing:.1em;margin-bottom:6px}
+.asset-tile.forbidden .asset-tile-id{color:var(--red)}
+.asset-tile-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--white);margin-bottom:6px}
+.asset-tile-desc{font-size:11.5px;color:#4B5563;line-height:1.4}
+.asset-badge{position:absolute;top:10px;right:10px;font-family:'DM Mono',monospace;font-size:8px;padding:2px 7px;border-radius:100px}
+.asset-badge.ok{background:rgba(0,201,167,.15);color:var(--mint)}
+.asset-badge.no{background:rgba(220,38,38,.15);color:var(--red)}
+
+/* LAYOUT CARDS */
+.layout-card{background:var(--white);border:1px solid var(--rule);border-radius:12px;overflow:hidden;margin:20px 0}
+.layout-card-header{background:var(--ink);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.layout-card-id{font-family:'DM Mono',monospace;font-size:11px;color:var(--mint);letter-spacing:.1em}
+.layout-card-name{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--white)}
+.layout-card-body{display:grid;grid-template-columns:180px 1fr;gap:0}
+.layout-preview{background:var(--navy);display:flex;align-items:center;justify-content:center;padding:20px;border-right:1px solid var(--rule)}
+.layout-mini{width:80px;height:107px;background:#0D1B3E;border:1px solid #1A56DB;border-radius:3px;position:relative;overflow:hidden}
+.layout-spec{padding:20px 24px}
+.layout-spec h4{margin-top:0}
+.layout-spec ul{padding-left:16px;font-size:13px;color:#374151;margin-bottom:12px}
+.layout-spec li{margin-bottom:5px;line-height:1.45}
+.layout-footer{padding:14px 20px;background:var(--surface);border-top:1px solid var(--rule);font-size:12.5px;color:#374151}
+.layout-footer strong{color:var(--blue)}
+
+/* MINI FRAME ZONES */
+.mz{position:absolute;display:block}
+.mz-dark{background:#050810}
+.mz-blue-block{background:rgba(26,86,219,.9)}
+.mz-mint-text{background:rgba(0,201,167,.7);border-radius:2px}
+.mz-white-text{background:rgba(255,255,255,.85);border-radius:2px}
+.mz-photo{background:linear-gradient(135deg,#1a2744,#2a3f6f)}
+.mz-geo{background:rgba(26,86,219,.4);border-radius:50%}
+.mz-overflow{position:absolute;overflow:visible}
+
+/* CONSTRAINT BLOCKS */
+.constraint{background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:16px 18px;margin:10px 0}
+.constraint-title{font-family:'DM Mono',monospace;font-size:10px;color:var(--red);text-transform:uppercase;letter-spacing:.12em;margin-bottom:8px}
+.constraint p{margin:0;font-size:13px;color:#7F1D1D}
+
+/* SEQUENCE DIAGRAM */
+.sequence{display:flex;gap:0;overflow-x:auto;margin:20px 0;padding-bottom:8px}
+.seq-slide{flex-shrink:0;width:80px}
+.seq-frame{width:64px;height:85px;margin:0 auto 8px;border-radius:3px;border:1px solid #1A56DB;position:relative;overflow:hidden;cursor:default}
+.seq-num{font-family:'DM Mono',monospace;font-size:9px;color:#4B5563;text-align:center;letter-spacing:.06em}
+.seq-arrow{width:16px;display:flex;align-items:center;padding-top:35px;color:#1A2744;font-size:10px;flex-shrink:0}
+.seq-label{font-family:'DM Mono',monospace;font-size:8px;color:var(--mint);text-align:center;text-transform:uppercase;letter-spacing:.08em;line-height:1.3}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .cover{padding:36px 24px}
+  .ch{padding:52px 24px 40px}
+  .doc{padding:48px 20px}
+  .grid-2,.grid-3,.layout-card-body,.asset-grid{grid-template-columns:1fr}
+  .cover h1{font-size:34px}
+  .layout-preview{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<section class="cover">
+  <div class="cover-top">
+    <div class="cover-logo">Mindflow</div>
+    <div class="cover-meta">
+      VISUAL-COMPOSITION-SYSTEM<br>
+      AGENT-EXECUTABLE SPEC<br>
+      VCS-v1.0 — 2025
+    </div>
+  </div>
+  <div class="cover-body">
+    <div class="cover-kicker">Sistema de Composição Visual</div>
+    <h1>Como compor.<br><span>Não o quê compor.</span></h1>
+    <p class="cover-sub">Especificação executável por agentes de IA para geração de carrosséis e posts estáticos Mindflow. Cada regra tem um valor numérico. Cada layout tem uma estrutura de zonas. Cada asset tem um tratamento prescrito. Um agente que lê este documento produz composições visuais — não texto diagramado.</p>
+    <div class="cover-chips">
+      <span class="chip">frame zones + coordenadas</span>
+      <span class="chip">5 layer system</span>
+      <span class="chip">8 assets com tratamento</span>
+      <span class="chip">7 layouts completos</span>
+      <span class="chip">tokens CSS executáveis</span>
+      <span class="chip">regras de sequência</span>
+      <span class="chip">hard constraints</span>
+    </div>
+  </div>
+  <div class="cover-bottom">
+    <div class="cover-v">VCS-v1.0 · MINDFLOW · CONFIDENCIAL</div>
+    <div class="cover-warn">Este documento foi construído a partir da análise direta de 30 exemplos de referência do corpus Mindflow — não de princípios de design genéricos.</div>
+  </div>
+</section>
+
+<!-- DIAGNÓSTICO: O QUE FALTOU -->
+<div class="ch surface">
+  <div class="ch-inner">
+    <div class="ch-kicker">Diagnóstico</div>
+    <h2>O Problema que<br>Este Documento Resolve</h2>
+    <p class="ch-intro">Os slides gerados pelo agente anterior tinham tipografia correta e cores corretas. Mas eram texto sobre fundo. Isso não é design visual — é diagramação. Este documento resolve o problema na raiz.</p>
+  </div>
+</div>
+<div class="doc">
+  <p class="lead">O corpus de 30 exemplos de referência da Mindflow — Pereira &amp; Associados, Neobank, CIT Transporte, Canlar, SmartCare e outros — tem uma característica que os slides gerados não têm: <strong>elementos visuais com peso físico no frame</strong>.</p>
+
+  <div class="grid-2">
+    <div class="card dark">
+      <h4>O que os slides gerados tinham</h4>
+      <p>Tipografia sobre gradiente escuro. Hierarquia de tamanho de texto. Cores corretas. Espaço negativo. Zero elementos visuais além de texto.</p>
+    </div>
+    <div class="card dark">
+      <h4>O que o corpus de referência tem</h4>
+      <p>Fotos de pessoas em zonas definidas. Objetos físicos sangrando para fora do frame. Device mockups como âncoras visuais. Formas geométricas com volume. Múltiplos planos de profundidade. Splits físicos do espaço.</p>
+    </div>
+  </div>
+
+  <div class="callout danger">
+    <div class="callout-icon">⛔</div>
+    <div>
+      <div class="callout-title">A Causa Raiz</div>
+      <p>Um agente sem especificação de assets e composição vai sempre produzir texto diagramado. Ele conhece tipografia. Não conhece composição visual. Este documento é a especificação de composição que faltava.</p>
+    </div>
+  </div>
+
+  <div class="rule"></div>
+
+  <h3>O que este documento adiciona ao Design Reasoning System</h3>
+  <p>O DRS (Design Reasoning System v2.0) explica o <em>porquê</em> dos princípios de design. Este documento especifica o <em>como</em> executável — valores numéricos, estruturas de zonas, tratamentos de assets, gramática de composição. Os dois documentos são complementares. Um agente que lê apenas o DRS sabe o que fazer mas não sabe como fazer. Com os dois, sabe.</p>
+
+  <table class="spec">
+    <thead><tr><th>Camada</th><th>DRS cobre</th><th>VCS (este doc) cobre</th></tr></thead>
+    <tbody>
+      <tr><td>Princípios</td><td class="ok">✓ Completo</td><td class="ok">— (não duplica)</td></tr>
+      <tr><td>Zonas do frame</td><td class="no">✗ Ausente</td><td class="ok">✓ Coordenadas exatas</td></tr>
+      <tr><td>Sistema de camadas</td><td class="no">✗ Ausente</td><td class="ok">✓ 5 camadas com z-index</td></tr>
+      <tr><td>Assets visuais</td><td class="no">✗ Ausente</td><td class="ok">✓ 8 tipos com tratamento</td></tr>
+      <tr><td>Layouts de composição</td><td class="no">✗ Ausente</td><td class="ok">✓ 7 layouts completos</td></tr>
+      <tr><td>Tokens de execução</td><td class="no">✗ Ausente</td><td class="ok">✓ CSS completo</td></tr>
+      <tr><td>Regras de sequência</td><td class="no">✗ Ausente</td><td class="ok">✓ Lógica de carrossel</td></tr>
+      <tr><td>Hard constraints</td><td class="no">Parcial</td><td class="ok">✓ Completo e executável</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- SEÇÃO 1: FRAME ZONES -->
+<div class="ch dark" id="s1">
+  <div class="ch-inner">
+    <div class="ch-kicker">Seção 1 · Frame Zones</div>
+    <h2>O Frame Como<br>Sistema de Zonas</h2>
+    <p class="ch-intro">O frame de 1080×1350px não é uma tela em branco. É um sistema de 6 zonas com função, posição e regras de ocupação definidas. Um agente não toma decisões de onde colocar elementos — ele escolhe qual elemento vai em qual zona.</p>
+  </div>
+</div>
+<div class="doc">
+
+  <h3>1.1 Especificação das Zonas</h3>
+  <p>Todas as coordenadas em pixels, baseadas no frame padrão 1080×1350px (formato 4:5). Para formato 1:1 (1080×1080px), ver seção 1.4.</p>
+
+  <div style="display:grid;grid-template-columns:220px 1fr;gap:32px;margin:24px 0;align-items:start">
+    <div>
+      <div class="zone-diagram">
+        <div class="zone-frame">
+          <div class="zone system-top">SYS-TOP</div>
+          <div class="zone anchor">ÂNCORA</div>
+          <div class="zone support">SUPORTE</div>
+          <div class="zone breath">RESPIRO</div>
+          <div class="zone system-bot">SYS-BOT</div>
+        </div>
+        <div class="zone-label">1080 × 1350px</div>
+      </div>
+    </div>
+    <div>
+      <table class="spec">
+        <thead><tr><th>Zona</th><th>Y início</th><th>Altura</th><th>Função</th></tr></thead>
+        <tbody>
+          <tr><td>SYS-TOP</td><td>0px</td><td>108px (8%)</td><td>Logo marca, número do slide, tag de categoria. Imutável entre slides.</td></tr>
+          <tr><td>ÂNCORA</td><td>108px</td><td>513px (38%)</td><td>O elemento dominante do post. Número gigante, foto de pessoa, objeto 3D, palavra âncora. Exatamente 1 elemento nesta zona.</td></tr>
+          <tr><td>SUPORTE</td><td>621px</td><td>378px (28%)</td><td>Contexto da âncora. Headline de suporte, body text, chips de informação, container de texto.</td></tr>
+          <tr><td>RESPIRO</td><td>999px</td><td>189px (14%)</td><td>Vazio intencional. Nenhum elemento de conteúdo. Pode ter elemento de sistema (seta, CTA) apenas no slide final.</td></tr>
+          <tr><td>SYS-BOT</td><td>1188px</td><td>162px (12%)</td><td>Handle @mindflow.ia, URL, indicador de próximo slide. Imutável entre slides.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout rule">
+        <div class="callout-icon">◈</div>
+        <div>
+          <div class="callout-title">Regra de Zona Única</div>
+          <p>Um elemento pode FISICAMENTE ocupar múltiplas zonas (um número gigante que começa na zona ÂNCORA e vaza para fora do frame). Mas sua ÂNCORA LÓGICA — o centro visual do elemento — deve estar em uma única zona. Isso determina qual zona "possui" o elemento.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>1.2 Regras de Ocupação por Zona</h3>
+
+  <table class="spec">
+    <thead><tr><th>Zona</th><th>Elementos permitidos</th><th>Elementos proibidos</th><th>Ocupação máxima</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>SYS-TOP</td>
+        <td>Logo (SVG), número de slide (DM Mono), tag de categoria (DM Mono uppercase)</td>
+        <td>Qualquer conteúdo, foto, texto de corpo, CTA</td>
+        <td>2 elementos simultâneos: 1 à esquerda, 1 à direita</td>
+      </tr>
+      <tr>
+        <td>ÂNCORA</td>
+        <td>1 e exatamente 1: número gigante, foto de pessoa, objeto/asset visual, palavra ampliada, device mockup</td>
+        <td>Mais de 1 elemento âncora, texto de corpo, listas, chips</td>
+        <td>80% da área da zona (os outros 20% são respiro ao redor da âncora)</td>
+      </tr>
+      <tr>
+        <td>SUPORTE</td>
+        <td>Headline (Syne ExtraBold), body text (DM Sans), chips (máx 6), container de texto, separador geométrico (linha)</td>
+        <td>Segundo elemento âncora, foto dominante, objeto 3D</td>
+        <td>90% da área da zona</td>
+      </tr>
+      <tr>
+        <td>RESPIRO</td>
+        <td>Nada (vazio intencional). Exceção: no slide CTA, botão de ação pode estar aqui.</td>
+        <td>Qualquer conteúdo informacional</td>
+        <td>0% (ou 1 botão de CTA apenas no último slide)</td>
+      </tr>
+      <tr>
+        <td>SYS-BOT</td>
+        <td>Handle @mindflow.ia, URL mindflow.ia, tagline (apenas no slide CTA), seta "arraste →" (apenas na capa)</td>
+        <td>Qualquer conteúdo, foto, dado</td>
+        <td>2 elementos: 1 à esquerda, 1 à direita</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>1.3 Margem Interna (Padding de Segurança)</h3>
+  <p>Todos os elementos de conteúdo devem respeitar uma margem interna mínima em todos os lados do frame — exceto elementos com overflow intencional (ver Seção 4).</p>
+
+  <pre><code><span class="comment">/* Margem de segurança — NUNCA violar exceto overflow intencional */</span>
+<span class="hl">--margin-h:</span> <span class="val">72px</span>;     <span class="comment">/* horizontal (esquerda e direita) */</span>
+<span class="hl">--margin-top:</span> <span class="val">40px</span>;   <span class="comment">/* topo (após zona SYS-TOP) */</span>
+<span class="hl">--margin-bot:</span> <span class="val">40px</span>;   <span class="comment">/* inferior (antes da zona SYS-BOT) */</span>
+
+<span class="comment">/* Zona SYS-TOP: padding interno */</span>
+<span class="hl">--systop-pad-h:</span> <span class="val">64px</span>;
+<span class="hl">--systop-pad-v:</span> <span class="val">36px</span>;
+
+<span class="comment">/* Zona SYS-BOT: padding interno */</span>
+<span class="hl">--sysbot-pad-h:</span> <span class="val">64px</span>;
+<span class="hl">--sysbot-pad-v:</span> <span class="val">32px</span>;</code></pre>
+
+  <h3>1.4 Formato 1:1 (1080×1080px)</h3>
+  <p>Para posts estáticos quadrados, as alturas das zonas são comprimidas proporcionalmente:</p>
+
+  <table class="spec">
+    <thead><tr><th>Zona</th><th>Altura 4:5</th><th>Altura 1:1</th><th>Nota</th></tr></thead>
+    <tbody>
+      <tr><td>SYS-TOP</td><td>108px</td><td>86px</td><td>Reduzir padding vertical para 24px</td></tr>
+      <tr><td>ÂNCORA</td><td>513px</td><td>360px</td><td>Elemento âncora menor ou reposicionado</td></tr>
+      <tr><td>SUPORTE</td><td>378px</td><td>302px</td><td>Reduzir body text — max 3 linhas</td></tr>
+      <tr><td>RESPIRO</td><td>189px</td><td>86px (ou 0)</td><td>Pode ser eliminada em 1:1 para dar espaço ao suporte</td></tr>
+      <tr><td>SYS-BOT</td><td>162px</td><td>108px</td><td>Reduzir padding vertical</td></tr>
+    </tbody>
+  </table>
+
+</div>
+
+<!-- SEÇÃO 2: SISTEMA DE CAMADAS -->
+<div class="ch navy" id="s2">
+  <div class="ch-inner">
+    <div class="ch-kicker">Seção 2 · Layer System</div>
+    <h2>O Sistema de<br>5 Camadas</h2>
+    <p class="ch-intro">Todo post Mindflow é composto de no mínimo 2 e no máximo 5 camadas sobrepostas. Cada camada tem uma função, um z-index, e regras de conteúdo. A profundidade de camadas é o que separa composição visual de texto diagramado.</p>
+  </div>
+</div>
+<div class="doc">
+
+  <h3>2.1 As 5 Camadas</h3>
+
+  <div class="layer-stack">
+    <div class="layer layer-0">
+      <div class="layer-id">L0 · FUNDO</div>
+      <div class="layer-name">Background</div>
+      <div class="layer-desc">A cor ou gradiente base do slide. Define a temperatura do post. Nunca tem conteúdo — apenas cor ou gradiente de cor. z-index: 0.</div>
+      <div class="layer-z">z: 0</div>
+    </div>
+    <div class="layer layer-1">
+      <div class="layer-id">L1 · TEXTURA</div>
+      <div class="layer-name">Textura / Elemento de Fundo</div>
+      <div class="layer-desc">Texto-textura gigante, forma geométrica de fundo, padrão sutil. Opacidade 6–15%. Não deve ser lido como conteúdo — é forma. z-index: 1.</div>
+      <div class="layer-z">z: 1</div>
+    </div>
+    <div class="layer layer-2">
+      <div class="layer-id">L2 · ESTRUTURA</div>
+      <div class="layer-name">Elementos Estruturais</div>
+      <div class="layer-desc">Blocos de cor sólida (split), formas geométricas com peso (retângulos, circles), fotos full-bleed com overlay. Define a divisão física do frame. z-index: 2.</div>
+      <div class="layer-z">z: 2</div>
+    </div>
+    <div class="layer layer-3">
+      <div class="layer-id">L3 · ÂNCORA</div>
+      <div class="layer-name">Elemento Âncora Visual</div>
+      <div class="layer-desc">O elemento dominante: foto de pessoa cut-out, objeto 3D, número gigante, device mockup. Pode ultrapassar as bordas das camadas inferiores. z-index: 3.</div>
+      <div class="layer-z">z: 3</div>
+    </div>
+    <div class="layer layer-4">
+      <div class="layer-id">L4 · CONTEÚDO</div>
+      <div class="layer-name">Conteúdo Tipográfico</div>
+      <div class="layer-desc">Todo texto: headline, body, tags, chips, containers de texto, logo, handle. Sempre sobre todas as outras camadas. z-index: 4.</div>
+      <div class="layer-z">z: 4</div>
+    </div>
+  </div>
+
+  <h3>2.2 Combinações Mínimas por Tipo de Post</h3>
+
+  <table class="spec">
+    <thead><tr><th>Tipo de Post</th><th>Camadas obrigatórias</th><th>Camadas opcionais</th><th>Mínimo de camadas</th></tr></thead>
+    <tbody>
+      <tr><td>Texto puro</td><td>L0 + L4</td><td>L1</td><td>2 (mas evitar — é o padrão fraco)</td></tr>
+      <tr><td>Dado numérico</td><td>L0 + L3 (número) + L4</td><td>L1 (textura), L2 (separador)</td><td>3</td></tr>
+      <tr><td>Com foto de pessoa</td><td>L0 + L2 (split ou overlay) + L3 (foto) + L4</td><td>L1 (textura)</td><td>4</td></tr>
+      <tr><td>Com objeto/asset 3D</td><td>L0 + L3 (objeto) + L4</td><td>L1 (textura), L2 (forma)</td><td>3</td></tr>
+      <tr><td>Split foto/texto</td><td>L0 + L2 (bloco de cor) + L3 (foto) + L4</td><td>L1 (textura no bloco de texto)</td><td>4</td></tr>
+      <tr><td>Slide CTA final</td><td>L0 (azul sólido) + L4</td><td>L1 (textura da marca)</td><td>2</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <div class="callout-icon">⚠</div>
+    <div>
+      <div class="callout-title">O Post de 2 Camadas é a Armadilha</div>
+      <p>L0 + L4 (fundo + texto) é a combinação mínima — e é o que o agente anterior produziu em todos os 5 slides. Um post com apenas 2 camadas é texto diagramado, não composição visual. A menos que o conteúdo seja excepcionalmente forte (uma citação de altíssimo impacto ou um slide de transição), sempre use mínimo 3 camadas.</p>
+    </div>
+  </div>
+
+  <h3>2.3 Código Base por Camada</h3>
+
+  <pre><code><span class="comment">/* FRAME BASE — container pai de todos os slides */</span>
+.slide {
+  <span class="hl">width:</span> <span class="val">1080px</span>;
+  <span class="hl">height:</span> <span class="val">1350px</span>;
+  <span class="hl">position:</span> <span class="val">relative</span>;
+  <span class="hl">overflow:</span> <span class="val">hidden</span>; <span class="comment">/* muda para 'visible' em slides com overflow intencional */</span>
+}
+
+<span class="comment">/* L0 — FUNDO */</span>
+.layer-background {
+  <span class="hl">position:</span> <span class="val">absolute</span>;
+  <span class="hl">inset:</span> <span class="val">0</span>;
+  <span class="hl">z-index:</span> <span class="val">0</span>;
+  <span class="comment">/* background definido pelo token de cor do slide */</span>
+}
+
+<span class="comment">/* L1 — TEXTURA */</span>
+.layer-texture {
+  <span class="hl">position:</span> <span class="val">absolute</span>;
+  <span class="hl">inset:</span> <span class="val">0</span>;
+  <span class="hl">z-index:</span> <span class="val">1</span>;
+  <span class="hl">pointer-events:</span> <span class="val">none</span>;
+  <span class="hl">user-select:</span> <span class="val">none</span>;
+  <span class="hl">overflow:</span> <span class="val">hidden</span>;
+}
+.texture-text {
+  <span class="hl">font-family:</span> <span class="val">'Syne', sans-serif</span>;
+  <span class="hl">font-size:</span> <span class="val">var(--texture-size, 280px)</span>;
+  <span class="hl">font-weight:</span> <span class="val">800</span>;
+  <span class="hl">opacity:</span> <span class="val">var(--texture-opacity, 0.07)</span>;
+  <span class="hl">color:</span> <span class="val">var(--texture-color, #ffffff)</span>;
+  <span class="hl">line-height:</span> <span class="val">1</span>;
+  <span class="hl">position:</span> <span class="val">absolute</span>;
+  <span class="hl">white-space:</span> <span class="val">nowrap</span>;
+  <span class="hl">letter-spacing:</span> <span class="val">-0.04em</span>;
+}
+
+<span class="comment">/* L2 — ESTRUTURA */</span>
+.layer-structure {
+  <span class="hl">position:</span> <span class="val">absolute</span>;
+  <span class="hl">z-index:</span> <span class="val">2</span>;
+}
+
+<span class="comment">/* L3 — ÂNCORA VISUAL */</span>
+.layer-anchor {
+  <span class="hl">position:</span> <span class="val">absolute</span>;
+  <span class="hl">z-index:</span> <span class="val">3</span>;
+}
+
+<span class="comment">/* L4 — CONTEÚDO TIPOGRÁFICO */</span>
+.layer-content {
+  <span class="hl">position:</span> <span class="val">absolute</span>;
+  <span class="hl">z-index:</span> <span class="val">4</span>;
+  <span class="hl">padding:</span> <span class="val">var(--systop-pad-v) var(--margin-h)</span>;
+}</code></pre>
+
+</div>
+
+<!-- SEÇÃO 3: TOKENS -->
+<div class="ch surface" id="s3">
+  <div class="ch-inner">
+    <div class="ch-kicker">Seção 3 · Design Tokens</div>
+    <h2>Tokens de Execução —<br>CSS Completo</h2>
+    <p class="ch-intro">Todos os valores de design como variáveis CSS com nomes semânticos. Um agente não decide "qual azul usar" — ele usa o token correto para o contexto. Usar um valor não-tokenizado é um erro de execução.</p>
+  </div>
+</div>
+<div class="doc">
+
+  <h3>3.1 Cores — Backgrounds</h3>
+  <pre><code><span class="comment">/* ── BACKGROUNDS PERMITIDOS (temperatura FRIA obrigatória) ── */</span>
+
+<span class="comment">/* Dark mode — 80% dos posts */</span>
+<span class="hl">--bg-midnight:</span>     <span class="val">#0A0A0F</span>;  <span class="comment">/* preto com toque azul — fundo mais escuro */</span>
+<span class="hl">--bg-navy-deep:</span>    <span class="val">#0A0F1E</span>;  <span class="comment">/* navy profundo — posts de autoridade */</span>
+<span class="hl">--bg-navy:</span>         <span class="val">#0D1B3E</span>;  <span class="comment">/* navy padrão — mais quente que deep */</span>
+<span class="hl">--bg-charcoal:</span>     <span class="val">#1E1E2E</span>;  <span class="comment">/* charcoal — posts de dado/número */</span>
+
+<span class="comment">/* Light mode — 20% dos posts (alternância no grid) */</span>
+<span class="hl">--bg-paper:</span>        <span class="val">#F7F5F2</span>;  <span class="comment">/* branco frio — posts educativos/argumentativos */</span>
+<span class="hl">--bg-white:</span>        <span class="val">#FFFFFF</span>;  <span class="comment">/* branco puro — posts de alta limpeza */</span>
+
+<span class="comment">/* CTA slide — obrigatório no último slide */</span>
+<span class="hl">--bg-cta:</span>          <span class="val">#1A56DB</span>;  <span class="comment">/* azul sólido — último slide do carrossel */</span>
+
+<span class="comment">/* ── BACKGROUNDS PROIBIDOS ── */</span>
+<span class="comment">/* NUNCA usar: qualquer cor warm (beige, creme, laranja, marrom, terra) */</span>
+<span class="comment">/* NUNCA usar: gradiente roxo, rosa, gradiente neon */</span>
+<span class="comment">/* NUNCA usar: #F0EDE8, #F4F1EA, ou qualquer cor com hue 20-80° + sat > 15% */</span></code></pre>
+
+  <h3>3.2 Cores — Elementos Visuais</h3>
+  <pre><code><span class="comment">/* ── CORES DE ACCENT E ELEMENTOS ── */</span>
+
+<span class="comment">/* Azul — cor da marca, CTA, elementos estruturais */</span>
+<span class="hl">--color-blue:</span>       <span class="val">#1A56DB</span>;  <span class="comment">/* padrão */</span>
+<span class="hl">--color-blue-deep:</span>  <span class="val">#0D3580</span>;  <span class="comment">/* versão mais escura para sobreposição */</span>
+<span class="hl">--color-blue-glow:</span>  <span class="val">rgba(26,86,219,0.15)</span>;  <span class="comment">/* radial glow de fundo */</span>
+
+<span class="comment">/* Mint — resultados, dados positivos, elementos de destaque */</span>
+<span class="hl">--color-mint:</span>       <span class="val">#00C9A7</span>;  <span class="comment">/* padrão — números de ROI, dados positivos */</span>
+<span class="hl">--color-mint-dim:</span>   <span class="val">rgba(0,201,167,0.12)</span>;  <span class="comment">/* chip background sobre dark */</span>
+
+<span class="comment">/* Amber — urgência, alerta, dado de problema */</span>
+<span class="hl">--color-amber:</span>      <span class="val">#F5A623</span>;  <span class="comment">/* apenas para dados de problema/dor */</span>
+
+<span class="comment">/* Tipografia sobre dark */</span>
+<span class="hl">--text-primary:</span>     <span class="val">#FFFFFF</span>;  <span class="comment">/* headlines sobre dark */</span>
+<span class="hl">--text-secondary:</span>   <span class="val">#9CA3AF</span>;  <span class="comment">/* body sobre dark */</span>
+<span class="hl">--text-muted:</span>       <span class="val">#4B5563</span>;  <span class="comment">/* fonte de dados, crédito */</span>
+<span class="hl">--text-system:</span>      <span class="val">#374151</span>;  <span class="comment">/* handle, URL, número de slide */</span>
+
+<span class="comment">/* Tipografia sobre light */</span>
+<span class="hl">--text-on-light:</span>    <span class="val">#080810</span>;  <span class="comment">/* headlines sobre fundo claro */</span>
+<span class="hl">--text-body-light:</span>  <span class="val">#6B7280</span>;  <span class="comment">/* body sobre fundo claro */</span>
+
+<span class="comment">/* ── REGRA DE ACCENT POR POST ── */</span>
+<span class="comment">/* Cada post usa NO MÁXIMO 1 cor de accent (blue OU mint OU amber) */</span>
+<span class="comment">/* O accent ocupa no máximo 15% da área visual do post */</span>
+<span class="comment">/* Violar = hierarquia visual destruída */</span></code></pre>
+
+  <h3>3.3 Tipografia — Tokens Completos</h3>
+  <pre><code><span class="comment">/* ── FAMÍLIAS ── */</span>
+<span class="hl">--font-display:</span>    <span class="val">'Syne', sans-serif</span>;     <span class="comment">/* headlines, âncoras, display */</span>
+<span class="hl">--font-body:</span>       <span class="val">'DM Sans', sans-serif</span>;  <span class="comment">/* corpo, suporte, chips */</span>
+<span class="hl">--font-mono:</span>       <span class="val">'DM Mono', monospace</span>;  <span class="comment">/* dados, tags, handle, fonte */</span>
+
+<span class="comment">/* ── TAMANHOS — ZONA ÂNCORA ── */</span>
+<span class="hl">--size-number-hero:</span>    <span class="val">200px</span>;  <span class="comment">/* número isolado como única âncora */</span>
+<span class="hl">--size-number-large:</span>   <span class="val">140px</span>;  <span class="comment">/* número com contexto de suporte */</span>
+<span class="hl">--size-number-medium:</span>  <span class="val">96px</span>;   <span class="comment">/* número dentro de composição mais densa */</span>
+<span class="hl">--size-word-anchor:</span>    <span class="val">120px</span>;  <span class="comment">/* palavra âncora ampliada (padrão A3) */</span>
+<span class="hl">--size-headline-cover:</span> <span class="val">88px</span>;   <span class="comment">/* headline de capa do carrossel */</span>
+
+<span class="comment">/* ── TAMANHOS — ZONA SUPORTE ── */</span>
+<span class="hl">--size-headline:</span>   <span class="val">52px</span>;   <span class="comment">/* headline principal na zona suporte */</span>
+<span class="hl">--size-subhead:</span>    <span class="val">32px</span>;   <span class="comment">/* subheadline, segunda hierarquia */</span>
+<span class="hl">--size-body:</span>       <span class="val">22px</span>;   <span class="comment">/* texto de corpo (em formato 1080px) */</span>
+<span class="hl">--size-body-sm:</span>    <span class="val">18px</span>;   <span class="comment">/* texto de corpo denso ou longo */</span>
+<span class="hl">--size-chip:</span>       <span class="val">18px</span>;   <span class="comment">/* texto dentro de chips */</span>
+
+<span class="comment">/* ── TAMANHOS — SISTEMA ── */</span>
+<span class="hl">--size-tag:</span>        <span class="val">16px</span>;   <span class="comment">/* tag de categoria (DM Mono, uppercase) */</span>
+<span class="hl">--size-system:</span>     <span class="val">15px</span>;   <span class="comment">/* handle, URL, número de slide */</span>
+<span class="hl">--size-caption:</span>    <span class="val">14px</span>;   <span class="comment">/* fonte de dados, crédito de estudo */</span>
+<span class="hl">--size-texture:</span>    <span class="val">280px</span>;  <span class="comment">/* texto-textura de fundo (L1) */</span>
+
+<span class="comment">/* ── PESOS ── */</span>
+<span class="hl">--weight-anchor:</span>   <span class="val">800</span>;   <span class="comment">/* ExtraBold — âncoras APENAS */</span>
+<span class="hl">--weight-headline:</span> <span class="val">700</span>;   <span class="comment">/* Bold — headlines de suporte */</span>
+<span class="hl">--weight-body:</span>     <span class="val">400</span>;   <span class="comment">/* Regular — todo o corpo */</span>
+<span class="hl">--weight-mono:</span>     <span class="val">400</span>;   <span class="comment">/* Regular — mono (peso neutro) */</span>
+<span class="hl">--weight-mono-med:</span> <span class="val">500</span>;   <span class="comment">/* Medium — mono para tags e chips */</span>
+
+<span class="comment">/* ── LINE HEIGHT ── */</span>
+<span class="hl">--lh-anchor:</span>    <span class="val">0.92</span>;   <span class="comment">/* números e palavras gigantes — comprimido */</span>
+<span class="hl">--lh-headline:</span>  <span class="val">1.05</span>;   <span class="comment">/* headlines de impacto */</span>
+<span class="hl">--lh-body:</span>      <span class="val">1.60</span>;   <span class="comment">/* corpo de texto */</span>
+<span class="hl">--lh-mono:</span>      <span class="val">1.50</span>;   <span class="comment">/* mono — tags, chips, caption */</span>
+
+<span class="comment">/* ── LETTER SPACING ── */</span>
+<span class="hl">--ls-anchor:</span>    <span class="val">-0.04em</span>;  <span class="comment">/* comprimido — números e palavras grandes */</span>
+<span class="hl">--ls-headline:</span>  <span class="val">-0.02em</span>;  <span class="comment">/* levemente comprimido */</span>
+<span class="hl">--ls-body:</span>      <span class="val">0</span>;        <span class="comment">/* neutro */</span>
+<span class="hl">--ls-tag:</span>       <span class="val">0.14em</span>;   <span class="comment">/* espaçado — tags e labels */</span>
+<span class="hl">--ls-system:</span>    <span class="val">0.06em</span>;   <span class="comment">/* levemente espaçado — handle, URL */</span></code></pre>
+
+  <h3>3.4 Dimensões e Espaçamento</h3>
+  <pre><code><span class="comment">/* ── FRAME ── */</span>
+<span class="hl">--frame-w:</span>    <span class="val">1080px</span>;
+<span class="hl">--frame-h:</span>    <span class="val">1350px</span>;   <span class="comment">/* formato 4:5 */</span>
+<span class="hl">--frame-h-sq:</span> <span class="val">1080px</span>;   <span class="comment">/* formato 1:1 */</span>
+
+<span class="comment">/* ── MARGENS ── */</span>
+<span class="hl">--margin-h:</span>   <span class="val">72px</span>;     <span class="comment">/* margem horizontal de segurança */</span>
+<span class="hl">--margin-top:</span> <span class="val">40px</span>;     <span class="comment">/* margem superior de conteúdo */</span>
+<span class="hl">--margin-bot:</span> <span class="val">40px</span>;     <span class="comment">/* margem inferior de conteúdo */</span>
+
+<span class="comment">/* ── ZONAS Y ── */</span>
+<span class="hl">--zone-systop-h:</span>  <span class="val">108px</span>;
+<span class="hl">--zone-anchor-y:</span>  <span class="val">108px</span>;
+<span class="hl">--zone-anchor-h:</span>  <span class="val">513px</span>;
+<span class="hl">--zone-support-y:</span> <span class="val">621px</span>;
+<span class="hl">--zone-support-h:</span> <span class="val">378px</span>;
+<span class="hl">--zone-breath-y:</span>  <span class="val">999px</span>;
+<span class="hl">--zone-breath-h:</span>  <span class="val">189px</span>;
+<span class="hl">--zone-sysbot-y:</span>  <span class="val">1188px</span>;
+<span class="hl">--zone-sysbot-h:</span>  <span class="val">162px</span>;
+
+<span class="comment">/* ── BORDER RADIUS ── */</span>
+<span class="hl">--radius-chip:</span>    <span class="val">100px</span>;  <span class="comment">/* chips/pills de informação */</span>
+<span class="hl">--radius-card:</span>    <span class="val">20px</span>;   <span class="comment">/* cards de informação */</span>
+<span class="hl">--radius-button:</span>  <span class="val">100px</span>;  <span class="comment">/* botão de CTA */</span>
+<span class="hl">--radius-none:</span>    <span class="val">0px</span>;    <span class="comment">/* containers de split — NUNCA arredondado */</span>
+
+<span class="comment">/* ── SEPARADORES ── */</span>
+<span class="hl">--sep-weight:</span>     <span class="val">2px</span>;    <span class="comment">/* linha separadora entre zonas */</span>
+<span class="hl">--sep-width:</span>      <span class="val">64px</span>;   <span class="comment">/* comprimento da linha separadora */</span>
+<span class="hl">--sep-color:</span>      <span class="val">var(--color-blue)</span>;</code></pre>
+
+</div>
+
+<!-- SEÇÃO 4: SISTEMA DE ASSETS -->
+<div class="ch dark" id="s4">
+  <div class="ch-inner">
+    <div class="ch-kicker">Seção 4 · Asset System</div>
+    <h2>8 Tipos de Asset —<br>Tratamento Completo</h2>
+    <p class="ch-intro">Um asset visual não é uma imagem jogada no frame. É um elemento com tipo, zona, tratamento de renderização, e regras de posicionamento específicas. Um agente não "adiciona uma foto" — ele aplica o asset correto com o tratamento correto na zona correta.</p>
+  </div>
+</div>
+<div class="doc">
+
+  <div class="callout rule">
+    <div class="callout-icon">◈</div>
+    <div>
+      <div class="callout-title">Regra de Asset</div>
+      <p>Todo post Mindflow deve ter no mínimo 1 asset visual na camada L2 ou L3 (além do texto na L4). Um post sem nenhum asset visual é texto diagramado — não design de carrossel. A única exceção é o slide de argumento puro (máx 1 por carrossel) e o slide CTA final.</p>
+    </div>
+  </div>
+
+  <div class="asset-grid">
+    <div class="asset-tile allowed">
+      <div class="asset-badge ok">✓ USE</div>
+      <div class="asset-tile-id">ASSET-01</div>
+      <div class="asset-tile-name">Foto de Pessoa</div>
+      <div class="asset-tile-desc">Pessoa real do ICP ou equipe Mindflow. Nunca stock genérico de banco de imagens.</div>
+    </div>
+    <div class="asset-tile allowed">
+      <div class="asset-badge ok">✓ USE</div>
+      <div class="asset-tile-id">ASSET-02</div>
+      <div class="asset-tile-name">Device Mockup</div>
+      <div class="asset-tile-desc">iPhone ou Android com screenshot da interface do agente Mindflow dentro.</div>
+    </div>
+    <div class="asset-tile allowed">
+      <div class="asset-badge ok">✓ USE</div>
+      <div class="asset-tile-id">ASSET-03</div>
+      <div class="asset-tile-name">Screenshot de Chat</div>
+      <div class="asset-tile-desc">Captura de tela de conversa real do agente — com balões de mensagem, timestamps, métricas.</div>
+    </div>
+    <div class="asset-tile allowed">
+      <div class="asset-badge ok">✓ USE</div>
+      <div class="asset-tile-id">ASSET-04</div>
+      <div class="asset-tile-name">Ícone SVG de Sistema</div>
+      <div class="asset-tile-desc">Ícone vetorial de alta qualidade representando o conceito (waveform, seta, ícone de chat).</div>
+    </div>
+    <div class="asset-tile allowed">
+      <div class="asset-badge ok">✓ USE</div>
+      <div class="asset-tile-id">ASSET-05</div>
+      <div class="asset-tile-name">Forma Geométrica</div>
+      <div class="asset-tile-desc">Círculo, retângulo, linha — criada em CSS/SVG. Elemento estrutural puro sem conteúdo.</div>
+    </div>
+    <div class="asset-tile allowed">
+      <div class="asset-badge ok">✓ USE</div>
+      <div class="asset-tile-id">ASSET-06</div>
+      <div class="asset-tile-name">Número/Dado como Objeto</div>
+      <div class="asset-tile-desc">O próprio número tratado como objeto visual na L3 — fonte gigante, cor de accent, z-index 3.</div>
+    </div>
+    <div class="asset-tile forbidden">
+      <div class="asset-badge no">✗ PROIBIDO</div>
+      <div class="asset-tile-id">ASSET-07</div>
+      <div class="asset-tile-name">Emoji 3D / Clipart</div>
+      <div class="asset-tile-desc">Emojis 3D flutuantes, ícones 3D de banco de imagens, elementos decorativos sem função.</div>
+    </div>
+    <div class="asset-tile forbidden">
+      <div class="asset-badge no">✗ PROIBIDO</div>
+      <div class="asset-tile-id">ASSET-08</div>
+      <div class="asset-tile-name">Stock Foto Genérica</div>
+      <div class="asset-tile-desc">Fotos de banco de imagens de "executivo sorrindo", "aperto de mão", "equipe em reunião".</div>
+    </div>
+    <div class="asset-tile allowed">
+      <div class="asset-badge ok">✓ USE</div>
+      <div class="asset-tile-id">ASSET-09</div>
+      <div class="asset-tile-name">Gráfico/Chart CSS</div>
+      <div class="asset-tile-desc">Gráfico de linha, barra ou pizza criado em CSS/SVG puro — sem bibliotecas externas.</div>
+    </div>
+  </div>
+
+  <h3>4.1 Tratamentos de Foto de Pessoa (ASSET-01)</h3>
+  <p>Uma foto de pessoa pode receber 4 tratamentos diferentes. O agente escolhe o tratamento baseado no layout selecionado:</p>
+
+  <table class="spec">
+    <thead><tr><th>Tratamento</th><th>Descrição técnica</th><th>Quando usar</th><th>Código CSS</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>CUT-OUT</td>
+        <td>Pessoa sem fundo, posicionada sobre o background do slide. Borda natural da pessoa visível.</td>
+        <td>Layout Split, layout com objeto flutuante. Pessoa parece "estar no post".</td>
+        <td><code>background: transparent; object-fit: contain;</code></td>
+      </tr>
+      <tr>
+        <td>SPLIT-ZONE</td>
+        <td>Foto ocupa metade do frame (L2 estrutural). Sem recorte — foto full dentro da sua zona.</td>
+        <td>Layout A2-Split. A foto está contida dentro da sua zona, não flutua.</td>
+        <td><code>width: 45%; height: 100%; object-fit: cover; object-position: top center;</code></td>
+      </tr>
+      <tr>
+        <td>FULL-BLEED + OVERLAY</td>
+        <td>Foto ocupa o frame inteiro como fundo (L2). Overlay escuro 40–55% por cima. Texto na L4 sobre o overlay.</td>
+        <td>Posts de storytelling / case. Foto tem peso emocional mas texto precisa ser legível.</td>
+        <td><code>width: 100%; height: 60%; object-fit: cover; + ::after { background: rgba(0,0,0,0.45); }</code></td>
+      </tr>
+      <tr>
+        <td>THUMBNAIL</td>
+        <td>Foto pequena (80–120px) em container circular ou arredondado. Elemento de suporte, não âncora.</td>
+        <td>Posts com citação de cliente, depoimento, "quem somos".</td>
+        <td><code>width: 96px; height: 96px; border-radius: 50%; object-fit: cover;</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>4.2 Device Mockup (ASSET-02) — Especificação</h3>
+  <pre><code><span class="comment">/* Device mockup — iPhone frame com screenshot interno */</span>
+.device-mockup {
+  <span class="hl">position:</span> <span class="val">absolute</span>;
+  <span class="hl">z-index:</span> <span class="val">3</span>;  <span class="comment">/* L3 — âncora visual */</span>
+
+  <span class="comment">/* Tamanho padrão dentro da zona ÂNCORA */</span>
+  <span class="hl">width:</span>  <span class="val">320px</span>;   <span class="comment">/* ~30% da largura do frame */</span>
+  <span class="hl">height:</span> <span class="val">640px</span>;   <span class="comment">/* proporção 1:2 do dispositivo */</span>
+
+  <span class="comment">/* Posicionamento — variações por layout */</span>
+  <span class="comment">/* Variação A: centralizado na zona âncora */</span>
+  <span class="hl">left:</span> <span class="val">50%</span>; <span class="hl">transform:</span> <span class="val">translateX(-50%)</span>;
+  <span class="hl">top:</span> <span class="val">var(--zone-anchor-y)</span>;
+
+  <span class="comment">/* Variação B: overflow — parte inferior sai do frame */</span>
+  <span class="hl">bottom:</span> <span class="val">-120px</span>;  <span class="comment">/* 120px abaixo do frame — overflow intencional */</span>
+  <span class="hl">right:</span> <span class="val">-40px</span>;    <span class="comment">/* levemente para fora pela direita */</span>
+
+  <span class="comment">/* Frame do dispositivo */</span>
+  <span class="hl">border-radius:</span> <span class="val">44px</span>;
+  <span class="hl">border:</span> <span class="val">6px solid rgba(255,255,255,0.15)</span>;
+  <span class="hl">background:</span> <span class="val">#000</span>;
+  <span class="hl">box-shadow:</span> <span class="val">0 40px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.08)</span>;
+  <span class="hl">overflow:</span> <span class="val">hidden</span>;
+}
+.device-screen {
+  <span class="hl">width:</span> <span class="val">100%</span>;
+  <span class="hl">height:</span> <span class="val">100%</span>;
+  <span class="hl">object-fit:</span> <span class="val">cover</span>;
+  <span class="hl">object-position:</span> <span class="val">top center</span>;
+}</code></pre>
+
+  <h3>4.3 Overflow Intencional — Quando e Como</h3>
+  <p>O "elemento que vaza" (Padrão A1 do DRS) é uma das técnicas mais características dos exemplos de referência. Aqui está a especificação técnica exata:</p>
+
+  <pre><code><span class="comment">/* Container pai do slide — muda para overflow: visible nos slides com overflow */</span>
+.slide.has-overflow {
+  <span class="hl">overflow:</span> <span class="val">visible</span>;  <span class="comment">/* ATENÇÃO: requer clip externo no Puppeteer */</span>
+}
+
+<span class="comment">/* Elemento que vaza pela borda direita */</span>
+.overflow-right {
+  <span class="hl">right:</span> <span class="val">-80px</span>;   <span class="comment">/* 80px fora do frame pela direita */</span>
+  <span class="hl">max-width:</span> <span class="val">calc(100% + 80px)</span>;
+}
+
+<span class="comment">/* Elemento que vaza pela borda inferior */</span>
+.overflow-bottom {
+  <span class="hl">bottom:</span> <span class="val">-100px</span>;  <span class="comment">/* 100px fora do frame pela inferior */</span>
+}
+
+<span class="comment">/* Texto vazando pela borda — para números e palavras âncora */</span>
+.overflow-text-right {
+  <span class="hl">left:</span> <span class="val">var(--margin-h)</span>;
+  <span class="hl">white-space:</span> <span class="val">nowrap</span>;
+  <span class="comment">/* O texto começa na margem esquerda e vai além do frame pela direita */</span>
+  <span class="comment">/* Sem max-width — deixa vazar naturalmente */</span>
+}
+
+<span class="comment">/* REGRA: O que fica DENTRO do frame deve ser suficiente para entender o conteúdo */</span>
+<span class="comment">/* O que vaza é amplificação, não informação essencial */</span></code></pre>
+
+  <h3>4.4 Formas Geométricas (ASSET-05) — Biblioteca</h3>
+  <pre><code><span class="comment">/* ── SEPARADOR HORIZONTAL — entre zonas âncora e suporte ── */</span>
+.geo-separator {
+  <span class="hl">width:</span> <span class="val">var(--sep-width)</span>;      <span class="comment">/* 64px */</span>
+  <span class="hl">height:</span> <span class="val">var(--sep-weight)</span>;    <span class="comment">/* 2px */</span>
+  <span class="hl">background:</span> <span class="val">var(--color-blue)</span>;
+  <span class="hl">margin:</span> <span class="val">24px 0</span>;
+}
+
+<span class="comment">/* ── CÍRCULO DECORATIVO — elemento orgânico de contraste ── */</span>
+.geo-circle {
+  <span class="hl">border-radius:</span> <span class="val">50%</span>;
+  <span class="hl">position:</span> <span class="val">absolute</span>;
+  <span class="hl">z-index:</span> <span class="val">2</span>;  <span class="comment">/* L2 — estrutural */</span>
+
+  <span class="comment">/* Variação Large — elemento de fundo decorativo */</span>
+  <span class="hl">width:</span> <span class="val">500px</span>; <span class="hl">height:</span> <span class="val">500px</span>;
+  <span class="hl">background:</span> <span class="val">rgba(26,86,219,0.08)</span>;
+  <span class="hl">top:</span> <span class="val">-200px</span>; <span class="hl">right:</span> <span class="val">-200px</span>;  <span class="comment">/* parcialmente fora do frame */</span>
+
+  <span class="comment">/* Variação Small — accent visual */</span>
+  <span class="hl">width:</span> <span class="val">120px</span>; <span class="hl">height:</span> <span class="val">120px</span>;
+  <span class="hl">background:</span> <span class="val">var(--color-mint)</span>;
+  <span class="hl">opacity:</span> <span class="val">0.9</span>;
+}
+
+<span class="comment">/* ── BLOCO DE COR SÓLIDA — para split layout ── */</span>
+.geo-split-block {
+  <span class="hl">position:</span> <span class="val">absolute</span>;
+  <span class="hl">z-index:</span> <span class="val">2</span>;
+  <span class="hl">border-radius:</span> <span class="val">0</span>;   <span class="comment">/* NUNCA border-radius em splits */</span>
+
+  <span class="comment">/* Variação vertical (esquerda/direita) */</span>
+  <span class="hl">left:</span> <span class="val">0</span>; <span class="hl">top:</span> <span class="val">0</span>; <span class="hl">bottom:</span> <span class="val">0</span>;
+  <span class="hl">width:</span> <span class="val">45%</span>;   <span class="comment">/* 45% para foto, 55% para texto */</span>
+
+  <span class="comment">/* Variação horizontal (cima/baixo) */</span>
+  <span class="hl">left:</span> <span class="val">0</span>; <span class="hl">right:</span> <span class="val">0</span>; <span class="hl">top:</span> <span class="val">0</span>;
+  <span class="hl">height:</span> <span class="val">60%</span>;   <span class="comment">/* 60% para foto em cima */</span>
+}
+
+<span class="comment">/* ── LINHA DECORATIVA — não separador, mas elemento visual ── */</span>
+.geo-accent-line {
+  <span class="hl">position:</span> <span class="val">absolute</span>;
+  <span class="hl">z-index:</span> <span class="val">2</span>;
+  <span class="hl">background:</span> <span class="val">var(--color-mint)</span>;
+  <span class="hl">width:</span> <span class="val">4px</span>;
+  <span class="hl">height:</span> <span class="val">80px</span>;
+  <span class="hl">left:</span> <span class="val">var(--margin-h)</span>;
+  <span class="hl">top:</span> <span class="val">calc(var(--zone-anchor-y) + 24px)</span>;
+}</code></pre>
+
+</div>
+
+<!-- SEÇÃO 5: 7 LAYOUTS COMPLETOS -->
+<div class="ch surface" id="s5">
+  <div class="ch-inner">
+    <div class="ch-kicker">Seção 5 · Layouts de Composição</div>
+    <h2>7 Layouts Completos —<br>Estrutura + Código</h2>
+    <p class="ch-intro">Cada layout é uma composição completa de camadas, zonas e assets. Um agente não "design" — ele seleciona um layout e preenche os slots. Os 7 layouts cobrem 95% dos casos de uso do carrossel Mindflow.</p>
+  </div>
+</div>
+<div class="doc">
+
+  <h3>Como Selecionar o Layout</h3>
+  <table class="spec">
+    <thead><tr><th>Se o conteúdo tem...</th><th>Use o layout</th></tr></thead>
+    <tbody>
+      <tr><td>Um número ou dado como elemento mais forte</td><td>LAYOUT-02 (Dado Isolado) ou LAYOUT-03 (Dado + Foto)</td></tr>
+      <tr><td>Uma foto de pessoa disponível + texto de impacto</td><td>LAYOUT-03 (Split Foto/Dado) ou LAYOUT-04 (Split Foto/Argumento)</td></tr>
+      <tr><td>Uma pergunta ou afirmação como capa do carrossel</td><td>LAYOUT-01 (Capa Impacto)</td></tr>
+      <tr><td>Uma lista de 3–6 features ou benefícios paralelos</td><td>LAYOUT-05 (Chips de Informação)</td></tr>
+      <tr><td>Um argumento textual com contexto (sem dado dominante)</td><td>LAYOUT-06 (Argumento Light)</td></tr>
+      <tr><td>O último slide do carrossel (conversão)</td><td>LAYOUT-07 (CTA Final)</td></tr>
+      <tr><td>Device mockup como produto hero</td><td>LAYOUT-02 variação "Device" ou LAYOUT-03</td></tr>
+    </tbody>
+  </table>
+
+  <!-- LAYOUT 01 -->
+  <div class="layout-card">
+    <div class="layout-card-header">
+      <div>
+        <div class="layout-card-id">LAYOUT-01</div>
+        <div class="layout-card-name">Capa de Impacto — Headline Dominante</div>
+      </div>
+      <div style="display:flex;gap:8px"><span class="tag white">Slide 1</span><span class="tag white">Capa</span></div>
+    </div>
+    <div class="layout-card-body">
+      <div class="layout-preview">
+        <div class="layout-mini" style="background:#0A0F1E">
+          <!-- L1: texture text -->
+          <div style="position:absolute;bottom:-8px;right:-4px;font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:rgba(255,255,255,0.05);line-height:1">MF</div>
+          <!-- L4: sys-top -->
+          <div style="position:absolute;top:5px;left:6px;display:flex;align-items:center;gap:3px">
+            <div style="width:16px;height:4px;background:#1A56DB;border-radius:1px"></div>
+            <div style="width:10px;height:4px;background:rgba(26,86,219,.4);border-radius:1px"></div>
+          </div>
+          <!-- L4: category tag -->
+          <div style="position:absolute;top:16px;left:6px;font-size:4px;color:#00C9A7;font-family:monospace;letter-spacing:.05em">CATEGORIA · PILAR</div>
+          <!-- L4: headline âncora -->
+          <div style="position:absolute;bottom:20px;left:6px;right:6px">
+            <div style="font-size:9px;font-weight:800;color:#fff;line-height:1.05;font-family:'Syne',sans-serif">Headline<br>de Impacto<br><span style="color:#1A56DB">em azul</span></div>
+          </div>
+          <!-- L4: sys-bot -->
+          <div style="position:absolute;bottom:6px;left:6px;right:6px;display:flex;justify-content:space-between">
+            <div style="font-size:4px;color:#374151;font-family:monospace">arraste →</div>
+            <div style="font-size:4px;color:#374151;font-family:monospace">mindflow.ia</div>
+          </div>
+        </div>
+      </div>
+      <div class="layout-spec">
+        <h4>Estrutura de Camadas</h4>
+        <ul>
+          <li><strong>L0:</strong> <code>var(--bg-midnight)</code> ou <code>var(--bg-navy-deep)</code></li>
+          <li><strong>L1:</strong> Texto-textura da marca (opcional) — "mindflow" ou número do pilar em fundo, 7% opacidade</li>
+          <li><strong>L3 (zona ÂNCORA):</strong> <em>Vazio intencional</em> — o espaço negativo É o elemento âncora desta zona</li>
+          <li><strong>L4 SYS-TOP:</strong> Logo waveform esquerda + tag de categoria em DM Mono mint</li>
+          <li><strong>L4 SUPORTE:</strong> Headline em Syne ExtraBold, 2 cores (branco + azul), alinhado esquerda</li>
+          <li><strong>L4 SYS-BOT:</strong> "arraste →" esquerda + "mindflow.ia" direita</li>
+        </ul>
+        <h4>Regras Críticas</h4>
+        <ul>
+          <li>Headline NUNCA ultrapassa 10 palavras totais</li>
+          <li>Parte em azul (<code>var(--color-blue)</code>) = a dor ou tensão — a parte mais importante</li>
+          <li>Espaço negativo acima da headline = mínimo 40% da altura do frame</li>
+          <li>ZERO outros elementos visuais além dos listados — a força vem da simplicidade</li>
+        </ul>
+      </div>
+    </div>
+    <div class="layout-footer">
+      <strong>Referência do corpus:</strong> CIT "Falta de motoristas?", Slide 1 do carrossel mLabs, Brand Story carousel capa. O espaço vazio acima do texto É a composição — não falta algo ali.
+    </div>
+  </div>
+
+  <!-- LAYOUT 02 -->
+  <div class="layout-card">
+    <div class="layout-card-header">
+      <div>
+        <div class="layout-card-id">LAYOUT-02</div>
+        <div class="layout-card-name">Dado Isolado — Número como Âncora Absoluta</div>
+      </div>
+      <div style="display:flex;gap:8px"><span class="tag white">Dado</span><span class="tag white">ROI</span></div>
+    </div>
+    <div class="layout-card-body">
+      <div class="layout-preview">
+        <div class="layout-mini" style="background:#0D1B3E">
+          <!-- L4: slide number -->
+          <div style="position:absolute;top:6px;left:6px;font-size:4px;color:#374151;font-family:monospace">02</div>
+          <!-- L3: número âncora gigante -->
+          <div style="position:absolute;top:20px;left:6px;font-size:28px;font-weight:800;color:#00C9A7;font-family:'Syne',sans-serif;line-height:.9;letter-spacing:-.03em">73%</div>
+          <!-- L2: separador -->
+          <div style="position:absolute;top:56px;left:6px;width:18px;height:1.5px;background:#1A56DB"></div>
+          <!-- L4: contexto -->
+          <div style="position:absolute;top:62px;left:6px;right:6px;font-size:5.5px;color:#fff;font-weight:700;line-height:1.3;font-family:'DM Sans',sans-serif">das empresas perdem receita em transições mal planejadas</div>
+          <!-- L4: fonte -->
+          <div style="position:absolute;top:82px;left:6px;right:6px;font-size:4px;color:#4B5563;font-family:monospace;line-height:1.4">Estudo McKinsey 2024 — 1.200 empresas</div>
+          <!-- L4: sys-bot -->
+          <div style="position:absolute;bottom:6px;left:6px;font-size:4px;color:#374151;font-family:monospace">mindflow.ia</div>
+        </div>
+      </div>
+      <div class="layout-spec">
+        <h4>Estrutura de Camadas</h4>
+        <ul>
+          <li><strong>L0:</strong> <code>var(--bg-charcoal)</code> ou <code>var(--bg-navy)</code></li>
+          <li><strong>L1:</strong> Texto-textura do número repetido — ex: "73" gigante em 8% opacidade atrás</li>
+          <li><strong>L3 (zona ÂNCORA):</strong> O número em <code>--size-number-hero</code> (200px), cor <code>var(--color-mint)</code>, Syne ExtraBold, letter-spacing <code>--ls-anchor</code></li>
+          <li><strong>L2:</strong> Separador horizontal 64px × 2px em azul, imediatamente abaixo do número</li>
+          <li><strong>L4 SUPORTE:</strong> Contexto do dado em Syne Bold 32–40px branco, fonte do estudo em DM Mono 14px muted</li>
+          <li><strong>L4 SYS-TOP:</strong> Número de slide (02) em DM Mono muted, canto superior esquerdo</li>
+          <li><strong>L4 SYS-BOT:</strong> mindflow.ia esquerda</li>
+        </ul>
+        <h4>Regras Críticas</h4>
+        <ul>
+          <li>O número DEVE ser a âncora — pelo menos 4× o tamanho do texto de contexto</li>
+          <li>Número em <code>var(--color-mint)</code> = dado positivo/resultado. Em <code>var(--color-amber)</code> = dado de problema/dor</li>
+          <li>Fonte do estudo é OBRIGATÓRIA — especificidade = credibilidade</li>
+          <li>Máximo 2 linhas no contexto imediato do número</li>
+        </ul>
+      </div>
+    </div>
+    <div class="layout-footer">
+      <strong>Referência do corpus:</strong> Slide 2 do carrossel gerado (o mais próximo do correto), Pereira &amp; Associados timer slide. O número deve ser grande o suficiente para ser reconhecível em miniatura de 50px.
+    </div>
+  </div>
+
+  <!-- LAYOUT 03 -->
+  <div class="layout-card">
+    <div class="layout-card-header">
+      <div>
+        <div class="layout-card-id">LAYOUT-03</div>
+        <div class="layout-card-name">Split Foto/Dado — Emoção + Prova</div>
+      </div>
+      <div style="display:flex;gap:8px"><span class="tag white">Foto</span><span class="tag white">Split</span></div>
+    </div>
+    <div class="layout-card-body">
+      <div class="layout-preview">
+        <div class="layout-mini" style="background:#0A0F1E;overflow:hidden">
+          <!-- L2: bloco foto (esquerda) -->
+          <div style="position:absolute;left:0;top:0;bottom:0;width:44%;background:linear-gradient(160deg,#1a2744,#2a3f6f)">
+            <!-- simulação de pessoa -->
+            <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:30px;height:50px;background:linear-gradient(180deg,#2a3f6f,#8ca0c4);border-radius:15px 15px 0 0;opacity:.6"></div>
+          </div>
+          <!-- L2: bloco texto (direita) -->
+          <div style="position:absolute;right:0;top:0;bottom:0;width:56%;background:#0A0F1E">
+            <div style="padding:8px 6px">
+              <div style="font-size:4px;color:#00C9A7;font-family:monospace;letter-spacing:.08em;margin-bottom:4px">DADO</div>
+              <div style="font-size:18px;font-weight:800;color:#00C9A7;font-family:'Syne',sans-serif;line-height:.9;letter-spacing:-.03em">4min</div>
+              <div style="width:12px;height:1px;background:#1A56DB;margin:5px 0"></div>
+              <div style="font-size:5px;color:#fff;font-weight:700;font-family:'DM Sans',sans-serif;line-height:1.3">tempo médio de resposta do agente</div>
+            </div>
+          </div>
+          <!-- L4: sys-top -->
+          <div style="position:absolute;top:5px;left:5px;font-size:4px;color:#374151;font-family:monospace">mindflow.ia</div>
+        </div>
+      </div>
+      <div class="layout-spec">
+        <h4>Estrutura de Camadas</h4>
+        <ul>
+          <li><strong>L0:</strong> <code>var(--bg-midnight)</code> — base unificada</li>
+          <li><strong>L2 esquerda:</strong> Zona de foto — <code>width: 45%</code>, foto com tratamento SPLIT-ZONE, <code>object-fit: cover; object-position: top center</code></li>
+          <li><strong>L2 direita:</strong> Bloco de cor sólida — <code>width: 55%</code>, <code>background: var(--bg-midnight)</code> ou <code>var(--bg-navy)</code></li>
+          <li><strong>L3 (dentro do bloco direito):</strong> Dado principal em <code>--size-number-large</code> (140px), cor accent</li>
+          <li><strong>L4 direita:</strong> Tag de categoria + separador + contexto do dado + fonte</li>
+          <li><strong>Linha hard de separação:</strong> <code>border-left: 1px solid rgba(26,86,219,0.3)</code> no bloco direito</li>
+        </ul>
+        <h4>Regras Críticas</h4>
+        <ul>
+          <li>A linha entre foto e texto é SEMPRE hard cut — nunca gradiente de transição</li>
+          <li>Foto: pessoa olhando para a direita (para o texto) — nunca para a esquerda (para fora do post)</li>
+          <li>O dado do lado direito é a âncora lógica — deve ser maior visualmente que a foto</li>
+          <li>Sem texto sobreposto à foto — o texto fica APENAS no bloco de cor</li>
+        </ul>
+      </div>
+    </div>
+    <div class="layout-footer">
+      <strong>Referência do corpus:</strong> Neobank (todos os slides), seguro azul/branco, CIT com motorista + texto. Este é o layout mais próximo de "empresa séria com rosto humano".
+    </div>
+  </div>
+
+  <!-- LAYOUT 04 -->
+  <div class="layout-card">
+    <div class="layout-card-header">
+      <div>
+        <div class="layout-card-id">LAYOUT-04</div>
+        <div class="layout-card-name">Foto Full-Bleed + Texto em Container</div>
+      </div>
+      <div style="display:flex;gap:8px"><span class="tag white">Foto</span><span class="tag white">Overlay</span></div>
+    </div>
+    <div class="layout-card-body">
+      <div class="layout-preview">
+        <div class="layout-mini" style="background:#111;overflow:hidden">
+          <!-- L2: foto full -->
+          <div style="position:absolute;inset:0;background:linear-gradient(160deg,#1a2744 0%,#0a0f1e 100%);opacity:.7"></div>
+          <!-- L2: overlay -->
+          <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(0,0,0,.7) 100%)"></div>
+          <!-- L3: container de texto -->
+          <div style="position:absolute;bottom:16px;left:6px;right:6px;background:rgba(10,10,30,0.85);border-radius:4px;padding:6px 7px;border:1px solid rgba(26,86,219,.3)">
+            <div style="font-size:7px;font-weight:800;color:#fff;font-family:'Syne',sans-serif;line-height:1.1;margin-bottom:3px">O caso que ninguém<br>conta</div>
+            <div style="font-size:4.5px;color:#9CA3AF;font-family:'DM Sans',sans-serif;line-height:1.3">Empresa BPO, R$ 80M. Fundador saiu. 4 dos 7 maiores clientes cancelaram.</div>
+          </div>
+          <!-- L4: sys-top -->
+          <div style="position:absolute;top:5px;left:5px;right:5px;display:flex;justify-content:space-between">
+            <div style="font-size:4px;color:#374151;font-family:monospace">04</div>
+            <div style="font-size:4px;color:#00C9A7;font-family:monospace;letter-spacing:.08em">EVIDÊNCIA</div>
+          </div>
+        </div>
+      </div>
+      <div class="layout-spec">
+        <h4>Estrutura de Camadas</h4>
+        <ul>
+          <li><strong>L0:</strong> Cor base (nunca visível — coberta pela foto)</li>
+          <li><strong>L2:</strong> Foto full-bleed — <code>position: absolute; inset: 0; object-fit: cover;</code></li>
+          <li><strong>L2 overlay:</strong> Gradiente escuro sobre a foto — <code>background: linear-gradient(180deg, transparent 20%, rgba(0,0,10,0.75) 100%)</code></li>
+          <li><strong>L3:</strong> Container de texto (ASSET-05 / B2 do DRS) — caixa arredondada semi-transparente na zona SUPORTE</li>
+          <li><strong>L4:</strong> Texto dentro do container: headline (Syne Bold 40px branco) + body (DM Sans 20px muted)</li>
+          <li><strong>L4 SYS-TOP:</strong> Número de slide esquerda + tag de categoria (DM Mono mint) direita</li>
+        </ul>
+        <h4>Regras Críticas</h4>
+        <ul>
+          <li>A foto NUNCA é decorativa — ela deve ser tematicamente relevante ao conteúdo</li>
+          <li>O overlay gradiente deve garantir contraste mínimo 4.5:1 do texto sobre a foto</li>
+          <li>Container de texto: <code>background: rgba(8,8,16,0.82); border: 1px solid rgba(26,86,219,0.25); border-radius: 16px;</code></li>
+          <li>Headline dentro do container: máximo 8 palavras</li>
+        </ul>
+      </div>
+    </div>
+    <div class="layout-footer">
+      <strong>Referência do corpus:</strong> Carrosséis de storytelling da Pereira &amp; Associados, slides de case do SmartCare, editorial fashion pins 7–9 com container marrom. O container de texto é elemento visual, não só funcional.
+    </div>
+  </div>
+
+  <!-- LAYOUT 05 -->
+  <div class="layout-card">
+    <div class="layout-card-header">
+      <div>
+        <div class="layout-card-id">LAYOUT-05</div>
+        <div class="layout-card-name">Chips de Informação — Features e Benefícios</div>
+      </div>
+      <div style="display:flex;gap:8px"><span class="tag white">Lista</span><span class="tag white">Features</span></div>
+    </div>
+    <div class="layout-card-body">
+      <div class="layout-preview">
+        <div class="layout-mini" style="background:#0D1B3E;overflow:hidden">
+          <!-- L1: accent circle -->
+          <div style="position:absolute;top:-20px;right:-20px;width:60px;height:60px;border-radius:50%;background:rgba(26,86,219,.12)"></div>
+          <!-- L4: sys-top -->
+          <div style="position:absolute;top:5px;left:6px;font-size:4px;color:#374151;font-family:monospace">03</div>
+          <!-- L4: headline âncora -->
+          <div style="position:absolute;top:18px;left:6px;right:6px;font-size:8px;font-weight:800;color:#fff;font-family:'Syne',sans-serif;line-height:1.05">O agente faz<br>enquanto você<br><span style="color:#1A56DB">dorme</span></div>
+          <!-- L2: separador -->
+          <div style="position:absolute;top:56px;left:6px;width:16px;height:1px;background:#1A56DB"></div>
+          <!-- D1: chips -->
+          <div style="position:absolute;top:64px;left:6px;right:6px;display:flex;flex-direction:column;gap:4px">
+            <div style="background:rgba(26,86,219,.15);border-radius:8px;padding:4px 7px;font-size:4.5px;color:#fff;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px"><span style="color:#00C9A7">✓</span> Responde em 4 minutos</div>
+            <div style="background:rgba(26,86,219,.15);border-radius:8px;padding:4px 7px;font-size:4.5px;color:#fff;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px"><span style="color:#00C9A7">✓</span> Qualifica automaticamente</div>
+            <div style="background:rgba(26,86,219,.15);border-radius:8px;padding:4px 7px;font-size:4.5px;color:#fff;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px"><span style="color:#00C9A7">✓</span> Funciona 24h por dia</div>
+            <div style="background:rgba(26,86,219,.15);border-radius:8px;padding:4px 7px;font-size:4.5px;color:#fff;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px"><span style="color:#00C9A7">✓</span> Zero intervenção humana</div>
+          </div>
+          <!-- L4: sys-bot -->
+          <div style="position:absolute;bottom:5px;left:6px;font-size:4px;color:#374151;font-family:monospace">mindflow.ia</div>
+        </div>
+      </div>
+      <div class="layout-spec">
+        <h4>Estrutura de Camadas</h4>
+        <ul>
+          <li><strong>L0:</strong> <code>var(--bg-navy)</code> ou <code>var(--bg-charcoal)</code></li>
+          <li><strong>L1:</strong> Círculo geométrico parcialmente fora do frame (canto superior direito) — 500px, <code>background: rgba(26,86,219,0.08)</code></li>
+          <li><strong>L3 (zona ÂNCORA):</strong> Headline curta em Syne ExtraBold <code>--size-headline-cover</code> (88px) — branco + parte em azul</li>
+          <li><strong>L2:</strong> Separador 64px × 2px azul, entre âncora e suporte</li>
+          <li><strong>L4 SUPORTE:</strong> Stack de chips — máx 6, cada chip com ícone ✓ em mint + texto em DM Sans 18px</li>
+          <li><strong>Chip CSS:</strong> <code>background: rgba(26,86,219,0.15); border-radius: var(--radius-chip); padding: 12px 20px;</code></li>
+        </ul>
+        <h4>Regras Críticas</h4>
+        <ul>
+          <li>Máximo 6 chips — mais que isso fragmenta demais</li>
+          <li>Cada chip: máximo 5 palavras</li>
+          <li>O ícone de cada chip (✓, →, ⚡) deve ser consistente dentro do mesmo post</li>
+          <li>Chips são paralelos — se os itens têm relação causal (A leva a B), use lista numerada, não chips</li>
+        </ul>
+      </div>
+    </div>
+    <div class="layout-footer">
+      <strong>Referência do corpus:</strong> SmartCare (chips de benefício), VITA (chips de categoria), CIT (checklist com ícones). Chips comunicam escaneabilidade — o usuário lê qualquer item em qualquer ordem.
+    </div>
+  </div>
+
+  <!-- LAYOUT 06 -->
+  <div class="layout-card">
+    <div class="layout-card-header">
+      <div>
+        <div class="layout-card-id">LAYOUT-06</div>
+        <div class="layout-card-name">Argumento Light — Headline + Corpo (Fundo Claro)</div>
+      </div>
+      <div style="display:flex;gap:8px"><span class="tag white">Argumento</span><span class="tag white">Light</span></div>
+    </div>
+    <div class="layout-card-body">
+      <div class="layout-preview">
+        <div class="layout-mini" style="background:#F7F5F2;overflow:hidden">
+          <!-- L4: sys-top -->
+          <div style="position:absolute;top:5px;left:6px;right:6px;display:flex;justify-content:space-between">
+            <div style="font-size:4px;color:#9CA3AF;font-family:monospace">03</div>
+            <div style="font-size:4px;color:#1A56DB;font-family:monospace;letter-spacing:.08em">O ARGUMENTO</div>
+          </div>
+          <!-- L4: headline -->
+          <div style="position:absolute;top:18px;left:6px;right:6px;font-size:7.5px;font-weight:800;color:#080810;font-family:'Syne',sans-serif;line-height:1.1">O problema não é a saída — é a ausência de <span style="color:#1A56DB">contexto transferido</span></div>
+          <!-- L2: separator line -->
+          <div style="position:absolute;top:58px;left:6px;right:6px;height:.5px;background:#E4DFD8"></div>
+          <!-- L4: body -->
+          <div style="position:absolute;top:64px;left:6px;right:6px;font-size:5px;color:#6B7280;font-family:'DM Sans',sans-serif;line-height:1.5">Quando o fundador sai sem sistematizar o relacionamento — a carteira não pertence à empresa. Pertence à pessoa.</div>
+          <!-- L4: sys-bot -->
+          <div style="position:absolute;bottom:5px;left:6px;font-size:4px;color:#9CA3AF;font-family:monospace">mindflow.ia</div>
+          <!-- L1: textura sutil -->
+          <div style="position:absolute;bottom:-8px;right:-2px;font-size:22px;font-weight:800;color:rgba(26,86,219,.04);font-family:'Syne',sans-serif">MF</div>
+        </div>
+      </div>
+      <div class="layout-spec">
+        <h4>Estrutura de Camadas</h4>
+        <ul>
+          <li><strong>L0:</strong> <code>var(--bg-paper)</code> (#F7F5F2) — NUNCA bege/cream/warm</li>
+          <li><strong>L1:</strong> Textura tipográfica sutil — iniciais ou número em opacidade 4% no canto</li>
+          <li><strong>L2:</strong> Linha separadora horizontal — <code>height: 1px; background: var(--rule-color, #E4DFD8);</code> entre headline e corpo</li>
+          <li><strong>L4 SYS-TOP:</strong> Número de slide (DM Mono, cinza claro) + label da seção (DM Mono, azul, uppercase, direita)</li>
+          <li><strong>L4 ÂNCORA:</strong> Headline em Syne ExtraBold 52px, cor <code>--text-on-light</code> + parte em <code>--color-blue</code></li>
+          <li><strong>L4 SUPORTE:</strong> Body em DM Sans Regular 22px, cor <code>--text-body-light</code> (#6B7280)</li>
+        </ul>
+        <h4>Regras Críticas</h4>
+        <ul>
+          <li>Máximo 1 deste layout por carrossel — variação de temperatura, não o padrão</li>
+          <li>O background DEVE ser <code>#F7F5F2</code> ou <code>#FFFFFF</code> — temperatura fria. NUNCA <code>#F0EDE8</code> ou qualquer warm</li>
+          <li>Body text: máximo 3 linhas (45–50 caracteres por linha)</li>
+          <li>A headline deve ter parte em azul — sem a cor de accent, o layout perde tensão</li>
+        </ul>
+      </div>
+    </div>
+    <div class="layout-footer">
+      <strong>Referência do corpus:</strong> O Slide 3 do carrossel gerado era este layout — mas com fundo bege incorreto. Com fundo <code>#F7F5F2</code> (frio, não warm), funciona. O slide do corpus que melhor representa: editorial fashion argumento com fundo off-white frio.
+    </div>
+  </div>
+
+  <!-- LAYOUT 07 -->
+  <div class="layout-card">
+    <div class="layout-card-header">
+      <div>
+        <div class="layout-card-id">LAYOUT-07</div>
+        <div class="layout-card-name">CTA Final — Conversão</div>
+      </div>
+      <div style="display:flex;gap:8px"><span class="tag white">Último Slide</span><span class="tag white">Obrigatório</span></div>
+    </div>
+    <div class="layout-card-body">
+      <div class="layout-preview">
+        <div class="layout-mini" style="background:#1A56DB;overflow:hidden">
+          <!-- L1: textura waveform -->
+          <div style="position:absolute;top:6px;left:6px;display:flex;gap:1px;align-items:flex-end">
+            <div style="width:2px;height:8px;background:rgba(255,255,255,.3);border-radius:1px"></div>
+            <div style="width:2px;height:14px;background:rgba(255,255,255,.3);border-radius:1px"></div>
+            <div style="width:2px;height:10px;background:rgba(255,255,255,.3);border-radius:1px"></div>
+            <div style="width:2px;height:18px;background:rgba(255,255,255,.3);border-radius:1px"></div>
+            <div style="width:2px;height:12px;background:rgba(255,255,255,.3);border-radius:1px"></div>
+            <div style="width:2px;height:6px;background:rgba(255,255,255,.3);border-radius:1px"></div>
+          </div>
+          <!-- L4: headline -->
+          <div style="position:absolute;top:30px;left:6px;right:6px;font-size:7px;font-weight:800;color:#fff;font-family:'Syne',sans-serif;line-height:1.1">Quando foi a última vez que você mapeou isso?</div>
+          <!-- L3: botão CTA -->
+          <div style="position:absolute;top:74px;left:6px;background:#00C9A7;border-radius:20px;padding:5px 10px;font-size:5px;font-weight:600;color:#080810;font-family:'DM Sans',sans-serif">Vale uma conversa →</div>
+          <!-- L4: sys-bot -->
+          <div style="position:absolute;bottom:5px;left:6px;right:6px">
+            <div style="width:14px;height:1px;background:rgba(255,255,255,.2);margin-bottom:3px"></div>
+            <div style="font-size:3.5px;color:rgba(255,255,255,.5);font-family:monospace">mindflow.ia · IA que conversa. E converte.</div>
+          </div>
+        </div>
+      </div>
+      <div class="layout-spec">
+        <h4>Estrutura de Camadas</h4>
+        <ul>
+          <li><strong>L0:</strong> <code>var(--bg-cta)</code> = <code>#1A56DB</code> — OBRIGATÓRIO. É a única mudança de fundo permitida</li>
+          <li><strong>L1:</strong> Logo waveform da Mindflow em branco com opacidade 25%, canto superior esquerdo</li>
+          <li><strong>L4 ÂNCORA:</strong> Pergunta ou afirmação em Syne ExtraBold <code>--size-headline-cover</code>, branco, máx 12 palavras</li>
+          <li><strong>L3:</strong> Botão CTA — <code>background: var(--color-mint); border-radius: var(--radius-button); padding: 20px 40px;</code> — cor do texto: <code>#080810</code> (preto no mint)</li>
+          <li><strong>L4 SYS-BOT:</strong> Linha divisória + tagline "mindflow.ia · IA que conversa. E converte."</li>
+        </ul>
+        <h4>Regras Críticas</h4>
+        <ul>
+          <li>Fundo DEVE mudar para azul sólido — é o sinal visual de "chegamos em outro lugar"</li>
+          <li>Um único CTA — texto no imperativo ativo ("Vale uma conversa →")</li>
+          <li>O botão CTA é o único elemento em mint neste slide</li>
+          <li>ZERO outros elementos que não sejam: headline, botão, logo, tagline</li>
+          <li>A pergunta do CTA deve conectar com a tensão criada na capa</li>
+        </ul>
+      </div>
+    </div>
+    <div class="layout-footer">
+      <strong>Referência do corpus:</strong> Slide 5 do carrossel gerado era este layout — e estava correto. mLabs slide 3 (laranja sólido), Neobank último slide. A mudança de cor de fundo é o dispositivo de conversão.
+    </div>
+  </div>
+
+</div>
+
+<!-- SEÇÃO 6: GRAMÁTICA DE HARMONIA -->
+<div class="ch dark" id="s6">
+  <div class="ch-inner">
+    <div class="ch-kicker">Seção 6 · Gramática de Harmonia</div>
+    <h2>Como os Elementos<br>se Relacionam</h2>
+    <p class="ch-intro">A harmonia visual não é estética — é o conjunto de relações matemáticas entre elementos. Tamanho relativo, distância, peso visual. Um agente que aplica estas relações produz composições que "parecem certas" sem saber por quê.</p>
+  </div>
+</div>
+<div class="doc">
+
+  <h3>6.1 Hierarquia de Peso Visual — Proporções Obrigatórias</h3>
+  <p>O peso visual de um elemento é determinado pela combinação de tamanho, cor, e contraste. As relações abaixo definem a hierarquia mínima que deve existir entre os três níveis de elementos:</p>
+
+  <table class="spec">
+    <thead><tr><th>Relação</th><th>Proporção mínima</th><th>Exemplo concreto</th><th>Se violada</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Âncora : Contexto</td>
+        <td>3:1 em tamanho de fonte</td>
+        <td>Número âncora 140px, headline de contexto 40px</td>
+        <td>Hierarquia plana — dois elementos competem</td>
+      </tr>
+      <tr>
+        <td>Âncora : Corpo</td>
+        <td>6:1 em tamanho de fonte</td>
+        <td>Número âncora 140px, body text 22px</td>
+        <td>O corpo "rouba" atenção da âncora</td>
+      </tr>
+      <tr>
+        <td>Headline : Corpo</td>
+        <td>2:1 em tamanho + diferença de peso (700 vs 400)</td>
+        <td>Headline 52px 700, body 22px 400</td>
+        <td>Leitura linear — sem ponto focal claro</td>
+      </tr>
+      <tr>
+        <td>Cor de accent : Cor neutra</td>
+        <td>Max 15% da área visual em accent</td>
+        <td>1 palavra em azul em headline de 6 palavras</td>
+        <td>O accent perde força — vira cor do layout, não destaque</td>
+      </tr>
+      <tr>
+        <td>Espaço negativo : Conteúdo</td>
+        <td>Min 40% do frame em espaço vazio</td>
+        <td>Conteúdo ocupa no máximo 60% do frame 4:5</td>
+        <td>Superlotação — ansiedade visual, usuário rola</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>6.2 Distâncias Entre Elementos — Espaçamento Interno</h3>
+  <pre><code><span class="comment">/* ── DISTÂNCIAS OBRIGATÓRIAS (em pixels, frame 1080px) ── */</span>
+
+<span class="comment">/* Entre SYS-TOP e primeiro elemento de conteúdo */</span>
+<span class="hl">--gap-systop-content:</span> <span class="val">48px</span>;
+
+<span class="comment">/* Entre elemento âncora e separador */</span>
+<span class="hl">--gap-anchor-sep:</span> <span class="val">32px</span>;
+
+<span class="comment">/* Entre separador e contexto imediato */</span>
+<span class="hl">--gap-sep-context:</span> <span class="val">24px</span>;
+
+<span class="comment">/* Entre headline e body text */</span>
+<span class="hl">--gap-headline-body:</span> <span class="val">28px</span>;
+
+<span class="comment">/* Entre itens de chip (vertical stack) */</span>
+<span class="hl">--gap-chip-chip:</span> <span class="val">12px</span>;
+
+<span class="comment">/* Entre body text e SYS-BOT */</span>
+<span class="hl">--gap-content-sysbot:</span> <span class="val">min 60px</span>;  <span class="comment">/* menor que isso = área de respiro violada */</span>
+
+<span class="comment">/* ── REGRA DE CLUSTERING ── */</span>
+<span class="comment">/* Elementos que pertencem ao mesmo grupo semântico ficam juntos */</span>
+<span class="comment">/* (número + separador + contexto = cluster do dado) */</span>
+<span class="comment">/* O espaço entre clusters é SEMPRE maior que o espaço interno */</span>
+<span class="hl">--gap-inter-cluster:</span> <span class="val">48px</span>;   <span class="comment">/* entre clusters diferentes */</span>
+<span class="hl">--gap-intra-cluster:</span> <span class="val">16-24px</span>; <span class="comment">/* dentro do mesmo cluster */</span></code></pre>
+
+  <h3>6.3 Posicionamento dos Elementos do Sistema (Invariável)</h3>
+  <p>Os elementos de sistema são os mesmos em todos os slides do carrossel. Posição, tamanho e estilo nunca mudam:</p>
+
+  <pre><code><span class="comment">/* ── LOGO / WAVEFORM (SYS-TOP, esquerda) ── */</span>
+.logo-waveform {
+  <span class="hl">position:</span> <span class="val">absolute</span>;
+  <span class="hl">top:</span> <span class="val">36px</span>;
+  <span class="hl">left:</span> <span class="val">64px</span>;
+  <span class="hl">width:</span> <span class="val">120px</span>;   <span class="comment">/* tamanho fixo — nunca muda */</span>
+  <span class="hl">height:</span> <span class="val">auto</span>;
+  <span class="hl">z-index:</span> <span class="val">4</span>;
+}
+
+<span class="comment">/* ── HANDLE / URL (SYS-BOT, esquerda) ── */</span>
+.handle {
+  <span class="hl">position:</span> <span class="val">absolute</span>;
+  <span class="hl">bottom:</span> <span class="val">40px</span>;
+  <span class="hl">left:</span> <span class="val">64px</span>;
+  <span class="hl">font-family:</span> <span class="val">var(--font-mono)</span>;
+  <span class="hl">font-size:</span> <span class="val">var(--size-system)</span>;  <span class="comment">/* 15px */</span>
+  <span class="hl">color:</span> <span class="val">var(--text-system)</span>;   <span class="comment">/* #374151 sobre dark, #9CA3AF sobre light */</span>
+  <span class="hl">letter-spacing:</span> <span class="val">var(--ls-system)</span>;
+  <span class="hl">z-index:</span> <span class="val">4</span>;
+}
+<span class="comment">/* Conteúdo: "mindflow.ia" — nunca "@mindflow" nem "mindflow.ia/" */</span>
+
+<span class="comment">/* ── NÚMERO DE SLIDE (SYS-TOP, esquerda) — slides 02+ ── */</span>
+.slide-number {
+  <span class="hl">position:</span> <span class="val">absolute</span>;
+  <span class="hl">top:</span> <span class="val">40px</span>;
+  <span class="hl">left:</span> <span class="val">64px</span>;
+  <span class="hl">font-family:</span> <span class="val">var(--font-mono)</span>;
+  <span class="hl">font-size:</span> <span class="val">14px</span>;
+  <span class="hl">color:</span> <span class="val">var(--text-system)</span>;
+  <span class="hl">opacity:</span> <span class="val">0.5</span>;  <span class="comment">/* presente mas discreto */</span>
+  <span class="hl">z-index:</span> <span class="val">4</span>;
+}
+<span class="comment">/* Formato: "02" não "2" ou "slide 2" */</span>
+
+<span class="comment">/* ── TAG DE SEÇÃO (SYS-TOP, direita) — opcional ── */</span>
+.section-tag {
+  <span class="hl">position:</span> <span class="val">absolute</span>;
+  <span class="hl">top:</span> <span class="val">40px</span>;
+  <span class="hl">right:</span> <span class="val">64px</span>;
+  <span class="hl">font-family:</span> <span class="val">var(--font-mono)</span>;
+  <span class="hl">font-size:</span> <span class="val">var(--size-tag)</span>;  <span class="comment">/* 16px */</span>
+  <span class="hl">font-weight:</span> <span class="val">var(--weight-mono-med)</span>;
+  <span class="hl">letter-spacing:</span> <span class="val">var(--ls-tag)</span>;
+  <span class="hl">text-transform:</span> <span class="val">uppercase</span>;
+  <span class="hl">color:</span> <span class="val">var(--color-mint)</span>;
+  <span class="hl">z-index:</span> <span class="val">4</span>;
+}
+<span class="comment">/* Conteúdo: "O ARGUMENTO", "EVIDÊNCIA", "O DADO", "A SOLUÇÃO" */</span></code></pre>
+
+  <h3>6.4 Relações de Cor — Harmonia Entre Temperatura e Conteúdo</h3>
+
+  <table class="spec">
+    <thead><tr><th>Tipo de conteúdo</th><th>Background</th><th>Âncora (cor)</th><th>Contexto (cor)</th><th>Sistema (cor)</th></tr></thead>
+    <tbody>
+      <tr><td>Capa / Tensão</td><td>--bg-midnight ou --bg-navy-deep</td><td>Branco + azul na parte de dor</td><td>—</td><td>Mint (tag), cinza (handle)</td></tr>
+      <tr><td>Dado positivo / ROI</td><td>--bg-charcoal ou --bg-navy</td><td>Mint (#00C9A7)</td><td>Branco (bold)</td><td>Cinza (slide num), cinza (handle)</td></tr>
+      <tr><td>Dado de problema / dor</td><td>--bg-midnight</td><td>Amber (#F5A623)</td><td>Branco</td><td>Cinza</td></tr>
+      <tr><td>Argumento / editorial</td><td>--bg-paper (#F7F5F2)</td><td>Preto + azul na palavra-chave</td><td>Cinza claro</td><td>Cinza claro (handle), azul (tag)</td></tr>
+      <tr><td>Features / chips</td><td>--bg-navy</td><td>Branco (headline) + azul accent</td><td>Branco (chips)</td><td>Cinza</td></tr>
+      <tr><td>CTA Final</td><td>--bg-cta (#1A56DB)</td><td>Branco (pergunta)</td><td>—</td><td>Branco semitransparente</td></tr>
+    </tbody>
+  </table>
+
+</div>
+
+<!-- SEÇÃO 7: REGRAS DE SEQUÊNCIA -->
+<div class="ch surface" id="s7">
+  <div class="ch-inner">
+    <div class="ch-kicker">Seção 7 · Sequência do Carrossel</div>
+    <h2>Lógica de Sequência —<br>Slide a Slide</h2>
+    <p class="ch-intro">Um carrossel não é uma coleção de posts. É uma narrativa. Cada slide tem uma função e um layout correspondente. Um agente que monta o carrossel na sequência correta produz estrutura narrativa automaticamente.</p>
+  </div>
+</div>
+<div class="doc">
+
+  <h3>7.1 Estrutura Narrativa Padrão — Carrossel de 5 Slides</h3>
+
+  <div class="sequence">
+    <div class="seq-slide">
+      <div class="seq-frame" style="background:#0A0F1E">
+        <div style="position:absolute;bottom:12px;left:6px;right:6px;font-size:5px;font-weight:800;color:#fff;font-family:'Syne',sans-serif;line-height:1.1">Headline<br><span style="color:#1A56DB">tensão</span></div>
+        <div style="position:absolute;top:5px;left:5px;width:20px;height:3px;background:rgba(26,86,219,.5);border-radius:1px"></div>
+        <div style="position:absolute;bottom:4px;left:5px;font-size:3px;color:#374151;font-family:monospace">arraste →</div>
+      </div>
+      <div class="seq-num">01</div>
+      <div class="seq-label">CAPA<br>tensão</div>
+    </div>
+    <div class="seq-arrow">→</div>
+    <div class="seq-slide">
+      <div class="seq-frame" style="background:#0D1B3E">
+        <div style="position:absolute;top:14px;left:6px;font-size:20px;font-weight:800;color:#00C9A7;font-family:'Syne',sans-serif;line-height:.9">73%</div>
+        <div style="position:absolute;top:40px;left:6px;width:14px;height:1px;background:#1A56DB"></div>
+        <div style="position:absolute;top:46px;left:6px;right:6px;font-size:4px;color:#fff;font-weight:700;font-family:'DM Sans',sans-serif;line-height:1.3">das empresas perdem receita</div>
+        <div style="position:absolute;top:60px;left:6px;right:6px;font-size:3.5px;color:#4B5563;font-family:monospace">Estudo McKinsey 2024</div>
+      </div>
+      <div class="seq-num">02</div>
+      <div class="seq-label">DADO<br>evidência</div>
+    </div>
+    <div class="seq-arrow">→</div>
+    <div class="seq-slide">
+      <div class="seq-frame" style="background:#F7F5F2">
+        <div style="position:absolute;top:4px;right:5px;font-size:3.5px;color:#1A56DB;font-family:monospace;letter-spacing:.05em">ARGUMENTO</div>
+        <div style="position:absolute;top:14px;left:5px;right:5px;font-size:6px;font-weight:800;color:#080810;font-family:'Syne',sans-serif;line-height:1.1">O problema não é a saída — é a <span style="color:#1A56DB">falta de contexto</span></div>
+        <div style="position:absolute;top:50px;left:5px;right:5px;height:.5px;background:#E4DFD8"></div>
+        <div style="position:absolute;top:56px;left:5px;right:5px;font-size:4px;color:#6B7280;font-family:'DM Sans',sans-serif;line-height:1.4">A carteira não pertence à empresa. Pertence à pessoa.</div>
+      </div>
+      <div class="seq-num">03</div>
+      <div class="seq-label">ARGUMENTO<br>por quê</div>
+    </div>
+    <div class="seq-arrow">→</div>
+    <div class="seq-slide">
+      <div class="seq-frame" style="background:#080810">
+        <div style="position:absolute;top:4px;right:5px;font-size:3.5px;color:#00C9A7;font-family:monospace;letter-spacing:.05em">EVIDÊNCIA</div>
+        <div style="position:absolute;top:5px;left:5px;font-size:3px;color:#374151;font-family:monospace">04</div>
+        <div style="position:absolute;top:5px;left:5px;width:10px;height:1.5px;background:#1A56DB;top:16px"></div>
+        <div style="position:absolute;top:22px;left:5px;right:5px;font-size:6px;font-weight:800;color:#fff;font-family:'Syne',sans-serif;line-height:1.1">O caso que ninguém comenta</div>
+        <div style="position:absolute;top:50px;left:5px;right:5px;font-size:4px;color:#9CA3AF;font-family:'DM Sans',sans-serif;line-height:1.4">Empresa BPO, R$80M. Fundador vendeu 60%. 4 dos 7 maiores clientes cancelaram.</div>
+      </div>
+      <div class="seq-num">04</div>
+      <div class="seq-label">PROVA<br>caso real</div>
+    </div>
+    <div class="seq-arrow">→</div>
+    <div class="seq-slide">
+      <div class="seq-frame" style="background:#1A56DB">
+        <div style="position:absolute;top:5px;left:5px;display:flex;gap:1px;align-items:flex-end">
+          <div style="width:1.5px;height:7px;background:rgba(255,255,255,.4)"></div>
+          <div style="width:1.5px;height:12px;background:rgba(255,255,255,.4)"></div>
+          <div style="width:1.5px;height:9px;background:rgba(255,255,255,.4)"></div>
+          <div style="width:1.5px;height:14px;background:rgba(255,255,255,.4)"></div>
+          <div style="width:1.5px;height:8px;background:rgba(255,255,255,.4)"></div>
+        </div>
+        <div style="position:absolute;top:26px;left:5px;right:5px;font-size:6.5px;font-weight:800;color:#fff;font-family:'Syne',sans-serif;line-height:1.1">Quando mapeou quem é insubstituível?</div>
+        <div style="position:absolute;top:62px;left:5px;background:#00C9A7;border-radius:16px;padding:4px 8px;font-size:4.5px;font-weight:600;color:#080810;font-family:'DM Sans',sans-serif">Vale uma conversa →</div>
+        <div style="position:absolute;bottom:5px;left:5px;font-size:3px;color:rgba(255,255,255,.4);font-family:monospace">mindflow.ia · IA que conversa.</div>
+      </div>
+      <div class="seq-num">05</div>
+      <div class="seq-label">CTA<br>conversão</div>
+    </div>
+  </div>
+
+  <h3>7.2 Função de Cada Posição</h3>
+
+  <table class="spec">
+    <thead><tr><th>Posição</th><th>Função</th><th>Layout</th><th>Pergunta que responde</th><th>Se falhar</th></tr></thead>
+    <tbody>
+      <tr><td>Slide 1 (Capa)</td><td>Parar o scroll. Criar tensão.</td><td>LAYOUT-01</td><td>"Por que devo continuar?"</td><td>Usuário não desliza</td></tr>
+      <tr><td>Slide 2</td><td>Provar que o problema existe com dado.</td><td>LAYOUT-02 ou LAYOUT-03</td><td>"Isso é real? Quão grande?"</td><td>Usuário não acredita na premissa</td></tr>
+      <tr><td>Slide 3</td><td>Explicar o mecanismo. Por que acontece.</td><td>LAYOUT-06 (argumento) ou LAYOUT-04</td><td>"Por que acontece comigo?"</td><td>Usuário entende o problema mas não a causa</td></tr>
+      <tr><td>Slide N-1</td><td>Evidência / caso real / prova social.</td><td>LAYOUT-04 ou LAYOUT-02 variação</td><td>"Isso aconteceu de verdade?"</td><td>Usuário não confia o suficiente para agir</td></tr>
+      <tr><td>Slide final</td><td>Converter. Uma única ação.</td><td>LAYOUT-07 (obrigatório)</td><td>"O que eu faço agora?"</td><td>Usuário não sabe próximo passo</td></tr>
+    </tbody>
+  </table>
+
+  <h3>7.3 Regras de Transição entre Slides</h3>
+
+  <pre><code><span class="comment">/* ── REGRAS DE TEMPERATURA — sequência válida ── */</span>
+
+<span class="comment">/* A temperatura de fundo pode alternar entre slides mas NUNCA entre warm e frio */</span>
+<span class="hl">VÁLIDO:</span>   dark → dark → light → dark → cta-blue
+<span class="hl">VÁLIDO:</span>   dark → dark → dark → dark → cta-blue
+<span class="hl">INVÁLIDO:</span> dark → bege → dark → bege → cta-blue  <span class="comment">/* bege viola temperatura */</span>
+
+<span class="comment">/* ── REGRAS DE ACENTO — sequência válida ── */</span>
+<span class="comment">/* A cor de accent do dado pode mudar entre slides, mas com lógica: */</span>
+<span class="hl">mint</span>  = dado positivo (resultado, melhora, crescimento)
+<span class="hl">amber</span> = dado de dor (perda, risco, problema)
+<span class="hl">blue</span>  = structural/neutral (separador, link, CTA)
+
+<span class="comment">/* Exemplo válido de sequência de accent: */</span>
+<span class="comment">/* Slide 1: blue (headline) → Slide 2: amber (dado de dor 73%) → Slide 3: blue (argumento) → Slide 4: blue (caso) → Slide 5: mint (CTA positivo) */</span>
+
+<span class="comment">/* ── REGRAS DE LAYOUT — não repetir o mesmo layout consecutivo ── */</span>
+<span class="hl">VÁLIDO:</span>   L01 → L02 → L06 → L04 → L07
+<span class="hl">INVÁLIDO:</span> L06 → L06 → L06  <span class="comment">/* três argumentos seguidos = sem variedade visual */</span>
+
+<span class="comment">/* ── REGRAS DE PESO VISUAL — alternância de densidade ── */</span>
+<span class="comment">/* Slide pesado (muitos elementos) deve ser seguido de slide leve */</span>
+<span class="hl">Pesado (L05 chips):</span>  alternar com leve (L02 dado isolado) ou médio (L06)
+<span class="hl">Leve (L01 capa):</span>     pode ser seguido de qualquer densidade</code></pre>
+
+  <h3>7.4 Extensão do Carrossel — Regras por Número de Slides</h3>
+
+  <table class="spec">
+    <thead><tr><th>Slides</th><th>Estrutura obrigatória</th><th>Slides intermediários</th></tr></thead>
+    <tbody>
+      <tr><td>3 slides</td><td>Capa → [1 slide de conteúdo] → CTA</td><td>1 slide: dado ou argumento</td></tr>
+      <tr><td>5 slides (padrão)</td><td>Capa → Dado → Argumento → Prova → CTA</td><td>Slides 2 e 3</td></tr>
+      <tr><td>7 slides</td><td>Capa → Dado → Argumento → Prova → [2 intermediários] → CTA</td><td>Slides 2–5: pode adicionar chips ou segundo dado</td></tr>
+      <tr><td>10+ slides</td><td>Capa → [múltiplos dados/argumentos] → Solução → Prova → CTA</td><td>Adicionar slide de SOLUÇÃO (como o produto resolve) antes da prova</td></tr>
+    </tbody>
+  </table>
+
+</div>
+
+<!-- SEÇÃO 8: HARD CONSTRAINTS -->
+<div class="ch dark" id="s8">
+  <div class="ch-inner">
+    <div class="ch-kicker">Seção 8 · Hard Constraints</div>
+    <h2>O Que Nunca<br>Pode Acontecer</h2>
+    <p class="ch-intro">Estas são restrições absolutas. Um agente que viola qualquer uma delas está produzindo output incorreto — independente de qualquer outra decisão ter sido certa. Cada violação tem uma razão técnica específica.</p>
+  </div>
+</div>
+<div class="doc">
+
+  <div class="constraint">
+    <div class="constraint-title">CONSTRAINT-01 — Zero Post de Texto Puro</div>
+    <p>Nenhum post do carrossel pode ter apenas texto e background como elementos. Todo post (exceto LAYOUT-07 CTA) precisa de mínimo 3 camadas — L0 + pelo menos um elemento em L1 ou L2 + L4. Se não há asset disponível, usar textura tipográfica (L1) como terceira camada mínima.</p>
+  </div>
+
+  <div class="constraint">
+    <div class="constraint-title">CONSTRAINT-02 — Zero Background Warm</div>
+    <p>Nenhum post pode ter background com temperatura quente. Backgrounds proibidos incluem qualquer cor no espectro amarelo-laranja-vermelho-marrom, incluindo: #F0EDE8, #F4F1EA, #FFF8F0, #FFFAF5, e qualquer cor com HSL hue entre 20° e 80° com saturation acima de 15%. Verificação obrigatória: calcular HSL do background antes de usar.</p>
+  </div>
+
+  <div class="constraint">
+    <div class="constraint-title">CONSTRAINT-03 — Zero Dois Elementos Âncora</div>
+    <p>Cada post pode ter exatamente 1 elemento na zona ÂNCORA (L3). Se houver dois candidatos (número grande + foto de pessoa), um deles deve ser reclassificado como suporte ou movido para outro slide. A âncora é o elemento que responde "onde o olho vai em 0,3 segundos" — deve haver uma única resposta certa.</p>
+  </div>
+
+  <div class="constraint">
+    <div class="constraint-title">CONSTRAINT-04 — Zero Dois CTAs no Último Slide</div>
+    <p>O LAYOUT-07 tem exatamente 1 botão de ação. Qualquer combinação de "acesse o link" + "salve esse post" + "nos siga" no mesmo slide é violação. Definir a conversão desejada antes de gerar o slide e construir o slide exclusivamente para ela.</p>
+  </div>
+
+  <div class="constraint">
+    <div class="constraint-title">CONSTRAINT-05 — Zero Emoji como Decoração</div>
+    <p>Nenhum emoji (incluindo versões 3D/rendered) pode ser usado como elemento decorativo ou de preenchimento visual. Emojis podem ser usados APENAS como ícone funcional dentro de chips (✓, →, ⚡) e apenas quando o ícone é SVG ou caractere unicode simples, não imagem 3D renderizada.</p>
+  </div>
+
+  <div class="constraint">
+    <div class="constraint-title">CONSTRAINT-06 — Zero Gradiente sobre Gradiente</div>
+    <p>Um post pode ter no máximo 1 gradiente. Se o background é gradiente, nenhum outro elemento pode ter gradiente (nem texto, nem overlay, nem forma geométrica). Se um overlay é necessário sobre foto, usar rgba sólido, não gradiente. A única exceção: radial-gradient de brilho sutil no background (L0) é permitido se for o único gradiente no post.</p>
+  </div>
+
+  <div class="constraint">
+    <div class="constraint-title">CONSTRAINT-07 — Zero Mais de Uma Cor de Accent por Post</div>
+    <p>Cada post usa exatamente uma cor de accent: blue (#1A56DB) OU mint (#00C9A7) OU amber (#F5A623). Nunca duas ao mesmo tempo no mesmo post. O branco e os tons de cinza/navy são neutros e não contam como accent. A cor de accent pode mudar entre slides do carrossel, mas não dentro do mesmo slide.</p>
+  </div>
+
+  <div class="constraint">
+    <div class="constraint-title">CONSTRAINT-08 — Texto Sobre Foto Requer Tratamento</div>
+    <p>Qualquer texto que apareça sobre uma fotografia precisa de um dos três tratamentos: (1) overlay rgba(0,0,10,0.45) mínimo sobre toda a foto, (2) container de texto com background opaco mínimo 80%, ou (3) texto na zona split (fora da foto, em bloco de cor). Texto branco sobre foto sem tratamento é violação — o contraste mínimo 4.5:1 não é atingível sem tratamento.</p>
+  </div>
+
+  <div class="constraint">
+    <div class="constraint-title">CONSTRAINT-09 — Zero Fonte Fora do Sistema</div>
+    <p>As únicas fontes permitidas são: Syne (display/âncora), DM Sans (corpo/suporte), DM Mono (dados/sistema). Qualquer outra fonte — Montserrat, Inter, Roboto, fontes do sistema — é violação. As três fontes são carregadas do Google Fonts com os pesos especificados nos tokens.</p>
+  </div>
+
+  <div class="constraint">
+    <div class="constraint-title">CONSTRAINT-10 — Zero Afirmação Sem Dado Específico</div>
+    <p>Este é um constraint de conteúdo, não apenas visual. Qualquer afirmação de performance ou resultado precisa de número específico. "Respondemos rapidamente" → violação. "Respondemos em 4 minutos em média" → válido. Se o dado específico não está disponível, a afirmação deve ser reformulada ou removida.</p>
+  </div>
+
+</div>
+
+<!-- SEÇÃO 9: PROTOCOLO DE EXECUÇÃO DO AGENTE -->
+<div class="ch surface" id="s9">
+  <div class="ch-inner">
+    <div class="ch-kicker">Seção 9 · Protocolo de Execução</div>
+    <h2>Como o Agente<br>Executa</h2>
+    <p class="ch-intro">O protocolo de execução que um agente deve seguir para cada carrossel gerado. Cada step tem uma saída verificável. Um step não pode ser pulado.</p>
+  </div>
+</div>
+<div class="doc">
+
+  <h3>9.1 Protocolo de Geração — 8 Steps</h3>
+
+  <div style="margin:24px 0">
+    <div class="step" style="display:flex;gap:18px;margin-bottom:20px;align-items:flex-start">
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--blue);color:#fff;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
+      <div>
+        <div style="font-weight:600;font-size:15px;margin-bottom:4px;color:var(--ink)">Identificar o elemento mais forte do conteúdo</div>
+        <div style="font-size:13.5px;color:#6B7280;line-height:1.55">Antes de qualquer decisão visual: qual é o dado, número, frase ou conceito mais impactante do conteúdo a ser comunicado? Esse elemento será a âncora do slide principal. Saída: 1 elemento identificado.</div>
+      </div>
+    </div>
+    <div class="step" style="display:flex;gap:18px;margin-bottom:20px;align-items:flex-start">
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--blue);color:#fff;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
+      <div>
+        <div style="font-weight:600;font-size:15px;margin-bottom:4px;color:var(--ink)">Montar a estrutura narrativa do carrossel</div>
+        <div style="font-size:13.5px;color:#6B7280;line-height:1.55">Definir quantos slides e qual função cada um terá (usando a tabela da Seção 7.2). Saída: lista de slides com função e layout selecionado para cada um.</div>
+      </div>
+    </div>
+    <div class="step" style="display:flex;gap:18px;margin-bottom:20px;align-items:flex-start">
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--blue);color:#fff;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
+      <div>
+        <div style="font-weight:600;font-size:15px;margin-bottom:4px;color:var(--ink)">Verificar regras de sequência</div>
+        <div style="font-size:13.5px;color:#6B7280;line-height:1.55">Confirmar: (a) sem dois layouts iguais consecutivos, (b) sem warm no background de nenhum slide, (c) CTA é sempre o último slide. Saída: sequência aprovada ou revisada.</div>
+      </div>
+    </div>
+    <div class="step" style="display:flex;gap:18px;margin-bottom:20px;align-items:flex-start">
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--blue);color:#fff;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">4</div>
+      <div>
+        <div style="font-weight:600;font-size:15px;margin-bottom:4px;color:var(--ink)">Selecionar assets para cada slide</div>
+        <div style="font-size:13.5px;color:#6B7280;line-height:1.55">Para cada slide: identificar qual asset vai na L3 (âncora visual). Se não há foto/objeto disponível, usar ASSET-06 (número como objeto) ou textura tipográfica na L1. Saída: asset definido por slide.</div>
+      </div>
+    </div>
+    <div class="step" style="display:flex;gap:18px;margin-bottom:20px;align-items:flex-start">
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--blue);color:#fff;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">5</div>
+      <div>
+        <div style="font-weight:600;font-size:15px;margin-bottom:4px;color:var(--ink)">Definir tokens de cor por slide</div>
+        <div style="font-size:13.5px;color:#6B7280;line-height:1.55">Para cada slide: background token + cor de accent (apenas 1). Verificar que nenhum background é warm. Saída: tabela de cores por slide.</div>
+      </div>
+    </div>
+    <div class="step" style="display:flex;gap:18px;margin-bottom:20px;align-items:flex-start">
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--blue);color:#fff;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">6</div>
+      <div>
+        <div style="font-weight:600;font-size:15px;margin-bottom:4px;color:var(--ink)">Gerar o HTML+CSS de cada slide</div>
+        <div style="font-size:13.5px;color:#6B7280;line-height:1.55">Usando o layout selecionado como template base, preencher: (a) texto âncora na zona correta com tokens de tipografia corretos, (b) assets nas camadas corretas, (c) elementos de sistema (logo, handle, número de slide) em posições fixas. Saída: HTML+CSS por slide.</div>
+      </div>
+    </div>
+    <div class="step" style="display:flex;gap:18px;margin-bottom:20px;align-items:flex-start">
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--blue);color:#fff;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">7</div>
+      <div>
+        <div style="font-weight:600;font-size:15px;margin-bottom:4px;color:var(--ink)">Verificar Hard Constraints</div>
+        <div style="font-size:13.5px;color:#6B7280;line-height:1.55">Checklist das 10 constraints (Seção 8) contra cada slide gerado. Qualquer violação: corrigir antes de avançar. Saída: confirmação de que nenhuma constraint foi violada.</div>
+      </div>
+    </div>
+    <div class="step" style="display:flex;gap:18px;margin-bottom:20px;align-items:flex-start">
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--mint);color:#080810;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">8</div>
+      <div>
+        <div style="font-weight:600;font-size:15px;margin-bottom:4px;color:var(--ink)">Teste Final — As 3 Perguntas</div>
+        <div style="font-size:13.5px;color:#6B7280;line-height:1.55">Para cada slide: (1) em 0,3 segundos, o olho sabe onde ir? (2) sem ver o logo, parece Mindflow? (3) em miniatura de 50px, o elemento âncora ainda é reconhecível? Se qualquer resposta for "não" ou "não sei" — revisar antes de renderizar.</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>9.2 Template de Slide Base — HTML Mínimo</h3>
+  <pre><code><span class="comment">&lt;!-- TEMPLATE BASE — todos os slides partem daqui --&gt;</span>
+<span class="hl">&lt;div</span> <span class="hl2">class</span>=<span class="val">"slide [layout-id] [has-overflow?]"</span> <span class="hl2">data-slide</span>=<span class="val">"01"</span>&gt;
+
+  <span class="comment">&lt;!-- L0: FUNDO --&gt;</span>
+  <span class="hl">&lt;div</span> <span class="hl2">class</span>=<span class="val">"layer-background"</span> <span class="hl2">style</span>=<span class="val">"background: var(--bg-[TOKEN])"</span>&gt;<span class="hl">&lt;/div&gt;</span>
+
+  <span class="comment">&lt;!-- L1: TEXTURA (opcional, mas recomendado) --&gt;</span>
+  <span class="hl">&lt;div</span> <span class="hl2">class</span>=<span class="val">"layer-texture"</span>&gt;
+    <span class="hl">&lt;span</span> <span class="hl2">class</span>=<span class="val">"texture-text"</span> <span class="hl2">style</span>=<span class="val">"[posição: top|bottom]-[offset]px; [left|right]-[offset]px"</span>&gt;
+      [TEXTO-TEXTURA: nome da marca, número, palavra-tema]
+    <span class="hl">&lt;/span&gt;</span>
+  <span class="hl">&lt;/div&gt;</span>
+
+  <span class="comment">&lt;!-- L2: ESTRUTURA (se o layout usa split, overlay, forma) --&gt;</span>
+  <span class="hl">&lt;div</span> <span class="hl2">class</span>=<span class="val">"layer-structure [geo-split-block|geo-circle|...]"</span>&gt;<span class="hl">&lt;/div&gt;</span>
+
+  <span class="comment">&lt;!-- L3: ÂNCORA VISUAL (sempre presente, exceto LAYOUT-06) --&gt;</span>
+  <span class="hl">&lt;div</span> <span class="hl2">class</span>=<span class="val">"layer-anchor [overflow-right|overflow-bottom]?"</span>&gt;
+    <span class="comment">&lt;!-- ASSET: número, foto, device mockup, ícone SVG --&gt;</span>
+  <span class="hl">&lt;/div&gt;</span>
+
+  <span class="comment">&lt;!-- L4: CONTEÚDO TIPOGRÁFICO --&gt;</span>
+  <span class="hl">&lt;div</span> <span class="hl2">class</span>=<span class="val">"layer-content"</span>&gt;
+
+    <span class="comment">&lt;!-- SYS-TOP: logo + número de slide + tag de seção --&gt;</span>
+    <span class="hl">&lt;div</span> <span class="hl2">class</span>=<span class="val">"sys-top"</span>&gt;
+      <span class="hl">&lt;img</span> <span class="hl2">class</span>=<span class="val">"logo-waveform"</span> <span class="hl2">src</span>=<span class="val">"mindflow-waveform.svg"</span> <span class="hl2">alt</span>=<span class="val">"Mindflow"</span>&gt;
+      <span class="comment">&lt;!-- OU número de slide nos slides 02+ --&gt;</span>
+      <span class="hl">&lt;span</span> <span class="hl2">class</span>=<span class="val">"slide-number"</span>&gt;[0N]<span class="hl">&lt;/span&gt;</span>
+      <span class="comment">&lt;!-- Tag de seção (opcional) --&gt;</span>
+      <span class="hl">&lt;span</span> <span class="hl2">class</span>=<span class="val">"section-tag"</span>&gt;[NOME DA SEÇÃO]<span class="hl">&lt;/span&gt;</span>
+    <span class="hl">&lt;/div&gt;</span>
+
+    <span class="comment">&lt;!-- ZONA ÂNCORA: tag de categoria (apenas na capa) --&gt;</span>
+    <span class="hl">&lt;span</span> <span class="hl2">class</span>=<span class="val">"category-tag"</span>&gt;[CATEGORIA · PILAR N]<span class="hl">&lt;/span&gt;</span>
+
+    <span class="comment">&lt;!-- ZONA ÂNCORA/SUPORTE: conteúdo principal --&gt;</span>
+    <span class="comment">&lt;!-- [VARIA POR LAYOUT — ver especificação de cada layout] --&gt;</span>
+
+    <span class="comment">&lt;!-- SYS-BOT: handle + seta/CTA --&gt;</span>
+    <span class="hl">&lt;div</span> <span class="hl2">class</span>=<span class="val">"sys-bot"</span>&gt;
+      <span class="hl">&lt;span</span> <span class="hl2">class</span>=<span class="val">"handle"</span>&gt;mindflow.ia<span class="hl">&lt;/span&gt;</span>
+      <span class="comment">&lt;!-- "arraste →" apenas na capa --&gt;</span>
+    <span class="hl">&lt;/div&gt;</span>
+
+  <span class="hl">&lt;/div&gt;</span>
+<span class="hl">&lt;/div&gt;</span></code></pre>
+
+</div>
+
+<!-- CODA -->
+<div style="background:var(--ink);padding:72px 40px">
+  <div style="max-width:960px;margin:0 auto">
+
+    <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--mint);margin-bottom:28px;display:flex;align-items:center;gap:14px"><span style="width:28px;height:1px;background:var(--mint);display:inline-block"></span>A Diferença</div>
+
+    <div style="font-family:'Syne',sans-serif;font-size:clamp(24px,3.5vw,42px);font-weight:800;color:var(--white);line-height:1.05;margin-bottom:24px;max-width:700px">Um agente sem este documento gera texto diagramado. Com ele, gera composição.</div>
+
+    <p style="font-size:16px;color:#4B5563;line-height:1.7;max-width:600px;margin-bottom:48px">A diferença não está nas cores nem nas fontes — está nas camadas, nos assets, nas zonas e nas relações entre elementos. Este documento especifica tudo isso em valores que um agente pode executar diretamente.</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;max-width:720px;margin-bottom:64px">
+      <div style="border:1px solid #1A1A2E;border-radius:8px;padding:18px">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--mint);letter-spacing:.12em;margin-bottom:8px">DRS</div>
+        <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#fff;margin-bottom:6px">Design Reasoning System</div>
+        <div style="font-size:12px;color:#4B5563;line-height:1.5">Por que as decisões existem. Princípios e padrões para raciocinar sobre design.</div>
+      </div>
+      <div style="border:1px solid #1A56DB;border-radius:8px;padding:18px;background:rgba(26,86,219,.06)">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--mint);letter-spacing:.12em;margin-bottom:8px">VCS (ESTE DOC)</div>
+        <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#fff;margin-bottom:6px">Visual Composition System</div>
+        <div style="font-size:12px;color:#4B5563;line-height:1.5">Como executar. Zonas, camadas, assets, layouts e constraints em valores numéricos.</div>
+      </div>
+      <div style="border:1px solid #1A1A2E;border-radius:8px;padding:18px">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:#374151;letter-spacing:.12em;margin-bottom:8px">PRÓXIMO</div>
+        <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#374151;margin-bottom:6px">Component Library</div>
+        <div style="font-size:12px;color:#2D3748;line-height:1.5">HTML+CSS renderizável por Puppeteer. Templates prontos para cada layout.</div>
+      </div>
+    </div>
+
+    <div style="padding-top:32px;border-top:1px solid #0D0D1A;display:flex;justify-content:space-between;align-items:flex-end">
+      <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:#1F2937">mindflow.</div>
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:#1F2937;text-align:right;line-height:1.9;letter-spacing:.06em">
+        VISUAL-COMPOSITION-SYSTEM-v1.0<br>
+        9 SEÇÕES · 7 LAYOUTS · 10 CONSTRAINTS<br>
+        6 ZONAS · 5 CAMADAS · 9 ASSETS
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
