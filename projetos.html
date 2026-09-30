@@ -586,24 +586,47 @@
     </div>
   </div>
 
-  <!-- ── MODAL: FASE 2 PREVIEW (ÁUDIO / IA) ── -->
+  <!-- ── MODAL: NOTA IA & LINHA DO TEMPO (FASE 2) ── -->
   <div class="modal-overlay" id="modalIaNote">
-    <div class="modal-card">
+    <div class="modal-card" style="max-width: 600px;">
       <div class="modal-header">
-        <h2 class="modal-title">🎙️ Nota da IA & Linha do Tempo</h2>
+        <div>
+          <h2 class="modal-title" id="iaModalClientName">🎙️ Linha do Tempo & Notas da IA</h2>
+          <span style="font-size:11px; color:var(--teal); font-family:'Space Grotesk',sans-serif; font-weight:600;">Assistente MindFlow CS</span>
+        </div>
         <button class="modal-close" onclick="closeModal('modalIaNote')"><span class="material-symbols-outlined">close</span></button>
       </div>
       
-      <p style="font-size:13px; color:var(--muted); line-height:1.5;">
-        Esta área será conectada à <strong style="color:#fff;">LLM na Fase 2</strong> para permitir que o CS grave áudios ou envie mensagens rápidas que são resumidas automaticamente no histórico do cliente.
-      </p>
+      <input type="hidden" id="iaModalProjectId">
 
-      <div style="background:rgba(46,79,255,0.08); border:1px solid rgba(46,79,255,0.2); border-radius:12px; padding:14px; font-size:12px; color:var(--blue2);">
-        ✨ <strong>Em breve (Fase 2):</strong> Botão de gravação direta por áudio com transcrição Whisper + análise automática de Risco de Churn!
+      <!-- Gravação / Input rápido -->
+      <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:12px;">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <span class="form-label" style="margin:0;">Adicionar Nota / Atualização de Voz</span>
+          <button type="button" class="btn-audio-ia" id="btnRecordAudioSim" onclick="toggleAudioRecordingSim()">
+            <span class="material-symbols-outlined" id="recIcon">mic</span>
+            <span id="recText">Gravar Áudio</span>
+          </button>
+        </div>
+        <textarea class="form-textarea" id="iaNoteText" placeholder="Digite ou grave um comentário para a IA resumir e categorizar no histórico deste cliente..."></textarea>
+        <div style="display:flex; justify-content:flex-end;">
+          <button class="btn-primary" style="padding:8px 16px; font-size:12px;" onclick="saveIaNote()">
+            <span class="material-symbols-outlined" style="font-size:16px;">send</span>
+            Salvar na Linha do Tempo
+          </button>
+        </div>
       </div>
 
-      <div style="display:flex; justify-content:flex-end; margin-top:8px;">
-        <button class="btn-primary" onclick="closeModal('modalIaNote')">Entendido</button>
+      <!-- Histórico de Notas da Linha do Tempo -->
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <span class="form-label">Linha do Tempo de Interações</span>
+        <div id="iaNotesTimeline" style="display:flex; flex-direction:column; gap:10px; max-height:220px; overflow-y:auto; padding-right:4px;">
+          <!-- Renderizado via JS -->
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; margin-top:4px;">
+        <button class="btn-logout" style="color:var(--muted); border-color:var(--border);" onclick="closeModal('modalIaNote')">Fechar</button>
       </div>
     </div>
   </div>
@@ -873,9 +896,81 @@
       closeModal('modalCard');
     }
 
+    let isRecordingSim = false;
+
     function openIaModal(e, id) {
       e.stopPropagation();
+      const p = allProjects[id];
+      if (!p) return;
+      document.getElementById('iaModalProjectId').value = id;
+      document.getElementById('iaModalClientName').textContent = `🎙️ ${p.name} — Linha do Tempo`;
+      document.getElementById('iaNoteText').value = '';
+      renderIaTimeline(p.notesHistory || []);
       openModal('modalIaNote');
+    }
+
+    function renderIaTimeline(history) {
+      const container = document.getElementById('iaNotesTimeline');
+      if (!history || history.length === 0) {
+        container.innerHTML = `<div style="font-size:12px; color:var(--muted); font-style:italic;">Nenhuma nota registrada ainda nesta linha do tempo.</div>`;
+        return;
+      }
+
+      container.innerHTML = history.slice().reverse().map(n => `
+        <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:4px;">
+          <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--muted);">
+            <span style="color:#fff; font-weight:600;">👤 ${escapeHtml(n.author || 'Pedro')}</span>
+            <span>${n.time || ''}</span>
+          </div>
+          <div style="font-size:12px; color:#E0E2EF; line-height:1.4;">${escapeHtml(n.text)}</div>
+        </div>
+      `).join('');
+    }
+
+    function saveIaNote() {
+      const id = document.getElementById('iaModalProjectId').value;
+      const text = document.getElementById('iaNoteText').value.trim();
+      if (!text || !id) return;
+
+      const p = allProjects[id];
+      const history = p.notesHistory || [];
+      const nowStr = new Date().toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+
+      history.push({
+        author: p.assignee || 'Pedro',
+        time: nowStr,
+        text: text
+      });
+
+      projectsRef.child(id).update({ notesHistory: history });
+      document.getElementById('iaNoteText').value = '';
+      renderIaTimeline(history);
+    }
+
+    function toggleAudioRecordingSim() {
+      const btn = document.getElementById('btnRecordAudioSim');
+      const icon = document.getElementById('recIcon');
+      const txt = document.getElementById('recText');
+      const field = document.getElementById('iaNoteText');
+
+      if (!isRecordingSim) {
+        isRecordingSim = true;
+        btn.style.background = 'rgba(239, 68, 68, 0.25)';
+        btn.style.borderColor = 'var(--red)';
+        btn.style.color = '#fff';
+        icon.textContent = 'graphic_eq';
+        txt.textContent = 'Gravando... Clique p/ Parar';
+        field.placeholder = '🎙️ Gravando áudio... A IA transcreverá o conteúdo em instantes...';
+      } else {
+        isRecordingSim = false;
+        btn.style.background = '';
+        btn.style.borderColor = '';
+        btn.style.color = '';
+        icon.textContent = 'mic';
+        txt.textContent = 'Gravar Áudio';
+        field.value = 'Cliente solicitou ajuste na velocidade da voz e confirmou que os testes no WhatsApp foram aprovados.';
+        field.placeholder = 'Digite ou grave um comentário para a IA resumir e categorizar no histórico deste cliente...';
+      }
     }
 
     // ── Helper Modal & Utils ──
