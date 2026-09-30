@@ -747,12 +747,18 @@
 
       const roundsClass = (p.rounds || 1) >= 4 ? 'high' : '';
 
+      // Status da Z-API / Telemetria
+      const isZapiDisconnected = p.zapiStatus === 'disconnected';
+      const zapiBadgeHtml = isZapiDisconnected 
+        ? `<span class="card-tag" style="background:rgba(239,68,68,0.18); color:var(--red); border:1px solid rgba(239,68,68,0.4); font-weight:700;">⚠️ Z-API Desconectada</span>`
+        : `<span class="card-tag" style="background:rgba(0,181,160,0.12); color:var(--teal); border:1px solid rgba(0,181,160,0.2);">● Z-API Conectada</span>`;
+
       div.innerHTML = `
         <div class="card-top">
           <div class="card-title">${escapeHtml(p.name)}</div>
         </div>
 
-        <div class="card-tags">${tagsHtml}</div>
+        <div class="card-tags">${tagsHtml} ${zapiBadgeHtml}</div>
 
         <div class="card-metrics">
           <div class="time-badge ${timeClass}">

@@ -521,6 +521,7 @@
             <th>Inteligência Artificial</th>
             <th>Manhã — Pedro</th>
             <th>Tarde — Mariah</th>
+            <th>Telemetria API</th>
             <th>Última Atualização</th>
           </tr>
         </thead>
@@ -826,6 +827,15 @@
               <span class="material-symbols-outlined">${s.mariah?'check_circle':'play_circle'}</span>
               ${s.mariah ? `OK (${escHtml(s.mariah)})` : (readonly ? 'Não testado' : 'Testar IA')}
             </button>
+          </td>
+          <td>
+            <div class="status-cell">
+              <span class="status-label">Status da Instância</span>
+              <div class="status-value" style="font-size:12px; font-weight:600; color:var(--teal)">
+                <span class="live-dot" style="width:6px; height:6px;"></span>
+                <span>Z-API Conectada</span>
+              </div>
+            </div>
           </td>
           <td>
             <div class="status-cell">

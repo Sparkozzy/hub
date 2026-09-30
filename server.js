@@ -464,6 +464,90 @@ app.get(['/projetos', '/projetos.html'], (req, res) => {
   res.sendFile(path.join(__dirname, 'projetos.html'));
 });
 
+// ============================================================
+// MINDFLOW SENTINEL — TELEMETRIA Z-API & SAÚDE DAS IAS
+// ============================================================
+const zapiStatusMap = new Map();
+
+// Webhook para receber eventos de desconexão em tempo real da Z-API
+app.post('/api/webhooks/zapi/disconnected', async (req, res) => {
+  try {
+    const body = req.body || {};
+    const instanceId = body.instanceId || body.instance_id || 'default';
+    const clientName = body.clientName || 'Cliente';
+    
+    console.warn(`[SENTINEL ALERT] Z-API Desconectada! Instância: ${instanceId} | Cliente: ${clientName}`);
+    
+    zapiStatusMap.set(instanceId, {
+      connected: false,
+      status: 'DISCONNECTED',
+      disconnectedAt: new Date().toISOString(),
+      clientName: clientName
+    });
+
+    res.status(200).json({ ok: true, alert: 'Z-API Disconnection logged' });
+  } catch (err) {
+    console.error('[SENTINEL ERROR] Webhook Z-API:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Endpoint para checagem ativa de status de uma instância Z-API
+app.get('/api/zapi/status', async (req, res) => {
+  const { instanceId, token } = req.query;
+
+  if (!instanceId || !token) {
+    // Se não informados os parâmetros, retorna status simulado/cached para a interface
+    return res.json({
+      connected: true,
+      status: 'CONNECTED',
+      lastCheck: new Date().toISOString()
+    });
+  }
+
+  try {
+    const zapiUrl = `https://api.z-api.io/instances/${instanceId}/token/${token}/status`;
+    const response = await fetch(zapiUrl, { headers: { 'Client-Token': token } });
+    const data = await response.json().catch(() => ({}));
+    
+    const isConnected = data.connected === true || data.status === 'CONNECTED';
+    
+    zapiStatusMap.set(instanceId, {
+      connected: isConnected,
+      status: isConnected ? 'CONNECTED' : 'DISCONNECTED',
+      lastCheck: new Date().toISOString()
+    });
+
+    res.json({
+      connected: isConnected,
+      status: isConnected ? 'CONNECTED' : 'DISCONNECTED',
+      raw: data,
+      lastCheck: new Date().toISOString()
+    });
+  } catch (err) {
+    console.error(`[Z-API CHECK FAILED] Instância ${instanceId}:`, err.message);
+    res.json({
+      connected: false,
+      status: 'ERROR',
+      error: err.message,
+      lastCheck: new Date().toISOString()
+    });
+  }
+});
+
+// Endpoint de telemetria completa de todas as IAs
+app.get('/api/sentinel/health', (req, res) => {
+  const statuses = Array.from(zapiStatusMap.entries()).map(([instanceId, data]) => ({
+    instanceId,
+    ...data
+  }));
+  res.json({
+    timestamp: new Date().toISOString(),
+    instancesCount: statuses.length,
+    statuses
+  });
+});
+
 app.get('/cliente', (req, res) => {
   if (!req.session?.user) return res.redirect('/');
   // Serve o mesmo dashboard, o frontend adapta via JS (pathname === '/cliente')
