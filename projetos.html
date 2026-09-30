@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Projetos & Kanban — MindFlow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  
+  <!-- Firebase App & Database -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    :root {
+      --bg: #04060E;
+      --surface: rgba(13, 17, 32, 0.75);
+      --surface-card: rgba(18, 24, 43, 0.85);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(46, 79, 255, 0.35);
+      --blue: #2E4FFF;
+      --blue2: #7B9AFF;
+      --teal: #00B5A0;
+      --purple: #7C3AED;
+      --amber: #F59E0B;
+      --red: #EF4444;
+      --text: #F1F5F9;
+      --muted: #8E8FA2;
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* ── CANVAS & GLASS BACKGROUND ── */
+    #neural-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.45;
+    }
+
+    /* ── DOCK LATERAL ── */
+    .dock {
+      position: fixed;
+      left: 20px; top: 50%;
+      transform: translateY(-50%);
+      z-index: 1000;
+      display: flex; flex-direction: column; gap: 10px;
+      padding: 12px 8px;
+      background: rgba(13, 17, 32, 0.75);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+    .dock-item {
+      width: 42px; height: 42px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--muted);
+      text-decoration: none;
+      transition: all .25s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+    .dock-item:hover {
+      color: #fff;
+      background: rgba(46, 79, 255, 0.15);
+      transform: scale(1.08);
+    }
+    .dock-item.active {
+      color: #fff;
+      background: linear-gradient(135deg, var(--blue), var(--teal));
+      box-shadow: 0 4px 16px rgba(46, 79, 255, 0.4);
+    }
+    .dock-item .material-symbols-outlined { font-size: 20px; }
+    .dock-sep { height: 1px; background: var(--border); margin: 4px 0; }
+
+    /* ── NAVBAR ── */
+    .navbar {
+      position: fixed; top: 0; left: 0; right: 0;
+      height: 64px; z-index: 900;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 28px 0 88px;
+      background: rgba(4, 6, 14, 0.85);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(16px);
+    }
+    .nav-left { display: flex; align-items: center; gap: 14px; text-decoration: none; }
+    .nav-right { display: flex; align-items: center; gap: 16px; }
+    .nav-user { font-family: 'Space Grotesk', sans-serif; font-size: 13px; color: var(--muted); }
+    .nav-user strong { color: #fff; }
+    .btn-logout {
+      background: rgba(255, 77, 77, 0.1);
+      border: 1px solid rgba(255, 77, 77, 0.2);
+      color: var(--red);
+      padding: 6px 14px; border-radius: 8px;
+      font-size: 12px; font-family: 'Space Grotesk', sans-serif;
+      cursor: pointer; transition: all .2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .btn-logout:hover { background: rgba(255, 77, 77, 0.2); border-color: rgba(255, 77, 77, 0.4); }
+
+    /* ── MAIN CONTENT ── */
+    main {
+      position: relative; z-index: 1;
+      padding: 84px 28px 40px 96px;
+      max-width: 1720px; margin: 0 auto;
+    }
+
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px; flex-wrap: wrap; gap: 16px;
+    }
+    .page-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 28px; font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #fff 30%, var(--muted) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .page-sub {
+      font-size: 13px; color: var(--muted);
+      display: flex; align-items: center; gap: 8px; margin-top: 4px;
+    }
+    .live-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--teal);
+      box-shadow: 0 0 10px var(--teal);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+    .header-actions { display: flex; align-items: center; gap: 12px; }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: linear-gradient(135deg, var(--blue), var(--teal));
+      color: #fff; border: none; border-radius: 10px;
+      padding: 10px 20px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all .25s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 4px 20px rgba(46, 79, 255, 0.35);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(46, 79, 255, 0.5); }
+    .btn-primary .material-symbols-outlined { font-size: 18px; }
+
+    /* ── TOP STATS CARDS ── */
+    .top-stats {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 16px 20px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .stat-label {
+      font-family: 'Space Grotesk', sans-serif; font-size: 11px;
+      font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--muted); display: flex; align-items: center; gap: 6px;
+    }
+    .stat-label .material-symbols-outlined { font-size: 15px; }
+    .stat-value {
+      font-family: 'Space Grotesk', sans-serif; font-size: 26px;
+      font-weight: 700; color: #fff;
+    }
+    .stat-sub { font-size: 11px; color: var(--muted); }
+
+    /* ── KANBAN BOARD ── */
+    .kanban-board {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(280px, 1fr));
+      gap: 16px;
+      align-items: start;
+      overflow-x: auto;
+      padding-bottom: 20px;
+    }
+
+    .kanban-col {
+      background: rgba(10, 14, 28, 0.7);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      display: flex; flex-direction: column; gap: 14px;
+      min-height: 520px;
+    }
+
+    .col-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .col-title-wrap { display: flex; align-items: center; gap: 8px; }
+    .col-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .col-dot.setup { background: var(--blue2); box-shadow: 0 0 8px var(--blue2); }
+    .col-dot.dev   { background: var(--blue); box-shadow: 0 0 8px var(--blue); }
+    .col-dot.test  { background: var(--purple); box-shadow: 0 0 8px var(--purple); }
+    .col-dot.wait  { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+    .col-dot.live  { background: var(--teal); box-shadow: 0 0 8px var(--teal); }
+
+    .col-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px; font-weight: 600;
+      color: #fff; letter-spacing: -0.01em;
+    }
+    .col-count {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 11px; font-weight: 700;
+      background: rgba(255,255,255,0.08); color: var(--muted);
+      padding: 2px 8px; border-radius: 12px;
+    }
+
+    .col-cards {
+      display: flex; flex-direction: column; gap: 12px;
+      min-height: 400px;
+    }
+
+    /* ── KANBAN CARD ── */
+    .kanban-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all .25s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .kanban-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.5), 0 0 16px rgba(46,79,255,0.15);
+    }
+    .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+    .card-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 14px; font-weight: 600;
+      color: #fff; line-height: 1.3;
+    }
+    .card-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+    .card-tag {
+      font-size: 9px; font-weight: 600; letter-spacing: 0.05em;
+      text-transform: uppercase; padding: 2px 7px; border-radius: 6px;
+      background: rgba(255,255,255,0.06); color: var(--muted);
+    }
+    .card-tag.whatsapp { background: rgba(0,181,160,0.12); color: var(--teal); border: 1px solid rgba(0,181,160,0.2); }
+    .card-tag.voz      { background: rgba(124,58,237,0.15); color: #A78BFA; border: 1px solid rgba(124,58,237,0.3); }
+
+    .card-metrics {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px; font-size: 11px;
+      background: rgba(0,0,0,0.25);
+      padding: 8px 10px; border-radius: 8px;
+    }
+    .time-badge {
+      display: flex; align-items: center; gap: 4px;
+      font-family: 'Space Grotesk', sans-serif; font-weight: 600;
+    }
+    .time-badge.normal { color: var(--teal); }
+    .time-badge.warning { color: var(--amber); }
+    .time-badge.critical { color: var(--red); font-weight: 700; animation: pulse 1.5s infinite; }
+    .time-badge .material-symbols-outlined { font-size: 14px; }
+
+    .rounds-badge {
+      display: flex; align-items: center; gap: 4px;
+      font-family: 'Space Grotesk', sans-serif; font-size: 10px;
+      color: var(--muted);
+    }
+    .rounds-badge.high { color: var(--amber); font-weight: 600; }
+
+    .card-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    .card-assignee {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; color: var(--muted);
+    }
+    .avatar {
+      width: 22px; height: 22px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; font-weight: 700; color: #fff;
+      background: linear-gradient(135deg, var(--blue), var(--teal));
+    }
+    .card-actions { display: flex; align-items: center; gap: 4px; }
+    .card-btn {
+      background: none; border: none; color: var(--muted);
+      cursor: pointer; padding: 4px; border-radius: 6px;
+      transition: all .2s; display: flex; align-items: center;
+    }
+    .card-btn:hover { color: #fff; background: rgba(255,255,255,0.08); }
+    .card-btn .material-symbols-outlined { font-size: 16px; }
+
+    .btn-audio-ia {
+      background: rgba(46,79,255,0.12); color: var(--blue2);
+      border: 1px solid rgba(46,79,255,0.25);
+      border-radius: 8px; padding: 4px 8px;
+      font-size: 10px; font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600; display: flex; align-items: center; gap: 4px;
+      cursor: pointer; transition: all .2s;
+    }
+    .btn-audio-ia:hover {
+      background: rgba(46,79,255,0.25); color: #fff; border-color: var(--blue);
+    }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 2000;
+      background: rgba(4, 6, 14, 0.85);
+      backdrop-filter: blur(12px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px; opacity: 0; pointer-events: none;
+      transition: opacity .25s ease;
+    }
+    .modal-overlay.active { opacity: 1; pointer-events: auto; }
+    .modal-card {
+      background: rgba(13, 17, 32, 0.95);
+      border: 1px solid var(--border);
+      border-radius: 20px; padding: 24px;
+      width: 100%; max-width: 520px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      display: flex; flex-direction: column; gap: 18px;
+      transform: scale(0.95); transition: transform .25s ease;
+    }
+    .modal-overlay.active .modal-card { transform: scale(1); }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; }
+    .modal-title { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; color: #fff; }
+    .modal-close { background: none; border: none; color: var(--muted); cursor: pointer; }
+    .modal-close:hover { color: #fff; }
+
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-label { font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .form-input, .form-select, .form-textarea {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 10px; color: #fff;
+      font-family: 'Inter', sans-serif; font-size: 13px;
+      padding: 10px 14px; outline: none; transition: border .2s;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--blue); }
+    .form-textarea { min-height: 80px; resize: vertical; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    @media(max-width: 1200px) {
+      .top-stats { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media(max-width: 768px) {
+      main { padding: 84px 16px 32px 16px; }
+      .dock { bottom: 16px; top: auto; transform: none; left: 50%; transform: translateX(-50%); flex-direction: row; }
+      .top-stats { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ── DOCK ── -->
+  <nav class="dock">
+    <a href="/hub" class="dock-item" title="Hub Principal"><span class="material-symbols-outlined">grid_view</span></a>
+    <a href="/disparo" class="dock-item" title="Disparo de Chamadas"><span class="material-symbols-outlined">smart_toy</span></a>
+    <a href="/dashboard" class="dock-item" title="Dashboard"><span class="material-symbols-outlined">bar_chart</span></a>
+    <a href="/atendimento" class="dock-item" id="dockAtendimento" title="Atendimento"><span class="material-symbols-outlined">headset_mic</span></a>
+    <a href="/checkup" class="dock-item" title="Check-up IAs"><span class="material-symbols-outlined">fact_check</span></a>
+    <a href="/projetos" class="dock-item active" title="Kanban Projetos"><span class="material-symbols-outlined">view_kanban</span></a>
+    <div class="dock-sep"></div>
+    <a href="#" onclick="logout(); return false;" class="dock-item" style="color:rgba(255,77,77,0.5)">
+      <span class="material-symbols-outlined">logout</span>
+    </a>
+  </nav>
+  <script>
+    (function() {
+      var h = document.getElementById('dockAtendimento');
+      if (h) { h.href='https://mindflow.wts.chat/auth/sign-in'; h.target='_blank'; h.rel='noopener'; }
+    })();
+  </script>
+
+  <canvas id="neural-canvas"></canvas>
+
+  <!-- ── NAVBAR ── -->
+  <nav class="navbar">
+    <a class="nav-left" href="/hub">
+      <svg class="mark" width="28" height="28" viewBox="1255 225 485 450" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path fill="white" transform="translate(0 -1604)" d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z"/>
+      </svg>
+      <svg class="brand" height="22" viewBox="530 745 1945 360" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;flex-shrink:0">
+        <path fill="white" transform="translate(0 -1604)" d="M1479.61 2368.25L1517.74 2368.25L1517.51 2687.85L1479.48 2687.89C1479.52 2678.56 1479.38 2672.65 1478.94 2663.35C1476.02 2658.69 1456.89 2675.85 1451.6 2678.72C1406.96 2702.97 1363.56 2697.62 1320.38 2667.34C1192.38 2557.43 1355.7 2366.92 1479.31 2485.3L1479.61 2368.25ZM1409.55 2656.67C1430.48 2653.41 1457.64 2642.26 1471.86 2613.07C1487.34 2581.3 1481.19 2539.66 1462.79 2516.65C1443.01 2491.9 1414.8 2481.8 1391.08 2485.73C1277.23 2502.82 1296.53 2664.41 1409.55 2656.67Z"/>
+        <path fill="white" transform="translate(0 -1604)" d="M1945.14 2449.24C1982.13 2445.92 2019.48 2455.23 2050.21 2491.51C2099.37 2550.97 2081.5 2632.36 2033.13 2668.24C2012.12 2683.83 1999.15 2687.68 1976.32 2692.86C1935.29 2694.67 1898.43 2691.03 1863.2 2648.74C1828.03 2606.27 1827 2537.01 1862.85 2494.41C1889.41 2462.84 1913.93 2454.83 1945.14 2449.24ZM1874.49 2573.05C1885.2 2649 1930.75 2657.77 1968.13 2656.51C1981.97 2653.64 1991.4 2651.59 2004.13 2643.2C2055.51 2609.35 2049.08 2526.6 2000.07 2497.62C1981.5 2486.63 1969.43 2484.68 1949.73 2485.82C1915.94 2493.17 1884.01 2507.18 1874.49 2573.05Z"/>
+        <path fill="white" transform="translate(0 -1604)" d="M730.789 2495.2C755.41 2462.12 780.94 2449.08 811.813 2448.86C833.954 2448.71 863.277 2456.99 879.134 2486.8C884.658 2497.21 888.528 2510.04 890.347 2523.98C894.054 2551.21 892.549 2653.03 892.457 2687.4L853.587 2687.34C853.378 2650.23 857.517 2524.89 846.818 2510.14C810.708 2460.38 744.823 2484.77 739.735 2576.07L739.65 2687.57L700.73 2687.59C700.595 2649.75 705.869 2530.84 691.58 2505.44C669.808 2469.53 616.642 2485.38 598.393 2520.89C581.653 2553.46 586.828 2643.28 587.016 2687.87L548.265 2687.82L548.298 2454.53C559.842 2454.48 573.861 2452.16 584.977 2454.83C588.228 2459.91 587.568 2468.01 587.96 2477.32C593.241 2476.98 611.801 2461.92 620.155 2457.97C633.29 2451.77 638.111 2451.09 651.988 2449.4C687.529 2449.75 711.068 2458.86 730.789 2495.2Z"/>
+        <path fill="white" transform="translate(0 -1604)" d="M1758.55 2369.67L1797.02 2369.51L1796.72 2687.47L1758.6 2687.36L1758.55 2369.67Z"/>
+        <path fill="white" transform="translate(0 -1604)" d="M939.123 2454.44L977.913 2454.48L977.762 2687.61L939.08 2687.62C938.324 2611.78 938.775 2530.28 939.123 2454.44Z"/>
+        <path fill="white" transform="translate(0 -1604)" d="M952.952 2363.16C986.762 2360.45 1003.1 2404.64 964.268 2419.56C928.358 2422.49 915.136 2374.36 952.952 2363.16Z"/>
+      </svg>
+    </a>
+    <div class="nav-right">
+      <span class="nav-user" id="userDisplay">Olá, <strong id="userName">—</strong></span>
+      <button class="btn-logout" onclick="logout()">
+        <span class="material-symbols-outlined">logout</span> Sair
+      </button>
+    </div>
+  </nav>
+
+  <!-- ── MAIN CONTENT ── -->
+  <main>
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Gestão de Clientes & Projetos</h1>
+        <p class="page-sub">
+          <span class="live-dot"></span>
+          Kanban Operacional com métricas de tempo e acompanhamento em tempo real
+        </p>
+      </div>
+      <div class="header-actions">
+        <button class="btn-primary" onclick="openNewCardModal()">
+          <span class="material-symbols-outlined">add</span>
+          Novo Cliente / Projeto
+        </button>
+      </div>
+    </div>
+
+    <!-- Top stats -->
+    <div class="top-stats">
+      <div class="stat-card">
+        <div class="stat-label"><span class="material-symbols-outlined">folder</span> Total de Projetos</div>
+        <div class="stat-value" id="statTotal">0</div>
+        <div class="stat-sub">projetos em acompanhamento</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><span class="material-symbols-outlined">engineering</span> Em Desenvolvimento</div>
+        <div class="stat-value" id="statDev" style="color:var(--blue2)">0</div>
+        <div class="stat-sub">agentes e integrações sendo criados</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><span class="material-symbols-outlined">science</span> Em Testes</div>
+        <div class="stat-value" id="statTest" style="color:var(--purple)">0</div>
+        <div class="stat-sub">em validação interna ou homologação</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><span class="material-symbols-outlined">warning</span> Projetos Estagnados</div>
+        <div class="stat-value" id="statStale" style="color:var(--red)">0</div>
+        <div class="stat-sub">> 7 dias sem mudança de etapa</div>
+      </div>
+    </div>
+
+    <!-- Kanban Board -->
+    <div class="kanban-board">
+      
+      <!-- Col 1: Setup & Onboarding -->
+      <div class="kanban-col" data-col="setup">
+        <div class="col-header">
+          <div class="col-title-wrap">
+            <span class="col-dot setup"></span>
+            <span class="col-title">1. Onboarding & Setup</span>
+          </div>
+          <span class="col-count" id="count-setup">0</span>
+        </div>
+        <div class="col-cards" id="cards-setup"></div>
+      </div>
+
+      <!-- Col 2: Desenvolvimento -->
+      <div class="kanban-col" data-col="dev">
+        <div class="col-header">
+          <div class="col-title-wrap">
+            <span class="col-dot dev"></span>
+            <span class="col-title">2. Desenvolvimento</span>
+          </div>
+          <span class="col-count" id="count-dev">0</span>
+        </div>
+        <div class="col-cards" id="cards-dev"></div>
+      </div>
+
+      <!-- Col 3: Em Testes -->
+      <div class="kanban-col" data-col="test">
+        <div class="col-header">
+          <div class="col-title-wrap">
+            <span class="col-dot test"></span>
+            <span class="col-title">3. Em Testes</span>
+          </div>
+          <span class="col-count" id="count-test">0</span>
+        </div>
+        <div class="col-cards" id="cards-test"></div>
+      </div>
+
+      <!-- Col 4: Aguardando Cliente -->
+      <div class="kanban-col" data-col="wait">
+        <div class="col-header">
+          <div class="col-title-wrap">
+            <span class="col-dot wait"></span>
+            <span class="col-title">4. Aguardando Cliente</span>
+          </div>
+          <span class="col-count" id="count-wait">0</span>
+        </div>
+        <div class="col-cards" id="cards-wait"></div>
+      </div>
+
+      <!-- Col 5: Ativo / Go-Live -->
+      <div class="kanban-col" data-col="live">
+        <div class="col-header">
+          <div class="col-title-wrap">
+            <span class="col-dot live"></span>
+            <span class="col-title">5. Ativo / Go-Live</span>
+          </div>
+          <span class="col-count" id="count-live">0</span>
+        </div>
+        <div class="col-cards" id="cards-live"></div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ── MODAL: NOVO / EDITAR CARD ── -->
+  <div class="modal-overlay" id="modalCard">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">Novo Cliente / Projeto</h2>
+        <button class="modal-close" onclick="closeModal('modalCard')"><span class="material-symbols-outlined">close</span></button>
+      </div>
+
+      <input type="hidden" id="cardId">
+      
+      <div class="form-group">
+        <label class="form-label">Nome do Cliente / Projeto</label>
+        <input type="text" class="form-input" id="cardClientName" placeholder="Ex: Kravi SAC, DevolveJus...">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Estágio Inicial</label>
+          <select class="form-select" id="cardStage">
+            <option value="setup">1. Onboarding & Setup</option>
+            <option value="dev">2. Desenvolvimento</option>
+            <option value="test">3. Em Testes</option>
+            <option value="wait">4. Aguardando Cliente</option>
+            <option value="live">5. Ativo / Go-Live</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Responsável</label>
+          <select class="form-select" id="cardAssignee">
+            <option value="Pedro">Pedro</option>
+            <option value="Mariah">Mariah</option>
+            <option value="Wandrey">Wandrey</option>
+            <option value="Dev Team">Dev Team</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tags (separadas por vírgula)</label>
+          <input type="text" class="form-input" id="cardTags" placeholder="WhatsApp, Voz, CRM">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Rodada de Alteração</label>
+          <input type="number" class="form-input" id="cardRounds" min="1" value="1">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Observações / Detalhes</label>
+        <textarea class="form-textarea" id="cardNotes" placeholder="Resumo do escopo, pendências do cliente ou observações..."></textarea>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:8px;">
+        <button class="btn-logout" style="color:var(--muted); border-color:var(--border)" onclick="closeModal('modalCard')">Cancelar</button>
+        <button class="btn-primary" onclick="saveCard()">Salvar Projeto</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL: FASE 2 PREVIEW (ÁUDIO / IA) ── -->
+  <div class="modal-overlay" id="modalIaNote">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 class="modal-title">🎙️ Nota da IA & Linha do Tempo</h2>
+        <button class="modal-close" onclick="closeModal('modalIaNote')"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      
+      <p style="font-size:13px; color:var(--muted); line-height:1.5;">
+        Esta área será conectada à <strong style="color:#fff;">LLM na Fase 2</strong> para permitir que o CS grave áudios ou envie mensagens rápidas que são resumidas automaticamente no histórico do cliente.
+      </p>
+
+      <div style="background:rgba(46,79,255,0.08); border:1px solid rgba(46,79,255,0.2); border-radius:12px; padding:14px; font-size:12px; color:var(--blue2);">
+        ✨ <strong>Em breve (Fase 2):</strong> Botão de gravação direta por áudio com transcrição Whisper + análise automática de Risco de Churn!
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; margin-top:8px;">
+        <button class="btn-primary" onclick="closeModal('modalIaNote')">Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── FIREBASE & LOGIC ── -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCWKMy7_bWxBiv5-EKAZ2MI8Rt0rjtb4cQ",
+      authDomain: "controle-de-ia.firebaseapp.com",
+      projectId: "controle-de-ia",
+      storageBucket: "controle-de-ia.firebasestorage.app",
+      messagingSenderId: "252097842356",
+      appId: "1:252097842356:web:f05d1f0fef676dc1535be1",
+      databaseURL: "https://controle-de-ia-default-rtdb.firebaseio.com"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const projectsRef = db.ref('kanban-projetos');
+
+    let allProjects = {};
+
+    // ── Preenchimento Inicial de Exemplo (Seed Data se estive vazio) ──
+    const SEED_PROJECTS = {
+      "p1": {
+        name: "[Kravi SAC]",
+        stage: "live",
+        assignee: "Pedro",
+        tags: ["WhatsApp", "SAC"],
+        rounds: 1,
+        notes: "Operação ativa e rodando com sucesso.",
+        movedAt: Date.now() - (15 * 86400000) // 15 dias atrás
+      },
+      "p2": {
+        name: "[DevolveJus]",
+        stage: "test",
+        assignee: "Mariah",
+        tags: ["WhatsApp", "Jurídico"],
+        rounds: 3,
+        notes: "Em testes finais com os advogados do cliente.",
+        movedAt: Date.now() - (6 * 86400000) // 6 dias atrás
+      },
+      "p3": {
+        name: "MY Gain",
+        stage: "dev",
+        assignee: "Wandrey",
+        tags: ["WhatsApp", "Comercial"],
+        rounds: 2,
+        notes: "Ajustando fluxo de qualificação de leads.",
+        movedAt: Date.now() - (3 * 86400000) // 3 dias atrás
+      },
+      "p4": {
+        name: "Eduardo - CRM",
+        stage: "wait",
+        assignee: "Pedro",
+        tags: ["Voz", "Retell"],
+        rounds: 6,
+        notes: "Aguardando aprovação do cliente para as gravações de voz.",
+        movedAt: Date.now() - (9 * 86400000) // 9 dias atrás (Estagnado!)
+      }
+    };
+
+    // ── Listener Realtime do Firebase ──
+    projectsRef.on('value', snap => {
+      const val = snap.val();
+      if (!val) {
+        // Se banco estiver vazio, salva seed data
+        projectsRef.set(SEED_PROJECTS);
+        return;
+      }
+      allProjects = val;
+      renderBoard();
+    });
+
+    // ── Renderiza todo o Kanban ──
+    function renderBoard() {
+      const cols = ['setup', 'dev', 'test', 'wait', 'live'];
+      const counts = { setup:0, dev:0, test:0, wait:0, live:0 };
+      let totalProjects = 0;
+      let staleCount = 0;
+
+      cols.forEach(c => {
+        document.getElementById(`cards-${c}`).innerHTML = '';
+      });
+
+      const now = Date.now();
+
+      Object.keys(allProjects).forEach(id => {
+        const p = allProjects[id];
+        if (!p.stage || !cols.includes(p.stage)) p.stage = 'setup';
+        
+        counts[p.stage]++;
+        totalProjects++;
+
+        // Cálculo de dias na etapa atual
+        const movedAt = p.movedAt || now;
+        const diffDays = Math.floor((now - movedAt) / (1000 * 60 * 60 * 24));
+
+        if (diffDays >= 7 && p.stage !== 'live') {
+          staleCount++;
+        }
+
+        const cardEl = createCardElement(id, p, diffDays);
+        document.getElementById(`cards-${p.stage}`).appendChild(cardEl);
+      });
+
+      // Atualiza contadores dos headers das colunas
+      cols.forEach(c => {
+        document.getElementById(`count-${c}`).textContent = counts[c];
+      });
+
+      // Atualiza cards de estatísticas do topo
+      document.getElementById('statTotal').textContent = totalProjects;
+      document.getElementById('statDev').textContent = counts.dev;
+      document.getElementById('statTest').textContent = counts.test;
+      document.getElementById('statStale').textContent = staleCount;
+    }
+
+    // ── Cria o Elemento do Card HTML ──
+    function createCardElement(id, p, days) {
+      const div = document.createElement('div');
+      div.className = 'kanban-card';
+
+      // Badge de Tempo
+      let timeClass = 'normal';
+      let timeText = `⏱️ ${days === 0 ? 'Hoje' : days + 'd nesta etapa'}`;
+      if (days >= 4 && days < 7) timeClass = 'warning';
+      if (days >= 7) {
+        timeClass = 'critical';
+        timeText = `⚠️ ${days}d nesta etapa (Atraso!)`;
+      }
+
+      // Tags HTML
+      const tagsList = p.tags || [];
+      const tagsHtml = tagsList.map(t => {
+        const l = t.toLowerCase();
+        let cls = '';
+        if (l.includes('whatsapp')) cls = 'whatsapp';
+        if (l.includes('voz') || l.includes('ligação')) cls = 'voz';
+        return `<span class="card-tag ${cls}">#${t.trim()}</span>`;
+      }).join('');
+
+      const roundsClass = (p.rounds || 1) >= 4 ? 'high' : '';
+
+      div.innerHTML = `
+        <div class="card-top">
+          <div class="card-title">${escapeHtml(p.name)}</div>
+        </div>
+
+        <div class="card-tags">${tagsHtml}</div>
+
+        <div class="card-metrics">
+          <div class="time-badge ${timeClass}">
+            <span class="material-symbols-outlined">schedule</span>
+            <span>${timeText}</span>
+          </div>
+          <div class="rounds-badge ${roundsClass}" title="Rodadas de Alteração">
+            <span class="material-symbols-outlined">sync</span>
+            <span>${p.rounds || 1}ª Rodada</span>
+          </div>
+        </div>
+
+        <div class="card-footer">
+          <div class="card-assignee">
+            <div class="avatar">${(p.assignee || 'P')[0]}</div>
+            <span>${escapeHtml(p.assignee || 'Pedro')}</span>
+          </div>
+          <div class="card-actions">
+            <button class="btn-audio-ia" onclick="openIaModal(event, '${id}')" title="Nota da IA">
+              <span class="material-symbols-outlined">mic</span> Nota IA
+            </button>
+            <button class="card-btn" onclick="moveCardPrev(event, '${id}')" title="Mover para esquerda"><span class="material-symbols-outlined">chevron_left</span></button>
+            <button class="card-btn" onclick="moveCardNext(event, '${id}')" title="Mover para direita"><span class="material-symbols-outlined">chevron_right</span></button>
+            <button class="card-btn" onclick="editCard(event, '${id}')" title="Editar"><span class="material-symbols-outlined">edit</span></button>
+          </div>
+        </div>
+      `;
+
+      return div;
+    }
+
+    // ── Mover Card entre Colunas ──
+    const STAGES_ORDER = ['setup', 'dev', 'test', 'wait', 'live'];
+
+    function moveCardNext(e, id) {
+      e.stopPropagation();
+      const p = allProjects[id];
+      if (!p) return;
+      const idx = STAGES_ORDER.indexOf(p.stage);
+      if (idx < STAGES_ORDER.length - 1) {
+        projectsRef.child(id).update({
+          stage: STAGES_ORDER[idx + 1],
+          movedAt: Date.now()
+        });
+      }
+    }
+
+    function moveCardPrev(e, id) {
+      e.stopPropagation();
+      const p = allProjects[id];
+      if (!p) return;
+      const idx = STAGES_ORDER.indexOf(p.stage);
+      if (idx > 0) {
+        projectsRef.child(id).update({
+          stage: STAGES_ORDER[idx - 1],
+          movedAt: Date.now()
+        });
+      }
+    }
+
+    // ── Criar / Editar Card Modal ──
+    function openNewCardModal() {
+      document.getElementById('modalTitle').textContent = 'Novo Cliente / Projeto';
+      document.getElementById('cardId').value = '';
+      document.getElementById('cardClientName').value = '';
+      document.getElementById('cardStage').value = 'setup';
+      document.getElementById('cardAssignee').value = 'Pedro';
+      document.getElementById('cardTags').value = 'WhatsApp';
+      document.getElementById('cardRounds').value = 1;
+      document.getElementById('cardNotes').value = '';
+      openModal('modalCard');
+    }
+
+    function editCard(e, id) {
+      e.stopPropagation();
+      const p = allProjects[id];
+      if (!p) return;
+      document.getElementById('modalTitle').textContent = 'Editar Projeto';
+      document.getElementById('cardId').value = id;
+      document.getElementById('cardClientName').value = p.name || '';
+      document.getElementById('cardStage').value = p.stage || 'setup';
+      document.getElementById('cardAssignee').value = p.assignee || 'Pedro';
+      document.getElementById('cardTags').value = (p.tags || []).join(', ');
+      document.getElementById('cardRounds').value = p.rounds || 1;
+      document.getElementById('cardNotes').value = p.notes || '';
+      openModal('modalCard');
+    }
+
+    function saveCard() {
+      const id = document.getElementById('cardId').value || projectsRef.push().key;
+      const name = document.getElementById('cardClientName').value.trim();
+      if (!name) { alert('Informe o nome do cliente'); return; }
+
+      const newStage = document.getElementById('cardStage').value;
+      const prevStage = allProjects[id] ? allProjects[id].stage : null;
+      const movedAt = (prevStage !== newStage) ? Date.now() : (allProjects[id]?.movedAt || Date.now());
+
+      const tagsStr = document.getElementById('cardTags').value;
+      const tags = tagsStr.split(',').map(t => t.trim()).filter(Boolean);
+
+      const data = {
+        name: name,
+        stage: newStage,
+        assignee: document.getElementById('cardAssignee').value,
+        tags: tags,
+        rounds: parseInt(document.getElementById('cardRounds').value) || 1,
+        notes: document.getElementById('cardNotes').value,
+        movedAt: movedAt
+      };
+
+      projectsRef.child(id).update(data);
+      closeModal('modalCard');
+    }
+
+    function openIaModal(e, id) {
+      e.stopPropagation();
+      openModal('modalIaNote');
+    }
+
+    // ── Helper Modal & Utils ──
+    function openModal(id) { document.getElementById(id).classList.add('active'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+    function escapeHtml(str) {
+      return (str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function logout() {
+      fetch('/api/logout', { method: 'POST' }).then(() => window.location.href = '/');
+    }
+
+    // ── Neural Canvas Animated Background ──
+    const canvas = document.getElementById('neural-canvas');
+    const ctx = canvas.getContext('2d');
+    let width, height, particles = [];
+
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    for (let i = 0; i < 45; i++) {
+      particles.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: (Math.random() - 0.5) * 0.4,
+        r: Math.random() * 2 + 1
+      });
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = 'rgba(46, 79, 255, 0.4)';
+      ctx.strokeStyle = 'rgba(46, 79, 255, 0.08)';
+
+      particles.forEach((p, i) => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0 || p.x > width) p.vx *= -1;
+        if (p.y < 0 || p.y > height) p.vy *= -1;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+
+        for (let j = i + 1; j < particles.length; j++) {
+          const p2 = particles[j];
+          const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+          if (dist < 130) {
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+          }
+        }
+      });
+      requestAnimationFrame(animate);
+    }
+    animate();
+  </script>
+</body>
+</html>
