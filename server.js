@@ -214,7 +214,7 @@ const loginLimiter = rateLimit({
 // ============================================================
 function requireAuth(req, res, next) {
   if (req.session?.user) return next();
-  const publicPaths = ['/', '/api/', '/redefinir-senha', '/dev-login', '/dev-client-login', '/hub', '/dashboard', '/disparo', '/cliente', '/dashboard-style.css', '/dashboard-app.js'];
+  const publicPaths = ['/', '/api/', '/redefinir-senha', '/dev-login', '/dev-client-login', '/hub', '/dashboard', '/disparo', '/checkup', '/cliente', '/dashboard-style.css', '/dashboard-app.js'];
   if (publicPaths.some(p => req.path === p || req.path.startsWith('/api/'))) return next();
   if (/\.(html|css|js)$/.test(req.path)) return res.redirect('/');
   res.status(401).json({ error: 'Unauthorized' });
@@ -452,6 +452,11 @@ app.get(['/disparo', '/disparo.html'], (req, res) => {
   res.setHeader('Expires', '0');
   res.setHeader('Surrogate-Control', 'no-store');
   res.sendFile(path.join(__dirname, 'disparo.html'));
+});
+
+app.get(['/checkup', '/checkup.html'], (req, res) => {
+  if (!req.session?.user) return res.redirect('/');
+  res.sendFile(path.join(__dirname, 'checkup.html'));
 });
 
 app.get('/cliente', (req, res) => {
