@@ -181,12 +181,69 @@
       background:rgba(142,143,162,0.1); color:var(--muted);
       border:1px solid rgba(142,143,162,0.15);
     }
-    #dateInput {
-      background:var(--surface); border:1px solid var(--border);
-      border-radius:10px; color:#fff; font-family:'Space Grotesk',sans-serif;
-      font-size:13px; padding:6px 12px; cursor:pointer;
+    .date-nav-btn:disabled, .date-nav-btn.disabled {
+      opacity:0.25 !important; cursor:not-allowed !important; pointer-events:none !important;
     }
-    #dateInput::-webkit-calendar-picker-indicator { filter:invert(1) opacity(0.5); cursor:pointer; }
+
+    /* ── CUSTOM CALENDAR POPOVER (DISPARO DESIGN) ── */
+    .calendar-popover-wrapper { position:relative; }
+    .calendar-popover {
+      position:absolute; top:calc(100% + 10px); right:0;
+      width:310px; background:rgba(13,17,32,0.96);
+      border:1px solid rgba(255,255,255,0.12); border-radius:16px;
+      padding:16px; box-shadow:0 16px 48px rgba(0,0,0,0.6), 0 0 24px rgba(46,79,255,0.15);
+      backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+      z-index:100; display:none;
+      animation:popoverFadeIn .2s cubic-bezier(0.16,1,0.3,1);
+    }
+    .calendar-popover.active { display:block; }
+    @keyframes popoverFadeIn {
+      from { opacity:0; transform:translateY(-8px) scale(0.96); }
+      to { opacity:1; transform:translateY(0) scale(1); }
+    }
+    .cal-header {
+      display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;
+    }
+    .cal-month {
+      font-family:'Space Grotesk',sans-serif; font-size:13px; font-weight:600;
+      color:#e0e2ef; letter-spacing:-0.01em; text-transform:capitalize;
+    }
+    .cal-nav {
+      background:none; border:none; cursor:pointer; color:#8e8fa2;
+      border-radius:6px; width:28px; height:28px; display:flex;
+      align-items:center; justify-content:center;
+      transition:color .15s, background .15s;
+    }
+    .cal-nav:hover { color:#e0e2ef; background:rgba(255,255,255,0.08); }
+    .cal-nav .material-symbols-outlined { font-size:18px; }
+    .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
+    .cal-weekday {
+      font-family:'Space Grotesk',sans-serif; font-size:10px; font-weight:600;
+      letter-spacing:0.06em; text-transform:uppercase; color:#4d5570;
+      text-align:center; padding:4px 0;
+    }
+    .cal-day {
+      aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+      font-family:'Inter',sans-serif; font-size:12px; color:#8e8fa2;
+      border-radius:8px; cursor:pointer; transition:all .15s;
+      border:1px solid transparent; position:relative;
+    }
+    .cal-day:hover:not(.empty):not(.future) {
+      background:rgba(46,79,255,0.18); color:#e0e2ef; border-color:rgba(46,79,255,0.35);
+    }
+    .cal-day.today { color:#7B9AFF; font-weight:600; border-color:rgba(123,154,255,0.35); }
+    .cal-day.selected {
+      background:linear-gradient(135deg,#2E4FFF,#00B5A0) !important;
+      color:#fff !important; font-weight:700 !important;
+      border-color:transparent !important; box-shadow:0 4px 12px rgba(46,79,255,0.4);
+    }
+    .cal-day.future { color:#2a2d3a; cursor:not-allowed; opacity:0.3; }
+    .cal-day.empty { cursor:default; }
+    .cal-day-dot {
+      position:absolute; bottom:2px; width:4px; height:4px; border-radius:50%;
+    }
+    .cal-day-dot.complete { background:#00B5A0; box-shadow:0 0 6px #00B5A0; }
+    .cal-day-dot.partial  { background:#F59E0B; }
 
     /* ── TABLE CARD ── */
     .table-card {
@@ -426,7 +483,26 @@
       </button>
       <div class="date-display" id="dateDisplay">—</div>
       <span id="dateStatusBadge" class="date-today-badge">HOJE</span>
-      <input type="date" id="dateInput" title="Ir para data">
+      
+      <!-- Custom Calendar Popover (Disparo Style) -->
+      <div class="calendar-popover-wrapper">
+        <button class="date-nav-btn" id="btnToggleCalendar" title="Abrir Calendário">
+          <span class="material-symbols-outlined">calendar_month</span>
+        </button>
+        <div class="calendar-popover" id="calendarPopover">
+          <div class="cal-header">
+            <button type="button" class="cal-nav" id="calPrevMonth" title="Mês anterior">
+              <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+            <span class="cal-month" id="calMonthLabel">—</span>
+            <button type="button" class="cal-nav" id="calNextMonth" title="Próximo mês">
+              <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+        </div>
+      </div>
+
       <button class="date-nav-btn" id="btnNextDay" title="Próximo dia">
         <span class="material-symbols-outlined">chevron_right</span>
       </button>
@@ -532,39 +608,155 @@
     // ── Date navigation ──
     const dateDisplay = document.getElementById('dateDisplay');
     const dateStatusBadge = document.getElementById('dateStatusBadge');
-    const dateInput = document.getElementById('dateInput');
     const btnReset = document.getElementById('btnReset');
     const tableBody = document.getElementById('tableBody');
     const loadingOverlay = document.getElementById('loadingOverlay');
 
+    let calCurrentMonthDate = new Date();
+
+    function updateNavButtons() {
+      const btnNext = document.getElementById('btnNextDay');
+      if (viewDate >= todayStr()) {
+        btnNext.disabled = true;
+        btnNext.classList.add('disabled');
+      } else {
+        btnNext.disabled = false;
+        btnNext.classList.remove('disabled');
+      }
+    }
+
     function setViewDate(str) {
       viewDate = str;
-      dateInput.value = str;
       dateDisplay.textContent = fmtDate(str);
       dateStatusBadge.textContent = isToday() ? 'HOJE' : 'HISTÓRICO';
       dateStatusBadge.className = isToday() ? 'date-today-badge' : 'date-readonly-badge';
       btnReset.style.display = isToday() ? '' : 'none';
+      updateNavButtons();
+      if (document.getElementById('calendarPopover').classList.contains('active')) {
+        renderCustomCalendar();
+      }
       loadingOverlay.classList.remove('hidden');
       loadData();
     }
 
     document.getElementById('btnPrevDay').onclick = () => {
       const d = new Date(viewDate + 'T12:00:00');
-      d.setDate(d.getDate()-1);
-      setViewDate(d.toISOString().slice(0,10));
+      d.setDate(d.getDate() - 1);
+      setViewDate(d.toISOString().slice(0, 10));
     };
+
     document.getElementById('btnNextDay').onclick = () => {
+      if (viewDate >= todayStr()) return;
       const d = new Date(viewDate + 'T12:00:00');
-      d.setDate(d.getDate()+1);
-      const next = d.toISOString().slice(0,10);
-      if (next > todayStr()) return; // não avança além de hoje
+      d.setDate(d.getDate() + 1);
+      const next = d.toISOString().slice(0, 10);
       setViewDate(next);
     };
-    dateInput.onchange = () => {
-      if (dateInput.value && dateInput.value <= todayStr()) setViewDate(dateInput.value);
+
+    // ── Custom Calendar Popover Logic ──
+    function renderCustomCalendar() {
+      const grid = document.getElementById('calGrid');
+      const label = document.getElementById('calMonthLabel');
+      if (!grid || !label) return;
+
+      const today = new Date();
+      today.setHours(0,0,0,0);
+
+      const y = calCurrentMonthDate.getFullYear();
+      const m = calCurrentMonthDate.getMonth();
+
+      const monthNames = [
+        'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+      ];
+      const weekdays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+      label.textContent = `${monthNames[m]} ${y}`;
+
+      const firstDay = new Date(y, m, 1).getDay();
+      const daysInMonth = new Date(y, m + 1, 0).getDate();
+
+      let html = weekdays.map(w => `<div class="cal-weekday">${w}</div>`).join('');
+
+      for (let i = 0; i < firstDay; i++) {
+        html += `<div class="cal-day empty"></div>`;
+      }
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const thisDateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const thisDate = new Date(y, m, d);
+        thisDate.setHours(0,0,0,0);
+
+        const isFuture = thisDateStr > todayStr();
+        const isToday = thisDateStr === todayStr();
+        const isSel = thisDateStr === viewDate;
+
+        let cls = 'cal-day';
+        if (isFuture) cls += ' future';
+        if (isToday) cls += ' today';
+        if (isSel) cls += ' selected';
+
+        let dotHtml = '';
+        const cached = historyCache[thisDateStr];
+        if (cached) {
+          let count = 0;
+          AIS.forEach(ai => {
+            if (cached[`${ai.id}_pedro`]) count++;
+            if (cached[`${ai.id}_mariah`]) count++;
+          });
+          if (count === 10) {
+            dotHtml = '<span class="cal-day-dot complete"></span>';
+          } else if (count > 0) {
+            dotHtml = '<span class="cal-day-dot partial"></span>';
+          }
+        }
+
+        const clickAttr = isFuture ? '' : `onclick="selectCalDate('${thisDateStr}')"`;
+        html += `<div class="${cls}" ${clickAttr} role="button" tabindex="0">${d}${dotHtml}</div>`;
+      }
+
+      grid.innerHTML = html;
+    }
+
+    function selectCalDate(dateStr) {
+      setViewDate(dateStr);
+      document.getElementById('calendarPopover').classList.remove('active');
+    }
+
+    document.getElementById('calPrevMonth').onclick = (e) => {
+      e.stopPropagation();
+      calCurrentMonthDate.setMonth(calCurrentMonthDate.getMonth() - 1);
+      renderCustomCalendar();
     };
-    dateInput.max = todayStr();
-    dateInput.value = todayStr();
+
+    document.getElementById('calNextMonth').onclick = (e) => {
+      e.stopPropagation();
+      calCurrentMonthDate.setMonth(calCurrentMonthDate.getMonth() + 1);
+      renderCustomCalendar();
+    };
+
+    document.getElementById('btnToggleCalendar').onclick = (e) => {
+      e.stopPropagation();
+      const popover = document.getElementById('calendarPopover');
+      const isActive = popover.classList.contains('active');
+      if (!isActive) {
+        const [y, m, d] = viewDate.split('-').map(Number);
+        calCurrentMonthDate = new Date(y, m - 1, d);
+        renderCustomCalendar();
+      }
+      popover.classList.toggle('active');
+    };
+
+    document.addEventListener('click', (e) => {
+      const pop = document.getElementById('calendarPopover');
+      const btn = document.getElementById('btnToggleCalendar');
+      if (pop && !pop.contains(e.target) && !btn.contains(e.target)) {
+        pop.classList.remove('active');
+      }
+    });
+
+    // Initialize nav buttons state
+    updateNavButtons();
 
     // ── Load data for selected day ──
     function loadData() {
