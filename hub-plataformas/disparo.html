@@ -5920,28 +5920,6 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     }
 
-    function renderUserDispatchHistoryList(list) {
-      const container = document.getElementById('userHistoryList');
-      const countEl = document.getElementById('userHistoryCount');
-      if (!container) return;
-
-      if (!Array.isArray(list) || list.length === 0) {
-        if (countEl) countEl.textContent = '0';
-        container.innerHTML = `
-          <div class="user-history-empty">
-            <span class="material-symbols-outlined" style="font-size:32px; color:rgba(255,255,255,0.2);">phone_disabled</span>
-            <p style="margin-top:8px; font-size:13px; color:#8E8FA2;">Nenhum disparo realizado nesta sessão.</p>
-          </div>
-        `;
-        return;
-      }
-
-      if (countEl) countEl.textContent = list.length.toString();
-
-      container.innerHTML = list.map((item) => {
-        const initials = getInitials(item.nome || item.Nome || 'Contato');
-        const leadName = item.nome || item.Nome || 'Sem Nome';
-        const phone = item.telefone || item.Numero || item.to_number || '-';
     function getCallStatusBadge(item) {
       if (!item) return { badgeClass: 'completed', badgeIcon: 'check_circle', badgeText: 'Finalizada' };
 
