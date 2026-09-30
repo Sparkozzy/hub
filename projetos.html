@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Projetos & Kanban — MindFlow</title>
+  <title>Gestão de Clientes & Projetos — MindFlow</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -17,10 +17,10 @@
   <style>
     :root {
       --bg: #04060E;
-      --surface: rgba(13, 17, 32, 0.75);
-      --surface-card: rgba(18, 24, 43, 0.85);
+      --surface: rgba(11, 15, 28, 0.8);
+      --surface-card: rgba(16, 22, 40, 0.9);
       --border: rgba(255, 255, 255, 0.08);
-      --border-hover: rgba(46, 79, 255, 0.35);
+      --border-hover: rgba(46, 79, 255, 0.4);
       --blue: #2E4FFF;
       --blue2: #7B9AFF;
       --teal: #00B5A0;
@@ -28,7 +28,7 @@
       --amber: #F59E0B;
       --red: #EF4444;
       --text: #F1F5F9;
-      --muted: #8E8FA2;
+      --muted: #94A3B8;
     }
 
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -42,14 +42,14 @@
       position: relative;
     }
 
-    /* ── CANVAS & GLASS BACKGROUND ── */
+    /* ── CANVAS & BACKGROUND ── */
     #neural-canvas {
       position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100%;
       z-index: 0;
       pointer-events: none;
-      opacity: 0.45;
+      opacity: 0.35;
     }
 
     /* ── DOCK LATERAL ── */
@@ -117,7 +117,7 @@
     main {
       position: relative; z-index: 1;
       padding: 84px 28px 40px 96px;
-      max-width: 1720px; margin: 0 auto;
+      max-width: 1800px; margin: 0 auto;
     }
 
     .page-header {
@@ -127,9 +127,7 @@
     .page-title {
       font-family: 'Space Grotesk', sans-serif;
       font-size: 28px; font-weight: 700;
-      letter-spacing: -0.02em;
-      background: linear-gradient(135deg, #fff 30%, var(--muted) 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      letter-spacing: -0.02em; color: #fff;
     }
     .page-sub {
       font-size: 13px; color: var(--muted);
@@ -160,11 +158,11 @@
     /* ── TOP STATS CARDS ── */
     .top-stats {
       display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
-      margin-bottom: 24px;
+      margin-bottom: 28px;
     }
     .stat-card {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: 16px; padding: 16px 20px;
+      border-radius: 16px; padding: 18px 22px;
       backdrop-filter: blur(16px);
       box-shadow: 0 4px 20px rgba(0,0,0,0.3);
       display: flex; flex-direction: column; gap: 6px;
@@ -174,32 +172,32 @@
       font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
       color: var(--muted); display: flex; align-items: center; gap: 6px;
     }
-    .stat-label .material-symbols-outlined { font-size: 15px; }
+    .stat-label .material-symbols-outlined { font-size: 16px; color: var(--blue2); }
     .stat-value {
-      font-family: 'Space Grotesk', sans-serif; font-size: 26px;
-      font-weight: 700; color: #fff;
+      font-family: 'Space Grotesk', sans-serif; font-size: 28px;
+      font-weight: 700; color: #fff; line-height: 1.1; margin-top: 2px;
     }
-    .stat-sub { font-size: 11px; color: var(--muted); }
+    .stat-sub { font-size: 12px; color: var(--muted); }
 
     /* ── KANBAN BOARD ── */
     .kanban-board {
       display: grid;
-      grid-template-columns: repeat(5, minmax(280px, 1fr));
+      grid-template-columns: repeat(5, minmax(310px, 1fr));
       gap: 16px;
       align-items: start;
       overflow-x: auto;
-      padding-bottom: 20px;
+      padding-bottom: 24px;
     }
 
     .kanban-col {
-      background: rgba(10, 14, 28, 0.7);
+      background: rgba(10, 14, 26, 0.65);
       border: 1px solid var(--border);
       border-radius: 18px;
       padding: 16px;
       backdrop-filter: blur(16px);
       box-shadow: 0 8px 32px rgba(0,0,0,0.4);
       display: flex; flex-direction: column; gap: 14px;
-      min-height: 520px;
+      min-height: 560px;
     }
 
     .col-header {
@@ -207,32 +205,33 @@
       padding-bottom: 12px;
       border-bottom: 1px solid rgba(255,255,255,0.06);
     }
-    .col-title-wrap { display: flex; align-items: center; gap: 8px; }
+    .col-title-wrap { display: flex; align-items: center; gap: 10px; }
     .col-dot { width: 10px; height: 10px; border-radius: 50%; }
-    .col-dot.setup { background: var(--blue2); box-shadow: 0 0 8px var(--blue2); }
-    .col-dot.dev   { background: var(--blue); box-shadow: 0 0 8px var(--blue); }
-    .col-dot.test  { background: var(--purple); box-shadow: 0 0 8px var(--purple); }
-    .col-dot.wait  { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
-    .col-dot.live  { background: var(--teal); box-shadow: 0 0 8px var(--teal); }
+    .col-dot.setup { background: var(--blue2); box-shadow: 0 0 10px var(--blue2); }
+    .col-dot.dev   { background: var(--blue); box-shadow: 0 0 10px var(--blue); }
+    .col-dot.test  { background: var(--purple); box-shadow: 0 0 10px var(--purple); }
+    .col-dot.wait  { background: var(--amber); box-shadow: 0 0 10px var(--amber); }
+    .col-dot.live  { background: var(--teal); box-shadow: 0 0 10px var(--teal); }
 
     .col-title {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 13px; font-weight: 600;
+      font-size: 13.5px; font-weight: 600;
       color: #fff; letter-spacing: -0.01em;
     }
     .col-count {
       font-family: 'Space Grotesk', sans-serif;
       font-size: 11px; font-weight: 700;
-      background: rgba(255,255,255,0.08); color: var(--muted);
-      padding: 2px 8px; border-radius: 12px;
+      background: rgba(255,255,255,0.08); color: var(--text);
+      padding: 2px 9px; border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
     }
 
     .col-cards {
       display: flex; flex-direction: column; gap: 12px;
-      min-height: 400px;
+      min-height: 440px;
     }
 
-    /* ── KANBAN CARD ── */
+    /* ── KANBAN CARD REDESIGN (CLEAN & SPACIOUS) ── */
     .kanban-card {
       background: var(--surface-card);
       border: 1px solid var(--border);
@@ -240,88 +239,131 @@
       padding: 16px;
       cursor: pointer;
       transition: all .25s cubic-bezier(0.16, 1, 0.3, 1);
-      position: relative;
-      overflow: hidden;
       display: flex; flex-direction: column; gap: 12px;
+      position: relative;
     }
     .kanban-card:hover {
       border-color: var(--border-hover);
       transform: translateY(-3px);
-      box-shadow: 0 12px 30px rgba(0,0,0,0.5), 0 0 16px rgba(46,79,255,0.15);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.5), 0 0 20px rgba(46,79,255,0.18);
     }
-    .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+
+    .card-head {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+    }
+    .card-title-group {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
     .card-title {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 14px; font-weight: 600;
-      color: #fff; line-height: 1.3;
+      font-size: 15px; font-weight: 700;
+      color: #fff; letter-spacing: -0.01em;
     }
-    .card-tags { display: flex; flex-wrap: wrap; gap: 4px; }
-    .card-tag {
-      font-size: 9px; font-weight: 600; letter-spacing: 0.05em;
-      text-transform: uppercase; padding: 2px 7px; border-radius: 6px;
-      background: rgba(255,255,255,0.06); color: var(--muted);
-    }
-    .card-tag.whatsapp { background: rgba(0,181,160,0.12); color: var(--teal); border: 1px solid rgba(0,181,160,0.2); }
-    .card-tag.voz      { background: rgba(124,58,237,0.15); color: #A78BFA; border: 1px solid rgba(124,58,237,0.3); }
 
+    /* Status Pills */
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 10px; font-weight: 600; font-family: 'Space Grotesk', sans-serif;
+      letter-spacing: 0.03em; padding: 3px 8px; border-radius: 20px;
+    }
+    .status-pill.online {
+      background: rgba(0,181,160,0.12); color: var(--teal);
+      border: 1px solid rgba(0,181,160,0.25);
+    }
+    .status-pill.offline {
+      background: rgba(239,68,68,0.15); color: var(--red);
+      border: 1px solid rgba(239,68,68,0.35); animation: pulse 1.5s infinite;
+    }
+
+    /* Tags Bar */
+    .card-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .card-tag {
+      font-size: 9.5px; font-weight: 600; letter-spacing: 0.04em;
+      text-transform: uppercase; padding: 2px 8px; border-radius: 6px;
+      background: rgba(255,255,255,0.06); color: var(--muted);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .card-tag.whatsapp { background: rgba(0,181,160,0.12); color: var(--teal); border-color: rgba(0,181,160,0.2); }
+    .card-tag.voz      { background: rgba(124,58,237,0.15); color: #A78BFA; border-color: rgba(124,58,237,0.3); }
+
+    /* Metrics Bar */
     .card-metrics {
       display: flex; align-items: center; justify-content: space-between;
-      gap: 8px; font-size: 11px;
-      background: rgba(0,0,0,0.25);
-      padding: 8px 10px; border-radius: 8px;
+      gap: 10px; font-size: 11px;
+      background: rgba(0,0,0,0.3);
+      padding: 9px 12px; border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.04);
     }
     .time-badge {
-      display: flex; align-items: center; gap: 4px;
+      display: flex; align-items: center; gap: 5px;
       font-family: 'Space Grotesk', sans-serif; font-weight: 600;
     }
-    .time-badge.normal { color: var(--teal); }
-    .time-badge.warning { color: var(--amber); }
+    .time-badge.normal   { color: var(--teal); }
+    .time-badge.warning  { color: var(--amber); }
     .time-badge.critical { color: var(--red); font-weight: 700; animation: pulse 1.5s infinite; }
-    .time-badge .material-symbols-outlined { font-size: 14px; }
+    .time-badge.live-ok  { color: var(--teal); }
+    .time-badge .material-symbols-outlined { font-size: 15px; }
 
     .rounds-badge {
       display: flex; align-items: center; gap: 4px;
-      font-family: 'Space Grotesk', sans-serif; font-size: 10px;
+      font-family: 'Space Grotesk', sans-serif; font-size: 11px;
       color: var(--muted);
     }
     .rounds-badge.high { color: var(--amber); font-weight: 600; }
+    .rounds-badge .material-symbols-outlined { font-size: 14px; }
 
+    /* Card Footer Clean Redesign */
     .card-footer {
       display: flex; align-items: center; justify-content: space-between;
-      padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05);
+      gap: 8px; padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,0.06);
     }
     .card-assignee {
       display: flex; align-items: center; gap: 6px;
       font-size: 11px; color: var(--muted);
+      font-family: 'Space Grotesk', sans-serif;
     }
     .avatar {
-      width: 22px; height: 22px; border-radius: 50%;
+      width: 24px; height: 24px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 9px; font-weight: 700; color: #fff;
+      font-size: 10px; font-weight: 700; color: #fff;
       background: linear-gradient(135deg, var(--blue), var(--teal));
     }
-    .card-actions { display: flex; align-items: center; gap: 4px; }
-    .card-btn {
-      background: none; border: none; color: var(--muted);
-      cursor: pointer; padding: 4px; border-radius: 6px;
-      transition: all .2s; display: flex; align-items: center;
-    }
-    .card-btn:hover { color: #fff; background: rgba(255,255,255,0.08); }
-    .card-btn .material-symbols-outlined { font-size: 16px; }
 
-    .btn-audio-ia {
+    .card-actions-cluster {
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    .btn-ia-action {
       background: rgba(46,79,255,0.12); color: var(--blue2);
-      border: 1px solid rgba(46,79,255,0.25);
-      border-radius: 8px; padding: 4px 8px;
-      font-size: 10px; font-family: 'Space Grotesk', sans-serif;
-      font-weight: 600; display: flex; align-items: center; gap: 4px;
+      border: 1px solid rgba(46,79,255,0.3);
+      border-radius: 8px; padding: 5px 9px;
+      font-size: 11px; font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600; display: inline-flex; align-items: center; gap: 4px;
       cursor: pointer; transition: all .2s;
     }
-    .btn-audio-ia:hover {
+    .btn-ia-action:hover {
       background: rgba(46,79,255,0.25); color: #fff; border-color: var(--blue);
+      transform: translateY(-1px);
     }
+    .btn-ia-action .material-symbols-outlined { font-size: 15px; }
 
-    /* ── MODAL ── */
+    .btn-group {
+      display: flex; align-items: center; gap: 2px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px; padding: 2px;
+    }
+    .icon-btn {
+      background: none; border: none; color: var(--muted);
+      cursor: pointer; padding: 3px 5px; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .15s;
+    }
+    .icon-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }
+    .icon-btn .material-symbols-outlined { font-size: 16px; }
+
+    /* ── MODAL REDESIGN ── */
     .modal-overlay {
       position: fixed; inset: 0; z-index: 2000;
       background: rgba(4, 6, 14, 0.85);
@@ -332,10 +374,10 @@
     }
     .modal-overlay.active { opacity: 1; pointer-events: auto; }
     .modal-card {
-      background: rgba(13, 17, 32, 0.95);
+      background: rgba(13, 17, 32, 0.96);
       border: 1px solid var(--border);
       border-radius: 20px; padding: 24px;
-      width: 100%; max-width: 520px;
+      width: 100%; max-width: 540px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.6);
       display: flex; flex-direction: column; gap: 18px;
       transform: scale(0.95); transition: transform .25s ease;
@@ -603,7 +645,7 @@
       <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:12px;">
         <div style="display:flex; align-items:center; justify-content:space-between;">
           <span class="form-label" style="margin:0;">Adicionar Nota / Atualização de Voz</span>
-          <button type="button" class="btn-audio-ia" id="btnRecordAudioSim" onclick="toggleAudioRecordingSim()">
+          <button type="button" class="btn-ia-action" id="btnRecordAudioSim" onclick="toggleAudioRecordingSim()">
             <span class="material-symbols-outlined" id="recIcon">mic</span>
             <span id="recText">Gravar Áudio</span>
           </button>
@@ -744,21 +786,33 @@
       document.getElementById('statStale').textContent = staleCount;
     }
 
-    // ── Cria o Elemento do Card HTML ──
+    // ── Cria o Elemento do Card HTML REDESENHADO ──
     function createCardElement(id, p, days) {
       const div = document.createElement('div');
       div.className = 'kanban-card';
 
-      // Badge de Tempo
+      // Lógica Correta de Badge de Tempo
       let timeClass = 'normal';
-      let timeText = `⏱️ ${days === 0 ? 'Hoje' : days + 'd nesta etapa'}`;
-      if (days >= 4 && days < 7) timeClass = 'warning';
-      if (days >= 7) {
-        timeClass = 'critical';
-        timeText = `⚠️ ${days}d nesta etapa (Atraso!)`;
+      let timeText = `⏱️ ${days === 0 ? 'Entrou hoje' : days + 'd nesta etapa'}`;
+      
+      if (p.stage === 'live') {
+        timeClass = 'live-ok';
+        timeText = `🚀 Ativo há ${days}d`;
+      } else {
+        if (days >= 4 && days < 7) timeClass = 'warning';
+        if (days >= 7) {
+          timeClass = 'critical';
+          timeText = `⚠️ ${days}d (Atraso!)`;
+        }
       }
 
-      // Tags HTML
+      // Status da Z-API / Telemetria em Badge Separado
+      const isZapiDisconnected = p.zapiStatus === 'disconnected';
+      const statusPillHtml = isZapiDisconnected 
+        ? `<span class="status-pill offline">⚠️ Off</span>`
+        : `<span class="status-pill online">● Online</span>`;
+
+      // Tags Categorias
       const tagsList = p.tags || [];
       const tagsHtml = tagsList.map(t => {
         const l = t.toLowerCase();
@@ -770,18 +824,15 @@
 
       const roundsClass = (p.rounds || 1) >= 4 ? 'high' : '';
 
-      // Status da Z-API / Telemetria
-      const isZapiDisconnected = p.zapiStatus === 'disconnected';
-      const zapiBadgeHtml = isZapiDisconnected 
-        ? `<span class="card-tag" style="background:rgba(239,68,68,0.18); color:var(--red); border:1px solid rgba(239,68,68,0.4); font-weight:700;">⚠️ Z-API Desconectada</span>`
-        : `<span class="card-tag" style="background:rgba(0,181,160,0.12); color:var(--teal); border:1px solid rgba(0,181,160,0.2);">● Z-API Conectada</span>`;
-
       div.innerHTML = `
-        <div class="card-top">
-          <div class="card-title">${escapeHtml(p.name)}</div>
+        <div class="card-head">
+          <div class="card-title-group">
+            <span class="card-title">${escapeHtml(p.name)}</span>
+            ${statusPillHtml}
+          </div>
         </div>
 
-        <div class="card-tags">${tagsHtml} ${zapiBadgeHtml}</div>
+        <div class="card-tags">${tagsHtml}</div>
 
         <div class="card-metrics">
           <div class="time-badge ${timeClass}">
@@ -799,13 +850,16 @@
             <div class="avatar">${(p.assignee || 'P')[0]}</div>
             <span>${escapeHtml(p.assignee || 'Pedro')}</span>
           </div>
-          <div class="card-actions">
-            <button class="btn-audio-ia" onclick="openIaModal(event, '${id}')" title="Nota da IA">
+
+          <div class="card-actions-cluster">
+            <button class="btn-ia-action" onclick="openIaModal(event, '${id}')" title="Nota da IA">
               <span class="material-symbols-outlined">mic</span> Nota IA
             </button>
-            <button class="card-btn" onclick="moveCardPrev(event, '${id}')" title="Mover para esquerda"><span class="material-symbols-outlined">chevron_left</span></button>
-            <button class="card-btn" onclick="moveCardNext(event, '${id}')" title="Mover para direita"><span class="material-symbols-outlined">chevron_right</span></button>
-            <button class="card-btn" onclick="editCard(event, '${id}')" title="Editar"><span class="material-symbols-outlined">edit</span></button>
+            <div class="btn-group">
+              <button class="icon-btn" onclick="moveCardPrev(event, '${id}')" title="Mover para esquerda"><span class="material-symbols-outlined">chevron_left</span></button>
+              <button class="icon-btn" onclick="moveCardNext(event, '${id}')" title="Mover para direita"><span class="material-symbols-outlined">chevron_right</span></button>
+              <button class="icon-btn" onclick="editCard(event, '${id}')" title="Editar"><span class="material-symbols-outlined">edit</span></button>
+            </div>
           </div>
         </div>
       `;
