@@ -337,10 +337,11 @@
     .btn-ia-action {
       background: rgba(46,79,255,0.12); color: var(--blue2);
       border: 1px solid rgba(46,79,255,0.3);
-      border-radius: 8px; padding: 5px 9px;
+      border-radius: 8px; padding: 5px 10px;
       font-size: 11px; font-family: 'Space Grotesk', sans-serif;
       font-weight: 600; display: inline-flex; align-items: center; gap: 4px;
       cursor: pointer; transition: all .2s;
+      white-space: nowrap; flex-shrink: 0;
     }
     .btn-ia-action:hover {
       background: rgba(46,79,255,0.25); color: #fff; border-color: var(--blue);
@@ -793,16 +794,16 @@
 
       // Lógica Correta de Badge de Tempo
       let timeClass = 'normal';
-      let timeText = `⏱️ ${days === 0 ? 'Entrou hoje' : days + 'd nesta etapa'}`;
+      let timeText = days === 0 ? 'Entrou hoje' : `${days}d nesta etapa`;
       
       if (p.stage === 'live') {
         timeClass = 'live-ok';
-        timeText = `🚀 Ativo há ${days}d`;
+        timeText = `Ativo há ${days}d`;
       } else {
         if (days >= 4 && days < 7) timeClass = 'warning';
         if (days >= 7) {
           timeClass = 'critical';
-          timeText = `⚠️ ${days}d (Atraso!)`;
+          timeText = `${days}d (Atraso!)`;
         }
       }
 
