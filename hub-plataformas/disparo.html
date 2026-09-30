@@ -6105,6 +6105,10 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       const item = activeModalHistoryItem;
       closeHistoryDetailModal();
 
+      if (typeof window.switchMode === 'function') {
+        window.switchMode('complete');
+      }
+
       if (item.nome || item.Nome) { const el = document.getElementById('nome'); if (el) { el.value = item.nome || item.Nome; updateClearBtn('nome'); } }
       if (item.telefone || item.Numero) { const el = document.getElementById('telefone'); if (el) { el.value = item.telefone || item.Numero; updateClearBtn('telefone'); } }
       if (item.contexto) { const el = document.getElementById('contexto'); if (el) { el.value = item.contexto; updateClearBtn('contexto'); } }
@@ -6825,6 +6829,25 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           if (advPanel) advPanel.style.display = 'none';
           const modeCompleteTitle = document.querySelector('#modeComplete .mode-card-title');
           if (modeCompleteTitle) modeCompleteTitle.textContent = 'Disparo para Lead';
+
+          // Para cliente externo, cria o grupo "Meu Próprio Número" como padrão no Disparo Rápido
+          if (userData.name) {
+            contactGroups.meu_numero = {
+              id: 'meu_numero',
+              name: 'Meu Próprio Número',
+              isDefault: true,
+              contacts: [{
+                id: 'self',
+                name: userData.name,
+                phone: userData.phone || '5547991089099',
+                avatar: typeof getInitials === 'function' ? getInitials(userData.name) : 'ME',
+                badgeColor: '#00B5A0'
+              }]
+            };
+            if (typeof switchGroup === 'function') {
+              switchGroup('meu_numero');
+            }
+          }
         }
       } catch (err) {
         console.error('Erro ao verificar modo cliente:', err);
