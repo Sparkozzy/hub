@@ -101,8 +101,8 @@
     }
     .logo-mark, .nav-left { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #fff; }
     .nav-right { display: flex; align-items: center; gap: 16px; }
-    .nav-user { font-family: 'Space Grotesk', sans-serif; font-size: 13px; color: var(--muted); }
-    .nav-user strong { color: #fff; }
+    .nav-user { font-family: 'Space Grotesk', sans-serif; font-size: 13px; color: rgba(255, 255, 255, 0.5); display: inline-flex; align-items: center; gap: 4px; }
+    .nav-user strong { color: #FFFFFF; font-weight: 600; }
     .btn-logout {
       background: rgba(239, 68, 68, 0.1);
       border: 1px solid rgba(239, 68, 68, 0.25);
@@ -1264,6 +1264,17 @@
     function escapeHtml(str) {
       return (str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
+
+    async function checkSession() {
+      try {
+        const res = await fetch('/api/check');
+        if (!res.ok) throw new Error('unauthorized');
+        const data = await res.json();
+        const userNameEl = document.getElementById('userName');
+        if (userNameEl && data.name) userNameEl.textContent = data.name;
+      } catch { window.location.href = '/'; }
+    }
+    checkSession();
 
     function logout() {
       fetch('/api/logout', { method: 'POST' }).then(() => window.location.href = '/');
