@@ -33,6 +33,38 @@
       --motion-close-ease: cubic-bezier(0.4, 0, 0.2, 1);
     }
 
+    .btn-logout {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      color: #F87171;
+      padding: 6px 14px;
+      border-radius: 9px;
+      font-size: 12px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      line-height: 1;
+    }
+    .btn-logout:hover {
+      background: rgba(239, 68, 68, 0.22);
+      border-color: rgba(239, 68, 68, 0.5);
+      color: #FFFFFF;
+      box-shadow: 0 4px 16px rgba(239, 68, 68, 0.35);
+      transform: translateY(-1px);
+    }
+    .btn-logout .material-symbols-outlined {
+      font-size: 16px;
+      transition: transform 0.2s ease;
+    }
+    .btn-logout:hover .material-symbols-outlined {
+      transform: translateX(2px);
+    }
+
     body {
       display: flex;
       flex-direction: column;
@@ -3860,9 +3892,9 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         <span style="font-size:13px;color:var(--muted);font-family:'Space Grotesk',sans-serif">
           Olá, <strong id="userName" style="color:#fff;font-weight:500">—</strong>
         </span>
-        <button onclick="logout()" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;color:var(--muted);font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;padding:6px 14px;cursor:pointer;transition:background .2s,color .2s">
-          <span class="material-symbols-outlined" style="font-size:16px">logout</span>
-          Sair
+        <button onclick="logout()" class="btn-logout" id="btnLogout">
+          <span class="material-symbols-outlined">logout</span>
+          <span>Sair</span>
         </button>
       </div>
     </nav>
@@ -5964,12 +5996,15 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       return { badgeClass: 'completed', badgeIcon: 'check_circle', badgeText: duration ? `Finalizada (${duration})` : 'Finalizada' };
     }
 
+    window.userHistoryCache = [];
+
     function renderUserDispatchHistoryList(list) {
       const container = document.getElementById('userHistoryList');
       const countEl = document.getElementById('userHistoryCount');
       if (!container) return;
 
       if (!Array.isArray(list) || list.length === 0) {
+        window.userHistoryCache = [];
         if (countEl) countEl.textContent = '0';
         container.innerHTML = `
           <div class="user-history-empty">
@@ -5980,9 +6015,10 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         return;
       }
 
+      window.userHistoryCache = list;
       if (countEl) countEl.textContent = list.length.toString();
 
-      container.innerHTML = list.map((item) => {
+      container.innerHTML = list.map((item, idx) => {
         const initials = getInitials(item.nome || item.Nome || 'Contato');
         const leadName = item.nome || item.Nome || 'Sem Nome';
         const phone = item.telefone || item.Numero || item.to_number || '-';
@@ -5992,7 +6028,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         const jsonPayload = escHtml(JSON.stringify(item));
 
         return `
-          <div class="history-item-card" data-id="${item.execution_id || item.id || ''}" onclick="openHistoryDetailModal(this, event)" data-item='${jsonPayload}'>
+          <div class="history-item-card" data-index="${idx}" onclick="openHistoryDetailModalByIndex(${idx}, event)" style="cursor: pointer;">
             <div class="history-item-top">
               <div class="history-lead-info">
                 <div class="history-avatar">${initials}</div>
@@ -6018,7 +6054,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
                 <span>${formatTimeAgo(item.created_at || item.timestamp)}</span>
               </div>
               <div class="history-item-actions">
-                <button type="button" class="history-action-btn" onclick="event.stopPropagation(); reTriggerHistoryItem(this)" data-item='${jsonPayload}'>
+                <button type="button" class="history-action-btn" onclick="event.stopPropagation(); reTriggerHistoryItemByIndex(${idx}, event)" data-item='${jsonPayload}'>
                   <span class="material-symbols-outlined">replay</span> Refazer
                 </button>
                 ${item.recording_url ? `
@@ -6035,7 +6071,112 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
 
     let activeModalHistoryItem = null;
 
+    function openHistoryDetailModalByIndex(idx, event) {
+      if (event && event.target && event.target.closest('.history-action-btn')) {
+        return;
+      }
+      try {
+        const item = (window.userHistoryCache && window.userHistoryCache[idx]) ? window.userHistoryCache[idx] : null;
+        if (!item) return;
+        activeModalHistoryItem = item;
+
+        const initials = getInitials(item.nome || item.Nome || 'Contato');
+        const leadName = item.nome || item.Nome || 'Sem Nome';
+        const phone = item.telefone || item.Numero || item.to_number || '-';
+        const email = item.email || item.Email || '-';
+        const agentName = item.agent_name || item.agentName || 'Agente Mindflow';
+        const providerName = item.provider || item.provedor || 'Automático (IA / Roteamento por DDD)';
+        const contexto = item.contexto || item.context || 'Sem contexto informado.';
+        const timeFormatted = item.created_at ? new Date(item.created_at).toLocaleString('pt-BR') : (item.timestamp ? new Date(item.timestamp).toLocaleString('pt-BR') : 'Recentemente');
+
+        const { badgeClass, badgeIcon, badgeText } = getCallStatusBadge(item);
+
+        const agentId = item.agent_id || item.agentId || (item.agent ? (item.agent.id || item.agent) : null) || 'agent_1e4cfa23e3910c557d82167949';
+        const promptId = item.prompt_id || item.promptId || item.template_id || item.prompt_name || 'prompt_default_v2';
+        const callId = item.call_id || item.execution_id || item.id || item.disparo_id || 'call_' + Math.random().toString(36).substr(2, 10);
+
+        const avatarEl = document.getElementById('histModalAvatar');
+        if (avatarEl) avatarEl.textContent = initials;
+        const nameEl = document.getElementById('histModalLeadName');
+        if (nameEl) nameEl.textContent = leadName;
+        const phoneEl = document.getElementById('histModalLeadPhone');
+        if (phoneEl) phoneEl.textContent = phone;
+        const emailEl = document.getElementById('histModalEmail');
+        if (emailEl) emailEl.textContent = email;
+        const agentEl = document.getElementById('histModalAgent');
+        if (agentEl) agentEl.textContent = agentName;
+        const providerEl = document.getElementById('histModalProvider');
+        if (providerEl) providerEl.textContent = providerName;
+        const timeEl = document.getElementById('histModalTime');
+        if (timeEl) timeEl.textContent = timeFormatted;
+        const ctxEl = document.getElementById('histModalContext');
+        if (ctxEl) ctxEl.textContent = contexto;
+
+        const agentIdEl = document.getElementById('histModalAgentId');
+        if (agentIdEl) agentIdEl.textContent = agentId;
+        const promptIdEl = document.getElementById('histModalPromptId');
+        if (promptIdEl) promptIdEl.textContent = promptId;
+        const callIdEl = document.getElementById('histModalCallId');
+        if (callIdEl) callIdEl.textContent = callId;
+
+        const badgeWrap = document.getElementById('histModalBadge');
+        if (badgeWrap) {
+          badgeWrap.className = `history-status-badge ${badgeClass}`;
+          badgeWrap.innerHTML = `<span class="material-symbols-outlined" style="font-size:13px;">${badgeIcon}</span> <span>${badgeText}</span>`;
+        }
+
+        const audioWrap = document.getElementById('histModalAudioWrap');
+        const audioElem = document.getElementById('histModalAudioElement');
+        if (item.recording_url && audioWrap && audioElem) {
+          audioElem.src = item.recording_url;
+          audioWrap.style.display = 'flex';
+        } else if (audioWrap) {
+          audioWrap.style.display = 'none';
+          if (audioElem) audioElem.src = '';
+        }
+
+        const modal = document.getElementById('historyDetailModal');
+        if (modal) modal.style.display = 'flex';
+      } catch (err) {
+        console.error('Erro ao abrir modal do histórico por índice:', err);
+      }
+    }
+
+    function reTriggerHistoryItemByIndex(idx, event) {
+      if (event) event.stopPropagation();
+      const item = (window.userHistoryCache && window.userHistoryCache[idx]) ? window.userHistoryCache[idx] : null;
+      if (!item) return;
+
+      if (typeof window.switchMode === 'function') {
+        window.switchMode('complete');
+      }
+
+      if (item.nome || item.Nome) { const el = document.getElementById('nome'); if (el) { el.value = item.nome || item.Nome; updateClearBtn('nome'); } }
+      if (item.telefone || item.Numero) { const el = document.getElementById('telefone'); if (el) { el.value = item.telefone || item.Numero; updateClearBtn('telefone'); } }
+      if (item.contexto) { const el = document.getElementById('contexto'); if (el) { el.value = item.contexto; updateClearBtn('contexto'); } }
+      if (item.email) { const el = document.getElementById('email'); if (el) { el.value = item.email; updateClearBtn('email'); } }
+      saveFormDraft();
+      if (typeof checkFormReady === 'function') checkFormReady();
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      const card = document.querySelector('.card');
+      if (card) {
+        card.style.transition = 'box-shadow 0.4s ease, border-color 0.4s ease';
+        card.style.borderColor = 'rgba(0, 181, 160, 0.6)';
+        card.style.boxShadow = '0 0 25px rgba(0, 181, 160, 0.3)';
+        setTimeout(() => {
+          card.style.borderColor = '';
+          card.style.boxShadow = '';
+        }, 2000);
+      }
+    }
+
     function openHistoryDetailModal(cardEl, event) {
+      if (cardEl && cardEl.dataset && cardEl.dataset.index !== undefined) {
+        openHistoryDetailModalByIndex(parseInt(cardEl.dataset.index), event);
+        return;
+      }
       if (event && event.target && event.target.closest('.history-action-btn')) {
         return;
       }

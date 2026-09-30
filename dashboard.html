@@ -51,14 +51,36 @@
     .nav-right { display: flex; align-items: center; gap: 16px; }
     .nav-user { font-size: 13px; color: rgba(255, 255, 255, 0.6); }
     .btn-logout {
-      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
-      color: rgba(255,255,255,0.5); padding: 6px 14px 6px 10px; border-radius: 8px;
-      cursor: pointer; font-family: 'Space Grotesk', sans-serif;
-      font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 6px;
-      transition: all 0.2s;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      color: #F87171;
+      padding: 6px 14px;
+      border-radius: 9px;
+      font-size: 12px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      line-height: 1;
     }
-    .btn-logout:hover { background: rgba(255,77,77,0.12); border-color: rgba(255,77,77,0.2); color: #FF4D4D; }
-    .btn-logout .material-symbols-outlined { font-size: 16px; }
+    .btn-logout:hover {
+      background: rgba(239, 68, 68, 0.22);
+      border-color: rgba(239, 68, 68, 0.5);
+      color: #FFFFFF;
+      box-shadow: 0 4px 16px rgba(239, 68, 68, 0.35);
+      transform: translateY(-1px);
+    }
+    .btn-logout .material-symbols-outlined {
+      font-size: 16px;
+      transition: transform 0.2s ease;
+    }
+    .btn-logout:hover .material-symbols-outlined {
+      transform: translateX(2px);
+    }
 
     /* ── In-page Client Selector ── */
     .title-row {
