@@ -1,82 +1,78 @@
 @charset "UTF-8";
 /* ==========================================================================
    MINDFLOW DESIGN SYSTEM - CORE STYLESHEET (mindflow-core.css)
-   Unified Design Tokens, Anti-AI Aesthetic, Components, and Micro-interactions
+   Inspirado no Design de Elite da Tela de Disparos de Ligações
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 
 /* --------------------------------------------------------------------------
-   1. Design Tokens & Foundations
+   1. Design Tokens (Identidade Visual Baseada em Disparo de Ligações)
    -------------------------------------------------------------------------- */
 :root {
-  /* Brand Primary Colors */
-  --mf-blue: #2E4FFF;
+  /* Brand Palette (Disparo Standard) */
+  --mf-blue: #2563EB;
+  --mf-blue-hover: #1D4ED8;
+  --mf-blue-light: #60A5FA;
+  --mf-purple: #7C3AED;
+  --mf-purple-hover: #6D28D9;
   --mf-teal: #00B5A0;
-  --mf-blue-light: #7B9AFF;
-  --mf-blue-dark: #1E37B3;
-  --mf-gradient-primary: linear-gradient(135deg, #2E4FFF 0%, #00B5A0 100%);
-  --mf-gradient-primary-hover: linear-gradient(135deg, #3B5CFF 0%, #00D4BD 100%);
-  --mf-gradient-surface: linear-gradient(180deg, rgba(20, 26, 46, 0.7) 0%, rgba(12, 16, 28, 0.8) 100%);
+  --mf-teal-light: #2DD4BF;
+  
+  /* Primary Action Gradients */
+  --mf-gradient-blue: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+  --mf-gradient-purple: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
+  --mf-gradient-teal: linear-gradient(135deg, #00B5A0 0%, #0D9488 100%);
 
-  /* Backgrounds & Canvas Layering */
-  --mf-bg-canvas: #060814;
-  --mf-bg-panel: rgba(12, 16, 30, 0.75);
-  --mf-bg-card: rgba(18, 24, 42, 0.65);
-  --mf-bg-card-hover: rgba(26, 34, 58, 0.75);
-  --mf-bg-input: rgba(10, 14, 26, 0.8);
+  /* Backgrounds & Surface Elevation */
+  --mf-bg-canvas: #04060E;
+  --mf-bg-panel: rgba(8, 12, 24, 0.75);
+  --mf-bg-card: rgba(10, 15, 28, 0.85);
+  --mf-bg-card-hover: rgba(16, 24, 44, 0.9);
+  --mf-bg-input: rgba(255, 255, 255, 0.03);
 
   /* Functional Status Palette */
   --mf-success: #10B981;
-  --mf-success-bg: rgba(16, 185, 129, 0.12);
+  --mf-success-bg: rgba(16, 185, 129, 0.1);
   --mf-success-border: rgba(16, 185, 129, 0.3);
 
   --mf-warning: #F59E0B;
-  --mf-warning-bg: rgba(245, 158, 11, 0.12);
+  --mf-warning-bg: rgba(245, 158, 11, 0.1);
   --mf-warning-border: rgba(245, 158, 11, 0.3);
 
   --mf-danger: #EF4444;
-  --mf-danger-bg: rgba(239, 68, 68, 0.12);
+  --mf-danger-bg: rgba(239, 68, 68, 0.1);
   --mf-danger-border: rgba(239, 68, 68, 0.3);
 
-  --mf-info: #3B82F6;
-  --mf-info-bg: rgba(59, 130, 246, 0.12);
-  --mf-info-border: rgba(59, 130, 246, 0.3);
-
   /* Neutral Typography Colors */
-  --mf-text-primary: #F8FAFC;
-  --mf-text-secondary: #94A3B8;
+  --mf-text-primary: #FFFFFF;
+  --mf-text-secondary: #8E8FA2;
   --mf-text-muted: #64748B;
-  --mf-text-subtle: #475569;
+  --mf-text-subtle: #4D5570;
 
   /* Borders & Dividers */
   --mf-border-subtle: rgba(255, 255, 255, 0.08);
   --mf-border-medium: rgba(255, 255, 255, 0.14);
-  --mf-border-focus: rgba(46, 79, 255, 0.5);
-  --mf-border-glow: rgba(46, 79, 255, 0.35);
+  --mf-border-glow-blue: rgba(37, 99, 235, 0.4);
+  --mf-border-glow-teal: rgba(0, 181, 160, 0.4);
 
   /* Radii */
   --mf-radius-xs: 6px;
   --mf-radius-sm: 8px;
-  --mf-radius-md: 12px;
+  --mf-radius-md: 10px;
   --mf-radius-lg: 16px;
-  --mf-radius-xl: 24px;
   --mf-radius-pill: 9999px;
 
-  /* Elevation Shadows & Glows */
-  --mf-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
-  --mf-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
-  --mf-shadow-glow-blue: 0 4px 20px rgba(46, 79, 255, 0.25);
-  --mf-shadow-glow-teal: 0 4px 20px rgba(0, 181, 160, 0.25);
+  /* Shadows */
+  --mf-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --mf-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --mf-shadow-glow-blue: 0 4px 16px rgba(37, 99, 235, 0.35);
+  --mf-shadow-glow-purple: 0 4px 16px rgba(124, 58, 237, 0.35);
+  --mf-shadow-glow-teal: 0 4px 16px rgba(0, 181, 160, 0.35);
 
-  /* Transitions & Motion */
+  /* Transitions */
   --mf-transition-fast: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   --mf-transition-normal: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  --mf-transition-bounce: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-
-  /* Backdrop Blur Filters */
-  --mf-blur: blur(14px);
-  --mf-blur-heavy: blur(24px);
 }
 
 /* --------------------------------------------------------------------------
@@ -91,43 +87,23 @@
 body {
   background-color: var(--mf-bg-canvas);
   color: var(--mf-text-primary);
-  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom Scrollbars */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
-}
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: var(--mf-radius-pill);
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
 /* --------------------------------------------------------------------------
-   3. Unified Buttons (.mf-btn)
+   3. Botões Unificados (.mf-btn) — Estilo Disparo
    -------------------------------------------------------------------------- */
 .mf-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 9px 16px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  padding: 9px 18px;
+  font-family: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif;
   font-size: 13px;
   font-weight: 600;
   line-height: 1;
@@ -140,241 +116,109 @@ body {
   white-space: nowrap;
   outline: none;
 }
-.mf-btn:focus-visible {
-  box-shadow: 0 0 0 2px var(--mf-bg-canvas), 0 0 0 4px var(--mf-blue);
-}
 .mf-btn:active {
   transform: translateY(0) scale(0.98) !important;
 }
 
-/* Size Variants */
-.mf-btn-sm {
-  padding: 6px 12px;
-  font-size: 12px;
-  border-radius: var(--mf-radius-sm);
-}
-.mf-btn-lg {
-  padding: 12px 24px;
-  font-size: 15px;
-  border-radius: var(--mf-radius-md);
-}
-
-/* 3.1 Primary Button (Gradiente Mindflow) */
-.mf-btn-primary {
-  background: var(--mf-gradient-primary);
+/* Botão Azul (Ação Principal / Testar IA Pedro) */
+.mf-btn-primary, .mf-btn-blue {
+  background: var(--mf-gradient-blue);
   color: #ffffff;
   border: none;
-  box-shadow: 0 2px 10px rgba(46, 79, 255, 0.2);
+  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.25);
 }
-.mf-btn-primary:hover {
-  background: var(--mf-gradient-primary-hover);
+.mf-btn-primary:hover, .mf-btn-blue:hover {
+  background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
   transform: translateY(-1px);
   box-shadow: var(--mf-shadow-glow-blue);
 }
 
-/* 3.2 Secondary / Glass Button (Padronizado para a plataforma) */
+/* Botão Roxo (Testar IA Mariah) */
+.mf-btn-purple {
+  background: var(--mf-gradient-purple);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 2px 10px rgba(124, 58, 237, 0.25);
+}
+.mf-btn-purple:hover {
+  background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%);
+  transform: translateY(-1px);
+  box-shadow: var(--mf-shadow-glow-purple);
+}
+
+/* Botão Secundário Glass */
 .mf-btn-secondary {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--mf-border-subtle);
-  color: var(--mf-text-primary);
-  backdrop-filter: var(--mf-blur);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #E2E8F0;
+  backdrop-filter: blur(12px);
 }
 .mf-btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(46, 79, 255, 0.4);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(37, 99, 235, 0.5);
   color: #ffffff;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
 }
 
-/* 3.3 Danger Button */
+/* Botão Perigo / Desconectar */
 .mf-btn-danger {
-  background: var(--mf-danger-bg);
-  border: 1px solid var(--mf-danger-border);
-  color: #FCA5A5;
-}
-.mf-btn-danger:hover {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: var(--mf-danger);
-  color: #ffffff;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
-}
-
-/* 3.4 Ghost Button */
-.mf-btn-ghost {
-  background: transparent;
-  border: 1px solid transparent;
-  color: var(--mf-text-secondary);
-}
-.mf-btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--mf-text-primary);
-}
-
-/* --------------------------------------------------------------------------
-   4. Unified Cards (.mf-card)
-   -------------------------------------------------------------------------- */
-.mf-card {
-  background: var(--mf-bg-card);
-  backdrop-filter: var(--mf-blur);
-  -webkit-backdrop-filter: var(--mf-blur);
-  border: 1px solid var(--mf-border-subtle);
-  border-radius: var(--mf-radius-lg);
-  padding: 24px;
-  transition: var(--mf-transition-normal);
-  position: relative;
-  overflow: hidden;
-}
-.mf-card-hover:hover {
-  background: var(--mf-bg-card-hover);
-  border-color: var(--mf-border-medium);
-  transform: translateY(-2px);
-  box-shadow: var(--mf-shadow-md);
-}
-
-/* Header inside Card */
-.mf-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-.mf-card-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--mf-text-primary);
-  letter-spacing: -0.01em;
-}
-
-/* --------------------------------------------------------------------------
-   5. Unified Status Badges (.mf-badge)
-   -------------------------------------------------------------------------- */
-.mf-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  border-radius: var(--mf-radius-pill);
-  line-height: 1;
-  text-transform: uppercase;
-}
-.mf-badge-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-/* Status Variations */
-.mf-badge-success {
-  background: var(--mf-success-bg);
-  border: 1px solid var(--mf-success-border);
-  color: #34D399;
-}
-.mf-badge-success .mf-badge-dot {
-  background: #10B981;
-  box-shadow: 0 0 8px #10B981;
-}
-
-.mf-badge-warning {
-  background: var(--mf-warning-bg);
-  border: 1px solid var(--mf-warning-border);
-  color: #FBBF24;
-}
-.mf-badge-warning .mf-badge-dot {
-  background: #F59E0B;
-  box-shadow: 0 0 8px #F59E0B;
-}
-
-.mf-badge-danger {
   background: var(--mf-danger-bg);
   border: 1px solid var(--mf-danger-border);
   color: #F87171;
 }
-.mf-badge-danger .mf-badge-dot {
-  background: #EF4444;
-  box-shadow: 0 0 8px #EF4444;
-}
-
-.mf-badge-info {
-  background: var(--mf-info-bg);
-  border: 1px solid var(--mf-info-border);
-  color: #60A5FA;
-}
-.mf-badge-info .mf-badge-dot {
-  background: #3B82F6;
-  box-shadow: 0 0 8px #3B82F6;
+.mf-btn-danger:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #EF4444;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
 }
 
 /* --------------------------------------------------------------------------
-   6. Unified Navigation Tabs (.mf-tabs)
+   4. Badges de Canal & Status (WhatsApp, Ligação, etc)
    -------------------------------------------------------------------------- */
-.mf-tabs-container {
-  display: inline-flex;
-  background: rgba(10, 14, 26, 0.7);
-  border: 1px solid var(--mf-border-subtle);
-  border-radius: var(--mf-radius-pill);
-  padding: 4px;
-  backdrop-filter: var(--mf-blur);
-}
-.mf-tab-item {
+.mf-tag-whatsapp {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 18px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--mf-text-secondary);
+  gap: 6px;
+  background: rgba(0, 181, 160, 0.1);
+  border: 1px solid rgba(0, 181, 160, 0.3);
+  color: #00B5A0;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 3px 10px;
   border-radius: var(--mf-radius-pill);
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  transition: var(--mf-transition-fast);
+  text-transform: uppercase;
 }
-.mf-tab-item:hover {
-  color: var(--mf-text-primary);
-  background: rgba(255, 255, 255, 0.04);
-}
-.mf-tab-item.active {
-  background: var(--mf-primary-blue);
-  color: #ffffff;
-  box-shadow: 0 2px 12px rgba(46, 79, 255, 0.35);
+
+.mf-tag-ligacao {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #F59E0B;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 3px 10px;
+  border-radius: var(--mf-radius-pill);
+  text-transform: uppercase;
 }
 
 /* --------------------------------------------------------------------------
-   7. Form Inputs & Selects (.mf-input)
+   5. Card Principal Estilo Disparo (.mf-card-disparo)
    -------------------------------------------------------------------------- */
-.mf-input, .mf-select {
-  width: 100%;
-  padding: 10px 14px;
-  background: var(--mf-bg-input);
-  border: 1px solid var(--mf-border-subtle);
-  border-radius: var(--mf-radius-md);
-  color: var(--mf-text-primary);
-  font-family: inherit;
-  font-size: 13px;
-  outline: none;
-  transition: var(--mf-transition-fast);
-}
-.mf-input:focus, .mf-select:focus {
-  border-color: var(--mf-blue);
-  box-shadow: 0 0 0 3px rgba(46, 79, 255, 0.25);
-  background: rgba(14, 20, 36, 0.95);
-}
-.mf-input::placeholder {
-  color: var(--mf-text-subtle);
-}
-
-/* --------------------------------------------------------------------------
-   8. Global Dock / Sidebar Styling
-   -------------------------------------------------------------------------- */
-.dock-item-content {
-  position: relative;
-}
-.dock-item-content::after {
-  display: none !important; /* Desativa bolinhas azuis antigas */
+.mf-card-disparo {
+  background: linear-gradient(145deg, rgba(8, 14, 28, 0.85), rgba(13, 22, 44, 0.75));
+  border: 1px solid rgba(0, 181, 160, 0.25);
+  border-radius: var(--mf-radius-lg);
+  padding: 24px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(0, 181, 160, 0.05);
 }
