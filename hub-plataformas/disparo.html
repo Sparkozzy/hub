@@ -3829,7 +3829,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
     (function() {
       var dock = document.querySelector('.dock');
       if (!dock) return;
-      var isClient = window.location.pathname === '/cliente' || sessionStorage.getItem('isClient') === '1';
+      var isClientPath = window.location.pathname === '/cliente';
       var headset = document.getElementById('dockAtendimento');
 
       // Headset abre o atendimento (WhatsApp) em nova aba
@@ -3839,10 +3839,10 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         headset.setAttribute('rel', 'noopener');
       }
 
-      if (isClient) {
+      if (isClientPath) {
         // Esconde hub
         var hub = document.getElementById('dockHub');
-        if (hub) hub.parentNode.removeChild(hub);
+        if (hub && hub.parentNode) hub.parentNode.removeChild(hub);
 
         // Reordena dock: Dashboard, Disparo, Atendimento, [sep], Logout
         var dash = dock.querySelector('a[href="/dashboard"], a[href="/cliente"]');
@@ -7065,6 +7065,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
     })();
 
     async function logout() {
+      sessionStorage.clear();
       await fetch('/api/logout', { method: 'POST' });
       window.location.href = '/';
     }

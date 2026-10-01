@@ -1234,6 +1234,7 @@
     }
 
     function logout() {
+      sessionStorage.clear();
       fetch('/api/logout', { method: 'POST' }).then(() => window.location.href = '/');
     }
 

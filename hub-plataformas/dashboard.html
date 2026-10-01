@@ -456,15 +456,19 @@ will-change: transform;
     (function() {
       var dock = document.querySelector('.dock');
       if (!dock) return;
-      var isClient = window.location.pathname === '/cliente' || sessionStorage.getItem('isClient') === '1';
+      var isClientPath = window.location.pathname === '/cliente';
       var headset = document.getElementById('dockAtendimento');
 
-      if (isClient) {
-        // Esconde hub
-        var hub = document.getElementById('dockHub');
-        if (hub) hub.parentNode.removeChild(hub);
+      if (headset) {
+        headset.href = 'https://mindflow.wts.chat/auth/sign-in';
+        headset.setAttribute('target', '_blank');
+        headset.setAttribute('rel', 'noopener');
+      }
 
-        // Reordena dock: Dashboard, Disparo, Atendimento, [sep], Logout
+      if (isClientPath) {
+        var hub = document.getElementById('dockHub');
+        if (hub && hub.parentNode) hub.parentNode.removeChild(hub);
+
         var dash = dock.querySelector('a[href="/dashboard"], a[href="/cliente"]');
         var disp = dock.querySelector('a[href="/disparo"]');
         var logout = dock.querySelector('a[onclick*="logout"]');
@@ -992,6 +996,9 @@ will-change: transform;
         const res = await fetch('/api/check');
         if (!res.ok) throw new Error('unauthorized');
         const data = await res.json();
+        if (data.active_client === '2' || (data.client_access && data.client_access.length > 1)) {
+          sessionStorage.removeItem('isClient');
+        }
         userName.textContent = data.name;
         initClientSelector(data);
       } catch { window.location.href = '/'; }
@@ -1076,6 +1083,7 @@ will-change: transform;
     }
 
     async function logout() {
+      sessionStorage.clear();
       await fetch('/api/logout', { method: 'POST' });
       window.location.href = '/';
     }
