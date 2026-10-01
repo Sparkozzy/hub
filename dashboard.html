@@ -1029,12 +1029,19 @@
         }
         userName.textContent = data.name;
         initClientSelector(data);
+        if (typeof refreshDashboard === 'function') {
+          refreshDashboard();
+        }
       } catch { window.location.href = '/'; }
     }
 
     function initClientSelector(data) {
       currentClients = data.client_access || [];
       activeClientId = data.active_client;
+
+      if (clientBtnLabel && data.active_client_name) {
+        clientBtnLabel.textContent = data.active_client_name;
+      }
 
       if (currentClients.length <= 1) return;
 

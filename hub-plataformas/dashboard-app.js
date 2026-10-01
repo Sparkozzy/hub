@@ -197,13 +197,13 @@ function initFilters() {
 
         for (let d = 1; d <= daysInMonth; d++) {
             const date = new Date(year, month, d);
-            const isFuture = date > todayNorm;
+            const isPast = date < todayNorm;
             const isToday = sameDay(date, today);
             const isStart = sameDay(date, selStart);
             const isEnd = sameDay(date, selEnd);
             const inRange = selStart && selEnd && date >= selStart && date <= selEnd;
             let cls = 'period-cal-day';
-            if (isFuture) cls += ' future';
+            if (isPast) cls += ' past';
             if (isToday) cls += ' today';
             if (isStart && isEnd && sameDay(selStart, selEnd)) cls += ' selected';
             else if (isStart) cls += ' range-start';
@@ -213,7 +213,7 @@ function initFilters() {
         }
         calGrid.innerHTML = html;
 
-        calGrid.querySelectorAll('.period-cal-day:not(.empty):not(.future)').forEach(el => {
+        calGrid.querySelectorAll('.period-cal-day:not(.empty):not(.past)').forEach(el => {
             el.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const [y, m, day] = el.dataset.date.split('-').map(Number);
@@ -488,7 +488,9 @@ async function loadFunnel(queryStr) {
             }
         };
 
-        const ctx = document.getElementById('chart-funnel').getContext('2d');
+        const funnelCanvas = document.getElementById('chart-funnel');
+        if (!funnelCanvas) return;
+        const ctx = funnelCanvas.getContext('2d');
 
         if (state.charts.funnel) {
             state.charts.funnel.destroy();
@@ -619,7 +621,9 @@ async function loadDisconnections(queryStr) {
             const labels = categories;
             const bgColors = categories.map(cat => categoryColors[cat] || '#6b7280');
 
-            const ctx = document.getElementById('chart-disconnections').getContext('2d');
+            const discCanvas = document.getElementById('chart-disconnections');
+            if (!discCanvas) return;
+            const ctx = discCanvas.getContext('2d');
 
             if (state.charts.disconnections) {
                 state.charts.disconnections.destroy();
@@ -697,7 +701,9 @@ async function loadHourly(queryStr) {
         const conversion = data.map(d => d.conversion_rate);
         const peakIndex = calls.indexOf(Math.max(...calls));
 
-        const ctx = document.getElementById('chart-hourly').getContext('2d');
+        const hourlyCanvas = document.getElementById('chart-hourly');
+        if (!hourlyCanvas) return;
+        const ctx = hourlyCanvas.getContext('2d');
 
         if (state.charts.hourly) {
             state.charts.hourly.destroy();
@@ -826,7 +832,9 @@ async function loadFatigue(queryStr) {
         const calls = data.map(d => d.call_count);
         const conversions = data.map(d => d.conversion_rate);
 
-        const ctx = document.getElementById('chart-fatigue-impact').getContext('2d');
+        const fatigueCanvas = document.getElementById('chart-fatigue-impact');
+        if (!fatigueCanvas) return;
+        const ctx = fatigueCanvas.getContext('2d');
 
         if (state.charts.fatigue) {
             state.charts.fatigue.destroy();
