@@ -619,12 +619,13 @@ app.get('/api/zapi/all-status', async (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
 
   const instances = [
-    { client_name: 'Mindflow Oficial', instanceId: '3F5BBCC13F9441E00E5886B9FA2A227D', token: '64F4F81BE55EC5EDBA9696A0', clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S' },
-    { client_name: 'ATS Portaria Remota', instanceId: '3F593841D8F6F1D722D88699EC5A47CF', token: '11BBEB710E926E64F5AF73AD', clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S' },
-    { client_name: 'Kravi SAC', instanceId: '3F8A8CFB6E84B0BA6E6B92B31FE9D931', token: '9EC21D107C4163E74F680818', clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S' },
-    { client_name: 'Kravi Comercial', instanceId: '3F53014B6E8BE165D5DDE25F89A39EC6', token: '88891636BD921F9AA5D37E52', clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S' },
-    { client_name: 'DevolveJus', instanceId: '3F7D488E0411C146C267A6F05C4968EE', token: 'D43AE3E8FFC686E9DC0D34ED', clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S' },
-    { client_name: 'MyGain', instanceId: '3F5B9720BCBA4109714BFA27602D6B71', token: '4120836441EE8155F2B47D33', clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S' }
+    { key: 'mindflow', name: 'Mindflow Oficial', client_name: 'Mindflow Oficial', instanceId: '3F5BBCC13F9441E00E5886B9FA2A227D', token: '64F4F81BE55EC5EDBA9696A0', clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S' },
+    { key: 'kravi_sac', name: 'Kravi SAC', client_name: 'Kravi SAC', instanceId: '3F8A8CFB6E84B0BA6E6B92B31FE9D931', token: '9EC21D107C4163E74F680818', clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S' },
+    { key: 'kravi_comercial', name: 'Kravi Comercial', client_name: 'Kravi Comercial', instanceId: '3F53014B6E8BE165D5DDE25F89A39EC6', token: '88891636BD921F9AA5D37E52', clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S' },
+    { key: 'ats', name: 'ATS Portaria Remota', client_name: 'ATS Portaria Remota', instanceId: '3F593841D8F6F1D722D88699EC5A47CF', token: '11BBEB710E926E64F5AF73AD', clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S' },
+    { key: 'devolvejus', name: 'DevolveJus', client_name: 'DevolveJus', instanceId: '3F7D488E0411C146C267A6F05C4968EE', token: 'D43AE3E8FFC686E9DC0D34ED', clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S' },
+    { key: 'mygain', name: 'MyGain', client_name: 'MyGain', instanceId: '3F5B9720BCBA4109714BFA27602D6B71', token: '4120836441EE8155F2B47D33', clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S' },
+    { key: 'mindflow_teste', name: 'Mindflow Teste', client_name: 'Mindflow Teste', instanceId: '3F588D53C27212C62711', token: '820E3AA869FA76FEFE33', clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S' }
   ];
 
   const results = await Promise.all(instances.map(async (inst) => {
@@ -633,18 +634,23 @@ app.get('/api/zapi/all-status', async (req, res) => {
       const response = await fetch(statusUrl, { headers: { 'Client-Token': inst.clientToken } });
       if (response.ok) {
         const data = await response.json();
+        const isConnected = data.connected === true;
         return {
           ...inst,
-          connected: data.connected === true,
+          name: inst.name || inst.client_name,
+          connected: isConnected,
           phone: data.phone || data.connectedPhone || data.zapId || null,
-          status: data.connected ? 'CONNECTED' : 'DISCONNECTED',
+          statusLabel: isConnected ? 'Conectada' : 'Desconectada',
+          status: isConnected ? 'CONNECTED' : 'DISCONNECTED',
           lastCheck: new Date().toISOString()
         };
       }
     } catch (e) {}
     return {
       ...inst,
+      name: inst.name || inst.client_name,
       connected: false,
+      statusLabel: 'Desconectada',
       status: 'DISCONNECTED',
       lastCheck: new Date().toISOString()
     };

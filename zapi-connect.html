@@ -173,7 +173,7 @@
     /* ── CONTAINER PRINCIPAL ── */
     .container {
       width: 100%;
-      max-width: 1120px;
+      max-width: 1160px;
       padding: 32px 20px 60px;
       position: relative;
       z-index: 1;
@@ -281,7 +281,7 @@
       line-height: 1.5;
     }
 
-    /* ── TELA 1: ESTADO CONECTADO (Sem QR Code!) ── */
+    /* ── TELA 1: ESTADO CONECTADO ── */
     .connected-box {
       background: rgba(0, 181, 160, 0.05);
       border: 1px solid rgba(0, 181, 160, 0.25);
@@ -353,6 +353,13 @@
       box-shadow: 0 0 10px #4ADE80;
       animation: pulse 1.8s infinite ease-in-out;
     }
+    .dot-red {
+      width: 8px;
+      height: 8px;
+      background: #EF4444;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #EF4444;
+    }
 
     .info-grid {
       display: grid;
@@ -385,7 +392,7 @@
       display: block;
     }
 
-    /* ── TELA 2: ESTADO DESCONECTADO (Guia + QR Code) ── */
+    /* ── TELA 2: ESTADO DESCONECTADO ── */
     .qr-layout {
       display: grid;
       grid-template-columns: 1fr 240px;
@@ -518,7 +525,7 @@
       transform: translateY(-2px);
     }
 
-    /* ── SEÇÃO HUB DE DESENVOLVEDORES (GRID MULTI-CLIENTES) ── */
+    /* ── SEÇÃO HUB DE DESENVOLVEDORES (DEV OPERATIONS) ── */
     .dev-grid-section {
       display: none;
       width: 100%;
@@ -529,7 +536,7 @@
     }
     .dev-header h2 {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 22px;
+      font-size: 24px;
       font-weight: 700;
       color: #fff;
     }
@@ -539,9 +546,140 @@
       margin-top: 4px;
     }
 
+    /* Stat Cards da Telemetria */
+    .telemetry-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+      width: 100%;
+    }
+    .stat-card {
+      background: rgba(8, 14, 28, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      backdrop-filter: blur(14px);
+    }
+    .stat-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+    .stat-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+    .stat-value {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      margin-top: 2px;
+    }
+
+    /* Controls Bar */
+    .dev-controls-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 20px;
+      width: 100%;
+    }
+    .filter-tabs {
+      display: flex;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .filter-btn {
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .filter-btn.active {
+      background: rgba(46, 79, 255, 0.25);
+      color: #fff;
+      border: 1px solid rgba(46, 79, 255, 0.4);
+    }
+    .search-box {
+      position: relative;
+      width: 240px;
+    }
+    .search-box input {
+      width: 100%;
+      height: 36px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 0 12px 0 36px;
+      color: #fff;
+      font-size: 12px;
+      outline: none;
+    }
+    .search-box .search-icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 18px;
+      color: var(--muted);
+    }
+    .view-toggle {
+      display: flex;
+      gap: 4px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 4px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .view-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .view-btn.active {
+      background: rgba(0, 181, 160, 0.25);
+      color: #00B5A0;
+    }
+
+    /* Cards Grid View */
     .grid-instances {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
       gap: 20px;
       width: 100%;
     }
@@ -566,61 +704,112 @@
 
     .client-card-head {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
+      gap: 12px;
     }
     .client-name {
       font-family: 'Space Grotesk', sans-serif;
       font-size: 17px;
       font-weight: 700;
       color: #fff;
+      line-height: 1.2;
     }
-    .client-id-sub {
-      font-size: 11px;
-      color: var(--muted);
-      font-family: monospace;
-      margin-top: 2px;
+    .client-type-tag {
+      font-size: 10px;
+      color: #7B9AFF;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 4px;
+      display: block;
     }
 
-    .client-badge-connected {
+    /* Status Badges */
+    .status-badge-connected {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       background: rgba(34, 197, 94, 0.15);
-      border: 1px solid rgba(34, 197, 94, 0.3);
+      border: 1px solid rgba(34, 197, 94, 0.35);
       color: #4ADE80;
-      padding: 4px 10px;
+      padding: 5px 12px;
       border-radius: 20px;
-      font-size: 11px;
-      font-weight: 700;
       font-family: 'Space Grotesk', sans-serif;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
     }
-    .client-badge-waiting {
-      background: rgba(245, 158, 11, 0.15);
-      border: 1px solid rgba(245, 158, 11, 0.3);
-      color: #FBBF24;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 700;
-      font-family: 'Space Grotesk', sans-serif;
+    .status-badge-disconnected {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: #F87171;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
     }
 
-    .client-details {
+    /* Copy Chips */
+    .credentials-box {
       background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
       border-radius: 12px;
       padding: 12px;
       display: flex;
       flex-direction: column;
+      gap: 10px;
+    }
+    .cred-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       gap: 8px;
+    }
+    .cred-label {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .copy-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 11px;
+      color: #CBD5E1;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .copy-chip:hover {
+      background: rgba(0, 181, 160, 0.15);
+      border-color: rgba(0, 181, 160, 0.4);
+      color: #00B5A0;
+    }
+
+    .client-details {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 12px;
     }
     .client-detail-row {
       display: flex;
       justify-content: space-between;
-      font-size: 12px;
+      align-items: center;
     }
     .client-detail-row span:first-child { color: var(--muted); }
     .client-detail-row span:last-child { color: #fff; font-weight: 600; font-family: 'Space Grotesk', sans-serif; }
@@ -638,7 +827,50 @@
       padding: 0 10px;
     }
 
-    /* Selector Drawer (para selecionar instancia no topo da visao cliente em dev mode) */
+    /* Tabela Estilo Z-API */
+    .zapi-table-wrap {
+      width: 100%;
+      background: rgba(8, 14, 28, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      overflow-x: auto;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    }
+    .zapi-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+    .zapi-table th {
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--muted);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .zapi-table td {
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      color: #E2E8F0;
+      vertical-align: middle;
+    }
+    .zapi-table tbody tr {
+      transition: background 0.2s ease;
+    }
+    .zapi-table tbody tr:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .zapi-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Selector Bar */
     .selector-bar {
       width: 100%;
       background: rgba(12, 20, 38, 0.6);
@@ -713,11 +945,46 @@
       font-size: 12px;
       outline: none;
     }
+
+    /* Toast Container */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 999999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+    .toast {
+      background: rgba(10, 18, 38, 0.95);
+      border: 1px solid rgba(0, 181, 160, 0.5);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 15px rgba(0, 181, 160, 0.25);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      pointer-events: auto;
+      animation: toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes toastIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
   </style>
 </head>
 
 <body>
   <canvas id="neural-canvas"></canvas>
+
+  <div class="toast-container" id="toastContainer"></div>
 
   <!-- ── DOCK NAVEGAÇÃO LATERAL ── -->
   <nav class="dock">
@@ -793,6 +1060,7 @@
             <option value="ats">ATS Portaria Remota</option>
             <option value="devolvejus">DevolveJus</option>
             <option value="mygain">MyGain</option>
+            <option value="mindflow_teste">Mindflow Teste</option>
           </select>
         </div>
       </div>
@@ -807,7 +1075,7 @@
         <h1 class="card-title" id="cardTitle">Ativação de WhatsApp</h1>
         <p class="card-sub" id="cardSub">Gerencie a conexão da sua instância de WhatsApp para permitir o funcionamento dos agentes de IA e disparos automáticos.</p>
 
-        <!-- ESTADO: CONECTADO (Sem QR code, cartão verificado) -->
+        <!-- ESTADO: CONECTADO -->
         <div id="flowConnected" style="display: none;">
           <div class="connected-box">
             <div class="connected-icon-wrap">
@@ -898,15 +1166,114 @@
       </div>
     </div>
 
-    <!-- ── SEÇÃO 2: CENTRAL DEV OPERATIONS (GRID DE 6 CLIENTES) ── -->
+    <!-- ── SEÇÃO 2: CENTRAL DEV OPERATIONS (TELEMETRIA Z-API) ── -->
     <div id="devSection" class="dev-grid-section">
       <div class="dev-header">
-        <h2>Central de Telemetria Z-API (Dev Operations)</h2>
-        <p>Monitore a saúde, status de conexão e webhooks de todas as instâncias de clientes cadastradas no ecossistema Mindflow.</p>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+          <div>
+            <h2>Central de Telemetria Z-API (Dev Operations)</h2>
+            <p>Monitore a saúde, status de conexão, IDs, tokens e webhooks de todas as instâncias de clientes cadastradas.</p>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <button class="btn-action btn-secondary" style="height: 38px; padding: 0 16px; font-size: 12px;" onclick="loadDevOperationsGrid()">
+              <span class="material-symbols-outlined" style="font-size: 16px;">refresh</span>
+              Atualizar Telemetria
+            </button>
+          </div>
+        </div>
       </div>
 
+      <!-- CARDS DE RESUMO DA TELEMETRIA -->
+      <div class="telemetry-stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background: rgba(46, 79, 255, 0.15); color: #7B9AFF;">
+            <span class="material-symbols-outlined">cell_tower</span>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Total de Instâncias</span>
+            <span class="stat-value" id="statTotalInstances">7</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon" style="background: rgba(34, 197, 94, 0.15); color: #4ADE80;">
+            <span class="material-symbols-outlined">check_circle</span>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Conectadas (Online)</span>
+            <span class="stat-value" style="color: #4ADE80;" id="statConnectedInstances">0</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon" style="background: rgba(239, 68, 68, 0.15); color: #F87171;">
+            <span class="material-symbols-outlined">cancel</span>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Desconectadas</span>
+            <span class="stat-value" style="color: #F87171;" id="statDisconnectedInstances">0</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon" style="background: rgba(0, 181, 160, 0.15); color: #00B5A0;">
+            <span class="material-symbols-outlined">sync</span>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Sinal Z-API</span>
+            <span class="stat-value" style="color: #00B5A0;">100% Operacional</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- BARRA DE FILTROS & MODO DE VISUALIZAÇÃO -->
+      <div class="dev-controls-bar">
+        <div class="filter-tabs">
+          <button class="filter-btn active" id="filterAll" onclick="setDevFilter('all')">Todas (<span id="cntAll">7</span>)</button>
+          <button class="filter-btn" id="filterConn" onclick="setDevFilter('connected')">🟢 Conectadas (<span id="cntConn">0</span>)</button>
+          <button class="filter-btn" id="filterDisconn" onclick="setDevFilter('disconnected')">🔴 Desconectadas (<span id="cntDisconn">0</span>)</button>
+        </div>
+
+        <div style="display: flex; gap: 12px; align-items: center;">
+          <div class="search-box">
+            <span class="material-symbols-outlined search-icon">search</span>
+            <input type="text" id="devSearchInput" placeholder="Buscar cliente ou ID..." oninput="onDevSearchInput()" />
+          </div>
+
+          <div class="view-toggle">
+            <button class="view-btn active" id="btnViewGrid" title="Visualização em Cards Glass" onclick="setDevViewMode('grid')">
+              <span class="material-symbols-outlined">grid_view</span>
+            </button>
+            <button class="view-btn" id="btnViewTable" title="Tabela Estilo Z-API" onclick="setDevViewMode('table')">
+              <span class="material-symbols-outlined">table_chart</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTAINER CARDS GRID VIEW -->
       <div class="grid-instances" id="devGridInstances">
         <!-- Renderizado dinamicamente via JS -->
+      </div>
+
+      <!-- CONTAINER TABELA Z-API VIEW -->
+      <div class="zapi-table-wrap" id="devTableWrap" style="display: none;">
+        <table class="zapi-table">
+          <thead>
+            <tr>
+              <th>NOME DA INSTÂNCIA</th>
+              <th>STATUS</th>
+              <th>ID DA INSTÂNCIA</th>
+              <th>TOKEN DA INSTÂNCIA</th>
+              <th>TELEFONE WHATSAPP</th>
+              <th>WEBHOOK Z-API</th>
+              <th style="text-align: right;">AÇÕES</th>
+            </tr>
+          </thead>
+          <tbody id="devTableBody">
+            <!-- Renderizado dinamicamente via JS -->
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -970,6 +1337,12 @@
         instanceId: '3F5B9720BCBA4109714BFA27602D6B71',
         token: '4120836441EE8155F2B47D33',
         clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S'
+      },
+      mindflow_teste: {
+        name: 'Mindflow Teste',
+        instanceId: '3F588D53C27212C62711',
+        token: '820E3AA869FA76FEFE33',
+        clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S'
       }
     };
 
@@ -980,6 +1353,12 @@
     let activeClientToken = PRESETS.mindflow.clientToken;
     let qrInterval = null;
     let devGridInterval = null;
+
+    // Estado da Central Dev
+    let devInstancesList = [];
+    let currentDevFilter = 'all'; // 'all', 'connected', 'disconnected'
+    let currentDevViewMode = 'grid'; // 'grid', 'table'
+    let currentSearchTerm = '';
 
     // Elementos DOM
     const modeSwitcher = document.getElementById('modeSwitcher');
@@ -1071,7 +1450,6 @@
         const data = await response.json();
 
         if (data.connected) {
-          // SE JA ESTIVER CONECTADO: Oculta o QR code e exibe o cartão verificado com número de telefone!
           flowDisconnected.style.display = 'none';
           flowConnected.style.display = 'block';
           
@@ -1085,7 +1463,6 @@
           return;
         }
 
-        // SE NÃO ESTIVER CONECTADO: Exibe instrução + QR Code
         flowConnected.style.display = 'none';
         flowDisconnected.style.display = 'block';
 
@@ -1111,9 +1488,21 @@
         const url = `/api/setup-webhook?instanceId=${encodeURIComponent(activeInstanceId)}&token=${encodeURIComponent(activeToken)}&clientToken=${encodeURIComponent(activeClientToken)}`;
         const res = await fetch(url);
         const data = await res.json();
-        alert(data.message || 'Webhook re-sincronizado com sucesso!');
+        showToast(data.message || 'Webhook re-sincronizado com sucesso!');
       } catch (e) {
-        alert('Erro ao sincronizar webhook com Z-API');
+        showToast('Erro ao sincronizar webhook com Z-API');
+      }
+    }
+
+    async function registerWebhookForInstance(instId, tok, cTok) {
+      try {
+        const url = `/api/setup-webhook?instanceId=${encodeURIComponent(instId)}&token=${encodeURIComponent(tok)}&clientToken=${encodeURIComponent(cTok || PRESETS.mindflow.clientToken)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        showToast(data.message || 'Webhook re-sincronizado!');
+        loadDevOperationsGrid();
+      } catch (e) {
+        showToast('Erro ao sincronizar webhook');
       }
     }
 
@@ -1124,74 +1513,276 @@
           const res = await fetch(url);
           const data = await res.json();
           if (data.success) {
-            alert('Instância desconectada com sucesso!');
+            showToast('Instância desconectada com sucesso!');
             fetchQRCode();
           }
         } catch (e) {
-          alert('Erro ao desconectar instância.');
+          showToast('Erro ao desconectar instância.');
+        }
+      }
+    }
+
+    async function disconnectInstance(instId, tok, cTok) {
+      if (confirm(`Deseja desconectar a instância ${instId.substring(0,8)}...?`)) {
+        try {
+          const url = `/api/disconnect?instanceId=${encodeURIComponent(instId)}&token=${encodeURIComponent(tok)}&clientToken=${encodeURIComponent(cTok || PRESETS.mindflow.clientToken)}`;
+          const res = await fetch(url);
+          const data = await res.json();
+          if (data.success) {
+            showToast('Instância desconectada com sucesso!');
+            loadDevOperationsGrid();
+          }
+        } catch (e) {
+          showToast('Erro ao desconectar instância.');
         }
       }
     }
 
     /* ── HUB DE DESENVOLVEDORES: CARREGA SAÚDE DE TODAS AS INSTÂNCIAS ── */
     async function loadDevOperationsGrid() {
-      const container = document.getElementById('devGridInstances');
       try {
         const res = await fetch('/api/zapi/all-status');
-        const list = await res.json();
+        devInstancesList = await res.json();
 
-        container.innerHTML = '';
-        list.forEach(item => {
-          const isConn = item.connected;
-          const card = document.createElement('div');
-          card.className = 'client-card';
-          
-          card.innerHTML = `
-            <div class="client-card-head">
-              <div>
-                <div class="client-name">${item.name}</div>
-                <div class="client-id-sub">ID: ${item.instanceId.substring(0, 10)}...</div>
-              </div>
-              ${isConn ? `
-                <div class="client-badge-connected">
-                  <div class="dot-green"></div>
-                  ONLINE
-                </div>
-              ` : `
-                <div class="client-badge-waiting">
-                  <span class="material-symbols-outlined" style="font-size: 14px;">qr_code</span>
-                  PENDENTE
-                </div>
-              `}
-            </div>
-
-            <div class="client-details">
-              <div class="client-detail-row">
-                <span>Telefone:</span>
-                <span>${item.phone || (isConn ? 'Conectado' : 'Aguardando QR')}</span>
-              </div>
-              <div class="client-detail-row">
-                <span>Webhook Z-API:</span>
-                <span style="color: ${isConn ? '#4ADE80' : '#FBBF24'}">${isConn ? 'Sincronizado' : 'Pendente'}</span>
-              </div>
-            </div>
-
-            <div class="client-card-actions">
-              <button class="btn-action btn-mini btn-secondary" onclick="openClientCardView('${item.key}')">
-                <span class="material-symbols-outlined" style="font-size: 14px;">qr_code_2</span>
-                Abrir QR
-              </button>
-              <button class="btn-action btn-mini btn-secondary" onclick="openShareModal('${item.key}')">
-                <span class="material-symbols-outlined" style="font-size: 14px;">link</span>
-                Link Cliente
-              </button>
-            </div>
-          `;
-          container.appendChild(card);
-        });
+        updateTelemetryStats();
+        renderDevView();
       } catch (err) {
         console.error('Erro ao carregar dev operations grid:', err);
       }
+    }
+
+    function updateTelemetryStats() {
+      const total = devInstancesList.length;
+      const conn = devInstancesList.filter(i => i.connected).length;
+      const disconn = total - conn;
+
+      document.getElementById('statTotalInstances').innerText = total;
+      document.getElementById('statConnectedInstances').innerText = conn;
+      document.getElementById('statDisconnectedInstances').innerText = disconn;
+
+      document.getElementById('cntAll').innerText = total;
+      document.getElementById('cntConn').innerText = conn;
+      document.getElementById('cntDisconn').innerText = disconn;
+    }
+
+    function setDevFilter(filter) {
+      currentDevFilter = filter;
+      document.getElementById('filterAll').classList.toggle('active', filter === 'all');
+      document.getElementById('filterConn').classList.toggle('active', filter === 'connected');
+      document.getElementById('filterDisconn').classList.toggle('active', filter === 'disconnected');
+      renderDevView();
+    }
+
+    function setDevViewMode(mode) {
+      currentDevViewMode = mode;
+      document.getElementById('btnViewGrid').classList.toggle('active', mode === 'grid');
+      document.getElementById('btnViewTable').classList.toggle('active', mode === 'table');
+
+      const gridEl = document.getElementById('devGridInstances');
+      const tableWrapEl = document.getElementById('devTableWrap');
+
+      if (mode === 'grid') {
+        gridEl.style.display = 'grid';
+        tableWrapEl.style.display = 'none';
+      } else {
+        gridEl.style.display = 'none';
+        tableWrapEl.style.display = 'block';
+      }
+      renderDevView();
+    }
+
+    function onDevSearchInput() {
+      currentSearchTerm = document.getElementById('devSearchInput').value.toLowerCase().trim();
+      renderDevView();
+    }
+
+    function getFilteredInstances() {
+      return devInstancesList.filter(item => {
+        if (currentDevFilter === 'connected' && !item.connected) return false;
+        if (currentDevFilter === 'disconnected' && item.connected) return false;
+
+        if (currentSearchTerm) {
+          const name = (item.name || item.client_name || '').toLowerCase();
+          const id = (item.instanceId || '').toLowerCase();
+          const phone = (item.phone || '').toLowerCase();
+          return name.includes(currentSearchTerm) || id.includes(currentSearchTerm) || phone.includes(currentSearchTerm);
+        }
+        return true;
+      });
+    }
+
+    function renderDevView() {
+      const filtered = getFilteredInstances();
+
+      if (currentDevViewMode === 'grid') {
+        renderDevCards(filtered);
+      } else {
+        renderDevTable(filtered);
+      }
+    }
+
+    function renderDevCards(items) {
+      const container = document.getElementById('devGridInstances');
+      container.innerHTML = '';
+
+      if (items.length === 0) {
+        container.innerHTML = `<div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--muted); background: rgba(255,255,255,0.02); border-radius: 16px;">Nenhuma instância encontrada com os filtros selecionados.</div>`;
+        return;
+      }
+
+      items.forEach(item => {
+        const isConn = item.connected;
+        const displayName = item.name || item.client_name || 'Instância Z-API';
+        const card = document.createElement('div');
+        card.className = 'client-card';
+
+        const instIdSnippet = item.instanceId ? (item.instanceId.substring(0, 10) + '...') : '—';
+        const tokenSnippet = item.token ? (item.token.substring(0, 10) + '...') : '—';
+
+        card.innerHTML = `
+          <div class="client-card-head">
+            <div>
+              <div class="client-name">${displayName}</div>
+              <span class="client-type-tag">Z-API Multi-Device</span>
+            </div>
+            ${isConn ? `
+              <div class="status-badge-connected">
+                <span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span>
+                Conectada
+              </div>
+            ` : `
+              <div class="status-badge-disconnected">
+                <span class="material-symbols-outlined" style="font-size: 16px;">cancel</span>
+                Desconectada
+              </div>
+            `}
+          </div>
+
+          <div class="credentials-box">
+            <div class="cred-row">
+              <span class="cred-label">ID da Instância</span>
+              <div class="copy-chip" onclick="copyToClipboard('${item.instanceId}', 'ID da Instância ${displayName}')" title="Clique para copiar o ID completo">
+                <span>${instIdSnippet}</span>
+                <span class="material-symbols-outlined" style="font-size: 14px; color: var(--teal);">content_copy</span>
+              </div>
+            </div>
+            <div class="cred-row">
+              <span class="cred-label">Token</span>
+              <div class="copy-chip" onclick="copyToClipboard('${item.token}', 'Token da Instância ${displayName}')" title="Clique para copiar o Token completo">
+                <span>${tokenSnippet}</span>
+                <span class="material-symbols-outlined" style="font-size: 14px; color: var(--teal);">content_copy</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="client-details">
+            <div class="client-detail-row">
+              <span>Telefone WhatsApp:</span>
+              <span>${item.phone ? (item.phone.startsWith('+') ? item.phone : '+' + item.phone) : (isConn ? 'Número Ativo' : 'Aguardando QR')}</span>
+            </div>
+            <div class="client-detail-row">
+              <span>Webhook Z-API:</span>
+              <span style="color: ${isConn ? '#4ADE80' : '#FBBF24'}">${isConn ? '🟢 Sincronizado' : '🟡 Pendente'}</span>
+            </div>
+          </div>
+
+          <div class="client-card-actions">
+            <button class="btn-action btn-mini btn-secondary" onclick="openClientCardView('${item.key || 'mindflow'}')">
+              <span class="material-symbols-outlined" style="font-size: 14px;">qr_code_2</span>
+              Ver QR / Conexão
+            </button>
+            <button class="btn-action btn-mini btn-secondary" onclick="openShareModal('${item.key || 'mindflow'}')">
+              <span class="material-symbols-outlined" style="font-size: 14px;">link</span>
+              Link Cliente
+            </button>
+            <button class="btn-action btn-mini btn-secondary" onclick="registerWebhookForInstance('${item.instanceId}', '${item.token}', '${item.clientToken}')" title="Re-sincronizar Webhook">
+              <span class="material-symbols-outlined" style="font-size: 14px;">sync</span>
+              Webhook
+            </button>
+            <button class="btn-action btn-mini btn-danger" onclick="disconnectInstance('${item.instanceId}', '${item.token}', '${item.clientToken}')" title="Desconectar Instância">
+              <span class="material-symbols-outlined" style="font-size: 14px;">power_settings_new</span>
+              Desconectar
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function renderDevTable(items) {
+      const tbody = document.getElementById('devTableBody');
+      tbody.innerHTML = '';
+
+      if (items.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--muted);">Nenhuma instância encontrada.</td></tr>`;
+        return;
+      }
+
+      items.forEach(item => {
+        const isConn = item.connected;
+        const displayName = item.name || item.client_name || 'Instância Z-API';
+        const tr = document.createElement('tr');
+
+        const instIdSnippet = item.instanceId ? (item.instanceId.substring(0, 12) + '...') : '—';
+        const tokenSnippet = item.token ? (item.token.substring(0, 12) + '...') : '—';
+
+        tr.innerHTML = `
+          <td>
+            <div style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; color: #fff; font-size: 14px;">${displayName}</div>
+            <span style="font-size: 10px; color: #7B9AFF; font-weight: 600;">Stripe / Enterprise</span>
+          </td>
+          <td>
+            ${isConn ? `
+              <div class="status-badge-connected">
+                <span class="material-symbols-outlined" style="font-size: 15px;">check_circle</span>
+                Conectada
+              </div>
+            ` : `
+              <div class="status-badge-disconnected">
+                <span class="material-symbols-outlined" style="font-size: 15px;">cancel</span>
+                Desconectada
+              </div>
+            `}
+          </td>
+          <td>
+            <div class="copy-chip" onclick="copyToClipboard('${item.instanceId}', 'ID da Instância ${displayName}')" title="Clique para copiar ID completo">
+              <span>${instIdSnippet}</span>
+              <span class="material-symbols-outlined" style="font-size: 14px; color: var(--teal);">content_copy</span>
+            </div>
+          </td>
+          <td>
+            <div class="copy-chip" onclick="copyToClipboard('${item.token}', 'Token da Instância ${displayName}')" title="Clique para copiar Token completo">
+              <span>${tokenSnippet}</span>
+              <span class="material-symbols-outlined" style="font-size: 14px; color: var(--teal);">content_copy</span>
+            </div>
+          </td>
+          <td style="font-family: monospace; font-size: 12px;">
+            ${item.phone ? (item.phone.startsWith('+') ? item.phone : '+' + item.phone) : (isConn ? 'Ativo' : '—')}
+          </td>
+          <td>
+            <span style="color: ${isConn ? '#4ADE80' : '#FBBF24'}; font-weight: 600; font-size: 12px;">
+              ${isConn ? '🟢 Sincronizado' : '🟡 Pendente'}
+            </span>
+          </td>
+          <td style="text-align: right;">
+            <div style="display: flex; gap: 6px; justify-content: flex-end;">
+              <button class="btn-action btn-mini btn-secondary" style="width: 32px; padding: 0;" onclick="openClientCardView('${item.key || 'mindflow'}')" title="Abrir Visão Cliente / QR">
+                <span class="material-symbols-outlined" style="font-size: 16px;">qr_code_2</span>
+              </button>
+              <button class="btn-action btn-mini btn-secondary" style="width: 32px; padding: 0;" onclick="openShareModal('${item.key || 'mindflow'}')" title="Copiar Link Cliente">
+                <span class="material-symbols-outlined" style="font-size: 16px;">link</span>
+              </button>
+              <button class="btn-action btn-mini btn-secondary" style="width: 32px; padding: 0;" onclick="registerWebhookForInstance('${item.instanceId}', '${item.token}', '${item.clientToken}')" title="Re-sincronizar Webhook">
+                <span class="material-symbols-outlined" style="font-size: 16px;">sync</span>
+              </button>
+              <button class="btn-action btn-mini btn-danger" style="width: 32px; padding: 0;" onclick="disconnectInstance('${item.instanceId}', '${item.token}', '${item.clientToken}')" title="Desconectar Instância">
+                <span class="material-symbols-outlined" style="font-size: 16px;">power_settings_new</span>
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
     }
 
     function openClientCardView(key) {
@@ -1218,8 +1809,46 @@
     function copyShareUrl() {
       const input = document.getElementById('shareUrlInput');
       input.select();
-      navigator.clipboard.writeText(input.value);
-      alert('Link copiado para a área de transferência! Envie para o seu cliente.');
+      copyToClipboard(input.value, 'Link de conexão do cliente');
+      closeShareModal();
+    }
+
+    function copyToClipboard(text, label) {
+      if (!text) return;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          showToast(`✅ ${label} copiado!`);
+        }).catch(() => {
+          fallbackCopy(text, label);
+        });
+      } else {
+        fallbackCopy(text, label);
+      }
+    }
+
+    function fallbackCopy(text, label) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      showToast(`✅ ${label} copiado!`);
+    }
+
+    function showToast(msg) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerHTML = `<span class="material-symbols-outlined" style="color: var(--teal); font-size: 18px;">info</span><span>${msg}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
     }
 
     async function checkSession() {
