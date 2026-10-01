@@ -386,8 +386,29 @@ async function loadKPIs(queryStr) {
 
         const totalCalls = data.total_calls || 0;
         const emptyNotice = document.getElementById('dashEmptyNotice');
-        if (emptyNotice) {
-            emptyNotice.style.display = totalCalls === 0 ? 'flex' : 'none';
+
+        if (totalCalls === 0 && emptyNotice) {
+            emptyNotice.style.display = 'flex';
+            try {
+                const waRes = await fetch(`/whatsapp/metrics?${queryStr}`);
+                if (waRes.ok) {
+                    const waData = await waRes.json();
+                    if (waData.total_mensagens > 0 || waData.total_leads > 0) {
+                        emptyNotice.innerHTML = `
+                          <span class="material-symbols-outlined" style="font-size: 32px; color: #00B5A0;">chat</span>
+                          <div style="flex: 1;">
+                            <h4 style="font-family: 'Space Grotesk', sans-serif; font-size: 15px; color: #fff; font-weight: 700;">Esta conta opera via WhatsApp IA (${waData.total_leads || 0} Leads / ${(waData.total_mensagens || 0).toLocaleString()} Mensagens)</h4>
+                            <p style="font-size: 13px; color: #8E8FA2; margin-top: 2px;">Não há ligações de voz Retell nesta aba. Clique no botão ao lado ou acesse a aba <strong>WhatsApp</strong> acima para visualizar todo o engajamento e métricas em tempo real.</p>
+                          </div>
+                          <button type="button" onclick="document.querySelector('[data-tab=\\'whatsapp\\']')?.click()" style="background: linear-gradient(135deg, #2E4FFF, #00B5A0); border: none; color: #fff; padding: 10px 18px; border-radius: 12px; font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; box-shadow: 0 4px 14px rgba(0,181,160,0.3);">
+                            Ver Dashboard WhatsApp &rarr;
+                          </button>
+                        `;
+                    }
+                }
+            } catch (e) {}
+        } else if (emptyNotice) {
+            emptyNotice.style.display = 'none';
         }
 
         document.getElementById('kpi-total-calls').textContent = totalCalls.toLocaleString();
