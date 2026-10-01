@@ -6,7 +6,7 @@
   <meta content="width=device-width, initial-scale=1.0" name="viewport" />
   <title>Conexão WhatsApp Z-API | MindFlow AI</title>
 
-  <!-- Scripts Base -->
+  <!-- QRCode.js Library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <link rel="icon"
@@ -32,6 +32,7 @@
       --blue2: #7B9AFF;
       --bg: #04060E;
       --muted: #8E8FA2;
+      --card-bg: rgba(8, 12, 24, 0.82);
     }
 
     body {
@@ -99,7 +100,7 @@
       margin: 2px 0;
     }
 
-    /* ── NAVBAR ── */
+    /* ── NAVBAR TOP ── */
     .navbar {
       position: fixed;
       top: 0;
@@ -169,23 +170,64 @@
       transform: translateY(-1px);
     }
 
-    /* ── CARD PRINCIPAL ── */
+    /* ── CONTAINER PRINCIPAL ── */
+    .container {
+      width: 100%;
+      max-width: 1120px;
+      padding: 32px 20px 60px;
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── TABS DE ALTERNÂNCIA (MODO STAFF / DEV) ── */
+    .mode-switcher {
+      display: inline-flex;
+      background: rgba(8, 14, 28, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 4px;
+      border-radius: 14px;
+      margin-bottom: 28px;
+      backdrop-filter: blur(10px);
+    }
+    .tab-btn {
+      padding: 8px 20px;
+      border-radius: 10px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .tab-btn.active {
+      color: #fff;
+      background: rgba(46, 79, 255, 0.3);
+      border: 1px solid rgba(46, 79, 255, 0.4);
+      box-shadow: 0 4px 14px rgba(46, 79, 255, 0.25);
+    }
+
+    /* ── CARD ANIMADO DE BORDA CONICA ── */
     @property --ba {
       syntax: '<angle>';
       initial-value: 0deg;
       inherits: false;
     }
-
     @keyframes spin-border {
-      to {
-        --ba: 360deg;
-      }
+      to { --ba: 360deg; }
     }
 
-    .card {
+    .main-card {
       --ba: 0deg;
       background:
-        linear-gradient(rgba(8, 12, 24, 0.82), rgba(8, 12, 24, 0.82)) padding-box,
+        linear-gradient(rgba(8, 12, 24, 0.85), rgba(8, 12, 24, 0.85)) padding-box,
         conic-gradient(from var(--ba),
           rgba(46, 79, 255, 0) 0%,
           rgba(46, 79, 255, .75) 15%,
@@ -194,18 +236,16 @@
           rgba(0, 181, 160, .55) 80%,
           rgba(46, 79, 255, 0) 100%) border-box;
       border: 1px solid transparent;
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-radius: 20px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 24px;
       width: 100%;
-      max-width: 520px;
-      padding: 38px 32px;
+      max-width: 680px;
+      padding: 40px;
       box-shadow: 0 32px 64px rgba(0, 0, 0, .65), 0 0 40px rgba(0, 181, 160, 0.1);
-      position: relative;
-      z-index: 1;
-      margin: auto 0;
       animation: spin-border 9s linear infinite;
       text-align: center;
+      position: relative;
     }
 
     .card-badge {
@@ -215,19 +255,19 @@
       background: rgba(0, 181, 160, 0.12);
       border: 1px solid rgba(0, 181, 160, 0.3);
       color: #00B5A0;
-      padding: 4px 12px;
+      padding: 5px 14px;
       border-radius: 20px;
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 700;
       font-family: 'Space Grotesk', sans-serif;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 16px;
+      letter-spacing: 0.06em;
+      margin-bottom: 20px;
     }
 
     .card-title {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 26px;
+      font-size: 28px;
       font-weight: 700;
       letter-spacing: -0.02em;
       color: #fff;
@@ -235,23 +275,173 @@
     }
 
     .card-sub {
-      font-size: 13px;
+      font-size: 14px;
       color: #8e8fa2;
-      margin-bottom: 24px;
+      margin-bottom: 28px;
       line-height: 1.5;
+    }
+
+    /* ── TELA 1: ESTADO CONECTADO (Sem QR Code!) ── */
+    .connected-box {
+      background: rgba(0, 181, 160, 0.05);
+      border: 1px solid rgba(0, 181, 160, 0.25);
+      border-radius: 18px;
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .connected-icon-wrap {
+      position: relative;
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(0, 181, 160, 0.2), rgba(46, 79, 255, 0.2));
+      border: 2px solid #00B5A0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 30px rgba(0, 181, 160, 0.4);
+    }
+    .connected-icon-wrap .material-symbols-outlined {
+      font-size: 40px;
+      color: #00B5A0;
+    }
+    .pulse-ring {
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 2px solid rgba(0, 181, 160, 0.5);
+      animation: pulse-ring 2s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
+    }
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      100% { transform: scale(1.35); opacity: 0; }
+    }
+
+    .phone-display {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.01em;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.35);
+      color: #4ADE80;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: 'Space Grotesk', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .dot-green {
+      width: 8px;
+      height: 8px;
+      background: #4ADE80;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #4ADE80;
+      animation: pulse 1.8s infinite ease-in-out;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      width: 100%;
+      margin-top: 10px;
+    }
+    .info-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: left;
+    }
+    .info-item span.lbl {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+    .info-item span.val {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      color: #fff;
+      font-weight: 600;
+      margin-top: 2px;
+      display: block;
+    }
+
+    /* ── TELA 2: ESTADO DESCONECTADO (Guia + QR Code) ── */
+    .qr-layout {
+      display: grid;
+      grid-template-columns: 1fr 240px;
+      gap: 24px;
+      align-items: center;
+      text-align: left;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 600px) {
+      .qr-layout { grid-template-columns: 1fr; }
+    }
+
+    .guide-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .guide-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(46, 79, 255, 0.2);
+      border: 1px solid rgba(46, 79, 255, 0.4);
+      color: var(--blue2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+    .step-text {
+      font-size: 13px;
+      color: #CBD5E1;
+      line-height: 1.4;
+    }
+    .step-text strong {
+      color: #fff;
     }
 
     .qr-box {
       background: #FFFFFF;
-      padding: 1.25rem;
-      border-radius: 16px;
-      display: inline-flex;
+      padding: 14px;
+      border-radius: 18px;
+      display: flex;
       justify-content: center;
       align-items: center;
-      margin-bottom: 20px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(255, 255, 255, 0.1);
-      min-width: 250px;
-      min-height: 250px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 181, 160, 0.2);
+      min-width: 220px;
+      min-height: 220px;
       position: relative;
     }
 
@@ -264,23 +454,8 @@
       align-items: center;
       justify-content: center;
       gap: 10px;
-      margin-top: 14px;
+      width: 100%;
     }
-
-    .dot {
-      width: 9px;
-      height: 9px;
-      background: var(--teal);
-      border-radius: 50%;
-      box-shadow: 0 0 12px var(--teal);
-      animation: pulse 1.8s infinite ease-in-out;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(1.35); }
-    }
-
     .status-text {
       font-family: 'Space Grotesk', sans-serif;
       font-size: 13px;
@@ -288,9 +463,17 @@
       color: #A5B4FC;
     }
 
-    .btn-action {
+    /* ── BOTOES DE AÇÃO ── */
+    .btn-row {
+      display: flex;
+      gap: 12px;
       width: 100%;
-      height: 48px;
+      margin-top: 20px;
+    }
+
+    .btn-action {
+      flex: 1;
+      height: 46px;
       background: linear-gradient(135deg, var(--blue) 0%, var(--teal) 100%);
       border: none;
       border-radius: 12px;
@@ -298,122 +481,237 @@
       font-family: 'Space Grotesk', sans-serif;
       font-size: 13px;
       font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
+      letter-spacing: 0.04em;
       cursor: pointer;
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-      margin-top: 20px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
     }
-
     .btn-action:hover {
       filter: brightness(1.15);
       transform: translateY(-2px);
       box-shadow: 0 12px 24px rgba(46, 79, 255, 0.35);
     }
 
-    .btn-danger {
-      background: rgba(239, 68, 68, 0.12);
-      color: #F87171;
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      margin-top: 10px;
-    }
-
-    .btn-danger:hover {
-      background: #EF4444;
-      color: #fff;
-      box-shadow: 0 12px 24px rgba(239, 68, 68, 0.35);
-    }
-
     .btn-secondary {
       background: rgba(255, 255, 255, 0.06);
       color: #E2E8F0;
       border: 1px solid rgba(255, 255, 255, 0.12);
-      margin-top: 10px;
     }
     .btn-secondary:hover {
       background: rgba(255, 255, 255, 0.12);
       color: #fff;
+      transform: translateY(-2px);
     }
 
-    .success-panel {
-      display: none;
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.12);
+      color: #F87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
     }
-
-    .success-panel.active {
-      display: block;
-      animation: slideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(16px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .icon-success {
-      width: 68px;
-      height: 68px;
-      background: linear-gradient(135deg, #00B5A0, #2E4FFF);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 20px;
-      font-size: 32px;
+    .btn-danger:hover {
+      background: #EF4444;
       color: #fff;
-      box-shadow: 0 0 35px rgba(0, 181, 160, 0.4);
+      box-shadow: 0 12px 24px rgba(239, 68, 68, 0.35);
+      transform: translateY(-2px);
     }
 
-    /* Instance Config Box */
-    .config-box {
-      background: rgba(4, 8, 20, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 14px;
-      padding: 16px;
-      margin-bottom: 20px;
+    /* ── SEÇÃO HUB DE DESENVOLVEDORES (GRID MULTI-CLIENTES) ── */
+    .dev-grid-section {
+      display: none;
+      width: 100%;
+    }
+    .dev-header {
+      margin-bottom: 24px;
       text-align: left;
     }
-    .config-box label {
-      font-size: 11px;
+    .dev-header h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 22px;
       font-weight: 700;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      display: block;
-      margin-bottom: 4px;
-    }
-    .config-input {
-      width: 100%;
-      height: 38px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      padding: 0 12px;
       color: #fff;
-      font-family: monospace;
-      font-size: 12px;
-      margin-bottom: 10px;
-      outline: none;
-      transition: border-color 0.2s;
     }
-    .config-input:focus {
-      border-color: var(--teal);
+    .dev-header p {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
     }
 
-    .param-pill-box {
+    .grid-instances {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+      width: 100%;
+    }
+
+    .client-card {
+      background: rgba(8, 14, 28, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      backdrop-filter: blur(14px);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+    .client-card:hover {
+      border-color: rgba(0, 181, 160, 0.4);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 181, 160, 0.15);
+    }
+
+    .client-card-head {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: rgba(46, 79, 255, 0.08);
-      border: 1px solid rgba(46, 79, 255, 0.2);
-      border-radius: 10px;
-      padding: 8px 12px;
-      margin-bottom: 18px;
+    }
+    .client-name {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .client-id-sub {
       font-size: 11px;
-      color: #A5B4FC;
+      color: var(--muted);
+      font-family: monospace;
+      margin-top: 2px;
+    }
+
+    .client-badge-connected {
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: #4ADE80;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: 'Space Grotesk', sans-serif;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .client-badge-waiting {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: #FBBF24;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: 'Space Grotesk', sans-serif;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .client-details {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .client-detail-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+    .client-detail-row span:first-child { color: var(--muted); }
+    .client-detail-row span:last-child { color: #fff; font-weight: 600; font-family: 'Space Grotesk', sans-serif; }
+
+    .client-card-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .btn-mini {
+      height: 36px;
+      font-size: 11px;
+      border-radius: 9px;
+      padding: 0 10px;
+    }
+
+    /* Selector Drawer (para selecionar instancia no topo da visao cliente em dev mode) */
+    .selector-bar {
+      width: 100%;
+      background: rgba(12, 20, 38, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      font-size: 12px;
+    }
+    .selector-bar select {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      color: #fff;
+      padding: 4px 10px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 12px;
+      outline: none;
+    }
+
+    /* Modal Share Link */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 99999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-box {
+      background: #0A0F1E;
+      border: 1px solid rgba(0, 181, 160, 0.3);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 520px;
+      padding: 28px;
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.8);
+      text-align: left;
+    }
+    .modal-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .modal-sub {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+    .copy-input-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .copy-input {
+      flex: 1;
+      height: 42px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 0 12px;
+      color: var(--teal);
+      font-family: monospace;
+      font-size: 12px;
+      outline: none;
     }
   </style>
 </head>
@@ -429,7 +727,7 @@
     <a href="/disparo" class="dock-item" title="Disparo de Ligações">
       <span class="material-symbols-outlined">smart_toy</span>
     </a>
-    <a href="/dashboard" class="dock-item" title="Dashboard Metrias">
+    <a href="/dashboard" class="dock-item" title="Dashboard Métricas">
       <span class="material-symbols-outlined">bar_chart</span>
     </a>
     <a href="/zapi-connect" class="dock-item active" title="Conexão WhatsApp Z-API">
@@ -465,180 +763,302 @@
     </div>
   </nav>
 
-  <main style="flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; padding: 40px 20px;">
-    <div class="card">
-      <div class="card-badge">
-        <span class="material-symbols-outlined" style="font-size: 14px;">cell_tower</span>
-        <span>Conexão Z-API Instância</span>
+  <!-- ── CONTEÚDO PRINCIPAL ── -->
+  <main class="container">
+
+    <!-- Alternate Tabs (Visível em Staff Mode) -->
+    <div class="mode-switcher" id="modeSwitcher">
+      <button class="tab-btn active" id="tabClientMode" onclick="switchTab('client')">
+        <span class="material-symbols-outlined" style="font-size: 18px;">qr_code_2</span>
+        <span>Minha Conexão (Visão Cliente)</span>
+      </button>
+      <button class="tab-btn" id="tabDevMode" onclick="switchTab('dev')">
+        <span class="material-symbols-outlined" style="font-size: 18px;">monitoring</span>
+        <span>Central Dev Operations</span>
+      </button>
+    </div>
+
+    <!-- ── SEÇÃO 1: VISÃO DO CLIENTE / INSTÂNCIA INDIVIDUAL ── -->
+    <div id="clientSection" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+      
+      <!-- Selector de Instância (Aparece se for dev acessando sem params) -->
+      <div id="selectorBar" class="selector-bar" style="max-width: 680px; display: none;">
+        <span><strong style="color: #fff;">Instância Monitorada:</strong> <span id="lblActiveClient">Mindflow Oficial</span></span>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <label style="color: var(--muted); font-size: 11px;">Trocar Cliente:</label>
+          <select id="clientSelect" onchange="onClientSelectChange()">
+            <option value="mindflow">Mindflow Oficial</option>
+            <option value="kravi_sac">Kravi SAC</option>
+            <option value="kravi_comercial">Kravi Comercial</option>
+            <option value="ats">ATS Portaria Remota</option>
+            <option value="devolvejus">DevolveJus</option>
+            <option value="mygain">MyGain</option>
+          </select>
+        </div>
       </div>
 
-      <!-- Configuração de Parâmetros de Instância (Se acessado via Hub ou Manual) -->
-      <div id="paramPill" class="param-pill-box" style="display: none;">
-        <span><strong style="color: #fff;">Instância Ativa:</strong> <span id="lblInstanceId">3F59...</span></span>
-        <button type="button" onclick="toggleConfigDrawer()" style="background: none; border: none; color: #00B5A0; cursor: pointer; font-size: 11px; font-weight: 600;">Trocar Instância</button>
-      </div>
+      <!-- MAIN CARD DO CLIENTE -->
+      <div class="main-card">
+        <div class="card-badge" id="cardBadge">
+          <span class="material-symbols-outlined" style="font-size: 14px;">cell_tower</span>
+          <span id="badgeText">CONEXÃO WHATSAPP Z-API</span>
+        </div>
 
-      <div id="configDrawer" class="config-box" style="display: none;">
-        <label>Selecione um Cliente ou Digite as Chaves:</label>
-        <select id="clientPresetSelect" onchange="onPresetChange()" class="config-input" style="background: rgba(12,20,40,0.9); height: 38px;">
-          <option value="custom">-- Instância Manual / Query Strings --</option>
-          <option value="ats">ATS (Portaria Remota)</option>
-          <option value="kravi_sac">Kravi SAC</option>
-          <option value="kravi_comercial">Kravi Comercial</option>
-          <option value="devolvejus">DevolveJus</option>
-          <option value="mygain">MyGain</option>
-          <option value="mindflow" selected>Mindflow Oficial</option>
-        </select>
+        <h1 class="card-title" id="cardTitle">Ativação de WhatsApp</h1>
+        <p class="card-sub" id="cardSub">Gerencie a conexão da sua instância de WhatsApp para permitir o funcionamento dos agentes de IA e disparos automáticos.</p>
 
-        <label>Z-API Instance ID</label>
-        <input type="text" id="cfgInstanceId" class="config-input" placeholder="Ex: 3F593841D8F6F1D722D88699EC5A47CF" />
+        <!-- ESTADO: CONECTADO (Sem QR code, cartão verificado) -->
+        <div id="flowConnected" style="display: none;">
+          <div class="connected-box">
+            <div class="connected-icon-wrap">
+              <div class="pulse-ring"></div>
+              <span class="material-symbols-outlined">verified</span>
+            </div>
+            
+            <div class="status-pill">
+              <div class="dot-green"></div>
+              <span>INSTÂNCIA ONLINE & CONECTADA</span>
+            </div>
 
-        <label>Z-API Token</label>
-        <input type="text" id="cfgToken" class="config-input" placeholder="Ex: 11BBEB710E926E64F5AF73AD" />
+            <div class="phone-display" id="connectedPhoneDisplay">+55 (11) 99999-9999</div>
+            
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="lbl">Cliente / Empresa</span>
+                <span class="val" id="connectedClientName">Mindflow</span>
+              </div>
+              <div class="info-item">
+                <span class="lbl">ID da Instância</span>
+                <span class="val" id="connectedInstanceSnippet">3F5B...227D</span>
+              </div>
+              <div class="info-item">
+                <span class="lbl">Status Webhook</span>
+                <span class="val" style="color: #4ADE80;">🟢 Sincronizado</span>
+              </div>
+              <div class="info-item">
+                <span class="lbl">Sinal Z-API</span>
+                <span class="val" style="color: var(--teal);">⚡ 100% Ativo</span>
+              </div>
+            </div>
+          </div>
 
-        <label>Client Token</label>
-        <input type="text" id="cfgClientToken" class="config-input" placeholder="Ex: F5724b7f8bf0e456bbdad95a16886f435S" style="margin-bottom: 12px;" />
-
-        <button type="button" onclick="applyCustomConfig()" class="btn-action" style="height: 38px; font-size: 11px; margin-top: 0;">Carregar Instância</button>
-      </div>
-
-      <!-- Tela de Conexão (QR Code) -->
-      <div id="connection-flow">
-        <h1 class="card-title">Ativar WhatsApp</h1>
-        <p class="card-sub">Conecte sua instância Z-API escaneando o QR Code abaixo pelo aplicativo WhatsApp no seu celular.</p>
-
-        <div class="qr-box" id="qr-code-canvas">
-          <div style="font-size: 12px; color: #8E8FA2; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-            <span class="material-symbols-outlined" style="font-size: 32px; color: var(--teal); animation: pulse 1.5s infinite;">sync</span>
-            <span>Gerando QR Code atualizado...</span>
+          <div class="btn-row">
+            <button type="button" class="btn-action btn-secondary" onclick="registerWebhookManual()">
+              <span class="material-symbols-outlined">sync</span>
+              Re-Sincronizar Webhook
+            </button>
+            <button type="button" class="btn-action btn-danger" onclick="confirmarDesconexao()">
+              <span class="material-symbols-outlined">power_settings_new</span>
+              Desconectar WhatsApp
+            </button>
           </div>
         </div>
 
-        <div class="status-panel">
-          <div class="dot"></div>
-          <div class="status-text" id="statusText">Aguardando leitura do QR Code...</div>
-        </div>
-      </div>
+        <!-- ESTADO: DESCONECTADO (Guia + QR Code) -->
+        <div id="flowDisconnected">
+          <div class="qr-layout">
+            <div class="guide-list">
+              <div class="guide-step">
+                <div class="step-num">1</div>
+                <div class="step-text">Abra o aplicativo <strong>WhatsApp</strong> no celular onde deseja ativar o atendimento.</div>
+              </div>
+              <div class="guide-step">
+                <div class="step-num">2</div>
+                <div class="step-text">Acesse <strong>Configurações / Opções</strong> e selecione <strong>Dispositivos Conectados</strong>.</div>
+              </div>
+              <div class="guide-step">
+                <div class="step-num">3</div>
+                <div class="step-text">Toque em <strong>Conectar um Dispositivo</strong> e aponte a câmera para o QR Code ao lado.</div>
+              </div>
+            </div>
 
-      <!-- Tela de Sucesso -->
-      <div id="success-flow" class="success-panel">
-        <div class="icon-success">
-          <span class="material-symbols-outlined" style="font-size: 36px;">verified</span>
-        </div>
-        <h1 class="card-title">Instância Conectada!</h1>
-        <p class="card-sub" id="success-details">Sua instância WhatsApp Z-API foi autenticada e vinculada com sucesso. Os agentes e automações da Mindflow AI já estão prontos.</p>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+              <div class="qr-box" id="qr-code-canvas">
+                <div style="font-size: 12px; color: #8E8FA2; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                  <span class="material-symbols-outlined" style="font-size: 32px; color: var(--teal); animation: pulse 1.5s infinite;">sync</span>
+                  <span>Gerando QR Code...</span>
+                </div>
+              </div>
+            </div>
+          </div>
 
-        <button type="button" class="btn-action" onclick="registerWebhookManual()">
-          <span class="material-symbols-outlined" style="font-size: 18px;">webhook</span>
-          Re-Sincronizar Webhook Z-API
-        </button>
-        <button type="button" class="btn-action btn-danger" onclick="confirmarDesconexao()">
-          <span class="material-symbols-outlined" style="font-size: 18px;">power_settings_new</span>
-          Desconectar Instância
-        </button>
+          <div class="status-panel">
+            <div class="dot-green" style="background: var(--teal); box-shadow: 0 0 10px var(--teal);"></div>
+            <div class="status-text" id="statusText">Aguardando leitura do QR Code no WhatsApp...</div>
+          </div>
+
+          <div class="btn-row" style="margin-top: 18px;">
+            <button type="button" class="btn-action btn-secondary" onclick="fetchQRCode()">
+              <span class="material-symbols-outlined">refresh</span>
+              Atualizar QR Code
+            </button>
+          </div>
+        </div>
+
       </div>
     </div>
+
+    <!-- ── SEÇÃO 2: CENTRAL DEV OPERATIONS (GRID DE 6 CLIENTES) ── -->
+    <div id="devSection" class="dev-grid-section">
+      <div class="dev-header">
+        <h2>Central de Telemetria Z-API (Dev Operations)</h2>
+        <p>Monitore a saúde, status de conexão e webhooks de todas as instâncias de clientes cadastradas no ecossistema Mindflow.</p>
+      </div>
+
+      <div class="grid-instances" id="devGridInstances">
+        <!-- Renderizado dinamicamente via JS -->
+      </div>
+    </div>
+
   </main>
 
+  <!-- MODAL: GERAR/COPIAR LINK DO CLIENTE -->
+  <div class="modal-overlay" id="shareModal">
+    <div class="modal-box">
+      <h3 class="modal-title">Link de Conexão do Cliente</h3>
+      <p class="modal-sub">Envie este link direto para o seu cliente para que ele faça o escaneamento do QR Code sozinho sem acessar o menu de desenvolvedor.</p>
+
+      <div class="copy-input-group">
+        <input type="text" id="shareUrlInput" class="copy-input" readonly />
+        <button type="button" class="btn-action btn-mini" style="width: 100px;" onclick="copyShareUrl()">
+          <span class="material-symbols-outlined" style="font-size: 16px;">content_copy</span>
+          Copiar
+        </button>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end;">
+        <button type="button" class="btn-action btn-secondary btn-mini" style="max-width: 120px;" onclick="closeShareModal()">Fechar</button>
+      </div>
+    </div>
+  </div>
+
   <script>
+    // PRESETS DAS INSTÂNCIAS DA MINDFLOW
     const PRESETS = {
       mindflow: {
+        name: 'Mindflow Oficial',
         instanceId: '3F5BBCC13F9441E00E5886B9FA2A227D',
         token: '64F4F81BE55EC5EDBA9696A0',
         clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S'
       },
-      ats: {
-        instanceId: '3F593841D8F6F1D722D88699EC5A47CF',
-        token: '11BBEB710E926E64F5AF73AD',
-        clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S'
-      },
       kravi_sac: {
+        name: 'Kravi SAC',
         instanceId: '3F8A8CFB6E84B0BA6E6B92B31FE9D931',
         token: '9EC21D107C4163E74F680818',
         clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S'
       },
       kravi_comercial: {
+        name: 'Kravi Comercial',
         instanceId: '3F53014B6E8BE165D5DDE25F89A39EC6',
         token: '88891636BD921F9AA5D37E52',
         clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S'
       },
+      ats: {
+        name: 'ATS Portaria Remota',
+        instanceId: '3F593841D8F6F1D722D88699EC5A47CF',
+        token: '11BBEB710E926E64F5AF73AD',
+        clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S'
+      },
       devolvejus: {
+        name: 'DevolveJus',
         instanceId: '3F7D488E0411C146C267A6F05C4968EE',
         token: 'D43AE3E8FFC686E9DC0D34ED',
         clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S'
       },
       mygain: {
+        name: 'MyGain',
         instanceId: '3F5B9720BCBA4109714BFA27602D6B71',
         token: '4120836441EE8155F2B47D33',
         clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S'
       }
     };
 
+    let isClientDirectAccess = false;
+    let activeKey = 'mindflow';
+    let activeInstanceId = PRESETS.mindflow.instanceId;
+    let activeToken = PRESETS.mindflow.token;
+    let activeClientToken = PRESETS.mindflow.clientToken;
+    let qrInterval = null;
+    let devGridInterval = null;
+
+    // Elementos DOM
+    const modeSwitcher = document.getElementById('modeSwitcher');
+    const clientSection = document.getElementById('clientSection');
+    const devSection = document.getElementById('devSection');
+    const selectorBar = document.getElementById('selectorBar');
+    const flowConnected = document.getElementById('flowConnected');
+    const flowDisconnected = document.getElementById('flowDisconnected');
     const qrContainer = document.getElementById('qr-code-canvas');
-    const connectionFlow = document.getElementById('connection-flow');
-    const successFlow = document.getElementById('success-flow');
-    const successDetails = document.getElementById('success-details');
     const statusText = document.getElementById('statusText');
 
-    let activeInstanceId = '';
-    let activeToken = '';
-    let activeClientToken = '';
-    let qrInterval = null;
-
-    function parseQueryParams() {
+    function initPage() {
       const urlParams = new URLSearchParams(window.location.search);
-      const instanceId = urlParams.get('instanceId');
-      const token = urlParams.get('token');
-      const clientToken = urlParams.get('clientToken');
+      const qInstanceId = urlParams.get('instanceId');
+      const qToken = urlParams.get('token');
+      const qClientToken = urlParams.get('clientToken');
 
-      if (instanceId && token) {
-        activeInstanceId = instanceId;
-        activeToken = token;
-        activeClientToken = clientToken || PRESETS.mindflow.clientToken;
-        
-        document.getElementById('paramPill').style.display = 'flex';
-        document.getElementById('lblInstanceId').innerText = activeInstanceId.substring(0, 8) + '...';
+      if (qInstanceId && qToken) {
+        // Acesso direto do cliente via Link gerado com Query Strings!
+        isClientDirectAccess = true;
+        activeInstanceId = qInstanceId;
+        activeToken = qToken;
+        activeClientToken = qClientToken || PRESETS.mindflow.clientToken;
+
+        // Tentar identificar o nome do cliente pelo preset
+        const matchedEntry = Object.entries(PRESETS).find(([k, v]) => v.instanceId === qInstanceId);
+        if (matchedEntry) {
+          activeKey = matchedEntry[0];
+          document.getElementById('connectedClientName').innerText = matchedEntry[1].name;
+        } else {
+          document.getElementById('connectedClientName').innerText = 'Cliente Z-API';
+        }
+
+        // Esconde navegadores de staff para o cliente ficar limpo!
+        modeSwitcher.style.display = 'none';
+        selectorBar.style.display = 'none';
       } else {
-        // Fallback para preset padrao Mindflow ou selecao manual
-        const preset = PRESETS.mindflow;
-        activeInstanceId = preset.instanceId;
-        activeToken = preset.token;
-        activeClientToken = preset.clientToken;
-        
-        document.getElementById('paramPill').style.display = 'flex';
-        document.getElementById('lblInstanceId').innerText = activeInstanceId.substring(0, 8) + '... (Mindflow)';
+        // Acesso interno do Hub Mindflow Staff
+        isClientDirectAccess = false;
+        selectorBar.style.display = 'flex';
       }
 
-      document.getElementById('cfgInstanceId').value = activeInstanceId;
-      document.getElementById('cfgToken').value = activeToken;
-      document.getElementById('cfgClientToken').value = activeClientToken;
+      checkSession();
+      loadClientView();
+      qrInterval = setInterval(fetchQRCode, 6000);
     }
 
-    function toggleConfigDrawer() {
-      const drawer = document.getElementById('configDrawer');
-      drawer.style.display = (drawer.style.display === 'none' || !drawer.style.display) ? 'block' : 'none';
-    }
-
-    function onPresetChange() {
-      const val = document.getElementById('clientPresetSelect').value;
-      if (val && PRESETS[val]) {
-        document.getElementById('cfgInstanceId').value = PRESETS[val].instanceId;
-        document.getElementById('cfgToken').value = PRESETS[val].token;
-        document.getElementById('cfgClientToken').value = PRESETS[val].clientToken;
+    function switchTab(tab) {
+      if (tab === 'client') {
+        document.getElementById('tabClientMode').classList.add('active');
+        document.getElementById('tabDevMode').classList.remove('active');
+        clientSection.style.display = 'flex';
+        devSection.style.display = 'none';
+        if (devGridInterval) clearInterval(devGridInterval);
+      } else {
+        document.getElementById('tabDevMode').classList.add('active');
+        document.getElementById('tabClientMode').classList.remove('active');
+        clientSection.style.display = 'none';
+        devSection.style.display = 'block';
+        loadDevOperationsGrid();
+        devGridInterval = setInterval(loadDevOperationsGrid, 10000);
       }
     }
 
-    function applyCustomConfig() {
-      activeInstanceId = document.getElementById('cfgInstanceId').value.trim();
-      activeToken = document.getElementById('cfgToken').value.trim();
-      activeClientToken = document.getElementById('cfgClientToken').value.trim();
+    function onClientSelectChange() {
+      const val = document.getElementById('clientSelect').value;
+      if (PRESETS[val]) {
+        activeKey = val;
+        activeInstanceId = PRESETS[val].instanceId;
+        activeToken = PRESETS[val].token;
+        activeClientToken = PRESETS[val].clientToken;
+        document.getElementById('lblActiveClient').innerText = PRESETS[val].name;
+        document.getElementById('connectedClientName').innerText = PRESETS[val].name;
+        loadClientView();
+      }
+    }
 
-      document.getElementById('lblInstanceId').innerText = activeInstanceId.substring(0, 8) + '...';
-      toggleConfigDrawer();
-
-      // Reiniciar fluxo
-      connectionFlow.style.display = 'block';
-      successFlow.classList.remove('active');
+    function loadClientView() {
+      document.getElementById('connectedInstanceSnippet').innerText = activeInstanceId.substring(0, 8) + '...' + activeInstanceId.substring(activeInstanceId.length - 4);
       fetchQRCode();
     }
 
@@ -651,22 +1071,30 @@
         const data = await response.json();
 
         if (data.connected) {
-          if (qrInterval) clearInterval(qrInterval);
-          connectionFlow.style.display = 'none';
-          successFlow.classList.add('active');
-          successDetails.innerText = `WhatsApp ativado e conectado via Z-API com sucesso (Instância: ${activeInstanceId}). O agente Mindflow AI já está monitorando as conversas.`;
+          // SE JA ESTIVER CONECTADO: Oculta o QR code e exibe o cartão verificado com número de telefone!
+          flowDisconnected.style.display = 'none';
+          flowConnected.style.display = 'block';
           
-          // Registra webhook de conexao automaticamente
-          autoRegisterWebhook();
+          if (data.phone) {
+            let p = data.phone;
+            if (!p.startsWith('+')) p = '+' + p;
+            document.getElementById('connectedPhoneDisplay').innerText = p;
+          } else {
+            document.getElementById('connectedPhoneDisplay').innerText = 'Número Ativo';
+          }
           return;
         }
+
+        // SE NÃO ESTIVER CONECTADO: Exibe instrução + QR Code
+        flowConnected.style.display = 'none';
+        flowDisconnected.style.display = 'block';
 
         if (data.base64) {
           qrContainer.innerHTML = '';
           new QRCode(qrContainer, {
             text: data.base64,
-            width: 240,
-            height: 240,
+            width: 200,
+            height: 200,
             colorDark: "#04060E",
             colorLight: "#ffffff",
             correctLevel: QRCode.CorrectLevel.H
@@ -678,15 +1106,6 @@
       }
     }
 
-    async function autoRegisterWebhook() {
-      try {
-        const url = `/api/setup-webhook?instanceId=${encodeURIComponent(activeInstanceId)}&token=${encodeURIComponent(activeToken)}&clientToken=${encodeURIComponent(activeClientToken)}`;
-        await fetch(url);
-      } catch (e) {
-        console.warn('Webhook auto-register warn:', e);
-      }
-    }
-
     async function registerWebhookManual() {
       try {
         const url = `/api/setup-webhook?instanceId=${encodeURIComponent(activeInstanceId)}&token=${encodeURIComponent(activeToken)}&clientToken=${encodeURIComponent(activeClientToken)}`;
@@ -694,24 +1113,113 @@
         const data = await res.json();
         alert(data.message || 'Webhook re-sincronizado com sucesso!');
       } catch (e) {
-        alert('Erro ao sincronizar webhook');
+        alert('Erro ao sincronizar webhook com Z-API');
       }
     }
 
     async function confirmarDesconexao() {
-      if (confirm("Deseja realmente desconectar esta instância WhatsApp Z-API?")) {
+      if (confirm(`Deseja realmente desconectar a instância (${activeInstanceId.substring(0,8)}...)?`)) {
         try {
           const url = `/api/disconnect?instanceId=${encodeURIComponent(activeInstanceId)}&token=${encodeURIComponent(activeToken)}&clientToken=${encodeURIComponent(activeClientToken)}`;
           const res = await fetch(url);
           const data = await res.json();
           if (data.success) {
             alert('Instância desconectada com sucesso!');
-            location.reload();
+            fetchQRCode();
           }
         } catch (e) {
           alert('Erro ao desconectar instância.');
         }
       }
+    }
+
+    /* ── HUB DE DESENVOLVEDORES: CARREGA SAÚDE DE TODAS AS INSTÂNCIAS ── */
+    async function loadDevOperationsGrid() {
+      const container = document.getElementById('devGridInstances');
+      try {
+        const res = await fetch('/api/zapi/all-status');
+        const list = await res.json();
+
+        container.innerHTML = '';
+        list.forEach(item => {
+          const isConn = item.connected;
+          const card = document.createElement('div');
+          card.className = 'client-card';
+          
+          card.innerHTML = `
+            <div class="client-card-head">
+              <div>
+                <div class="client-name">${item.name}</div>
+                <div class="client-id-sub">ID: ${item.instanceId.substring(0, 10)}...</div>
+              </div>
+              ${isConn ? `
+                <div class="client-badge-connected">
+                  <div class="dot-green"></div>
+                  ONLINE
+                </div>
+              ` : `
+                <div class="client-badge-waiting">
+                  <span class="material-symbols-outlined" style="font-size: 14px;">qr_code</span>
+                  PENDENTE
+                </div>
+              `}
+            </div>
+
+            <div class="client-details">
+              <div class="client-detail-row">
+                <span>Telefone:</span>
+                <span>${item.phone || (isConn ? 'Conectado' : 'Aguardando QR')}</span>
+              </div>
+              <div class="client-detail-row">
+                <span>Webhook Z-API:</span>
+                <span style="color: ${isConn ? '#4ADE80' : '#FBBF24'}">${isConn ? 'Sincronizado' : 'Pendente'}</span>
+              </div>
+            </div>
+
+            <div class="client-card-actions">
+              <button class="btn-action btn-mini btn-secondary" onclick="openClientCardView('${item.key}')">
+                <span class="material-symbols-outlined" style="font-size: 14px;">qr_code_2</span>
+                Abrir QR
+              </button>
+              <button class="btn-action btn-mini btn-secondary" onclick="openShareModal('${item.key}')">
+                <span class="material-symbols-outlined" style="font-size: 14px;">link</span>
+                Link Cliente
+              </button>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      } catch (err) {
+        console.error('Erro ao carregar dev operations grid:', err);
+      }
+    }
+
+    function openClientCardView(key) {
+      document.getElementById('clientSelect').value = key;
+      onClientSelectChange();
+      switchTab('client');
+    }
+
+    function openShareModal(key) {
+      const preset = PRESETS[key];
+      if (!preset) return;
+
+      const origin = window.location.origin;
+      const shareUrl = `${origin}/zapi-connect.html?instanceId=${encodeURIComponent(preset.instanceId)}&token=${encodeURIComponent(preset.token)}&clientToken=${encodeURIComponent(preset.clientToken)}`;
+      
+      document.getElementById('shareUrlInput').value = shareUrl;
+      document.getElementById('shareModal').style.display = 'flex';
+    }
+
+    function closeShareModal() {
+      document.getElementById('shareModal').style.display = 'none';
+    }
+
+    function copyShareUrl() {
+      const input = document.getElementById('shareUrlInput');
+      input.select();
+      navigator.clipboard.writeText(input.value);
+      alert('Link copiado para a área de transferência! Envie para o seu cliente.');
     }
 
     async function checkSession() {
@@ -729,11 +1237,8 @@
       fetch('/api/logout', { method: 'POST' }).then(() => window.location.href = '/');
     }
 
-    // Inicialização
-    parseQueryParams();
-    checkSession();
-    fetchQRCode();
-    qrInterval = setInterval(fetchQRCode, 7000);
+    // Inicialização da Página
+    initPage();
 
     /* ANIMAÇÃO NEURAL OFICIAL MINDFLOW */
     (function () {

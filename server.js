@@ -573,7 +573,11 @@ app.get('/api/qr-code', async (req, res) => {
       if (statusRes.ok) {
         const statusData = await statusRes.json();
         if (statusData.connected) {
-          return res.json({ connected: true });
+          return res.json({ 
+            connected: true, 
+            phone: statusData.phone || statusData.connectedPhone || statusData.zapId || null,
+            instanceId 
+          });
         }
       }
     } catch (e) {
@@ -587,7 +591,7 @@ app.get('/api/qr-code', async (req, res) => {
     });
 
     if (qrRes.status === 403 || qrRes.status === 400) {
-      return res.json({ connected: true });
+      return res.json({ connected: true, instanceId });
     }
 
     if (!qrRes.ok) {
@@ -596,14 +600,57 @@ app.get('/api/qr-code', async (req, res) => {
 
     const qrData = await qrRes.json();
     if (qrData.connected) {
-      return res.json({ connected: true });
+      return res.json({ 
+        connected: true, 
+        phone: qrData.phone || qrData.connectedPhone || qrData.zapId || null,
+        instanceId 
+      });
     }
 
-    return res.json({ base64: qrData.value });
+    return res.json({ connected: false, base64: qrData.value, instanceId });
   } catch (error) {
     console.error('[Z-API Proxy] Erro ao buscar QR Code:', error.message);
     res.status(500).json({ error: 'Erro interno ao buscar QR Code' });
   }
+});
+
+// Endpoint de telemetria consolidada de todas as instâncias cadastradas (MindFlow Dev Operations)
+app.get('/api/zapi/all-status', async (req, res) => {
+  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
+
+  const instances = [
+    { client_name: 'Mindflow Oficial', instanceId: '3F5BBCC13F9441E00E5886B9FA2A227D', token: '64F4F81BE55EC5EDBA9696A0', clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S' },
+    { client_name: 'ATS Portaria Remota', instanceId: '3F593841D8F6F1D722D88699EC5A47CF', token: '11BBEB710E926E64F5AF73AD', clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S' },
+    { client_name: 'Kravi SAC', instanceId: '3F8A8CFB6E84B0BA6E6B92B31FE9D931', token: '9EC21D107C4163E74F680818', clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S' },
+    { client_name: 'Kravi Comercial', instanceId: '3F53014B6E8BE165D5DDE25F89A39EC6', token: '88891636BD921F9AA5D37E52', clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S' },
+    { client_name: 'DevolveJus', instanceId: '3F7D488E0411C146C267A6F05C4968EE', token: 'D43AE3E8FFC686E9DC0D34ED', clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S' },
+    { client_name: 'MyGain', instanceId: '3F5B9720BCBA4109714BFA27602D6B71', token: '4120836441EE8155F2B47D33', clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S' }
+  ];
+
+  const results = await Promise.all(instances.map(async (inst) => {
+    try {
+      const statusUrl = `https://api.z-api.io/instances/${inst.instanceId}/token/${inst.token}/status`;
+      const response = await fetch(statusUrl, { headers: { 'Client-Token': inst.clientToken } });
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          ...inst,
+          connected: data.connected === true,
+          phone: data.phone || data.connectedPhone || data.zapId || null,
+          status: data.connected ? 'CONNECTED' : 'DISCONNECTED',
+          lastCheck: new Date().toISOString()
+        };
+      }
+    } catch (e) {}
+    return {
+      ...inst,
+      connected: false,
+      status: 'DISCONNECTED',
+      lastCheck: new Date().toISOString()
+    };
+  }));
+
+  res.json(results);
 });
 
 // 2. Setup Webhook Automatically
