@@ -530,6 +530,164 @@
       transform: translateY(-1px);
     }
 
+    /* ── BARRA SELECTOR DE INSTÂNCIA PARA STAFF ── */
+    .selector-bar {
+      width: 100%;
+      max-width: 680px;
+      margin-bottom: 20px;
+      padding: 12px 20px;
+      background: linear-gradient(145deg, rgba(8, 14, 28, 0.85), rgba(13, 22, 44, 0.75));
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      position: relative;
+      z-index: 100;
+    }
+    .selector-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      flex-wrap: wrap;
+    }
+    .selector-lbl {
+      color: #8E8FA2;
+      font-weight: 500;
+    }
+    .selector-val {
+      color: #FFFFFF;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+    }
+    .selector-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .selector-status-badge.connected {
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #10B981;
+    }
+    .selector-status-badge.pending {
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: #F59E0B;
+    }
+
+    .selector-dropdown-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .selector-dropdown-label {
+      font-size: 12px;
+      color: #8E8FA2;
+      font-weight: 500;
+    }
+
+    /* Custom Dropdown Glassmorphic Mindflow */
+    .custom-dropdown {
+      position: relative;
+    }
+    .custom-dropdown-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 7px 14px;
+      color: #FFFFFF;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      user-select: none;
+    }
+    .custom-dropdown-btn:hover {
+      background: rgba(255, 255, 255, 0.09);
+      border-color: rgba(37, 99, 235, 0.5);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .custom-dropdown-btn .dropdown-arrow {
+      font-size: 18px;
+      color: #8E8FA2;
+      transition: transform 0.25s ease;
+    }
+    .custom-dropdown.open .dropdown-arrow {
+      transform: rotate(180deg);
+    }
+
+    .custom-dropdown-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 270px;
+      background: rgba(10, 15, 28, 0.98);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 12px;
+      padding: 6px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(37, 99, 235, 0.15);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-8px);
+      transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 99999;
+    }
+    .custom-dropdown.open .custom-dropdown-menu {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .custom-dropdown-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      border-radius: 8px;
+      color: #8E8FA2;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .custom-dropdown-item:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: #FFFFFF;
+    }
+    .custom-dropdown-item.active {
+      background: rgba(37, 99, 235, 0.15);
+      color: #FFFFFF;
+      font-weight: 600;
+    }
+    .custom-dropdown-item .check-symbol {
+      font-size: 14px;
+      color: #10B981;
+      font-weight: 700;
+    }
+
     /* ── SEÇÃO HUB DE INSTÂNCIAS (GESTAO DE INSTANCIAS Z-API) ── */
     .dev-grid-section {
       display: none;
@@ -1050,8 +1208,32 @@
       </button>
     </div>
 
-    <!-- ── SEÇÃO 1: VISÃO DO CLIENTE (CLEAN & MINIMALISTA) ── -->
+    <!-- ── SEÇÃO 1: VISÃO DO CLIENTE ── -->
     <div id="clientSection" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+
+      <!-- Selector de Instância (Visível apenas no Hub Interno Mindflow Staff) -->
+      <div id="selectorBar" class="selector-bar" style="display: none;">
+        <div class="selector-info">
+          <span class="selector-lbl">Instância Monitorada:</span>
+          <span class="selector-val" id="lblActiveClient">Mindflow Oficial</span>
+          <span class="selector-status-badge connected" id="lblActiveStatusBadge">
+            <span class="status-icon" id="lblActiveStatusIcon">✓</span>
+            <span id="lblActiveStatusText">Conectada</span>
+          </span>
+        </div>
+        <div class="selector-dropdown-wrap">
+          <label class="selector-dropdown-label">Trocar Cliente:</label>
+          <div class="custom-dropdown" id="customClientDropdown">
+            <button type="button" class="custom-dropdown-btn" id="customClientBtn" onclick="toggleCustomDropdown(event)">
+              <span id="customClientLabel">Mindflow Oficial</span>
+              <span class="material-symbols-outlined dropdown-arrow">expand_more</span>
+            </button>
+            <div class="custom-dropdown-menu" id="customClientMenu">
+              <!-- Renderizado dinamicamente via JS com opções e status -->
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- MAIN CARD DO CLIENTE -->
       <div class="main-card">
@@ -1350,6 +1532,7 @@
 
     // Elementos DOM
     const modeSwitcher = document.getElementById('modeSwitcher');
+    const selectorBar = document.getElementById('selectorBar');
     const clientSection = document.getElementById('clientSection');
     const devSection = document.getElementById('devSection');
     const flowConnected = document.getElementById('flowConnected');
@@ -1379,17 +1562,57 @@
           document.getElementById('connectedClientName').innerText = 'Cliente Z-API';
         }
 
-        // Esconde navegadores de staff para o cliente ficar limpo!
-        modeSwitcher.style.display = 'none';
+        // Esconde navegadores e seletor de staff para o cliente ficar 100% limpo!
+        if (modeSwitcher) modeSwitcher.style.display = 'none';
+        if (selectorBar) selectorBar.style.display = 'none';
       } else {
         // Acesso interno do Hub Mindflow Staff
         isClientDirectAccess = false;
+        if (selectorBar) selectorBar.style.display = 'flex';
       }
 
+      renderCustomDropdownOptions();
       checkSession();
       loadClientView();
       qrInterval = setInterval(fetchQRCode, 6000);
     }
+
+    function renderCustomDropdownOptions() {
+      const menu = document.getElementById('customClientMenu');
+      if (!menu) return;
+
+      menu.innerHTML = '';
+      Object.entries(PRESETS).forEach(([key, preset]) => {
+        const item = document.createElement('div');
+        item.className = `custom-dropdown-item ${key === activeKey ? 'active' : ''}`;
+        item.onclick = () => selectCustomClient(key);
+        item.innerHTML = `
+          <span>${preset.name}</span>
+          <span class="check-symbol">${key === activeKey ? '✓' : ''}</span>
+        `;
+        menu.appendChild(item);
+      });
+    }
+
+    function toggleCustomDropdown(e) {
+      if (e) e.stopPropagation();
+      const dropdown = document.getElementById('customClientDropdown');
+      if (dropdown) dropdown.classList.toggle('open');
+    }
+
+    function selectCustomClient(key) {
+      selectClientInstance(key);
+      const dropdown = document.getElementById('customClientDropdown');
+      if (dropdown) dropdown.classList.remove('open');
+    }
+
+    // Fechar dropdown ao clicar fora
+    document.addEventListener('click', (e) => {
+      const dropdown = document.getElementById('customClientDropdown');
+      if (dropdown && !dropdown.contains(e.target)) {
+        dropdown.classList.remove('open');
+      }
+    });
 
     function selectClientInstance(key) {
       if (PRESETS[key]) {
@@ -1398,7 +1621,17 @@
         activeToken = PRESETS[key].token;
         activeClientToken = PRESETS[key].clientToken;
 
-        document.getElementById('connectedClientName').innerText = PRESETS[key].name;
+        if (document.getElementById('lblActiveClient')) {
+          document.getElementById('lblActiveClient').innerText = PRESETS[key].name;
+        }
+        if (document.getElementById('customClientLabel')) {
+          document.getElementById('customClientLabel').innerText = PRESETS[key].name;
+        }
+        if (document.getElementById('connectedClientName')) {
+          document.getElementById('connectedClientName').innerText = PRESETS[key].name;
+        }
+
+        renderCustomDropdownOptions();
         loadClientView();
       }
     }
@@ -1437,6 +1670,12 @@
           flowDisconnected.style.display = 'none';
           flowConnected.style.display = 'block';
           
+          const badge = document.getElementById('lblActiveStatusBadge');
+          if (badge) {
+            badge.className = 'selector-status-badge connected';
+            badge.innerHTML = '<span class="status-icon">✓</span> <span>Conectada</span>';
+          }
+
           if (data.phone) {
             let p = data.phone;
             if (!p.startsWith('+')) p = '+' + p;
@@ -1449,6 +1688,12 @@
 
         flowConnected.style.display = 'none';
         flowDisconnected.style.display = 'block';
+
+        const badge = document.getElementById('lblActiveStatusBadge');
+        if (badge) {
+          badge.className = 'selector-status-badge pending';
+          badge.innerHTML = '<span class="status-icon">⚡</span> <span>QR Pendente</span>';
+        }
 
         if (data.base64) {
           qrContainer.innerHTML = '';
