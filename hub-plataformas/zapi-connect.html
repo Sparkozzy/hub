@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html class="dark" lang="pt-BR">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Conexão WhatsApp Z-API | MindFlow AI</title>
+
+  <!-- Scripts Base -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%221225 1800 545 510%22><path fill=%22%23FFFFFF%22 d=%22M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z%22/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --blue: #2E4FFF;
+      --teal: #00B5A0;
+      --blue2: #7B9AFF;
+      --bg: #04060E;
+      --muted: #8E8FA2;
+    }
+
+    body {
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 52px;
+      overflow-x: hidden;
+      font-family: 'Inter', sans-serif;
+      color: #fff;
+    }
+
+    #neural-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── DOCK NAVEGAÇÃO LATERAL ── */
+    .dock {
+      position: fixed;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 999999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 10px;
+      background: rgba(8, 14, 28, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+    }
+    .dock-item {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      text-decoration: none;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+    .dock-item:hover, .dock-item.active {
+      color: #fff;
+      background: rgba(46, 79, 255, 0.25);
+      border: 1px solid rgba(46, 79, 255, 0.4);
+      box-shadow: 0 0 16px rgba(46, 79, 255, 0.3);
+    }
+    .dock-sep {
+      width: 24px;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.08);
+      margin: 2px 0;
+    }
+
+    /* ── NAVBAR ── */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      background: rgba(4, 6, 14, 0.65);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      z-index: 50;
+    }
+    .logo-mark {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #fff;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .nav-user {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.5);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .nav-user strong {
+      color: #FFFFFF;
+      font-weight: 600;
+    }
+
+    .btn-logout {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      color: #F87171;
+      padding: 6px 14px;
+      border-radius: 9px;
+      font-size: 12px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      line-height: 1;
+    }
+    .btn-logout:hover {
+      background: rgba(239, 68, 68, 0.22);
+      border-color: rgba(239, 68, 68, 0.5);
+      color: #FFFFFF;
+      box-shadow: 0 4px 16px rgba(239, 68, 68, 0.35);
+      transform: translateY(-1px);
+    }
+
+    /* ── CARD PRINCIPAL ── */
+    @property --ba {
+      syntax: '<angle>';
+      initial-value: 0deg;
+      inherits: false;
+    }
+
+    @keyframes spin-border {
+      to {
+        --ba: 360deg;
+      }
+    }
+
+    .card {
+      --ba: 0deg;
+      background:
+        linear-gradient(rgba(8, 12, 24, 0.82), rgba(8, 12, 24, 0.82)) padding-box,
+        conic-gradient(from var(--ba),
+          rgba(46, 79, 255, 0) 0%,
+          rgba(46, 79, 255, .75) 15%,
+          rgba(0, 181, 160, .75) 38%,
+          rgba(46, 79, 255, .75) 62%,
+          rgba(0, 181, 160, .55) 80%,
+          rgba(46, 79, 255, 0) 100%) border-box;
+      border: 1px solid transparent;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 520px;
+      padding: 38px 32px;
+      box-shadow: 0 32px 64px rgba(0, 0, 0, .65), 0 0 40px rgba(0, 181, 160, 0.1);
+      position: relative;
+      z-index: 1;
+      margin: auto 0;
+      animation: spin-border 9s linear infinite;
+      text-align: center;
+    }
+
+    .card-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 181, 160, 0.12);
+      border: 1px solid rgba(0, 181, 160, 0.3);
+      color: #00B5A0;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: 'Space Grotesk', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .card-sub {
+      font-size: 13px;
+      color: #8e8fa2;
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
+    .qr-box {
+      background: #FFFFFF;
+      padding: 1.25rem;
+      border-radius: 16px;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(255, 255, 255, 0.1);
+      min-width: 250px;
+      min-height: 250px;
+      position: relative;
+    }
+
+    .status-panel {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      background: var(--teal);
+      border-radius: 50%;
+      box-shadow: 0 0 12px var(--teal);
+      animation: pulse 1.8s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.35); }
+    }
+
+    .status-text {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: #A5B4FC;
+    }
+
+    .btn-action {
+      width: 100%;
+      height: 48px;
+      background: linear-gradient(135deg, var(--blue) 0%, var(--teal) 100%);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      margin-top: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-action:hover {
+      filter: brightness(1.15);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(46, 79, 255, 0.35);
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.12);
+      color: #F87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      margin-top: 10px;
+    }
+
+    .btn-danger:hover {
+      background: #EF4444;
+      color: #fff;
+      box-shadow: 0 12px 24px rgba(239, 68, 68, 0.35);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.06);
+      color: #E2E8F0;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      margin-top: 10px;
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+    }
+
+    .success-panel {
+      display: none;
+    }
+
+    .success-panel.active {
+      display: block;
+      animation: slideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .icon-success {
+      width: 68px;
+      height: 68px;
+      background: linear-gradient(135deg, #00B5A0, #2E4FFF);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 32px;
+      color: #fff;
+      box-shadow: 0 0 35px rgba(0, 181, 160, 0.4);
+    }
+
+    /* Instance Config Box */
+    .config-box {
+      background: rgba(4, 8, 20, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    .config-box label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .config-input {
+      width: 100%;
+      height: 38px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 0 12px;
+      color: #fff;
+      font-family: monospace;
+      font-size: 12px;
+      margin-bottom: 10px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .config-input:focus {
+      border-color: var(--teal);
+    }
+
+    .param-pill-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(46, 79, 255, 0.08);
+      border: 1px solid rgba(46, 79, 255, 0.2);
+      border-radius: 10px;
+      padding: 8px 12px;
+      margin-bottom: 18px;
+      font-size: 11px;
+      color: #A5B4FC;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="neural-canvas"></canvas>
+
+  <!-- ── DOCK NAVEGAÇÃO LATERAL ── -->
+  <nav class="dock">
+    <a href="/hub" class="dock-item" title="Hub de Plataformas">
+      <span class="material-symbols-outlined">grid_view</span>
+    </a>
+    <a href="/disparo" class="dock-item" title="Disparo de Ligações">
+      <span class="material-symbols-outlined">smart_toy</span>
+    </a>
+    <a href="/dashboard" class="dock-item" title="Dashboard Metrias">
+      <span class="material-symbols-outlined">bar_chart</span>
+    </a>
+    <a href="/zapi-connect" class="dock-item active" title="Conexão WhatsApp Z-API">
+      <span class="material-symbols-outlined">qr_code_scanner</span>
+    </a>
+    <a href="https://mindflow.wts.chat/auth/sign-in" target="_blank" class="dock-item" title="Atendimento WhatsApp">
+      <span class="material-symbols-outlined">headset_mic</span>
+    </a>
+    <a href="/checkup" class="dock-item" title="Checkup do Sistema">
+      <span class="material-symbols-outlined">fact_check</span>
+    </a>
+    <a href="/projetos" class="dock-item" title="Gestão de Projetos">
+      <span class="material-symbols-outlined">view_kanban</span>
+    </a>
+    <div class="dock-sep"></div>
+    <a href="#" onclick="logout(); return false;" class="dock-item" style="color:rgba(255,77,77,0.5)">
+      <span class="material-symbols-outlined">logout</span>
+    </a>
+  </nav>
+
+  <!-- ── NAVBAR TOP ── -->
+  <nav class="navbar">
+    <a href="/hub" class="logo-mark">
+      <span class="material-symbols-outlined" style="color: var(--teal);">qr_code_scanner</span>
+      <span>MINDFLOW AI &middot; Z-API CONNECT</span>
+    </a>
+    <div class="nav-right">
+      <span class="nav-user" id="userDisplay">Olá, <strong id="userName">Usuário</strong></span>
+      <button class="btn-logout" id="btnLogout" onclick="logout()">
+        <span class="material-symbols-outlined">logout</span>
+        <span>Sair</span>
+      </button>
+    </div>
+  </nav>
+
+  <main style="flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; padding: 40px 20px;">
+    <div class="card">
+      <div class="card-badge">
+        <span class="material-symbols-outlined" style="font-size: 14px;">cell_tower</span>
+        <span>Conexão Z-API Instância</span>
+      </div>
+
+      <!-- Configuração de Parâmetros de Instância (Se acessado via Hub ou Manual) -->
+      <div id="paramPill" class="param-pill-box" style="display: none;">
+        <span><strong style="color: #fff;">Instância Ativa:</strong> <span id="lblInstanceId">3F59...</span></span>
+        <button type="button" onclick="toggleConfigDrawer()" style="background: none; border: none; color: #00B5A0; cursor: pointer; font-size: 11px; font-weight: 600;">Trocar Instância</button>
+      </div>
+
+      <div id="configDrawer" class="config-box" style="display: none;">
+        <label>Selecione um Cliente ou Digite as Chaves:</label>
+        <select id="clientPresetSelect" onchange="onPresetChange()" class="config-input" style="background: rgba(12,20,40,0.9); height: 38px;">
+          <option value="custom">-- Instância Manual / Query Strings --</option>
+          <option value="ats">ATS (Portaria Remota)</option>
+          <option value="kravi_sac">Kravi SAC</option>
+          <option value="kravi_comercial">Kravi Comercial</option>
+          <option value="devolvejus">DevolveJus</option>
+          <option value="mygain">MyGain</option>
+          <option value="mindflow" selected>Mindflow Oficial</option>
+        </select>
+
+        <label>Z-API Instance ID</label>
+        <input type="text" id="cfgInstanceId" class="config-input" placeholder="Ex: 3F593841D8F6F1D722D88699EC5A47CF" />
+
+        <label>Z-API Token</label>
+        <input type="text" id="cfgToken" class="config-input" placeholder="Ex: 11BBEB710E926E64F5AF73AD" />
+
+        <label>Client Token</label>
+        <input type="text" id="cfgClientToken" class="config-input" placeholder="Ex: F5724b7f8bf0e456bbdad95a16886f435S" style="margin-bottom: 12px;" />
+
+        <button type="button" onclick="applyCustomConfig()" class="btn-action" style="height: 38px; font-size: 11px; margin-top: 0;">Carregar Instância</button>
+      </div>
+
+      <!-- Tela de Conexão (QR Code) -->
+      <div id="connection-flow">
+        <h1 class="card-title">Ativar WhatsApp</h1>
+        <p class="card-sub">Conecte sua instância Z-API escaneando o QR Code abaixo pelo aplicativo WhatsApp no seu celular.</p>
+
+        <div class="qr-box" id="qr-code-canvas">
+          <div style="font-size: 12px; color: #8E8FA2; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+            <span class="material-symbols-outlined" style="font-size: 32px; color: var(--teal); animation: pulse 1.5s infinite;">sync</span>
+            <span>Gerando QR Code atualizado...</span>
+          </div>
+        </div>
+
+        <div class="status-panel">
+          <div class="dot"></div>
+          <div class="status-text" id="statusText">Aguardando leitura do QR Code...</div>
+        </div>
+      </div>
+
+      <!-- Tela de Sucesso -->
+      <div id="success-flow" class="success-panel">
+        <div class="icon-success">
+          <span class="material-symbols-outlined" style="font-size: 36px;">verified</span>
+        </div>
+        <h1 class="card-title">Instância Conectada!</h1>
+        <p class="card-sub" id="success-details">Sua instância WhatsApp Z-API foi autenticada e vinculada com sucesso. Os agentes e automações da Mindflow AI já estão prontos.</p>
+
+        <button type="button" class="btn-action" onclick="registerWebhookManual()">
+          <span class="material-symbols-outlined" style="font-size: 18px;">webhook</span>
+          Re-Sincronizar Webhook Z-API
+        </button>
+        <button type="button" class="btn-action btn-danger" onclick="confirmarDesconexao()">
+          <span class="material-symbols-outlined" style="font-size: 18px;">power_settings_new</span>
+          Desconectar Instância
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const PRESETS = {
+      mindflow: {
+        instanceId: '3F5BBCC13F9441E00E5886B9FA2A227D',
+        token: '64F4F81BE55EC5EDBA9696A0',
+        clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S'
+      },
+      ats: {
+        instanceId: '3F593841D8F6F1D722D88699EC5A47CF',
+        token: '11BBEB710E926E64F5AF73AD',
+        clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S'
+      },
+      kravi_sac: {
+        instanceId: '3F8A8CFB6E84B0BA6E6B92B31FE9D931',
+        token: '9EC21D107C4163E74F680818',
+        clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S'
+      },
+      kravi_comercial: {
+        instanceId: '3F53014B6E8BE165D5DDE25F89A39EC6',
+        token: '88891636BD921F9AA5D37E52',
+        clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S'
+      },
+      devolvejus: {
+        instanceId: '3F7D488E0411C146C267A6F05C4968EE',
+        token: 'D43AE3E8FFC686E9DC0D34ED',
+        clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S'
+      },
+      mygain: {
+        instanceId: '3F5B9720BCBA4109714BFA27602D6B71',
+        token: '4120836441EE8155F2B47D33',
+        clientToken: 'F5724b7f8bf0e456bbdad95a16886f435S'
+      }
+    };
+
+    const qrContainer = document.getElementById('qr-code-canvas');
+    const connectionFlow = document.getElementById('connection-flow');
+    const successFlow = document.getElementById('success-flow');
+    const successDetails = document.getElementById('success-details');
+    const statusText = document.getElementById('statusText');
+
+    let activeInstanceId = '';
+    let activeToken = '';
+    let activeClientToken = '';
+    let qrInterval = null;
+
+    function parseQueryParams() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const instanceId = urlParams.get('instanceId');
+      const token = urlParams.get('token');
+      const clientToken = urlParams.get('clientToken');
+
+      if (instanceId && token) {
+        activeInstanceId = instanceId;
+        activeToken = token;
+        activeClientToken = clientToken || PRESETS.mindflow.clientToken;
+        
+        document.getElementById('paramPill').style.display = 'flex';
+        document.getElementById('lblInstanceId').innerText = activeInstanceId.substring(0, 8) + '...';
+      } else {
+        // Fallback para preset padrao Mindflow ou selecao manual
+        const preset = PRESETS.mindflow;
+        activeInstanceId = preset.instanceId;
+        activeToken = preset.token;
+        activeClientToken = preset.clientToken;
+        
+        document.getElementById('paramPill').style.display = 'flex';
+        document.getElementById('lblInstanceId').innerText = activeInstanceId.substring(0, 8) + '... (Mindflow)';
+      }
+
+      document.getElementById('cfgInstanceId').value = activeInstanceId;
+      document.getElementById('cfgToken').value = activeToken;
+      document.getElementById('cfgClientToken').value = activeClientToken;
+    }
+
+    function toggleConfigDrawer() {
+      const drawer = document.getElementById('configDrawer');
+      drawer.style.display = (drawer.style.display === 'none' || !drawer.style.display) ? 'block' : 'none';
+    }
+
+    function onPresetChange() {
+      const val = document.getElementById('clientPresetSelect').value;
+      if (val && PRESETS[val]) {
+        document.getElementById('cfgInstanceId').value = PRESETS[val].instanceId;
+        document.getElementById('cfgToken').value = PRESETS[val].token;
+        document.getElementById('cfgClientToken').value = PRESETS[val].clientToken;
+      }
+    }
+
+    function applyCustomConfig() {
+      activeInstanceId = document.getElementById('cfgInstanceId').value.trim();
+      activeToken = document.getElementById('cfgToken').value.trim();
+      activeClientToken = document.getElementById('cfgClientToken').value.trim();
+
+      document.getElementById('lblInstanceId').innerText = activeInstanceId.substring(0, 8) + '...';
+      toggleConfigDrawer();
+
+      // Reiniciar fluxo
+      connectionFlow.style.display = 'block';
+      successFlow.classList.remove('active');
+      fetchQRCode();
+    }
+
+    async function fetchQRCode() {
+      try {
+        if (!activeInstanceId || !activeToken) return;
+
+        const url = `/api/qr-code?instanceId=${encodeURIComponent(activeInstanceId)}&token=${encodeURIComponent(activeToken)}&clientToken=${encodeURIComponent(activeClientToken)}&t=${Date.now()}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.connected) {
+          if (qrInterval) clearInterval(qrInterval);
+          connectionFlow.style.display = 'none';
+          successFlow.classList.add('active');
+          successDetails.innerText = `WhatsApp ativado e conectado via Z-API com sucesso (Instância: ${activeInstanceId}). O agente Mindflow AI já está monitorando as conversas.`;
+          
+          // Registra webhook de conexao automaticamente
+          autoRegisterWebhook();
+          return;
+        }
+
+        if (data.base64) {
+          qrContainer.innerHTML = '';
+          new QRCode(qrContainer, {
+            text: data.base64,
+            width: 240,
+            height: 240,
+            colorDark: "#04060E",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+          });
+          if (statusText) statusText.innerText = 'Aguardando leitura do QR Code no aplicativo WhatsApp...';
+        }
+      } catch (error) {
+        console.error('[Z-API Connect Error]:', error);
+      }
+    }
+
+    async function autoRegisterWebhook() {
+      try {
+        const url = `/api/setup-webhook?instanceId=${encodeURIComponent(activeInstanceId)}&token=${encodeURIComponent(activeToken)}&clientToken=${encodeURIComponent(activeClientToken)}`;
+        await fetch(url);
+      } catch (e) {
+        console.warn('Webhook auto-register warn:', e);
+      }
+    }
+
+    async function registerWebhookManual() {
+      try {
+        const url = `/api/setup-webhook?instanceId=${encodeURIComponent(activeInstanceId)}&token=${encodeURIComponent(activeToken)}&clientToken=${encodeURIComponent(activeClientToken)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        alert(data.message || 'Webhook re-sincronizado com sucesso!');
+      } catch (e) {
+        alert('Erro ao sincronizar webhook');
+      }
+    }
+
+    async function confirmarDesconexao() {
+      if (confirm("Deseja realmente desconectar esta instância WhatsApp Z-API?")) {
+        try {
+          const url = `/api/disconnect?instanceId=${encodeURIComponent(activeInstanceId)}&token=${encodeURIComponent(activeToken)}&clientToken=${encodeURIComponent(activeClientToken)}`;
+          const res = await fetch(url);
+          const data = await res.json();
+          if (data.success) {
+            alert('Instância desconectada com sucesso!');
+            location.reload();
+          }
+        } catch (e) {
+          alert('Erro ao desconectar instância.');
+        }
+      }
+    }
+
+    async function checkSession() {
+      try {
+        const res = await fetch('/api/check');
+        if (res.ok) {
+          const data = await res.json();
+          const userNameEl = document.getElementById('userName');
+          if (userNameEl && data.name) userNameEl.textContent = data.name;
+        }
+      } catch (e) {}
+    }
+
+    function logout() {
+      fetch('/api/logout', { method: 'POST' }).then(() => window.location.href = '/');
+    }
+
+    // Inicialização
+    parseQueryParams();
+    checkSession();
+    fetchQRCode();
+    qrInterval = setInterval(fetchQRCode, 7000);
+
+    /* ANIMAÇÃO NEURAL OFICIAL MINDFLOW */
+    (function () {
+      const cv = document.getElementById('neural-canvas');
+      const ctx = cv.getContext('2d');
+      let W, H, t = 0;
+      let dots = [], mouse = { x: -9999, y: -9999 };
+      const PERFORMANCE_SCALE = 0.75;
+      const BLUE = [46, 79, 255];
+      const TEAL = [0, 181, 160];
+      const GAP = 38;
+
+      function rgba(rgb, a) { return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a.toFixed(3)})`; }
+
+      function resize() {
+        const realW = window.innerWidth; const realH = window.innerHeight;
+        W = Math.min(realW, 2560); H = Math.min(realH, 1440);
+        cv.width = realW * PERFORMANCE_SCALE; cv.height = realH * PERFORMANCE_SCALE;
+        buildGrid();
+      }
+
+      function buildGrid() {
+        dots = []; const cols = Math.ceil(W / GAP) + 2; const rows = Math.ceil(H / GAP) + 2;
+        for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) dots.push({ bx: c * GAP - GAP, by: r * GAP - GAP, phase: (c * 0.35 + r * 0.55) + Math.random() * 0.4, colorPhase: Math.random() * Math.PI * 2 });
+      }
+
+      function waveAt(wx, wy, dx, dy) { const dist = Math.sqrt(dx * dx + dy * dy); return Math.sin(dist * 0.022 - t * 0.045 + wx * 0.01 + wy * 0.01) * Math.exp(-dist / (Math.min(W, H) * 0.55)); }
+
+      function frame() {
+        const realW = window.innerWidth; const realH = window.innerHeight;
+        ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#04060E'; ctx.fillRect(0, 0, cv.width, cv.height);
+        ctx.scale((realW / W) * PERFORMANCE_SCALE, (realH / H) * PERFORMANCE_SCALE);
+        dots.forEach(d => {
+          let inf = 0;
+          [{ nx: 0.18, ny: 0.72, s: 0.00018, o: 0 }, { nx: 0.82, ny: 0.28, s: 0.00014, o: 2.1 }, { nx: 0.5, ny: 0.15, s: 0.0002, o: 4.2 }].forEach(wv => {
+            const wx = (wv.nx + Math.sin(t * wv.s + wv.o) * 0.18) * W; const wy = (0.5 + Math.cos(t * wv.s + wv.o) * 0.22) * H;
+            inf += waveAt(wx, wy, d.bx - wx, d.by - wy);
+          });
+          inf /= 3;
+          const x = d.bx + Math.sin(d.phase + t * 0.018) * 3.5 * inf * 4;
+          const y = d.by + Math.cos(d.phase + t * 0.014) * 3.5 * inf * 4;
+          const r = 0.9 + inf * 2.2; if (r <= 0) return;
+          const mix = Math.sin(d.colorPhase + t * 0.008 + inf * 3) * 0.5 + 0.5;
+          const rgb = [Math.round(BLUE[0] + (TEAL[0] - BLUE[0]) * mix), Math.round(BLUE[1] + (TEAL[1] - BLUE[1]) * mix), Math.round(BLUE[2] + (TEAL[2] - BLUE[2]) * mix)];
+          const mdx = d.bx - (mouse.x * (W / realW)); const mdy = d.by - (mouse.y * (H / realH));
+          const mGlow = Math.max(0, 1 - Math.sqrt(mdx * mdx + mdy * mdy) / 140);
+          const br = 0.06 + Math.max(0, inf) * 0.55 + mGlow * 0.6;
+          const g = ctx.createRadialGradient(x, y, 0, x, y, r * 5); g.addColorStop(0, rgba(rgb, br * 0.5)); g.addColorStop(0.4, rgba(rgb, br * 0.12)); g.addColorStop(1, rgba(rgb, 0));
+          ctx.beginPath(); ctx.arc(x, y, r * 5, 0, Math.PI * 2); ctx.fillStyle = g; ctx.fill();
+          ctx.beginPath(); ctx.arc(x, y, Math.max(0.3, r), 0, Math.PI * 2); ctx.fillStyle = rgba(rgb, 0.18 + Math.max(0, inf) * 0.65 + mGlow * 0.8); ctx.fill();
+        });
+        t++; requestAnimationFrame(frame);
+      }
+      resize(); window.addEventListener('resize', resize);
+      window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+      window.addEventListener('mouseleave', () => { mouse.x = -9999, mouse.y = -9999; });
+      frame();
+    })();
+  </script>
+</body>
+
+</html>

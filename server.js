@@ -464,6 +464,13 @@ app.get(['/projetos', '/projetos.html'], (req, res) => {
   res.sendFile(path.join(__dirname, 'projetos.html'));
 });
 
+app.get(['/zapi-connect', '/zapi-connect.html'], (req, res) => {
+  if (!req.session?.user && (!req.query.instanceId || !req.query.token)) {
+    return res.redirect('/');
+  }
+  res.sendFile(path.join(__dirname, 'zapi-connect.html'));
+});
+
 // ============================================================
 // MINDFLOW SENTINEL — TELEMETRIA Z-API & SAÚDE DAS IAS
 // ============================================================
@@ -533,6 +540,118 @@ app.get('/api/zapi/status', async (req, res) => {
       lastCheck: new Date().toISOString()
     });
   }
+});
+
+// ============================================================
+// Z-API AUTOMATION & QR-CODE CONNECT PROXY ENDPOINTS
+// ============================================================
+const DEFAULT_ZAPI_INSTANCE_ID = process.env.ZAPI_INSTANCE_ID || '3F593841D8F6F1D722D88699EC5A47CF';
+const DEFAULT_ZAPI_TOKEN = process.env.ZAPI_TOKEN || '11BBEB710E926E64F5AF73AD';
+const DEFAULT_CLIENT_TOKEN = process.env.CLIENT_TOKEN || 'F5724b7f8bf0e456bbdad95a16886f435S';
+const MY_WEBHOOK_URL = process.env.MY_WEBHOOK_URL || 'https://mindflow-ia-connect.loca.lt/webhook/zapi-connected';
+
+const getZapiCreds = (req) => ({
+  instanceId: req.query.instanceId || req.body?.instanceId || DEFAULT_ZAPI_INSTANCE_ID,
+  token: req.query.token || req.body?.token || DEFAULT_ZAPI_TOKEN,
+  clientToken: req.query.clientToken || req.body?.clientToken || DEFAULT_CLIENT_TOKEN
+});
+
+// 1. QR Code & Status Proxy
+app.get('/api/qr-code', async (req, res) => {
+  try {
+    const { instanceId, token, clientToken } = getZapiCreds(req);
+    if (!instanceId || !token) {
+      return res.status(400).json({ error: 'Instance ID e Token são obrigatórios' });
+    }
+
+    // Verifica status primeiro
+    const statusUrl = `https://api.z-api.io/instances/${instanceId}/token/${token}/status`;
+    try {
+      const statusRes = await fetch(statusUrl, {
+        headers: { 'Client-Token': clientToken }
+      });
+      if (statusRes.ok) {
+        const statusData = await statusRes.json();
+        if (statusData.connected) {
+          return res.json({ connected: true });
+        }
+      }
+    } catch (e) {
+      console.warn('[Z-API Proxy] Status check warning:', e.message);
+    }
+
+    // Se não estiver conectada, busca o QR Code
+    const qrUrl = `https://api.z-api.io/instances/${instanceId}/token/${token}/qr-code`;
+    const qrRes = await fetch(qrUrl, {
+      headers: { 'Client-Token': clientToken }
+    });
+
+    if (qrRes.status === 403 || qrRes.status === 400) {
+      return res.json({ connected: true });
+    }
+
+    if (!qrRes.ok) {
+      return res.status(qrRes.status).json({ error: 'Erro ao conectar com a Z-API' });
+    }
+
+    const qrData = await qrRes.json();
+    if (qrData.connected) {
+      return res.json({ connected: true });
+    }
+
+    return res.json({ base64: qrData.value });
+  } catch (error) {
+    console.error('[Z-API Proxy] Erro ao buscar QR Code:', error.message);
+    res.status(500).json({ error: 'Erro interno ao buscar QR Code' });
+  }
+});
+
+// 2. Setup Webhook Automatically
+app.get('/api/setup-webhook', async (req, res) => {
+  try {
+    const { instanceId, token, clientToken } = getZapiCreds(req);
+    const customUrl = req.query.url;
+    const finalWebhookUrl = customUrl ? `${customUrl}/webhook/zapi-connected` : MY_WEBHOOK_URL;
+    const url = `https://api.z-api.io/instances/${instanceId}/token/${token}/update-webhook-connected`;
+    
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Client-Token': clientToken 
+      },
+      body: JSON.stringify({ value: finalWebhookUrl })
+    });
+    const data = await response.json().catch(() => ({}));
+
+    res.json({ success: true, message: 'Webhook registrado com sucesso', data, registeredUrl: finalWebhookUrl });
+  } catch (error) {
+    console.error('[Z-API Proxy] Erro ao registrar webhook:', error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 3. Disconnect Instance
+app.get('/api/disconnect', async (req, res) => {
+  try {
+    const { instanceId, token, clientToken } = getZapiCreds(req);
+    const url = `https://api.z-api.io/instances/${instanceId}/token/${token}/disconnect`;
+    const response = await fetch(url, {
+      headers: { 'Client-Token': clientToken }
+    });
+    const data = await response.json().catch(() => ({}));
+    res.json({ success: true, message: 'Instância desconectada com sucesso!', data });
+  } catch (error) {
+    console.error('[Z-API Proxy] Erro ao desconectar:', error.message);
+    res.status(500).json({ error: 'Erro ao desconectar' });
+  }
+});
+
+// 4. Webhook Receiver
+app.post('/webhook/zapi-connected', (req, res) => {
+  const data = req.body || {};
+  console.log('[Z-API Webhook] Connection event received:', data);
+  res.status(200).send('OK');
 });
 
 // Endpoint de telemetria completa de todas as IAs
@@ -2708,10 +2827,17 @@ const PLATFORMS = [
   },
   {
     id: 'zapi',
-    name: 'Z-API',
-    description: 'API de WhatsApp',
+    name: 'Z-API Painel',
+    description: 'Painel oficial Z-API',
     url: 'https://app.z-api.io/app',
     icon: 'chat',
+  },
+  {
+    id: 'zapi-connect',
+    name: 'Conexão WhatsApp Z-API',
+    description: 'Conecte e espelhe o QR Code da sua instância Z-API',
+    url: '/zapi-connect',
+    icon: 'qr_code_scanner',
   },
   {
     id: 'trello-pi',
