@@ -56,7 +56,7 @@
       pointer-events: none;
     }
 
-    /* ── DOCK NAVEGAÇÃO LATERAL ── */
+    /* ── DOCK NAVEGAÇÃO LATERAL (PADRÃO MINDFLOW AI) ── */
     .dock {
       position: fixed;
       left: 16px;
@@ -66,14 +66,14 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
-      padding: 14px 10px;
-      background: rgba(8, 14, 28, 0.75);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      gap: 10px;
+      padding: 12px 8px;
+      background: rgba(13, 17, 32, 0.75);
       border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 20px;
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
     }
     .dock-item {
       width: 42px;
@@ -82,22 +82,32 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--muted);
+      color: #8E8FA2;
       text-decoration: none;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
       position: relative;
     }
-    .dock-item:hover, .dock-item.active {
+    .dock-item:hover {
       color: #fff;
-      background: rgba(46, 79, 255, 0.25);
-      border: 1px solid rgba(46, 79, 255, 0.4);
-      box-shadow: 0 0 16px rgba(46, 79, 255, 0.3);
+      background: rgba(46, 79, 255, 0.15);
+      transform: scale(1.08);
+    }
+    .dock-item.active {
+      color: #fff;
+      background: linear-gradient(135deg, #2E4FFF, #00B5A0);
+      box-shadow: 0 4px 16px rgba(46, 79, 255, 0.4);
+    }
+    .dock-item.active:hover {
+      transform: scale(1.05);
+    }
+    .dock-item .material-symbols-outlined {
+      font-size: 20px;
     }
     .dock-sep {
       width: 24px;
       height: 1px;
       background: rgba(255, 255, 255, 0.08);
-      margin: 2px 0;
+      margin: 4px 0;
     }
 
     /* ── NAVBAR TOP ── */
