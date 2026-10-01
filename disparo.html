@@ -5810,8 +5810,14 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       }
     }
 
-    // === Botões de limpar campo e Rascunho Persistente (localStorage) ===
+    // === Botões de limpar campo e Rascunho Persistente (localStorage isolado por cliente) ===
     const CLEARABLE_IDS = ['nome', 'contexto', 'telefone', 'email', 'agent_id', 'prompt_id'];
+
+    function getDraftStorageKey() {
+      const user = window.currentUserSession;
+      const clientId = (user && user.active_client) ? user.active_client : 'default';
+      return `mindflow_disparo_draft_${clientId}`;
+    }
 
     function saveFormDraft() {
       try {
@@ -5821,13 +5827,13 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           telefone: document.getElementById('telefone')?.value || '',
           email: document.getElementById('email')?.value || ''
         };
-        localStorage.setItem('mindflow_disparo_draft', JSON.stringify(draft));
+        localStorage.setItem(getDraftStorageKey(), JSON.stringify(draft));
       } catch (e) {}
     }
 
     function loadFormDraft() {
       try {
-        const raw = localStorage.getItem('mindflow_disparo_draft');
+        const raw = localStorage.getItem(getDraftStorageKey());
         if (!raw) return;
         const draft = JSON.parse(raw);
         if (draft.nome) { const el = document.getElementById('nome'); if (el) { el.value = draft.nome; updateClearBtn('nome'); } }
@@ -5880,7 +5886,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       hideContextoSuggestions();
       ctxEl.dispatchEvent(new Event('input'));
       CLEARABLE_IDS.forEach(id => updateClearBtn(id));
-      localStorage.removeItem('mindflow_disparo_draft');
+      localStorage.removeItem(getDraftStorageKey());
       checkFormReady();
     }
 
@@ -5898,12 +5904,18 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       }
     });
 
-    // ── Gestão do Histórico de Disparos do Usuário ──
-    const USER_HISTORY_KEY = 'mindflow_user_dispatch_history';
+    // ── Gestão do Histórico de Disparos do Usuário (Isolado por Usuário & Cliente) ──
+    function getUserHistoryStorageKey() {
+      const user = window.currentUserSession;
+      const email = (user && user.email) ? user.email.replace(/[^a-zA-Z0-9_]/g, '_') : 'guest';
+      const clientId = (user && user.active_client) ? user.active_client : 'default';
+      return `mindflow_user_dispatch_history_${email}_${clientId}`;
+    }
 
     function getUserLocalHistory() {
       try {
-        const raw = localStorage.getItem(USER_HISTORY_KEY);
+        const key = getUserHistoryStorageKey();
+        const raw = localStorage.getItem(key);
         return raw ? JSON.parse(raw) : [];
       } catch (e) {
         return [];
@@ -5912,7 +5924,8 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
 
     function saveUserLocalHistory(list) {
       try {
-        localStorage.setItem(USER_HISTORY_KEY, JSON.stringify((list || []).slice(0, 50)));
+        const key = getUserHistoryStorageKey();
+        localStorage.setItem(key, JSON.stringify((list || []).slice(0, 50)));
       } catch (e) {}
     }
 
@@ -5940,8 +5953,9 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
     }
 
     function clearUserLocalHistory() {
-      if (confirm('Deseja limpar o seu histórico local de disparos?')) {
-        localStorage.removeItem(USER_HISTORY_KEY);
+      if (confirm('Deseja limpar o seu histórico local de disparos para esta conta?')) {
+        const key = getUserHistoryStorageKey();
+        localStorage.removeItem(key);
         renderUserDispatchHistoryList([]);
       }
     }
@@ -6363,43 +6377,48 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       const local = getUserLocalHistory();
       renderUserDispatchHistoryList(local);
 
-      if (forceFetchServer || local.length < 5) {
-        try {
-          const res = await fetch('/api/calls?limit=20');
-          if (res.ok) {
-            const data = await res.json();
-            const serverCalls = data.calls || data.data || [];
-            if (Array.isArray(serverCalls) && serverCalls.length > 0) {
-              const mergedMap = new Map();
-              local.forEach(item => {
-                const key = item.execution_id || item.id || item.call_id;
-                if (key) mergedMap.set(key, item);
-              });
-              serverCalls.forEach(item => {
-                const key = item.call_id || item.id;
-                if (key && !mergedMap.has(key)) {
-                  mergedMap.set(key, {
-                    id: item.id,
-                    call_id: item.call_id,
-                    nome: item.Nome,
-                    telefone: item.Numero || item.to_number,
-                    status: item.status || 'completed',
-                    duration: item.Duracao,
-                    recording_url: item.recording_url,
-                    disconnection_reason: item.disconnection_reason,
-                    created_at: item.created_at,
-                    agent_name: item.agent_name
-                  });
-                }
-              });
-              const mergedList = Array.from(mergedMap.values());
-              saveUserLocalHistory(mergedList);
-              renderUserDispatchHistoryList(mergedList);
+      try {
+        const res = await fetch('/api/calls?limit=20');
+        if (res.ok) {
+          const data = await res.json();
+          const serverCalls = data.calls || data.data || [];
+          if (Array.isArray(serverCalls)) {
+            if (serverCalls.length === 0) {
+              // Se o cliente ativo não possui chamadas no servidor, limpa o histórico renderizado
+              saveUserLocalHistory([]);
+              renderUserDispatchHistoryList([]);
+              return;
             }
+
+            const mergedMap = new Map();
+            local.forEach(item => {
+              const key = item.execution_id || item.id || item.call_id;
+              if (key) mergedMap.set(key, item);
+            });
+            serverCalls.forEach(item => {
+              const key = item.call_id || item.id;
+              if (key) {
+                mergedMap.set(key, {
+                  id: item.id,
+                  call_id: item.call_id,
+                  nome: item.Nome,
+                  telefone: item.Numero || item.to_number,
+                  status: item.status || 'completed',
+                  duration: item.Duracao,
+                  recording_url: item.recording_url,
+                  disconnection_reason: item.disconnection_reason,
+                  created_at: item.created_at,
+                  agent_name: item.agent_name
+                });
+              }
+            });
+            const mergedList = Array.from(mergedMap.values());
+            saveUserLocalHistory(mergedList);
+            renderUserDispatchHistoryList(mergedList);
           }
-        } catch (e) {
-          console.error('Erro ao buscar histórico do servidor:', e);
         }
+      } catch (e) {
+        console.error('Erro ao buscar histórico do servidor:', e);
       }
     }
 
@@ -6957,6 +6976,10 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
           return;
         }
         const data = await res.json();
+        window.currentUserSession = data;
+        loadFormDraft();
+        loadUserDispatchHistory(true);
+
         const userNameEl = document.getElementById('userName');
         if (userNameEl && data.name) userNameEl.textContent = data.name;
 

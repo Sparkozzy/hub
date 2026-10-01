@@ -384,18 +384,28 @@ async function loadKPIs(queryStr) {
         const res = await fetch(`/metrics?${queryStr}`);
         const data = await res.json();
 
-        document.getElementById('kpi-total-calls').textContent = data.total_calls.toLocaleString();
-        document.getElementById('kpi-avg-calls-lead').textContent = data.avg_ligacoes_por_lead.toFixed(1);
-        document.getElementById('kpi-unique-leads').textContent = data.unique_leads.toLocaleString();
-        document.getElementById('kpi-total-interest').textContent = data.total_interesse.toLocaleString();
-        document.getElementById('kpi-interest-rate').textContent = data.taxa_interesse_por_lead.toFixed(1);
-        document.getElementById('kpi-total-cost').textContent = `${data.minutagem_total.toFixed(2)} min`;
-        document.getElementById('kpi-cost-lead').textContent = `${data.minutagem_por_lead.toFixed(2)} min`;
-        document.getElementById('kpi-cost-interest').textContent = `${data.minutagem_media.toFixed(2)} min`;
+        const totalCalls = data.total_calls || 0;
+        const emptyNotice = document.getElementById('dashEmptyNotice');
+        if (emptyNotice) {
+            emptyNotice.style.display = totalCalls === 0 ? 'flex' : 'none';
+        }
+
+        document.getElementById('kpi-total-calls').textContent = totalCalls.toLocaleString();
+        document.getElementById('kpi-avg-calls-lead').textContent = (data.avg_ligacoes_por_lead || 0).toFixed(1);
+        document.getElementById('kpi-unique-leads').textContent = (data.unique_leads || 0).toLocaleString();
+        document.getElementById('kpi-total-interest').textContent = (data.total_interesse || 0).toLocaleString();
+        document.getElementById('kpi-interest-rate').textContent = (data.taxa_interesse_por_lead || 0).toFixed(1);
+        document.getElementById('kpi-total-cost').textContent = `${(data.minutagem_total || 0).toFixed(2)} min`;
+        document.getElementById('kpi-cost-lead').textContent = `${(data.minutagem_por_lead || 0).toFixed(2)} min`;
+        document.getElementById('kpi-cost-interest').textContent = `${(data.minutagem_media || 0).toFixed(2)} min`;
 
         // Gauge statistics under Fatigue tab
-        document.getElementById('val-avg-density').textContent = data.avg_density.toFixed(2);
-        document.getElementById('val-avg-pressure').textContent = data.avg_pressure.toFixed(2);
+        if (document.getElementById('val-avg-density')) {
+            document.getElementById('val-avg-density').textContent = (data.avg_density || 0).toFixed(2);
+        }
+        if (document.getElementById('val-avg-pressure')) {
+            document.getElementById('val-avg-pressure').textContent = (data.avg_pressure || 0).toFixed(2);
+        }
     } catch (err) {
         console.error('Erro ao buscar métricas:', err);
         document.getElementById('kpi-total-calls').textContent = 'Erro';
