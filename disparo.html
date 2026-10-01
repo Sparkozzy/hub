@@ -6603,23 +6603,30 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
     };
 
     let activeGroupId = 'mindflow';
-    let activeContacts = [...contactGroups.mindflow.contacts];
+    let activeContacts = contactGroups.mindflow ? [...contactGroups.mindflow.contacts] : [];
     let currentPs3Index = 0;
+
+    function getContactGroupsStorageKey() {
+      const user = window.currentUserSession;
+      const clientId = (user && user.active_client) ? user.active_client : 'default';
+      return `mf_contact_groups_${clientId}`;
+    }
 
     function loadContactGroupsFromStorage() {
       try {
-        const saved = localStorage.getItem('mf_contact_groups');
+        const key = getContactGroupsStorageKey();
+        const saved = localStorage.getItem(key);
+        const isInternal = window.currentUserSession ? (window.currentUserSession.active_client === '2') : true;
+
         if (saved) {
           const parsed = JSON.parse(saved);
-          contactGroups = {
-            mindflow: {
-              id: 'mindflow',
-              name: 'Equipe MindFlow',
-              isDefault: true,
-              contacts: JSON.parse(JSON.stringify(DEFAULT_MINDFLOW_CONTACTS))
-            },
-            ...parsed
-          };
+          if (!isInternal) {
+            delete parsed.mindflow;
+          }
+          contactGroups = { ...contactGroups, ...parsed };
+        }
+        if (!isInternal) {
+          delete contactGroups.mindflow;
         }
       } catch (e) {
         console.error('Erro ao carregar grupos do localStorage:', e);
@@ -6628,9 +6635,11 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
 
     function saveContactGroupsToStorage() {
       try {
+        const key = getContactGroupsStorageKey();
         const toSave = { ...contactGroups };
-        delete toSave.mindflow; // Não sobrescreve grupo oficial MindFlow no storage
-        localStorage.setItem('mf_contact_groups', JSON.stringify(toSave));
+        delete toSave.mindflow;
+        delete toSave.meu_numero;
+        localStorage.setItem(key, JSON.stringify(toSave));
       } catch (e) {
         console.error('Erro ao salvar grupos no localStorage:', e);
       }
@@ -6983,27 +6992,58 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
         const userNameEl = document.getElementById('userName');
         if (userNameEl && data.name) userNameEl.textContent = data.name;
 
-        // Preenche dados do usuário da sessão no primeiro card da equipe MindFlow
-        if (data.name) {
-          contactGroups.mindflow.contacts[0].name = data.name;
-          contactGroups.mindflow.contacts[0].avatar = typeof getInitials === 'function' ? getInitials(data.name) : 'PE';
-          if (data.phone) contactGroups.mindflow.contacts[0].phone = data.phone;
-          if (activeGroupId === 'mindflow') {
-            activeContacts = [...contactGroups.mindflow.contacts];
-            renderPs3Carousel();
+        const isInternalMindflow = (data.active_client === '2');
+
+        if (isInternalMindflow) {
+          // CONTA INTERNA MINDFLOW: exibe equipe MindFlow
+          if (data.name && contactGroups.mindflow) {
+            contactGroups.mindflow.contacts[0].name = data.name;
+            contactGroups.mindflow.contacts[0].avatar = typeof getInitials === 'function' ? getInitials(data.name) : 'PE';
+            if (data.phone) contactGroups.mindflow.contacts[0].phone = data.phone;
           }
+          activeGroupId = 'mindflow';
+          if (contactGroups.mindflow) activeContacts = [...contactGroups.mindflow.contacts];
         } else {
-          const userPhone = data.phone || '5547991089099';
-          contactGroups.mindflow.contacts[0].phone = userPhone;
-          if (activeGroupId === 'mindflow') {
-            activeContacts = [...contactGroups.mindflow.contacts];
-            renderPs3Carousel();
-          }
+          // CONTA EXTERNA DE CLIENTE (ex: Kravi Comercial, ATS, DevolveJus, MyGain)
+          // REMOVE O GRUPO DA EQUIPE MINDFLOW DEFINITIVAMENTE DO CLIENTE
+          delete contactGroups.mindflow;
+
+          const clientName = data.active_client_name || data.name || 'Meu Negócio';
+          contactGroups.meu_numero = {
+            id: 'meu_numero',
+            name: 'Meu Próprio Número',
+            isDefault: true,
+            contacts: [{
+              id: 'self',
+              name: data.name || clientName,
+              phone: data.phone || '5547991089099',
+              avatar: typeof getInitials === 'function' ? getInitials(data.name || clientName) : 'CK',
+              badgeColor: '#00B5A0'
+            }]
+          };
+          activeGroupId = 'meu_numero';
+          activeContacts = [...contactGroups.meu_numero.contacts];
         }
+
+        loadContactGroupsFromStorage();
+        renderGroupDropdownOptions();
+        renderPs3Carousel();
 
         if (data.email) {
           const emailEl = document.getElementById('email');
           if (emailEl && !emailEl.value) emailEl.value = data.email;
+        }
+
+        // Esconde campos avançados e menus internos para clientes externos
+        if (!isInternalMindflow) {
+          const qaField = document.querySelector('#csQuickAgent')?.closest('.field');
+          if (qaField) qaField.style.display = 'none';
+          const advToggle = document.getElementById('advancedToggle');
+          if (advToggle) advToggle.style.display = 'none';
+          const advPanel = document.getElementById('advancedPanel');
+          if (advPanel) advPanel.style.display = 'none';
+          const modeCompleteTitle = document.querySelector('#modeComplete .mode-card-title');
+          if (modeCompleteTitle) modeCompleteTitle.textContent = 'Disparo para Lead';
         }
       } catch (err) {
         console.error('Erro ao verificar sessão do usuário:', err);
@@ -7014,52 +7054,6 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
       await fetch('/api/logout', { method: 'POST' });
       window.location.href = '/';
     }
-
-    // ── Client Mode Adaptation ──
-    (async () => {
-      try {
-        const checkRes = await fetch('/api/check');
-        const userData = await checkRes.json();
-        const isClient = userData.client_access && userData.client_access.length === 1 && userData.client_access[0].client_id !== '2';
-
-        if (isClient) {
-          sessionStorage.setItem('isClient', '1');
-          const logoLink = document.querySelector('.logo-mark');
-          if (logoLink) logoLink.href = '/cliente';
-
-          // Cliente externo: esconde seletores avançados e fixa a conta do próprio cliente
-          const qaField = document.querySelector('#csQuickAgent')?.closest('.field');
-          if (qaField) qaField.style.display = 'none';
-          const advToggle = document.getElementById('advancedToggle');
-          if (advToggle) advToggle.style.display = 'none';
-          const advPanel = document.getElementById('advancedPanel');
-          if (advPanel) advPanel.style.display = 'none';
-          const modeCompleteTitle = document.querySelector('#modeComplete .mode-card-title');
-          if (modeCompleteTitle) modeCompleteTitle.textContent = 'Disparo para Lead';
-
-          // Para cliente externo, cria o grupo "Meu Próprio Número" como padrão no Disparo Rápido
-          if (userData.name) {
-            contactGroups.meu_numero = {
-              id: 'meu_numero',
-              name: 'Meu Próprio Número',
-              isDefault: true,
-              contacts: [{
-                id: 'self',
-                name: userData.name,
-                phone: userData.phone || '5547991089099',
-                avatar: typeof getInitials === 'function' ? getInitials(userData.name) : 'ME',
-                badgeColor: '#00B5A0'
-              }]
-            };
-            if (typeof switchGroup === 'function') {
-              switchGroup('meu_numero');
-            }
-          }
-        }
-      } catch (err) {
-        console.error('Erro ao verificar modo cliente:', err);
-      }
-    })();
   </script>
   <!-- ── Modal Ligação ao Vivo (Image 2 Replica) ── -->
   <div id="liveCallModal" class="live-modal-overlay">
