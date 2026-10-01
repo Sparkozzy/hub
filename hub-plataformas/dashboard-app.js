@@ -115,9 +115,12 @@ function initTabs() {
         }, 100);
     }
 
+    window.activateTab = activateTab;
+
     tabs.forEach(tab => {
         tab.addEventListener('click', (e) => {
             e.preventDefault();
+            window._userManuallySelectedTab = true;
             const targetTab = tab.getAttribute('data-tab');
             window.location.hash = targetTab;
             activateTab(targetTab);
@@ -126,6 +129,7 @@ function initTabs() {
 
     const initialHash = (window.location.hash || '').replace('#', '');
     if (['overview', 'fatigue', 'audit', 'whatsapp'].includes(initialHash)) {
+        window._userManuallySelectedTab = true;
         activateTab(initialHash);
     }
 
@@ -394,11 +398,15 @@ async function loadKPIs(queryStr) {
                 if (waRes.ok) {
                     const waData = await waRes.json();
                     if (waData.total_mensagens > 0 || waData.total_leads > 0) {
+                        // Se o cliente opera apenas WhatsApp e o usuário não trocou de aba manualmente, ativa a aba de WhatsApp automaticamente!
+                        if (!window._userManuallySelectedTab && typeof window.activateTab === 'function') {
+                            window.activateTab('whatsapp');
+                        }
                         emptyNotice.innerHTML = `
                           <span class="material-symbols-outlined" style="font-size: 32px; color: #00B5A0;">chat</span>
                           <div style="flex: 1;">
                             <h4 style="font-family: 'Space Grotesk', sans-serif; font-size: 15px; color: #fff; font-weight: 700;">Esta conta opera via WhatsApp IA (${waData.total_leads || 0} Leads / ${(waData.total_mensagens || 0).toLocaleString()} Mensagens)</h4>
-                            <p style="font-size: 13px; color: #8E8FA2; margin-top: 2px;">Não há ligações de voz Retell nesta aba. Clique no botão ao lado ou acesse a aba <strong>WhatsApp</strong> acima para visualizar todo o engajamento e métricas em tempo real.</p>
+                            <p style="font-size: 13px; color: #8E8FA2; margin-top: 2px;">Não há ligações de voz Retell nesta aba. Abrimos a aba <strong>WhatsApp</strong> para você com todo o engajamento e métricas em tempo real.</p>
                           </div>
                           <button type="button" onclick="document.querySelector('[data-tab=\\'whatsapp\\']')?.click()" style="background: linear-gradient(135deg, #2E4FFF, #00B5A0); border: none; color: #fff; padding: 10px 18px; border-radius: 12px; font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; box-shadow: 0 4px 14px rgba(0,181,160,0.3);">
                             Ver Dashboard WhatsApp &rarr;
