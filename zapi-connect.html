@@ -353,13 +353,6 @@
       box-shadow: 0 0 10px #4ADE80;
       animation: pulse 1.8s infinite ease-in-out;
     }
-    .dot-red {
-      width: 8px;
-      height: 8px;
-      background: #EF4444;
-      border-radius: 50%;
-      box-shadow: 0 0 10px #EF4444;
-    }
 
     .info-grid {
       display: grid;
@@ -870,7 +863,7 @@
       border-bottom: none;
     }
 
-    /* Selector Bar */
+    /* Selector Bar Container */
     .selector-bar {
       width: 100%;
       background: rgba(12, 20, 38, 0.6);
@@ -883,15 +876,105 @@
       margin-bottom: 20px;
       font-size: 12px;
     }
-    .selector-bar select {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 8px;
+
+    /* ── CUSTOM DROPDOWN (DESIGN SYSTEM MINDFLOW AI) ── */
+    .custom-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+    .custom-dropdown-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 7px 14px;
       color: #fff;
-      padding: 4px 10px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      min-width: 190px;
+    }
+    .custom-dropdown-btn:hover {
+      background: rgba(46, 79, 255, 0.15);
+      border-color: rgba(46, 79, 255, 0.4);
+      box-shadow: 0 0 16px rgba(46, 79, 255, 0.25);
+    }
+    .custom-dropdown.open .custom-dropdown-btn {
+      border-color: var(--teal);
+      box-shadow: 0 0 18px rgba(0, 181, 160, 0.35);
+      background: rgba(0, 181, 160, 0.12);
+    }
+    .custom-dropdown-btn .dropdown-arrow {
+      font-size: 18px;
+      color: var(--muted);
+      transition: transform 0.25s ease;
+    }
+    .custom-dropdown.open .dropdown-arrow {
+      transform: rotate(180deg);
+      color: var(--teal);
+    }
+
+    .custom-dropdown-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      min-width: 230px;
+      background: rgba(8, 14, 28, 0.96);
+      backdrop-filter: blur(20px) saturate(1.4);
+      -webkit-backdrop-filter: blur(20px) saturate(1.4);
+      border: 1px solid rgba(0, 181, 160, 0.35);
+      border-radius: 14px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), 0 0 24px rgba(0, 181, 160, 0.18);
+      padding: 6px;
+      z-index: 99999;
+      display: none;
+      flex-direction: column;
+      gap: 3px;
+      animation: dropdownFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .custom-dropdown.open .custom-dropdown-menu {
+      display: flex;
+    }
+    @keyframes dropdownFadeIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .custom-dropdown-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 14px;
+      border-radius: 9px;
+      color: #CBD5E1;
       font-family: 'Space Grotesk', sans-serif;
       font-size: 12px;
-      outline: none;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+    .custom-dropdown-item:hover {
+      background: rgba(46, 79, 255, 0.2);
+      color: #fff;
+      padding-left: 18px;
+    }
+    .custom-dropdown-item.active {
+      background: rgba(0, 181, 160, 0.18);
+      color: #00B5A0;
+      font-weight: 700;
+    }
+    .custom-dropdown-item .check-icon {
+      font-size: 16px;
+      color: #00B5A0;
+      opacity: 0;
+    }
+    .custom-dropdown-item.active .check-icon {
+      opacity: 1;
     }
 
     /* Modal Share Link */
@@ -1053,15 +1136,17 @@
         <span><strong style="color: #fff;">Instância Monitorada:</strong> <span id="lblActiveClient">Mindflow Oficial</span></span>
         <div style="display: flex; align-items: center; gap: 8px;">
           <label style="color: var(--muted); font-size: 11px;">Trocar Cliente:</label>
-          <select id="clientSelect" onchange="onClientSelectChange()">
-            <option value="mindflow">Mindflow Oficial</option>
-            <option value="kravi_sac">Kravi SAC</option>
-            <option value="kravi_comercial">Kravi Comercial</option>
-            <option value="ats">ATS Portaria Remota</option>
-            <option value="devolvejus">DevolveJus</option>
-            <option value="mygain">MyGain</option>
-            <option value="mindflow_teste">Mindflow Teste</option>
-          </select>
+
+          <!-- Custom Dropdown Glassmorphic Mindflow -->
+          <div class="custom-dropdown" id="customClientDropdown">
+            <button type="button" class="custom-dropdown-btn" id="customClientBtn" onclick="toggleCustomDropdown(event)">
+              <span id="customClientLabel">Mindflow Oficial</span>
+              <span class="material-symbols-outlined dropdown-arrow">expand_more</span>
+            </button>
+            <div class="custom-dropdown-menu" id="customClientMenu">
+              <!-- Renderizado dinamicamente via JS com todas as 7 opções de clientes -->
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1401,10 +1486,60 @@
         selectorBar.style.display = 'flex';
       }
 
+      renderCustomDropdownOptions();
       checkSession();
       loadClientView();
       qrInterval = setInterval(fetchQRCode, 6000);
     }
+
+    function renderCustomDropdownOptions() {
+      const menu = document.getElementById('customClientMenu');
+      if (!menu) return;
+
+      menu.innerHTML = '';
+      Object.entries(PRESETS).forEach(([key, preset]) => {
+        const item = document.createElement('div');
+        item.className = `custom-dropdown-item ${key === activeKey ? 'active' : ''}`;
+        item.onclick = () => selectCustomClient(key);
+        item.innerHTML = `
+          <span>${preset.name}</span>
+          <span class="material-symbols-outlined check-icon">check</span>
+        `;
+        menu.appendChild(item);
+      });
+    }
+
+    function toggleCustomDropdown(e) {
+      if (e) e.stopPropagation();
+      const dropdown = document.getElementById('customClientDropdown');
+      dropdown.classList.toggle('open');
+    }
+
+    function selectCustomClient(key) {
+      if (PRESETS[key]) {
+        activeKey = key;
+        activeInstanceId = PRESETS[key].instanceId;
+        activeToken = PRESETS[key].token;
+        activeClientToken = PRESETS[key].clientToken;
+
+        document.getElementById('lblActiveClient').innerText = PRESETS[key].name;
+        document.getElementById('connectedClientName').innerText = PRESETS[key].name;
+        document.getElementById('customClientLabel').innerText = PRESETS[key].name;
+
+        renderCustomDropdownOptions();
+        loadClientView();
+      }
+      const dropdown = document.getElementById('customClientDropdown');
+      if (dropdown) dropdown.classList.remove('open');
+    }
+
+    // Fechar dropdown ao clicar fora
+    document.addEventListener('click', (e) => {
+      const dropdown = document.getElementById('customClientDropdown');
+      if (dropdown && !dropdown.contains(e.target)) {
+        dropdown.classList.remove('open');
+      }
+    });
 
     function switchTab(tab) {
       if (tab === 'client') {
@@ -1420,19 +1555,6 @@
         devSection.style.display = 'block';
         loadDevOperationsGrid();
         devGridInterval = setInterval(loadDevOperationsGrid, 10000);
-      }
-    }
-
-    function onClientSelectChange() {
-      const val = document.getElementById('clientSelect').value;
-      if (PRESETS[val]) {
-        activeKey = val;
-        activeInstanceId = PRESETS[val].instanceId;
-        activeToken = PRESETS[val].token;
-        activeClientToken = PRESETS[val].clientToken;
-        document.getElementById('lblActiveClient').innerText = PRESETS[val].name;
-        document.getElementById('connectedClientName').innerText = PRESETS[val].name;
-        loadClientView();
       }
     }
 
@@ -1786,8 +1908,7 @@
     }
 
     function openClientCardView(key) {
-      document.getElementById('clientSelect').value = key;
-      onClientSelectChange();
+      selectCustomClient(key);
       switchTab('client');
     }
 
