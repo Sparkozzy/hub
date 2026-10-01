@@ -13,9 +13,9 @@
     href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%221225 1800 545 510%22><path fill=%22%23FFFFFF%22 d=%22M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z%22/></svg>">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
     rel="stylesheet" />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
     rel="stylesheet" />
+  <link rel="stylesheet" href="mindflow-core.css" />
 
   <style>
     *,
@@ -497,32 +497,37 @@
       gap: 8px;
     }
     .btn-action:hover {
-      filter: brightness(1.15);
-      transform: translateY(-2px);
-      box-shadow: 0 12px 24px rgba(46, 79, 255, 0.35);
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(46, 79, 255, 0.25);
     }
 
     .btn-secondary {
-      background: rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.05);
       color: #E2E8F0;
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.09);
+      border-color: rgba(46, 79, 255, 0.4);
       color: #fff;
-      transform: translateY(-2px);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
     }
 
     .btn-danger {
-      background: rgba(239, 68, 68, 0.12);
+      background: rgba(239, 68, 68, 0.1);
       color: #F87171;
-      border: 1px solid rgba(239, 68, 68, 0.3);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .btn-danger:hover {
-      background: #EF4444;
+      background: rgba(239, 68, 68, 0.2);
+      border-color: #EF4444;
       color: #fff;
-      box-shadow: 0 12px 24px rgba(239, 68, 68, 0.35);
-      transform: translateY(-2px);
+      box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
+      transform: translateY(-1px);
     }
 
     /* ── SEÇÃO HUB DE INSTÂNCIAS (GESTAO DE INSTANCIAS Z-API) ── */
