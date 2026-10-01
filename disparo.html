@@ -4019,7 +4019,7 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
             <div class="group-select-wrapper" id="groupSelectWrapper">
               <button type="button" class="group-select-trigger" onclick="toggleGroupDropdown(event)" title="Selecionar Grupo de Contatos">
                 <span class="material-symbols-outlined" style="font-size: 15px; color: #00B5A0;">groups</span>
-                <span id="currentGroupName">EQUIPE MINDFLOW</span>
+                <span id="currentGroupName">Carregando...</span>
                 <span class="material-symbols-outlined group-arrow">expand_more</span>
               </button>
               <div class="group-dropdown-menu" id="groupDropdownMenu">
@@ -6655,6 +6655,20 @@ width: 4px; height: 4px; border-radius: 50%; background: #2E4FFF;
 
     function renderGroupDropdownOptions() {
       const dd = document.getElementById('groupDropdownMenu');
+      const groupLabel = document.getElementById('currentGroupName');
+
+      if (!contactGroups[activeGroupId]) {
+        const firstKey = Object.keys(contactGroups)[0];
+        if (firstKey) {
+          activeGroupId = firstKey;
+          activeContacts = [...contactGroups[firstKey].contacts];
+        }
+      }
+
+      if (groupLabel && contactGroups[activeGroupId]) {
+        groupLabel.textContent = contactGroups[activeGroupId].name;
+      }
+
       if (!dd) return;
       dd.innerHTML = Object.values(contactGroups).map(g => `
         <div class="group-dropdown-item ${g.id === activeGroupId ? 'active' : ''}" onclick="switchGroup('${g.id}')">
