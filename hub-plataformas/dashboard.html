@@ -375,13 +375,13 @@
       font-family: 'Inter', sans-serif; font-size: 12px; color: rgba(255,255,255,.7);
       border-radius: 6px; cursor: pointer; transition: all .12s; border: 1px solid transparent;
     }
-    .period-cal-day:hover:not(.empty):not(.past) { background: rgba(46,79,255,.15); color: #e0e2ef; border-color: rgba(46,79,255,.3); }
+    .period-cal-day:hover:not(.empty):not(.future) { background: rgba(46,79,255,.15); color: #e0e2ef; border-color: rgba(46,79,255,.3); }
     .period-cal-day.today { color: #7B9AFF; font-weight: 600; border-color: rgba(123,154,255,.3); }
     .period-cal-day.selected { background: linear-gradient(135deg,#2E4FFF,#00B5A0); color: #fff; font-weight: 600; border-color: transparent; }
     .period-cal-day.in-range { background: rgba(46,79,255,.15); border-color: transparent; border-radius: 0; }
     .period-cal-day.range-start { border-radius: 6px 0 0 6px; background: linear-gradient(135deg,#2E4FFF,#00B5A0); color: #fff; font-weight: 600; }
     .period-cal-day.range-end { border-radius: 0 6px 6px 0; background: linear-gradient(135deg,#2E4FFF,#00B5A0); color: #fff; font-weight: 600; }
-    .period-cal-day.past { color: #2a2d3a; cursor: default; }
+    .period-cal-day.future { color: #2a2d3a; cursor: default; }
     .period-cal-day.empty { cursor: default; }
     .period-status { text-align: center; font-size: 11px; color: #8E8FA2; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.06); margin-top: 4px; }
     .custom-select-dropdown::-webkit-scrollbar { width: 4px; }

@@ -197,13 +197,13 @@ function initFilters() {
 
         for (let d = 1; d <= daysInMonth; d++) {
             const date = new Date(year, month, d);
-            const isPast = date < todayNorm;
+            const isFuture = date > todayNorm;
             const isToday = sameDay(date, today);
             const isStart = sameDay(date, selStart);
             const isEnd = sameDay(date, selEnd);
             const inRange = selStart && selEnd && date >= selStart && date <= selEnd;
             let cls = 'period-cal-day';
-            if (isPast) cls += ' past';
+            if (isFuture) cls += ' future';
             if (isToday) cls += ' today';
             if (isStart && isEnd && sameDay(selStart, selEnd)) cls += ' selected';
             else if (isStart) cls += ' range-start';
@@ -213,7 +213,7 @@ function initFilters() {
         }
         calGrid.innerHTML = html;
 
-        calGrid.querySelectorAll('.period-cal-day:not(.empty):not(.past)').forEach(el => {
+        calGrid.querySelectorAll('.period-cal-day:not(.empty):not(.future)').forEach(el => {
             el.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const [y, m, day] = el.dataset.date.split('-').map(Number);
