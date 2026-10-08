@@ -531,6 +531,10 @@
         <span class="material-symbols-outlined">chat</span>
         WhatsApp
       </a>
+      <a href="#agendamentos" class="dash-tab" data-tab="agendamentos">
+        <span class="material-symbols-outlined">calendar_month</span>
+        Agendamentos
+      </a>
     </div>
       <!-- Top Header -->
       <header class="top-header">
@@ -996,6 +1000,107 @@
             </button>
             <span class="pagination-info">Página <strong id="wa-current-page">1</strong> de <strong id="wa-total-pages">1</strong></span>
             <button id="wa-btn-next" class="btn-pagination" disabled>
+              Próxima <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-agendamentos" class="tab-content">
+        <!-- KPI Cards Grid -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <span class="kpi-title">Total Agendados</span>
+              <div class="kpi-icon icon-purple"><span class="material-symbols-outlined">event_available</span></div>
+            </div>
+            <div class="kpi-body">
+              <h3 id="ag-kpi-total">-</h3>
+              <span class="kpi-subtitle">Reuniões no período</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <span class="kpi-title">Via Telefonia (Voz)</span>
+              <div class="kpi-icon icon-blue"><span class="material-symbols-outlined">phone_in_talk</span></div>
+            </div>
+            <div class="kpi-body">
+              <h3 id="ag-kpi-voice">-</h3>
+              <span class="kpi-subtitle">Agendados por Ligação</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <span class="kpi-title">Via WhatsApp</span>
+              <div class="kpi-icon icon-green"><span class="material-symbols-outlined">chat</span></div>
+            </div>
+            <div class="kpi-body">
+              <h3 id="ag-kpi-wa">-</h3>
+              <span class="kpi-subtitle">Agendados por Chat</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <span class="kpi-title">Status Confirmado</span>
+              <div class="kpi-icon icon-teal"><span class="material-symbols-outlined">check_circle</span></div>
+            </div>
+            <div class="kpi-body">
+              <h3 id="ag-kpi-confirmed">-</h3>
+              <span class="kpi-subtitle">Status Agendado</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="charts-row">
+          <div class="chart-card span-6">
+            <div class="chart-header">
+              <h3><span class="material-symbols-outlined">pie_chart</span> Agendamentos por Canal</h3>
+              <span class="chart-desc">Distribuição entre Telefonia e WhatsApp</span>
+            </div>
+            <div class="chart-container-funnel"><canvas id="chart-ag-channel"></canvas></div>
+          </div>
+          <div class="chart-card span-6">
+            <div class="chart-header">
+              <h3><span class="material-symbols-outlined">bar_chart</span> Agendamentos por Agente</h3>
+              <span class="chart-desc">Produtividade de reuniões por agente SDR</span>
+            </div>
+            <div class="chart-container-hourly"><canvas id="chart-ag-agent"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Tabela de Agendamentos -->
+        <div class="chart-card">
+          <div class="chart-header" style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <h3><span class="material-symbols-outlined">calendar_month</span> Lista de Agendamentos</h3>
+              <span class="chart-desc">Histórico completo de reuniões agendadas pelos agentes</span>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="audit-table">
+              <thead>
+                <tr>
+                  <th>Lead / Cliente</th>
+                  <th>Contato</th>
+                  <th>Canal</th>
+                  <th>Data do Agendamento</th>
+                  <th>Agente</th>
+                  <th>Status</th>
+                  <th>Detalhes</th>
+                </tr>
+              </thead>
+              <tbody id="ag-table-body">
+                <tr><td colspan="7" class="loading-td">Carregando agendamentos...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination-panel">
+            <button id="ag-btn-prev" class="btn-pagination" disabled>
+              <span class="material-symbols-outlined">chevron_left</span> Anterior
+            </button>
+            <span class="pagination-info">Página <strong id="ag-current-page">1</strong> de <strong id="ag-total-pages">1</strong></span>
+            <button id="ag-btn-next" class="btn-pagination" disabled>
               Próxima <span class="material-symbols-outlined">chevron_right</span>
             </button>
           </div>

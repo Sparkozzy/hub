@@ -2790,9 +2790,117 @@ app.get('/whatsapp/chats/:session_id/messages', (req, res) => {
 });
 
 // ============================================================
-// API: AGENDAMENTOS (proxy para hub_backend)
+// API: AGENDAMENTOS (BFF Native + Multicliente Supabase)
 // ============================================================
-app.get('/agendamentos', (req, res) => proxyToDashboardBackend(req, res, '/agendamentos'));
+async function handleAgendamentosMetrics(req, res) {
+  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const clientDb = getActiveClientDb(req);
+    const startDate = (req.query.start_date || req.query.startDate || '').trim();
+    const endDate = (req.query.end_date || req.query.endDate || '').trim();
+    const agent = (req.query.agent || '').trim();
+
+    let query = clientDb.from('agendamentos').select('*').order('created_at', { ascending: false });
+
+    if (startDate) query = query.gte('created_at', startDate);
+    if (endDate) query = query.lte('created_at', endDate + 'T23:59:59');
+    if (agent && agent !== 'all' && agent !== 'Todos os Agentes') query = query.eq('agent_id', agent);
+
+    const { data: rows, error } = await query;
+    if (error) throw error;
+
+    const list = rows || [];
+    const total = list.length;
+
+    let totalVoice = 0;
+    let totalWa = 0;
+    let totalAgendado = 0;
+    const byStatus = {};
+    const byAgent = {};
+    const byChannel = { ligacao: 0, whats: 0 };
+
+    list.forEach(r => {
+      const ch = (r.canal || 'ligacao').toLowerCase();
+      if (ch.includes('whats')) {
+        totalWa++;
+        byChannel.whats = (byChannel.whats || 0) + 1;
+      } else {
+        totalVoice++;
+        byChannel.ligacao = (byChannel.ligacao || 0) + 1;
+      }
+
+      const st = (r.status || 'agendado').toLowerCase();
+      byStatus[st] = (byStatus[st] || 0) + 1;
+      if (st.includes('agendad') || st.includes('confirm')) {
+        totalAgendado++;
+      }
+
+      const ag = r.agent_id || r.agente || 'Sem Agente';
+      byAgent[ag] = (byAgent[ag] || 0) + 1;
+    });
+
+    res.json({
+      ok: true,
+      total,
+      totalVoice,
+      totalWa,
+      totalAgendado,
+      byChannel,
+      byStatus,
+      byAgent,
+      recentList: list.slice(0, 50)
+    });
+  } catch (err) {
+    console.error('[API Agendamentos Metrics Error]:', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+}
+
+async function handleAgendamentosList(req, res) {
+  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const clientDb = getActiveClientDb(req);
+    const startDate = (req.query.start_date || req.query.startDate || '').trim();
+    const endDate = (req.query.end_date || req.query.endDate || '').trim();
+    const agent = (req.query.agent || '').trim();
+    const canal = (req.query.canal || '').trim();
+    const page = parseInt(req.query.page || '1', 10);
+    const limit = parseInt(req.query.limit || '15', 10);
+
+    let query = clientDb.from('agendamentos').select('*', { count: 'exact' });
+
+    if (startDate) query = query.gte('created_at', startDate);
+    if (endDate) query = query.lte('created_at', endDate + 'T23:59:59');
+    if (agent && agent !== 'all' && agent !== 'Todos os Agentes') query = query.eq('agent_id', agent);
+    if (canal && canal !== 'all') query = query.ilike('canal', `%${canal}%`);
+
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    query = query.order('created_at', { ascending: false }).range(from, to);
+
+    const { data: rows, count, error } = await query;
+    if (error) throw error;
+
+    const totalCount = count || (rows ? rows.length : 0);
+    res.json({
+      ok: true,
+      total: totalCount,
+      page,
+      limit,
+      totalPages: Math.ceil(totalCount / limit) || 1,
+      data: rows || []
+    });
+  } catch (err) {
+    console.error('[API Agendamentos List Error]:', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+}
+
+app.get('/agendamentos/metrics', handleAgendamentosMetrics);
+app.get('/api/agendamentos/metrics', handleAgendamentosMetrics);
+app.get('/agendamentos', handleAgendamentosList);
+app.get('/api/agendamentos', handleAgendamentosList);
 
 // ============================================================
 // API: PLATAFORMAS (protegida)
