@@ -1359,4 +1359,88 @@ audio {
   line-height: 1.2;
 }
 
+/* ── Client Selector (Seletor de Cliente no Topo) ── */
+.client-selector {
+  position: relative;
+  display: inline-block;
+  z-index: 100;
+}
+
+.client-selector-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: rgba(46, 79, 255, 0.14);
+  border: 1px solid rgba(46, 79, 255, 0.35);
+  border-radius: 8px;
+  color: #7B9AFF;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  outline: none;
+}
+
+.client-selector-btn:hover {
+  background: rgba(46, 79, 255, 0.28);
+  border-color: rgba(46, 79, 255, 0.6);
+  color: #FFFFFF;
+  box-shadow: 0 0 12px rgba(46, 79, 255, 0.25);
+}
+
+.client-selector-btn span.material-symbols-outlined {
+  font-size: 18px;
+  transition: transform 0.2s ease;
+}
+
+.client-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 99999;
+  min-width: 200px;
+  background: rgba(10, 14, 26, 0.98);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+  padding: 6px;
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.client-dropdown.open {
+  display: flex !important;
+}
+
+.client-option {
+  padding: 8px 12px;
+  border-radius: 7px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.client-option:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #FFFFFF;
+}
+
+.client-option.active {
+  background: rgba(46, 79, 255, 0.22);
+  color: #7B9AFF;
+  font-weight: 600;
+}
+
+
 
