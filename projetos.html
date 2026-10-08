@@ -955,6 +955,7 @@
 
       div.addEventListener('dragend', () => {
         div.classList.remove('dragging');
+        document.querySelectorAll('.col-cards').forEach(el => el.classList.remove('drag-over'));
       });
 
       // Status da Z-API / Telemetria em Badge Separado
@@ -1031,6 +1032,11 @@
     // ── Configuração das Zonas de Drop (Arrastar & Soltar entre Colunas) ──
     function setupDragAndDrop() {
       const cols = ['setup', 'dev', 'test', 'wait', 'live'];
+      
+      const clearAllDragOver = () => {
+        document.querySelectorAll('.col-cards').forEach(el => el.classList.remove('drag-over'));
+      };
+
       cols.forEach(c => {
         const colCardsEl = document.getElementById(`cards-${c}`);
         if (!colCardsEl) return;
@@ -1038,18 +1044,20 @@
         colCardsEl.addEventListener('dragover', (e) => {
           e.preventDefault();
           e.dataTransfer.dropEffect = 'move';
-          colCardsEl.classList.add('drag-over');
+          if (!colCardsEl.classList.contains('drag-over')) {
+            colCardsEl.classList.add('drag-over');
+          }
         });
 
         colCardsEl.addEventListener('dragleave', (e) => {
-          if (e.target === colCardsEl) {
+          if (!colCardsEl.contains(e.relatedTarget)) {
             colCardsEl.classList.remove('drag-over');
           }
         });
 
         colCardsEl.addEventListener('drop', (e) => {
           e.preventDefault();
-          colCardsEl.classList.remove('drag-over');
+          clearAllDragOver();
           const cardId = e.dataTransfer.getData('text/plain');
           if (cardId && allProjects[cardId]) {
             if (allProjects[cardId].stage !== c) {
@@ -1061,6 +1069,10 @@
           }
         });
       });
+
+      // Garantia global para nunca deixar contorno azul/roxo preso nas colunas
+      window.addEventListener('dragend', clearAllDragOver);
+      window.addEventListener('drop', clearAllDragOver);
     }
 
     // Inicializa os event listeners de Drag & Drop ao carregar a página
