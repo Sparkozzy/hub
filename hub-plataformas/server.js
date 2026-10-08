@@ -426,6 +426,9 @@ app.get('/hub', (req, res) => {
 
 app.get('/dashboard', (req, res) => {
   if (!req.session?.user) return res.redirect('/');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   res.sendFile(path.join(__dirname, 'dashboard.html'));
 });
 
