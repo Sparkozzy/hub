@@ -81,6 +81,10 @@ function updateHeaderTitle(tabName) {
         whatsapp: {
             title: 'Dashboard de WhatsApp',
             desc: 'Métricas de engajamento, funil de conversas e auditoria de mensagens do WhatsApp.'
+        },
+        agendamentos: {
+            title: 'Métricas de Agendamentos',
+            desc: 'Acompanhamento de reuniões agendadas pelos agentes via telefonia e WhatsApp.'
         }
     };
 
@@ -106,6 +110,10 @@ function initTabs() {
                 loadWhatsApp();
                 window._waNeedsReload = false;
             }, 60);
+        } else if (targetTab === 'agendamentos') {
+            setTimeout(() => {
+                loadAgendamentos();
+            }, 60);
         }
 
         setTimeout(() => {
@@ -128,14 +136,14 @@ function initTabs() {
     });
 
     const initialHash = (window.location.hash || '').replace('#', '');
-    if (['overview', 'fatigue', 'audit', 'whatsapp'].includes(initialHash)) {
+    if (['overview', 'fatigue', 'audit', 'whatsapp', 'agendamentos'].includes(initialHash)) {
         window._userManuallySelectedTab = true;
         activateTab(initialHash);
     }
 
     window.addEventListener('hashchange', () => {
         const hash = (window.location.hash || '').replace('#', '');
-        if (['overview', 'fatigue', 'audit', 'whatsapp'].includes(hash)) {
+        if (['overview', 'fatigue', 'audit', 'whatsapp', 'agendamentos'].includes(hash)) {
             activateTab(hash);
         }
     });
@@ -379,6 +387,12 @@ async function refreshDashboard() {
     if (waTab && (waTab.classList.contains('active') || window._waNeedsReload)) {
         loadWhatsApp();
         window._waNeedsReload = false;
+    }
+
+    // Recarrega Agendamentos se a aba estiver ativa
+    const agTab = document.getElementById('tab-agendamentos');
+    if (agTab && agTab.classList.contains('active')) {
+        loadAgendamentos();
     }
 }
 
@@ -2104,4 +2118,199 @@ document.getElementById('wa-btn-prev')?.addEventListener('click', () => {
 });
 document.getElementById('wa-btn-next')?.addEventListener('click', () => {
     if (waState.page < waState.totalPages) { waState.page++; loadWaChats(); }
+});
+
+// ============================================================
+// AGENDAMENTOS — STATE & LOGIC
+// ============================================================
+const agState = {
+    page: 1,
+    limit: 15,
+    totalPages: 1
+};
+
+async function loadAgendamentos() {
+    const queryStr = getQueryString();
+    loadAgendamentosMetrics(queryStr);
+    loadAgendamentosList();
+}
+
+async function loadAgendamentosMetrics(queryStr) {
+    try {
+        const res = await fetch(`/agendamentos/metrics?${queryStr}`);
+        const d = await res.json();
+        if (!d.ok) return;
+
+        const totalEl = document.getElementById('ag-kpi-total');
+        const voiceEl = document.getElementById('ag-kpi-voice');
+        const waEl = document.getElementById('ag-kpi-wa');
+        const confirmedEl = document.getElementById('ag-kpi-confirmed');
+
+        if (totalEl) totalEl.textContent = (d.total || 0).toLocaleString();
+        if (voiceEl) voiceEl.textContent = (d.totalVoice || 0).toLocaleString();
+        if (waEl) waEl.textContent = (d.totalWa || 0).toLocaleString();
+        if (confirmedEl) confirmedEl.textContent = (d.totalAgendado || 0).toLocaleString();
+
+        renderAgChannelChart(d.byChannel || {});
+        renderAgAgentChart(d.byAgent || {});
+    } catch (err) {
+        console.error('Erro ao carregar métricas de agendamento:', err);
+    }
+}
+
+function renderAgChannelChart(byChannel) {
+    const ctx = document.getElementById('chart-ag-channel')?.getContext('2d');
+    if (!ctx) return;
+
+    if (state.charts.agChannel) {
+        state.charts.agChannel.destroy();
+    }
+
+    const labels = ['Telefonia (Voz)', 'WhatsApp'];
+    const dataVals = [byChannel.ligacao || 0, byChannel.whats || 0];
+
+    state.charts.agChannel = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels,
+            datasets: [{
+                data: dataVals,
+                backgroundColor: ['#6366F1', '#10B981'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#8E8FA2', font: { family: 'Inter', size: 12 } }
+                }
+            },
+            cutout: '70%'
+        }
+    });
+}
+
+function renderAgAgentChart(byAgent) {
+    const ctx = document.getElementById('chart-ag-agent')?.getContext('2d');
+    if (!ctx) return;
+
+    if (state.charts.agAgent) {
+        state.charts.agAgent.destroy();
+    }
+
+    const labels = Object.keys(byAgent || {});
+    const dataVals = Object.values(byAgent || {});
+
+    state.charts.agAgent = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels.length ? labels : ['Sem Agentes'],
+            datasets: [{
+                label: 'Agendamentos',
+                data: dataVals.length ? dataVals : [0],
+                backgroundColor: '#7B9AFF',
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: { ticks: { color: '#8E8FA2', font: { family: 'Inter', size: 11 } }, grid: { display: false } },
+                y: { ticks: { color: '#8E8FA2', font: { family: 'Inter', size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } }
+            }
+        }
+    });
+}
+
+async function loadAgendamentosList() {
+    const tbody = document.getElementById('ag-table-body');
+    if (!tbody) return;
+
+    tbody.innerHTML = '<tr><td colspan="7" class="loading-td">Carregando agendamentos...</td></tr>';
+
+    const params = new URLSearchParams();
+    params.append('page', agState.page);
+    params.append('limit', agState.limit);
+    if (state.filters.agent) params.append('agent', state.filters.agent);
+    if (state.filters.startDate) params.append('startDate', state.filters.startDate);
+    if (state.filters.endDate) params.append('endDate', state.filters.endDate);
+
+    try {
+        const res = await fetch(`/agendamentos?${params.toString()}`);
+        const result = await res.json();
+
+        tbody.innerHTML = '';
+
+        if (!result.data || result.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="loading-td">Nenhum agendamento encontrado para o período.</td></tr>';
+            document.getElementById('ag-current-page').textContent = '1';
+            document.getElementById('ag-total-pages').textContent = '1';
+            document.getElementById('ag-btn-prev').disabled = true;
+            document.getElementById('ag-btn-next').disabled = true;
+            return;
+        }
+
+        agState.totalPages = result.totalPages || 1;
+        document.getElementById('ag-current-page').textContent = result.page;
+        document.getElementById('ag-total-pages').textContent = result.totalPages;
+        document.getElementById('ag-btn-prev').disabled = result.page === 1;
+        document.getElementById('ag-btn-next').disabled = result.page === result.totalPages;
+
+        result.data.forEach(item => {
+            const tr = document.createElement('tr');
+            const nome = item.nome || 'Contato Sem Nome';
+            const email = item.email ? `<span style="color:var(--text-muted);font-size:11px;display:block;">${item.email}</span>` : '';
+            const numero = item.numero || '-';
+            const isWa = (item.canal || 'ligacao').toLowerCase().includes('whats');
+            const canal = isWa ? 'WhatsApp' : 'Telefonia (Voz)';
+            const canalBadgeStyle = isWa 
+                ? 'background:rgba(16,185,129,0.15);color:#10B981;border:1px solid rgba(16,185,129,0.3);' 
+                : 'background:rgba(99,102,241,0.15);color:#7B9AFF;border:1px solid rgba(99,102,241,0.3);';
+
+            const status = item.status || 'agendado';
+
+            let dateFmt = '-';
+            if (item.data_agendamento || item.created_at) {
+                try {
+                    dateFmt = new Date(item.data_agendamento || item.created_at).toLocaleString('pt-BR');
+                } catch(e){}
+            }
+
+            const agente = item.agent_id || item.agente || 'Agente MindFlow';
+            const detalhes = item.detalhes || '-';
+
+            tr.innerHTML = `
+                <td>
+                    <span class="cell-lead-name" style="font-weight:600;color:#fff;">${nome}</span>
+                    ${email}
+                </td>
+                <td><span class="cell-phone">${numero}</span></td>
+                <td><span class="badge" style="${canalBadgeStyle}padding:3px 8px;border-radius:4px;font-size:11px;">${canal}</span></td>
+                <td style="color:#7B9AFF;font-weight:500;">${dateFmt}</td>
+                <td>${agente}</td>
+                <td><span class="badge" style="background:rgba(255,255,255,0.06);color:#fff;padding:3px 8px;border-radius:4px;font-size:11px;">${status}</span></td>
+                <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary);" title="${detalhes}">${detalhes}</td>
+            `;
+
+            tbody.appendChild(tr);
+        });
+    } catch (err) {
+        console.error('Erro ao carregar lista de agendamentos:', err);
+        tbody.innerHTML = '<tr><td colspan="7" class="loading-td" style="color:var(--error);">Erro ao carregar agendamentos.</td></tr>';
+    }
+}
+
+// Paginação dos Agendamentos
+document.getElementById('ag-btn-prev')?.addEventListener('click', () => {
+    if (agState.page > 1) { agState.page--; loadAgendamentosList(); }
+});
+document.getElementById('ag-btn-next')?.addEventListener('click', () => {
+    if (agState.page < agState.totalPages) { agState.page++; loadAgendamentosList(); }
 });
