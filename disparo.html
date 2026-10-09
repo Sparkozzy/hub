@@ -3820,7 +3820,121 @@
       align-items: center;
       justify-content: center;
     }
-  </style>
+  
+    /* ── CSV Import & Cadence Styles ── */
+    .csv-dropzone {
+      border: 2px dashed rgba(0, 181, 160, 0.4);
+      background: rgba(0, 181, 160, 0.03);
+      border-radius: 12px;
+      padding: 24px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .csv-dropzone:hover, .csv-dropzone.dragover {
+      border-color: #00B5A0;
+      background: rgba(0, 181, 160, 0.08);
+      box-shadow: 0 0 20px rgba(0, 181, 160, 0.15);
+      transform: translateY(-2px);
+    }
+    .csv-dropzone .csv-icon {
+      font-size: 36px;
+      color: #00B5A0;
+    }
+    .csv-dropzone-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #E2E8F0;
+    }
+    .csv-dropzone-title .highlight {
+      color: #00B5A0;
+      text-decoration: underline;
+    }
+    .csv-dropzone-sub {
+      font-size: 11px;
+      color: #8E8FA2;
+    }
+    .csv-stats-chips {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .csv-chip {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 10px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .csv-chip.valid { background: rgba(34, 197, 94, 0.12); color: #4ADE80; border: 1px solid rgba(34, 197, 94, 0.3); }
+    .csv-chip.fixed { background: rgba(234, 179, 8, 0.12); color: #FACC15; border: 1px solid rgba(234, 179, 8, 0.3); }
+    .csv-chip.invalid { background: rgba(239, 68, 68, 0.12); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .csv-preview-table-wrap {
+      max-height: 140px;
+      overflow-y: auto;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      background: rgba(0,0,0,0.2);
+    }
+    .csv-preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      color: #CBD5E1;
+    }
+    .csv-preview-table th {
+      background: rgba(255,255,255,0.05);
+      color: #8E8FA2;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 6px 10px;
+      text-align: left;
+      position: sticky;
+      top: 0;
+    }
+    .csv-preview-table td {
+      padding: 6px 10px;
+      border-top: 1px solid rgba(255,255,255,0.04);
+    }
+    .csv-cadence-options {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .cadence-option input[type="radio"] {
+      display: none;
+    }
+    .cadence-box {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      padding: 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+    .cadence-option input:checked + .cadence-box {
+      border-color: #00B5A0;
+      background: rgba(0, 181, 160, 0.12);
+      box-shadow: 0 0 12px rgba(0, 181, 160, 0.2);
+    }
+    .cadence-box .material-symbols-outlined { font-size: 18px; color: #00B5A0; }
+    .cadence-title { font-size: 11px; font-weight: 700; color: #F1F5F9; }
+    .cadence-desc { font-size: 9px; color: #8E8FA2; line-height: 1.2; }
+  
+</style>
 </head>
 
 <body>
@@ -3886,7 +4000,168 @@
         if (logout) dock.appendChild(logout);
       }
     })();
-  </script>
+  
+    /* ── CSV Parsing & Batch Dispatch Logic ── */
+    let parsedCsvLeads = [];
+
+    function handleCsvDragOver(e) {
+      e.preventDefault();
+      const dropzone = document.getElementById('csvDropzone');
+      if (dropzone) dropzone.classList.add('dragover');
+    }
+
+    function handleCsvDragLeave(e) {
+      e.preventDefault();
+      const dropzone = document.getElementById('csvDropzone');
+      if (dropzone) dropzone.classList.remove('dragover');
+    }
+
+    function handleCsvDrop(e) {
+      e.preventDefault();
+      const dropzone = document.getElementById('csvDropzone');
+      if (dropzone) dropzone.classList.remove('dragover');
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+        parseCsvFile(e.dataTransfer.files[0]);
+      }
+    }
+
+    function handleCsvFileSelected(e) {
+      if (e.target && e.target.files && e.target.files[0]) {
+        parseCsvFile(e.target.files[0]);
+      }
+    }
+
+    function parseCsvFile(file) {
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const text = evt.target.result;
+        processRawCsvText(text, file.name);
+      };
+      reader.readAsText(file, 'UTF-8');
+    }
+
+    function processRawCsvText(text, filename) {
+      const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+      if (lines.length === 0) {
+        alert('O arquivo selecionado está vazio.');
+        return;
+      }
+
+      // Detect delimiter (, or ;)
+      const firstLine = lines[0];
+      const delimiter = firstLine.includes(';') ? ';' : ',';
+
+      const headers = firstLine.split(delimiter).map(h => h.replace(/["']/g, '').trim());
+
+      let nameIdx = headers.findIndex(h => /nome|lead|cliente|person/i.test(h));
+      let phoneIdx = headers.findIndex(h => /telefone|whatsapp|celular|phone|numero|limpo/i.test(h));
+      let companyIdx = headers.findIndex(h => /empresa|company/i.test(h));
+      let dateIdx = headers.findIndex(h => /data|horario|time|date/i.test(h));
+
+      if (nameIdx === -1) nameIdx = 0;
+      if (phoneIdx === -1) phoneIdx = Math.min(1, headers.length - 1);
+
+      parsedCsvLeads = [];
+      let validCount = 0;
+      let fixedCount = 0;
+      let invalidCount = 0;
+
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(delimiter).map(c => c.replace(/^["=']+|["']+$/g, '').trim());
+        if (cols.length <= 1 && !cols[0]) continue;
+
+        let rawName = cols[nameIdx] || 'Lead ' + i;
+        let rawPhone = cols[phoneIdx] || '';
+        let company = companyIdx !== -1 ? cols[companyIdx] || '-' : '-';
+        let dateVal = dateIdx !== -1 ? cols[dateIdx] || '-' : '-';
+
+        let cleanPhone = rawPhone.replace(/\D/g, '');
+        let isFixed = false;
+        let isValid = true;
+
+        if (cleanPhone.length === 10 || cleanPhone.length === 11) {
+          cleanPhone = '55' + cleanPhone;
+          isFixed = true;
+        }
+
+        if (cleanPhone.length < 12 || cleanPhone.length > 14) {
+          isValid = false;
+        }
+
+        if (isValid) {
+          validCount++;
+          if (isFixed) fixedCount++;
+        } else {
+          invalidCount++;
+        }
+
+        parsedCsvLeads.push({
+          id: i,
+          name: rawName,
+          phone: cleanPhone,
+          formattedPhone: cleanPhone.length >= 12 ? '+' + cleanPhone.slice(0,2) + ' (' + cleanPhone.slice(2,4) + ') ' + cleanPhone.slice(4) : rawPhone,
+          company: company,
+          date: dateVal,
+          isValid: isValid
+        });
+      }
+
+      // Update UI
+      document.getElementById('csvValidCount').innerText = validCount;
+      document.getElementById('csvFixedCount').innerText = fixedCount;
+      document.getElementById('csvInvalidCount').innerText = invalidCount;
+
+      const tbody = document.getElementById('csvPreviewTbody');
+      tbody.innerHTML = parsedCsvLeads.slice(0, 15).map((l, idx) => `
+        <tr style="${!l.isValid ? 'opacity:0.5; background:rgba(239,68,68,0.05);' : ''}">
+          <td>${idx + 1}</td>
+          <td><b>${l.name}</b></td>
+          <td>${l.formattedPhone}</td>
+          <td>${l.company}</td>
+          <td>${l.date}</td>
+        </tr>
+      `).join('');
+
+      document.getElementById('csvPreviewWrap').style.display = 'block';
+    }
+
+    async function confirmBatchCsvDispatch() {
+      const validLeads = parsedCsvLeads.filter(l => l.isValid);
+      if (validLeads.length === 0) {
+        alert('Nenhum lead válido encontrado no CSV para agendar.');
+        return;
+      }
+
+      const selectedCadence = document.querySelector('input[name="csvCadence"]:checked')?.value || 'immediate';
+
+      const confirmMsg = `Deseja confirmar o agendamento de ${validLeads.length} ligações no modo '${selectedCadence.toUpperCase()}'?`;
+      if (!confirm(confirmMsg)) return;
+
+      try {
+        const res = await fetch('/api/disparo/schedule-batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            cadence: selectedCadence,
+            leads: validLeads,
+            agentId: 'Agente_Gatekeeper_Mindflow'
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          alert(`🚀 Sucesso! ${data.count} disparos/agendamentos foram registrados com sucesso no banco e adicionados à fila do Hub!`);
+          closeGroupManagerModal();
+        } else {
+          alert('Erro ao agendar lote: ' + (data.error || 'Falha na requisição.'));
+        }
+      } catch (err) {
+        console.error('Erro no disparo em lote:', err);
+        alert('Erro ao conectar com o servidor para agendar lote.');
+      }
+    }
+  
+</script>
 
   <canvas id="neural-canvas"></canvas>
 
@@ -7353,6 +7628,9 @@
         <button type="button" class="group-tab" onclick="switchGroupTab('groups')" id="tabBtnGroups">
           <span class="material-symbols-outlined">folder_open</span> Meus Grupos
         </button>
+        <button type="button" class="group-tab" onclick="switchGroupTab('csv')" id="tabBtnCsv">
+          <span class="material-symbols-outlined">upload_file</span> Importar CSV / Lote
+        </button>
       </div>
 
       <!-- Aba 1: Adicionar Contato -->
@@ -7399,7 +7677,78 @@
       </div>
     </div>
   </div>
-  <script src="/mindflow-dock.js"></script>
+  
+      <!-- Aba 3: Importar CSV / Agendar em Lote -->
+      <div class="group-tab-content" id="tabContentCsv">
+        <div id="csvDropzone" class="csv-dropzone" onclick="document.getElementById('csvFileInput').click()" ondragover="handleCsvDragOver(event)" ondragleave="handleCsvDragLeave(event)" ondrop="handleCsvDrop(event)">
+          <input type="file" id="csvFileInput" accept=".csv,.xlsx,.txt" style="display:none;" onchange="handleCsvFileSelected(event)">
+          <span class="material-symbols-outlined csv-icon">cloud_upload</span>
+          <div class="csv-dropzone-title">Arraste seu arquivo CSV de leads aqui ou <span class="highlight">clique para buscar</span></div>
+          <div class="csv-dropzone-sub">Suporta CSV, TXT ou XLSX (ex: leads_fisp_mindflow.csv)</div>
+        </div>
+
+        <div id="csvPreviewWrap" style="display:none; margin-top: 14px;">
+          <div class="csv-stats-chips">
+            <div class="csv-chip valid"><span class="material-symbols-outlined" style="font-size:14px;">check_circle</span> <span id="csvValidCount">0</span> Válidos</div>
+            <div class="csv-chip fixed"><span class="material-symbols-outlined" style="font-size:14px;">build</span> <span id="csvFixedCount">0</span> DDD Corrigido</div>
+            <div class="csv-chip invalid"><span class="material-symbols-outlined" style="font-size:14px;">warning</span> <span id="csvInvalidCount">0</span> Inválidos</div>
+          </div>
+
+          <div style="font-size:10px; font-weight:700; color:#8E8FA2; letter-spacing:0.05em; text-transform:uppercase; margin: 10px 0 4px 0;">PRÉVIA DOS LEADS IMPORTADOS</div>
+          <div class="csv-preview-table-wrap">
+            <table class="csv-preview-table" id="csvPreviewTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Nome</th>
+                  <th>Telefone</th>
+                  <th>Empresa</th>
+                  <th>Data/Horário</th>
+                </tr>
+              </thead>
+              <tbody id="csvPreviewTbody"></tbody>
+            </table>
+          </div>
+
+          <div class="csv-cadence-section" style="margin-top: 12px;">
+            <div style="font-size:10px; font-weight:700; color:#8E8FA2; letter-spacing:0.05em; text-transform:uppercase; margin-bottom: 6px;">CADÊNCIA DE DISPARO DA IA</div>
+            <div class="csv-cadence-options">
+              <label class="cadence-option">
+                <input type="radio" name="csvCadence" value="immediate" checked />
+                <div class="cadence-box">
+                  <span class="material-symbols-outlined">bolt</span>
+                  <div class="cadence-title">Imediato</div>
+                  <div class="cadence-desc">Disparar agora</div>
+                </div>
+              </label>
+
+              <label class="cadence-option">
+                <input type="radio" name="csvCadence" value="staggered" />
+                <div class="cadence-box">
+                  <span class="material-symbols-outlined">timer</span>
+                  <div class="cadence-title">Ritmo (Cadência)</div>
+                  <div class="cadence-desc">5/10min (Anti-bloqueio)</div>
+                </div>
+              </label>
+
+              <label class="cadence-option">
+                <input type="radio" name="csvCadence" value="scheduled" />
+                <div class="cadence-box">
+                  <span class="material-symbols-outlined">calendar_today</span>
+                  <div class="cadence-title">Horário CSV</div>
+                  <div class="cadence-desc">Horário da planilha</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <button type="button" class="group-btn-primary" onclick="confirmBatchCsvDispatch()" style="margin-top: 14px; background: linear-gradient(135deg, #2E4FFF, #00B5A0); font-weight: 700; height: 42px;">
+            <span class="material-symbols-outlined">rocket_launch</span> Confirmar e Agendar Disparos em Lote
+          </button>
+        </div>
+      </div>
+  
+<script src="/mindflow-dock.js"></script>
 </body>
 
 </html>

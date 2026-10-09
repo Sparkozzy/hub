@@ -2905,6 +2905,54 @@ app.get('/api/agendamentos/metrics', handleAgendamentosMetrics);
 app.get('/agendamentos', handleAgendamentosList);
 app.get('/api/agendamentos', handleAgendamentosList);
 
+app.post('/api/disparo/schedule-batch', async (req, res) => {
+  try {
+    const { cadence, leads, agentId } = req.body;
+    if (!leads || !Array.isArray(leads) || leads.length === 0) {
+      return res.status(400).json({ error: 'Nenhum lead fornecido para disparo.' });
+    }
+
+    console.log(`[DISPARO LOTE] Processando ${leads.length} leads no modo ${cadence}`);
+
+    const newAgendamentos = leads.map((l, i) => {
+      let scheduledTime = new Date();
+      if (cadence === 'staggered') {
+        // 5 chamadas a cada 10 minutos (intervalo de 2 minutos)
+        scheduledTime = new Date(Date.now() + i * 2 * 60 * 1000);
+      }
+
+      return {
+        nome: l.name || 'Lead CSV ' + (i + 1),
+        numero: l.phone,
+        canal: 'ligacao',
+        data_agendamento: scheduledTime.toISOString(),
+        status: 'agendado',
+        detalhes: `Importado via CSV - Empresa: ${l.company || 'N/I'} - Modo: ${cadence}`,
+        agent_id: agentId || 'Agente_Gatekeeper_Mindflow'
+      };
+    });
+
+    const clientDb = typeof getClientSupa === 'function' ? await getClientSupa(req) : supabase;
+    const { data, error } = await clientDb.from('agendamentos').insert(newAgendamentos).select();
+
+    if (error) {
+      console.error('[DISPARO LOTE] Erro Supabase:', error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.json({
+      success: true,
+      message: `${data.length} disparos/agendamentos criados em lote com sucesso!`,
+      count: data.length,
+      scheduled: data
+    });
+  } catch (err) {
+    console.error('[DISPARO LOTE] Error:', err);
+    res.status(500).json({ error: 'Erro interno ao agendar lote.' });
+  }
+});
+
+
 // ============================================================
 // API: PLATAFORMAS (protegida)
 // ============================================================

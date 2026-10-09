@@ -1,0 +1,304 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    table { border-collapse: collapse; width: 100%; font-size: 11pt; }
+    th {
+      background-color: #1E293B;
+      color: #FFFFFF;
+      font-weight: bold;
+      text-align: left;
+      padding: 10px 14px;
+      border: 1px solid #0F172A;
+      font-size: 11pt;
+    }
+    td {
+      border: 1px solid #CBD5E1;
+      padding: 8px 12px;
+      color: #1E293B;
+    }
+    tr:nth-child(even) { background-color: #F8FAFC; }
+    tr:hover { background-color: #F1F5F9; }
+    .txt { mso-number-format:"\@"; }
+    .badge-hot { background-color: #FEF2F2; color: #DC2626; font-weight: bold; padding: 2px 6px; border-radius: 4px; }
+    .badge-b2b { background-color: #EFF6FF; color: #2563EB; font-weight: bold; padding: 2px 6px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h2>📋 Relatório Consolidado de Leads FISP — MindFlow</h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="background-color:#1E293B; color:#FFF; font-weight:bold; width:40px;">#</th>
+        <th style="background-color:#1E293B; color:#FFF; font-weight:bold;">Nome do Lead</th>
+        <th style="background-color:#1E293B; color:#FFF; font-weight:bold;">Empresa</th>
+        <th style="background-color:#1E293B; color:#FFF; font-weight:bold;">Cargo / Função</th>
+        <th style="background-color:#1E293B; color:#FFF; font-weight:bold;">Data Entrada</th>
+        <th style="background-color:#1E293B; color:#FFF; font-weight:bold;">Horário</th>
+        <th style="background-color:#1E293B; color:#FFF; font-weight:bold;">WhatsApp Formatado</th>
+        <th style="background-color:#1E293B; color:#FFF; font-weight:bold;">Telefone Limpo</th>
+        <th style="background-color:#1E293B; color:#FFF; font-weight:bold;">DDD</th>
+        <th style="background-color:#1E293B; color:#FFF; font-weight:bold;">UF</th>
+        <th style="background-color:#1E293B; color:#FFF; font-weight:bold;">Status / Resumo Comercial</th>
+        <th style="background-color:#1E293B; color:#FFF; font-weight:bold; width:200px;">Observações</th>
+      </tr>
+    </thead>
+    <tbody>
+      
+      <tr>
+        <td align="center"><b>1</b></td>
+        <td><b>Sérgio Ramos (Juninho)</b></td>
+        <td>Massei Uniformes</td>
+        <td>Representante</td>
+        <td align="center" class="txt">06/10/2026</td>
+        <td align="center" class="txt">18:51:20</td>
+        <td class="txt">+55 (11) 99775-9782</td>
+        <td class="txt">5511997759782</td>
+        <td align="center" class="txt">11</td>
+        <td align="center">SP</td>
+        <td>Lead da Massei Uniformes. Acompanhamento enviado.</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td align="center"><b>2</b></td>
+        <td><b>Cristina Kosaka</b></td>
+        <td>Não informada</td>
+        <td>N/I</td>
+        <td align="center" class="txt">06/10/2026</td>
+        <td align="center" class="txt">19:04:21</td>
+        <td class="txt">+55 (11) 99261-1266</td>
+        <td class="txt">5511992611266</td>
+        <td align="center" class="txt">11</td>
+        <td align="center">SP</td>
+        <td>Acompanhamento pós-feira enviado.</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td align="center"><b>3</b></td>
+        <td><b>Bruna Alves</b></td>
+        <td>Não informada</td>
+        <td>N/I</td>
+        <td align="center" class="txt">06/10/2026</td>
+        <td align="center" class="txt">19:13:23</td>
+        <td class="txt">+55 (11) 96779-0254</td>
+        <td class="txt">5511967790254</td>
+        <td align="center" class="txt">11</td>
+        <td align="center">SP</td>
+        <td>Acompanhamento pós-feira enviado.</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td align="center"><b>4</b></td>
+        <td><b>Geovane Taborda</b></td>
+        <td>Não informada</td>
+        <td>N/I</td>
+        <td align="center" class="txt">06/10/2026</td>
+        <td align="center" class="txt">19:21:50</td>
+        <td class="txt">+55 (41) 9870-5393</td>
+        <td class="txt">554198705393</td>
+        <td align="center" class="txt">41</td>
+        <td align="center">PR</td>
+        <td>Acompanhamento pós-feira enviado.</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td align="center"><b>5</b></td>
+        <td><b>Alexandre Oliveira</b></td>
+        <td>Não informada</td>
+        <td>N/I</td>
+        <td align="center" class="txt">06/10/2026</td>
+        <td align="center" class="txt">19:32:25</td>
+        <td class="txt">+55 (34) 9320-0070</td>
+        <td class="txt">553493200070</td>
+        <td align="center" class="txt">34</td>
+        <td align="center">MG</td>
+        <td>Acompanhamento pós-feira enviado.</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td align="center"><b>6</b></td>
+        <td><b>Serasa / [NOVO]</b></td>
+        <td>Serasa</td>
+        <td>N/I</td>
+        <td align="center" class="txt">07/10/2026</td>
+        <td align="center" class="txt">N/A</td>
+        <td class="txt">+55 (11) 2847-5131</td>
+        <td class="txt">551128475131</td>
+        <td align="center" class="txt">11</td>
+        <td align="center">SP</td>
+        <td>Contato institucional cadastrado / Sem conversa ativa.</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td align="center"><b>7</b></td>
+        <td><b>Jeane</b></td>
+        <td>Tuboart</td>
+        <td>Contato Comercial</td>
+        <td align="center" class="txt">08/10/2026</td>
+        <td align="center" class="txt">18:46:11</td>
+        <td class="txt">+55 (11) 99502-2643</td>
+        <td class="txt">5511995022643</td>
+        <td align="center" class="txt">11</td>
+        <td align="center">SP</td>
+        <td>Lead B2B (Tuboart): Soluções em sinalização. Perguntou se prefere texto ou ligação.</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td align="center"><b>8</b></td>
+        <td><b>Thais Welsel</b></td>
+        <td>Não informada</td>
+        <td>N/I</td>
+        <td align="center" class="txt">08/10/2026</td>
+        <td align="center" class="txt">18:50:27</td>
+        <td class="txt">+55 (11) 98590-8574</td>
+        <td class="txt">5511985908574</td>
+        <td align="center" class="txt">11</td>
+        <td align="center">SP</td>
+        <td>Perguntou qual processo deseja automatizar.</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td align="center"><b>9</b></td>
+        <td><b>Fabíola Amorim</b></td>
+        <td>Não informada</td>
+        <td>N/I</td>
+        <td align="center" class="txt">08/10/2026</td>
+        <td align="center" class="txt">19:07:33</td>
+        <td class="txt">+55 (11) 96361-8532</td>
+        <td class="txt">5511963618532</td>
+        <td align="center" class="txt">11</td>
+        <td align="center">SP</td>
+        <td>A IA perguntou se o foco é velocidade ou conversão.</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td align="center"><b>10</b></td>
+        <td><b>Thiago Lopes</b></td>
+        <td>Não informada</td>
+        <td>N/I</td>
+        <td align="center" class="txt">08/10/2026</td>
+        <td align="center" class="txt">19:09:44</td>
+        <td class="txt">+55 (12) 99153-1419</td>
+        <td class="txt">5512991531419</td>
+        <td align="center" class="txt">12</td>
+        <td align="center">SP</td>
+        <td>Recebeu mensagem inicial de acompanhamento.</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td align="center"><b>11</b></td>
+        <td><b>Sarah</b></td>
+        <td>Não informada</td>
+        <td>N/I</td>
+        <td align="center" class="txt">08/10/2026</td>
+        <td align="center" class="txt">19:23:16</td>
+        <td class="txt">+55 (11) 99881-3660</td>
+        <td class="txt">5511998813660</td>
+        <td align="center" class="txt">11</td>
+        <td align="center">SP</td>
+        <td>Aguardando resposta sobre segmento de mercado.</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td align="center"><b>12</b></td>
+        <td><b>Christian</b></td>
+        <td>Não informada</td>
+        <td>N/I</td>
+        <td align="center" class="txt">08/10/2026</td>
+        <td align="center" class="txt">19:33:45</td>
+        <td class="txt">+55 (41) 9229-8800</td>
+        <td class="txt">554192298800</td>
+        <td align="center" class="txt">41</td>
+        <td align="center">PR</td>
+        <td>Aguardando resposta sobre IA pra vendas ou atendimento.</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td align="center"><b>13</b></td>
+        <td><b>Rafaela Cassini</b></td>
+        <td>Não informada</td>
+        <td>N/I</td>
+        <td align="center" class="txt">08/10/2026</td>
+        <td align="center" class="txt">19:45:18</td>
+        <td class="txt">+55 (19) 99741-7465</td>
+        <td class="txt">5519997417465</td>
+        <td align="center" class="txt">19</td>
+        <td align="center">SP</td>
+        <td>Aguardando resposta sobre área de atuação.</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td align="center"><b>14</b></td>
+        <td><b>Caroline</b></td>
+        <td>Não informada</td>
+        <td>N/I</td>
+        <td align="center" class="txt">08/10/2026</td>
+        <td align="center" class="txt">19:47:59</td>
+        <td class="txt">+55 (12) 99148-2347</td>
+        <td class="txt">5512991482347</td>
+        <td align="center" class="txt">12</td>
+        <td align="center">SP</td>
+        <td>Lead Quente: Enviou link do formulário (front-form-call...).</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td align="center"><b>15</b></td>
+        <td><b>Alessandra</b></td>
+        <td>Não informada</td>
+        <td>N/I</td>
+        <td align="center" class="txt">08/10/2026</td>
+        <td align="center" class="txt">19:55:07</td>
+        <td class="txt">+55 (11) 99638-8414</td>
+        <td class="txt">5511996388414</td>
+        <td align="center" class="txt">11</td>
+        <td align="center">SP</td>
+        <td>Recebeu apresentação. Aguardando segmento de atuação.</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td align="center"><b>16</b></td>
+        <td><b>Vanessa Sebok</b></td>
+        <td>Instrutherm</td>
+        <td>Diretora Comercial</td>
+        <td align="center" class="txt">08/10/2026</td>
+        <td align="center" class="txt">20:35:00</td>
+        <td class="txt">+55 (11) 96387-5690</td>
+        <td class="txt">5511963875690</td>
+        <td align="center" class="txt">11</td>
+        <td align="center">SP</td>
+        <td>Contato da Diretora Comercial. Equipe se interessou. Email: vanessa@instrutherm.com.br</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td align="center"><b>17</b></td>
+        <td><b>Anne Ferreira</b></td>
+        <td>Vectra Work</td>
+        <td>Executiva de Vendas</td>
+        <td align="center" class="txt">08/10/2026</td>
+        <td align="center" class="txt">20:40:00</td>
+        <td class="txt">+55 (11) 98160-1744</td>
+        <td class="txt">5511981601744</td>
+        <td align="center" class="txt">11</td>
+        <td align="center">SP</td>
+        <td>Cartão físico FISP. Sales Executive. Email: anne.ferreira@vectrawork.com.br</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td align="center"><b>18</b></td>
+        <td><b>Luis Henrique Sant Anna</b></td>
+        <td>Kaballah Uniformes</td>
+        <td>Consultor Técnico de Vendas</td>
+        <td align="center" class="txt">08/10/2026</td>
+        <td align="center" class="txt">20:45:00</td>
+        <td class="txt">+55 (11) 91071-7257</td>
+        <td class="txt">5511910717257</td>
+        <td align="center" class="txt">11</td>
+        <td align="center">SP</td>
+        <td>Cartão físico FISP. Uniformes / EPIs. Email: vendas07@kaballahuniformes.com.br</td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+</html>
