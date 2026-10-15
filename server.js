@@ -432,6 +432,16 @@ app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'dashboard.html'));
 });
 
+app.get('/prompt-ops', (req, res) => {
+  if (!req.session?.user) return res.redirect('/');
+  const isMindFlowMember = req.session.user.client_access?.some(c => String(c.client_id) === '2');
+  if (!isMindFlowMember) {
+    return res.status(403).send('<h1>403 Proibido: Acesso restrito aos engenheiros da MindFlow.</h1>');
+  }
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.sendFile(path.join(__dirname, 'prompt-ops.html'));
+});
+
 app.get('/dashboard-style.css', (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
@@ -2979,6 +2989,19 @@ app.get('/api/platforms', (req, res) => {
         });
       }
     }
+  }
+
+  // Se o usuário tem acesso à MindFlow (client_id === '2'), exibe a plataforma PromptOps
+  const isMindFlowMember = user.client_access?.some(c => String(c.client_id) === '2');
+  if (isMindFlowMember) {
+    platforms.push({
+      id: 'prompt-ops',
+      name: 'PromptOps',
+      description: 'Engenharia, Arena A/B e Evals de Prompts',
+      url: '/prompt-ops',
+      icon: 'terminal',
+      internal: true,
+    });
   }
 
   res.json(platforms);

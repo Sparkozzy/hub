@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MindFlow — PromptOps Platform</title>
+  <link rel="stylesheet" href="mindflow-core.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <style>
+    body {
+      background-color: var(--mf-bg-canvas);
+      color: var(--mf-text-primary);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 32px;
+      background: var(--mf-bg-panel);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--mf-border-subtle);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+    .brand .badge {
+      font-size: 11px;
+      font-family: 'Space Grotesk', sans-serif;
+      text-transform: uppercase;
+      background: rgba(37, 99, 235, 0.2);
+      color: var(--mf-blue-light);
+      border: 1px solid var(--mf-border-glow-blue);
+      padding: 2px 8px;
+      border-radius: var(--mf-radius-pill);
+    }
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .btn-hub {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--mf-text-secondary);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 14px;
+      border: 1px solid var(--mf-border-subtle);
+      border-radius: var(--mf-radius-sm);
+      transition: var(--mf-transition-fast);
+    }
+    .btn-hub:hover {
+      color: #fff;
+      border-color: var(--mf-border-medium);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* Layout Principal */
+    .main-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      height: calc(100vh - 65px);
+    }
+
+    /* Sidebar Esquerda (Clientes & Versões) */
+    .sidebar {
+      width: 320px;
+      background: rgba(6, 10, 20, 0.95);
+      border-right: 1px solid var(--mf-border-subtle);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--mf-border-subtle);
+    }
+    .sidebar-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--mf-text-muted);
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+    .select-input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--mf-border-subtle);
+      border-radius: var(--mf-radius-sm);
+      color: #fff;
+      padding: 10px 12px;
+      font-size: 13px;
+      outline: none;
+      transition: var(--mf-transition-fast);
+    }
+    .select-input:focus {
+      border-color: var(--mf-blue);
+    }
+    .version-list {
+      flex: 1;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .version-card {
+      padding: 12px;
+      border-radius: var(--mf-radius-sm);
+      background: var(--mf-bg-card);
+      border: 1px solid var(--mf-border-subtle);
+      cursor: pointer;
+      transition: var(--mf-transition-fast);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .version-card:hover {
+      border-color: var(--mf-border-medium);
+      background: var(--mf-bg-card-hover);
+    }
+    .version-card.active {
+      border-color: var(--mf-blue);
+      box-shadow: 0 0 12px rgba(37, 99, 235, 0.2);
+    }
+    .version-tag {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--mf-blue-light);
+    }
+    .version-meta {
+      font-size: 11px;
+      color: var(--mf-text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* Conteúdo Central (Tabs & Workspace) */
+    .content-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--mf-bg-canvas);
+      overflow-y: auto;
+    }
+
+    /* Navegação das Abas */
+    .tabs-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 24px;
+      background: var(--mf-bg-panel);
+      border-bottom: 1px solid var(--mf-border-subtle);
+    }
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--mf-text-secondary);
+      padding: 16px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 2px solid transparent;
+      transition: var(--mf-transition-fast);
+    }
+    .tab-btn:hover {
+      color: #fff;
+    }
+    .tab-btn.active {
+      color: #fff;
+      border-bottom-color: var(--mf-blue);
+    }
+
+    /* Área das Abas */
+    .tab-pane {
+      display: none;
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+    }
+    .tab-pane.active {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Arena Grid (Lado a Lado) */
+    .arena-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      flex: 1;
+    }
+    .arena-pane {
+      background: var(--mf-bg-card);
+      border: 1px solid var(--mf-border-subtle);
+      border-radius: var(--mf-radius-md);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .pane-header {
+      padding: 14px 18px;
+      background: rgba(255, 255, 255, 0.02);
+      border-bottom: 1px solid var(--mf-border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .chat-box {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 380px;
+    }
+    .message {
+      padding: 12px 16px;
+      border-radius: var(--mf-radius-sm);
+      font-size: 13px;
+      line-height: 1.5;
+      max-width: 85%;
+    }
+    .message.user {
+      align-self: flex-end;
+      background: var(--mf-gradient-blue);
+      color: #fff;
+    }
+    .message.assistant {
+      align-self: flex-start;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--mf-border-subtle);
+    }
+    .arena-input-bar {
+      display: flex;
+      gap: 12px;
+      padding: 16px;
+      background: var(--mf-bg-panel);
+      border: 1px solid var(--mf-border-subtle);
+      border-radius: var(--mf-radius-md);
+    }
+    .arena-input {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--mf-border-subtle);
+      border-radius: var(--mf-radius-sm);
+      color: #fff;
+      padding: 12px 16px;
+      font-size: 14px;
+      outline: none;
+    }
+    .arena-input:focus {
+      border-color: var(--mf-blue);
+    }
+    .btn-primary {
+      background: var(--mf-blue);
+      color: #fff;
+      border: none;
+      padding: 12px 24px;
+      border-radius: var(--mf-radius-sm);
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: var(--mf-transition-fast);
+    }
+    .btn-primary:hover {
+      background: var(--mf-blue-hover);
+    }
+
+    /* Agente Gerador & Diff */
+    .diff-container {
+      background: #020408;
+      border: 1px solid var(--mf-border-subtle);
+      border-radius: var(--mf-radius-sm);
+      padding: 16px;
+      font-family: 'Space Grotesk', monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      overflow-x: auto;
+      color: #94A3B8;
+      max-height: 250px;
+    }
+    .diff-container .added { color: #10B981; }
+    .diff-container .removed { color: #EF4444; }
+
+    /* Quality Gate & Evals */
+    .eval-card {
+      background: var(--mf-bg-card);
+      border: 1px solid var(--mf-border-subtle);
+      border-radius: var(--mf-radius-md);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .eval-score-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: var(--mf-radius-pill);
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .eval-score-badge.passed {
+      background: var(--mf-success-bg);
+      color: var(--mf-success);
+      border: 1px solid var(--mf-success-border);
+    }
+    .eval-score-badge.failed {
+      background: var(--mf-danger-bg);
+      color: var(--mf-danger);
+      border: 1px solid var(--mf-danger-border);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Topbar -->
+  <header class="top-bar">
+    <div class="brand">
+      <span class="material-symbols-outlined" style="color:var(--mf-blue);">terminal</span>
+      <span>MindFlow PromptOps</span>
+      <span class="badge">Engenharia Interna</span>
+    </div>
+    <div class="actions">
+      <a href="/hub" class="btn-hub">
+        <span class="material-symbols-outlined" style="font-size:16px;">arrow_back</span>
+        Voltar ao Hub
+      </a>
+    </div>
+  </header>
+
+  <!-- Container Geral -->
+  <div class="main-container">
+
+    <!-- Sidebar: Seleção de Cliente & Prompts -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-title">Prompt Oficial (Supabase)</div>
+        <select id="selectPrompt" class="select-input" onchange="loadPromptDetails()">
+          <option value="">Carregando prompts...</option>
+        </select>
+      </div>
+
+      <div class="sidebar-header" style="border-top:1px solid var(--mf-border-subtle);">
+        <div class="sidebar-title">Histórico de Versões (Postgres)</div>
+        <button class="btn-primary" style="width:100%;font-size:12px;padding:8px 12px;margin-bottom:8px;" onclick="createNewDraft()">
+          <span class="material-symbols-outlined" style="font-size:16px;">add</span>
+          Criar Novo Draft
+        </button>
+      </div>
+
+      <div class="version-list" id="versionList">
+        <div style="font-size:12px;color:var(--mf-text-muted);text-align:center;padding:20px;">
+          Selecione um prompt para carregar as versões.
+        </div>
+      </div>
+    </aside>
+
+    <!-- Área de Conteúdo Central -->
+    <main class="content-area">
+      
+      <!-- Abas de Navegação -->
+      <nav class="tabs-header">
+        <button class="tab-btn active" onclick="switchTab('arena')">
+          <span class="material-symbols-outlined">compare_arrows</span>
+          Arena de Testes (A/B)
+        </button>
+        <button class="tab-btn" onclick="switchTab('generator')">
+          <span class="material-symbols-outlined">auto_fix_high</span>
+          Agente Gerador de Prompt
+        </button>
+        <button class="tab-btn" onclick="switchTab('evals')">
+          <span class="material-symbols-outlined">fact_check</span>
+          Pipeline de Evaluations & Quality Gate
+        </button>
+      </nav>
+
+      <!-- ABA 1: ARENA DE TESTES -->
+      <section id="tab-arena" class="tab-pane active">
+        <div class="arena-grid">
+          
+          <!-- Versão A (Produção Atual) -->
+          <div class="arena-pane">
+            <div class="pane-header">
+              <span id="labelVerA">Versão A: Produção Oficial (Supabase)</span>
+              <span class="badge" style="background:rgba(16,185,129,0.1);color:#10B981;border:1px solid rgba(16,185,129,0.3);font-size:10px;padding:2px 8px;border-radius:10px;">Ativo</span>
+            </div>
+            <div class="chat-box" id="chatBoxA">
+              <div class="message assistant">Pronto para testar a versão A. Digite um cenário abaixo.</div>
+            </div>
+          </div>
+
+          <!-- Versão B (Draft Sendo Desenvolvido) -->
+          <div class="arena-pane">
+            <div class="pane-header">
+              <span id="labelVerB">Versão B: Draft em Teste</span>
+              <span class="badge" style="background:rgba(37,99,235,0.1);color:#60A5FA;border:1px solid rgba(37,99,235,0.3);font-size:10px;padding:2px 8px;border-radius:10px;">Draft</span>
+            </div>
+            <div class="chat-box" id="chatBoxB">
+              <div class="message assistant">Pronto para testar a versão B. Digite um cenário abaixo.</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Input da Arena -->
+        <div class="arena-input-bar">
+          <input type="text" id="arenaInput" class="arena-input" placeholder="Digite uma pergunta ou objeção para testar ambas as versões simultaneamente..." onkeydown="if(event.key==='Enter') sendArenaMessage()" />
+          <button class="btn-primary" onclick="sendArenaMessage()">
+            <span class="material-symbols-outlined">send</span>
+            Enviar para Ambos
+          </button>
+        </div>
+      </section>
+
+      <!-- ABA 2: AGENTE GERADOR DE PROMPT -->
+      <section id="tab-generator" class="tab-pane">
+        <div class="eval-card">
+          <h3 style="margin:0;font-size:16px;">Refinamento com Agente de Meta-Prompting</h3>
+          <p style="margin:0;color:var(--mf-text-secondary);font-size:13px;">
+            Converse diretamente com o agente de IA para ajustar o prompt do rascunho atual. Ele gerará as melhorias e apresentará um visual diff para sua aprovação.
+          </p>
+
+          <textarea id="currentPromptText" class="arena-input" style="height:150px;font-family:monospace;font-size:12px;resize:vertical;" placeholder="Prompt atual..."></textarea>
+
+          <input type="text" id="genInstruction" class="arena-input" placeholder="Ex: 'Torne o tom mais empático e proíba qualquer desconto sem autorização prévia.'" />
+
+          <button class="btn-primary" onclick="requestPromptSuggestion()" style="align-self:flex-start;">
+            <span class="material-symbols-outlined">auto_fix_high</span>
+            Gerar Sugestão de Alteração
+          </button>
+
+          <div id="diffOutputContainer" style="display:none;flex-direction:column;gap:8px;margin-top:12px;">
+            <h4 style="margin:0;font-size:13px;color:var(--mf-blue-light);">Diff Visual Unificado (Git Style):</h4>
+            <div id="diffText" class="diff-container"></div>
+            <p id="diffExplanation" style="font-size:13px;color:var(--mf-text-secondary);margin:4px 0;"></p>
+            <button class="btn-primary" style="background:var(--mf-success);align-self:flex-start;" onclick="applySuggestedPrompt()">
+              <span class="material-symbols-outlined">check</span>
+              Aplicar e Salvar como Nova Versão
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ABA 3: EVALUATIONS & QUALITY GATE -->
+      <section id="tab-evals" class="tab-pane">
+        <div class="eval-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <h3 style="margin:0;font-size:16px;">Pipeline de Avaliações Contínuas</h3>
+              <p style="margin:4px 0 0;color:var(--mf-text-secondary);font-size:13px;">
+                Uma nova versão só é liberada para produção se atingir <strong>no mínimo 90% de aprovação</strong> pelo LLM Juiz.
+              </p>
+            </div>
+            <button class="btn-primary" onclick="runEvaluationsBatch()">
+              <span class="material-symbols-outlined">play_arrow</span>
+              Rodar Bateria de Evals
+            </button>
+          </div>
+
+          <div id="evalStatusBlock" style="display:none;background:rgba(255,255,255,0.03);padding:16px;border-radius:var(--mf-radius-sm);border:1px solid var(--mf-border-subtle);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <span style="font-size:14px;font-weight:600;">Status da Bateria:</span>
+              <span id="evalScoreBadge" class="eval-score-badge passed">100% Aprovado</span>
+            </div>
+            <div id="evalResultsDetail" style="font-size:13px;color:var(--mf-text-secondary);line-height:1.6;"></div>
+          </div>
+
+          <div style="margin-top:16px;border-top:1px solid var(--mf-border-subtle);padding-top:16px;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-weight:600;font-size:14px;">Deploy para Produção</div>
+              <div style="font-size:12px;color:var(--mf-text-muted);">Atualiza atomicamente a tabela Prompts no Supabase oficial.</div>
+            </div>
+            <button id="btnPublishProd" class="btn-primary" style="background:var(--mf-purple);opacity:0.5;cursor:not-allowed;" disabled onclick="publishToProduction()">
+              <span class="material-symbols-outlined">rocket_launch</span>
+              Publicar em Produção (Gate: 90%)
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    const API_BASE = 'https://prompt-ops-prompt-ops-api.bkpxmb.easypanel.host/api/v1';
+    let currentSelectedPrompt = null;
+    let currentVersions = [];
+    let selectedVersion = null;
+
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', () => {
+      loadProductionPrompts();
+    });
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+      document.getElementById(`tab-${tabId}`).classList.add('active');
+      event.currentTarget.classList.add('active');
+    }
+
+    async function loadProductionPrompts() {
+      try {
+        const res = await fetch(`${API_BASE}/prompts/production/list`);
+        const prompts = await res.json();
+        const select = document.getElementById('selectPrompt');
+        select.innerHTML = '<option value="">Selecione um prompt oficial...</option>';
+        prompts.forEach(p => {
+          const client = p['Nome do cliente'] || 'Sem cliente';
+          const name = p['Pormpt_Name'] || `Prompt #${p.id}`;
+          select.innerHTML += `<option value="${p.id}">${client} — ${name} (ID: ${p.id})</option>`;
+        });
+      } catch (err) {
+        console.error('Erro ao listar prompts:', err);
+      }
+    }
+
+    async function loadPromptDetails() {
+      const promptId = document.getElementById('selectPrompt').value;
+      if (!promptId) return;
+
+      const res = await fetch(`${API_BASE}/prompts/production/${promptId}`);
+      currentSelectedPrompt = await res.json();
+      
+      document.getElementById('labelVerA').textContent = `Versão A: Produção (${currentSelectedPrompt['Nome do cliente'] || 'Cliente'})`;
+      document.getElementById('currentPromptText').value = currentSelectedPrompt.Prompt_Text || '';
+
+      await loadVersions(promptId);
+    }
+
+    async function loadVersions(promptId) {
+      const res = await fetch(`${API_BASE}/prompts/versions?prompt_id=${promptId}`);
+      currentVersions = await res.json();
+      const list = document.getElementById('versionList');
+      list.innerHTML = '';
+
+      if (currentVersions.length === 0) {
+        list.innerHTML = '<div style="font-size:12px;color:var(--mf-text-muted);text-align:center;padding:12px;">Nenhum draft cadastrado ainda.</div>';
+        return;
+      }
+
+      currentVersions.forEach((v, idx) => {
+        const card = document.createElement('div');
+        card.className = `version-card ${idx === 0 ? 'active' : ''}`;
+        card.onclick = () => selectVersion(v);
+        card.innerHTML = `
+          <div class="version-tag">${v.version_label} <span style="font-size:10px;color:var(--mf-text-muted);">(${v.status})</span></div>
+          <div style="font-size:12px;color:var(--mf-text-secondary);">${v.commit_message || 'Sem descrição'}</div>
+          <div class="version-meta">
+            <span>Score: ${v.eval_score ? (v.eval_score * 100).toFixed(0) + '%' : 'N/A'}</span>
+            <span>${new Date(v.created_at).toLocaleDateString('pt-BR')}</span>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+
+      if (currentVersions.length > 0) {
+        selectVersion(currentVersions[0]);
+      }
+    }
+
+    function selectVersion(v) {
+      selectedVersion = v;
+      document.getElementById('labelVerB').textContent = `Versão B: ${v.version_label} (${v.status})`;
+      document.getElementById('currentPromptText').value = v.prompt_text;
+      
+      const btnPublish = document.getElementById('btnPublishProd');
+      if (v.eval_score && v.eval_score >= 0.90) {
+        btnPublish.disabled = false;
+        btnPublish.style.opacity = '1';
+        btnPublish.style.cursor = 'pointer';
+      } else {
+        btnPublish.disabled = true;
+        btnPublish.style.opacity = '0.5';
+        btnPublish.style.cursor = 'not-allowed';
+      }
+    }
+
+    async function sendArenaMessage() {
+      const input = document.getElementById('arenaInput');
+      const text = input.value.trim();
+      if (!text || !selectedVersion) return;
+
+      appendChatMessage('chatBoxA', 'user', text);
+      appendChatMessage('chatBoxB', 'user', text);
+      input.value = '';
+
+      // Teste na versão B
+      try {
+        const res = await fetch(`${API_BASE}/arena/test-single`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            version_id: selectedVersion.id,
+            user_message: text,
+            variables: {}
+          })
+        });
+        const data = await res.json();
+        appendChatMessage('chatBoxB', 'assistant', data.assistant_message);
+      } catch (err) {
+        appendChatMessage('chatBoxB', 'assistant', 'Erro ao obter resposta da versão B.');
+      }
+    }
+
+    function appendChatMessage(containerId, role, text) {
+      const container = document.getElementById(containerId);
+      const msg = document.createElement('div');
+      msg.className = `message ${role}`;
+      msg.textContent = text;
+      container.appendChild(msg);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    async function requestPromptSuggestion() {
+      const current = document.getElementById('currentPromptText').value;
+      const instruction = document.getElementById('genInstruction').value;
+      if (!instruction) return;
+
+      const res = await fetch(`${API_BASE}/generator/suggest`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          current_prompt: current,
+          instruction: instruction
+        })
+      });
+      const data = await res.json();
+      document.getElementById('diffOutputContainer').style.display = 'flex';
+      document.getElementById('diffText').textContent = data.diff_unified;
+      document.getElementById('diffExplanation').textContent = data.explanation;
+      document.getElementById('currentPromptText').dataset.suggested = data.suggested_prompt;
+    }
+
+    async function applySuggestedPrompt() {
+      const suggested = document.getElementById('currentPromptText').dataset.suggested;
+      if (!suggested || !currentSelectedPrompt) return;
+
+      const res = await fetch(`${API_BASE}/prompts/versions`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          prompt_id: currentSelectedPrompt.id,
+          client_id: String(currentSelectedPrompt.id),
+          client_name: currentSelectedPrompt['Nome do cliente'],
+          version_label: `v1.${currentVersions.length + 1}.0-draft`,
+          prompt_text: suggested,
+          commit_message: document.getElementById('genInstruction').value,
+          author_email: 'engenheiro@mindflow.com.br'
+        })
+      });
+      alert('Nova versão gerada e salva no Postgres dedicado com sucesso!');
+      await loadVersions(currentSelectedPrompt.id);
+    }
+
+    async function runEvaluationsBatch() {
+      if (!selectedVersion) return;
+      alert('Iniciando bateria de avaliações com o LLM Juiz...');
+      try {
+        const res = await fetch(`${API_BASE}/evals/run`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            version_id: selectedVersion.id,
+            triggered_by: 'manual'
+          })
+        });
+        const run = await res.json();
+        document.getElementById('evalStatusBlock').style.display = 'block';
+        const badge = document.getElementById('evalScoreBadge');
+        const scorePct = (run.approval_rate * 100).toFixed(0);
+        badge.textContent = `${scorePct}% Aprovado (${run.passed_cases}/${run.total_cases})`;
+        badge.className = `eval-score-badge ${run.approval_rate >= 0.90 ? 'passed' : 'failed'}`;
+
+        document.getElementById('evalResultsDetail').innerHTML = run.cases.map(c => `
+          <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.05);">
+            <div><strong>Veredito:</strong> ${c.passed ? '✅ Aprovado' : '❌ Reprovado'}</div>
+            <div><strong>Resposta:</strong> "${c.generated_response}"</div>
+            <div><strong>Juiz:</strong> ${c.judge_reasoning}</div>
+          </div>
+        `).join('');
+
+        await loadVersions(selectedVersion.prompt_id);
+      } catch (err) {
+        alert('Erro ao executar evals.');
+      }
+    }
+
+    async function publishToProduction() {
+      if (!selectedVersion) return;
+      if (!confirm(`Confirmar deploy da versão ${selectedVersion.version_label} diretamente para a tabela Prompts do Supabase?`)) return;
+
+      const res = await fetch(`${API_BASE}/prompts/publish`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          version_id: selectedVersion.id,
+          author_email: 'engenheiro@mindflow.com.br'
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Prompt publicado em produção com sucesso!');
+        await loadPromptDetails();
+      } else {
+        alert(`Falha no deploy: ${data.detail || 'Erro desconhecido'}`);
+      }
+    }
+  </script>
+</body>
+</html>
