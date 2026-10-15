@@ -2121,62 +2121,140 @@ document.getElementById('wa-btn-next')?.addEventListener('click', () => {
 });
 
 // ============================================================
-// AGENDAMENTOS — STATE & LOGIC
+// AGENDAMENTOS — STATE & LOGIC (REDESIGN COMPLETO)
 // ============================================================
+function getQueryString() {
+    const qParams = new URLSearchParams();
+    if (state.filters.agent) qParams.append('agent', state.filters.agent);
+    if (state.filters.startDate) qParams.append('start_date', state.filters.startDate);
+    if (state.filters.endDate) qParams.append('end_date', state.filters.endDate);
+    return qParams.toString();
+}
+
 const agState = {
     page: 1,
     limit: 15,
-    totalPages: 1
+    totalPages: 1,
+    canalFilter: 'all',
+    searchQuery: '',
+    ignoreDateFilter: false,
+    cachedItems: []
 };
 
 async function loadAgendamentos() {
-    const queryStr = getQueryString();
-    loadAgendamentosMetrics(queryStr);
+    loadAgendamentosMetrics();
     loadAgendamentosList();
 }
 
-async function loadAgendamentosMetrics(queryStr) {
+async function loadAgendamentosMetrics() {
     try {
-        const res = await fetch(`/agendamentos/metrics?${queryStr}`);
+        const qParams = new URLSearchParams();
+        if (state.filters.agent) qParams.append('agent', state.filters.agent);
+        if (!agState.ignoreDateFilter) {
+            if (state.filters.startDate) qParams.append('start_date', state.filters.startDate);
+            if (state.filters.endDate) qParams.append('end_date', state.filters.endDate);
+        }
+
+        const res = await fetch(`/agendamentos/metrics?${qParams.toString()}`);
         const d = await res.json();
         if (!d.ok) return;
+
+        const total = d.total || 0;
+        const totalVoice = d.totalVoice || 0;
+        const totalWa = d.totalWa || 0;
+        const totalAgendado = d.totalAgendado || 0;
 
         const totalEl = document.getElementById('ag-kpi-total');
         const voiceEl = document.getElementById('ag-kpi-voice');
         const waEl = document.getElementById('ag-kpi-wa');
         const confirmedEl = document.getElementById('ag-kpi-confirmed');
 
-        if (totalEl) totalEl.textContent = (d.total || 0).toLocaleString();
-        if (voiceEl) voiceEl.textContent = (d.totalVoice || 0).toLocaleString();
-        if (waEl) waEl.textContent = (d.totalWa || 0).toLocaleString();
-        if (confirmedEl) confirmedEl.textContent = (d.totalAgendado || 0).toLocaleString();
+        if (totalEl) totalEl.textContent = total.toLocaleString();
+        if (voiceEl) voiceEl.textContent = totalVoice.toLocaleString();
+        if (waEl) waEl.textContent = totalWa.toLocaleString();
+        if (confirmedEl) confirmedEl.textContent = totalAgendado.toLocaleString();
 
-        renderAgChannelChart(d.byChannel || {});
-        renderAgAgentChart(d.byAgent || {});
+        // Badges com proporções inteligentes
+        const pctVoice = total > 0 ? Math.round((totalVoice / total) * 100) : 0;
+        const pctWa = total > 0 ? Math.round((totalWa / total) * 100) : 0;
+        const pctConf = total > 0 ? Math.round((totalAgendado / total) * 100) : 0;
+
+        const badgeVoice = document.getElementById('ag-badge-voice');
+        const badgeWa = document.getElementById('ag-badge-wa');
+        const badgeConf = document.getElementById('ag-badge-confirmed');
+        const badgeTotal = document.getElementById('ag-badge-total');
+
+        if (badgeVoice) badgeVoice.textContent = `${pctVoice}% do volume`;
+        if (badgeWa) badgeWa.textContent = `${pctWa}% do volume`;
+        if (badgeConf) badgeConf.textContent = `${pctConf}% confirmados`;
+        if (badgeTotal) badgeTotal.textContent = agState.ignoreDateFilter ? 'Todo o Histórico' : 'No período ativo';
+
+        // Atualiza contagens nas pílulas de filtro
+        const pillAll = document.getElementById('ag-pill-all-count');
+        const pillVoice = document.getElementById('ag-pill-voice-count');
+        const pillWa = document.getElementById('ag-pill-wa-count');
+        const pillConf = document.getElementById('ag-pill-conf-count');
+
+        if (pillAll) pillAll.textContent = total;
+        if (pillVoice) pillVoice.textContent = totalVoice;
+        if (pillWa) pillWa.textContent = totalWa;
+        if (pillConf) pillConf.textContent = totalAgendado;
+
+        // Se total for 0 e houver filtro de data ativo, oferece botão para ver todo o histórico
+        const btnViewAll = document.getElementById('ag-btn-view-all');
+        if (btnViewAll) {
+            if (total === 0 && (state.filters.startDate || state.filters.endDate) && !agState.ignoreDateFilter) {
+                btnViewAll.style.display = 'inline-flex';
+                btnViewAll.textContent = 'Ver Todo o Histórico (Sem Filtro de Data)';
+            } else if (agState.ignoreDateFilter) {
+                btnViewAll.style.display = 'inline-flex';
+                btnViewAll.textContent = 'Restaurar Filtro de Período';
+            } else {
+                btnViewAll.style.display = 'none';
+            }
+        }
+
+        renderAgChannelChart(d.byChannel || {}, total);
+        renderAgAgentChart(d.byAgent || {}, total);
     } catch (err) {
         console.error('Erro ao carregar métricas de agendamento:', err);
     }
 }
 
-function renderAgChannelChart(byChannel) {
-    const ctx = document.getElementById('chart-ag-channel')?.getContext('2d');
-    if (!ctx) return;
+function renderAgChannelChart(byChannel, total) {
+    const canvas = document.getElementById('chart-ag-channel');
+    const emptyEl = document.getElementById('chart-ag-channel-empty');
+    if (!canvas) return;
 
     if (state.charts.agChannel) {
         state.charts.agChannel.destroy();
+        state.charts.agChannel = null;
     }
 
-    const labels = ['Telefonia (Voz)', 'WhatsApp'];
-    const dataVals = [byChannel.ligacao || 0, byChannel.whats || 0];
+    const voiceVal = byChannel.ligacao || 0;
+    const waVal = byChannel.whats || 0;
+    const hasData = (voiceVal + waVal) > 0;
 
+    if (!hasData) {
+        canvas.style.display = 'none';
+        if (emptyEl) emptyEl.style.display = 'flex';
+        return;
+    }
+
+    canvas.style.display = 'block';
+    if (emptyEl) emptyEl.style.display = 'none';
+
+    const ctx = canvas.getContext('2d');
     state.charts.agChannel = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels,
+            labels: ['Telefonia Retell', 'WhatsApp'],
             datasets: [{
-                data: dataVals,
-                backgroundColor: ['#6366F1', '#10B981'],
-                borderWidth: 0
+                data: [voiceVal, waVal],
+                backgroundColor: ['#2E4FFF', '#00B5A0'],
+                borderColor: '#0B0F1C',
+                borderWidth: 3,
+                hoverOffset: 6
             }]
         },
         options: {
@@ -2185,45 +2263,96 @@ function renderAgChannelChart(byChannel) {
             plugins: {
                 legend: {
                     position: 'bottom',
-                    labels: { color: '#8E8FA2', font: { family: 'Inter', size: 12 } }
+                    labels: {
+                        color: '#C3C4D4',
+                        font: { family: 'Space Grotesk', size: 12, weight: 600 },
+                        padding: 18,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(10, 14, 26, 0.95)',
+                    titleColor: '#fff',
+                    bodyColor: '#C3C4D4',
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    borderWidth: 1,
+                    padding: 12,
+                    callbacks: {
+                        label: function(item) {
+                            const val = item.raw || 0;
+                            const pct = total > 0 ? Math.round((val / total) * 100) : 0;
+                            return ` ${item.label}: ${val} (${pct}%)`;
+                        }
+                    }
                 }
             },
-            cutout: '70%'
+            cutout: '72%'
         }
     });
 }
 
-function renderAgAgentChart(byAgent) {
-    const ctx = document.getElementById('chart-ag-agent')?.getContext('2d');
-    if (!ctx) return;
+function renderAgAgentChart(byAgent, total) {
+    const canvas = document.getElementById('chart-ag-agent');
+    const emptyEl = document.getElementById('chart-ag-agent-empty');
+    if (!canvas) return;
 
     if (state.charts.agAgent) {
         state.charts.agAgent.destroy();
+        state.charts.agAgent = null;
     }
 
-    const labels = Object.keys(byAgent || {});
-    const dataVals = Object.values(byAgent || {});
+    const labels = Object.keys(byAgent || {}).filter(k => byAgent[k] > 0);
+    const dataVals = labels.map(k => byAgent[k]);
 
+    if (!labels.length) {
+        canvas.style.display = 'none';
+        if (emptyEl) emptyEl.style.display = 'flex';
+        return;
+    }
+
+    canvas.style.display = 'block';
+    if (emptyEl) emptyEl.style.display = 'none';
+
+    const ctx = canvas.getContext('2d');
     state.charts.agAgent = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: labels.length ? labels : ['Sem Agentes'],
+            labels: labels.map(l => l.replace(/_/g, ' ')),
             datasets: [{
                 label: 'Agendamentos',
-                data: dataVals.length ? dataVals : [0],
-                backgroundColor: '#7B9AFF',
-                borderRadius: 6
+                data: dataVals,
+                backgroundColor: 'rgba(123, 154, 255, 0.75)',
+                hoverBackgroundColor: '#7B9AFF',
+                borderRadius: 8,
+                borderSkipped: false,
+                barThickness: 28
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: false }
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(10, 14, 26, 0.95)',
+                    titleColor: '#fff',
+                    bodyColor: '#7B9AFF',
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    borderWidth: 1,
+                    padding: 10
+                }
             },
             scales: {
-                x: { ticks: { color: '#8E8FA2', font: { family: 'Inter', size: 11 } }, grid: { display: false } },
-                y: { ticks: { color: '#8E8FA2', font: { family: 'Inter', size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } }
+                x: {
+                    ticks: { color: '#8E8FA2', font: { family: 'Space Grotesk', size: 11 } },
+                    grid: { display: false }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1, color: '#8E8FA2', font: { family: 'Inter', size: 11 } },
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                }
             }
         }
     });
@@ -2233,23 +2362,67 @@ async function loadAgendamentosList() {
     const tbody = document.getElementById('ag-table-body');
     if (!tbody) return;
 
-    tbody.innerHTML = '<tr><td colspan="7" class="loading-td">Carregando agendamentos...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="loading-td"><div style="display:flex;align-items:center;justify-content:center;gap:10px;"><div class="loading-spinner" style="width:18px;height:18px;border-width:2px;"></div> Carregando agendamentos...</div></td></tr>';
 
     const params = new URLSearchParams();
     params.append('page', agState.page);
     params.append('limit', agState.limit);
     if (state.filters.agent) params.append('agent', state.filters.agent);
-    if (state.filters.startDate) params.append('startDate', state.filters.startDate);
-    if (state.filters.endDate) params.append('endDate', state.filters.endDate);
+
+    if (!agState.ignoreDateFilter) {
+        if (state.filters.startDate) params.append('startDate', state.filters.startDate);
+        if (state.filters.endDate) params.append('endDate', state.filters.endDate);
+    }
+
+    if (agState.canalFilter && agState.canalFilter !== 'all' && agState.canalFilter !== 'confirmados') {
+        params.append('canal', agState.canalFilter);
+    }
 
     try {
         const res = await fetch(`/agendamentos?${params.toString()}`);
         const result = await res.json();
 
         tbody.innerHTML = '';
+        agState.cachedItems = result.data || [];
 
-        if (!result.data || result.data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="loading-td">Nenhum agendamento encontrado para o período.</td></tr>';
+        let list = [...agState.cachedItems];
+
+        // Filtro em memória por status confirmado
+        if (agState.canalFilter === 'confirmados') {
+            list = list.filter(item => {
+                const s = (item.status || '').toLowerCase();
+                return s.includes('agendad') || s.includes('confirm');
+            });
+        }
+
+        // Filtro de busca textual
+        if (agState.searchQuery) {
+            const q = agState.searchQuery.toLowerCase().trim();
+            list = list.filter(item => {
+                const nome = (item.nome || '').toLowerCase();
+                const num = (item.numero || '').toLowerCase();
+                const ag = (item.agent_id || item.agente || '').toLowerCase();
+                const em = (item.email || '').toLowerCase();
+                const det = (item.detalhes || '').toLowerCase();
+                return nome.includes(q) || num.includes(q) || ag.includes(q) || em.includes(q) || det.includes(q);
+            });
+        }
+
+        if (!list.length) {
+            const emptyHint = (state.filters.startDate || state.filters.endDate) && !agState.ignoreDateFilter
+                ? `<div style="padding:24px;text-align:center;">
+                     <span class="material-symbols-outlined" style="font-size:36px;color:rgba(255,255,255,0.2);margin-bottom:8px;">event_busy</span>
+                     <p style="color:#C3C4D4;font-size:14px;margin-bottom:12px;">Nenhum agendamento encontrado no período selecionado.</p>
+                     <button onclick="agState.ignoreDateFilter=true;loadAgendamentos();" class="btn-primary-sm" style="display:inline-flex;gap:6px;margin:0 auto;">
+                       <span class="material-symbols-outlined" style="font-size:16px;">history</span>
+                       Ver Todo o Histórico de Agendamentos
+                     </button>
+                   </div>`
+                : `<div style="padding:24px;text-align:center;color:var(--text-muted);">
+                     <span class="material-symbols-outlined" style="font-size:36px;color:rgba(255,255,255,0.2);margin-bottom:8px;">event_available</span>
+                     <p>Nenhum agendamento encontrado com os filtros atuais.</p>
+                   </div>`;
+            tbody.innerHTML = `<tr><td colspan="7">${emptyHint}</td></tr>`;
             document.getElementById('ag-current-page').textContent = '1';
             document.getElementById('ag-total-pages').textContent = '1';
             document.getElementById('ag-btn-prev').disabled = true;
@@ -2258,54 +2431,172 @@ async function loadAgendamentosList() {
         }
 
         agState.totalPages = result.totalPages || 1;
-        document.getElementById('ag-current-page').textContent = result.page;
-        document.getElementById('ag-total-pages').textContent = result.totalPages;
-        document.getElementById('ag-btn-prev').disabled = result.page === 1;
-        document.getElementById('ag-btn-next').disabled = result.page === result.totalPages;
+        document.getElementById('ag-current-page').textContent = result.page || 1;
+        document.getElementById('ag-total-pages').textContent = result.totalPages || 1;
+        document.getElementById('ag-btn-prev').disabled = (result.page || 1) <= 1;
+        document.getElementById('ag-btn-next').disabled = (result.page || 1) >= (result.totalPages || 1);
 
-        result.data.forEach(item => {
+        list.forEach((item, idx) => {
             const tr = document.createElement('tr');
             const nome = item.nome || 'Contato Sem Nome';
-            const email = item.email ? `<span style="color:var(--text-muted);font-size:11px;display:block;">${item.email}</span>` : '';
+            const initials = nome.split(' ').map(n => n[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || 'LD';
+            const email = item.email ? `<span class="ag-lead-email">${item.email}</span>` : '';
             const numero = item.numero || '-';
+
             const isWa = (item.canal || 'ligacao').toLowerCase().includes('whats');
-            const canal = isWa ? 'WhatsApp' : 'Telefonia (Voz)';
-            const canalBadgeStyle = isWa 
-                ? 'background:rgba(16,185,129,0.15);color:#10B981;border:1px solid rgba(16,185,129,0.3);' 
-                : 'background:rgba(99,102,241,0.15);color:#7B9AFF;border:1px solid rgba(99,102,241,0.3);';
+            const canalLabel = isWa ? 'WhatsApp' : 'Telefonia (Voz)';
+            const canalClass = isWa ? 'whatsapp' : 'voice';
+            const canalIcon = isWa ? 'chat' : 'call';
 
             const status = item.status || 'agendado';
-
-            let dateFmt = '-';
+            let dateFmt = '—';
             if (item.data_agendamento || item.created_at) {
                 try {
-                    dateFmt = new Date(item.data_agendamento || item.created_at).toLocaleString('pt-BR');
+                    const d = new Date(item.data_agendamento || item.created_at);
+                    const day = String(d.getDate()).padStart(2, '0');
+                    const month = d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+                    const hour = String(d.getHours()).padStart(2, '0');
+                    const min = String(d.getMinutes()).padStart(2, '0');
+                    dateFmt = `${day} ${month}, ${hour}:${min}`;
                 } catch(e){}
             }
 
-            const agente = item.agent_id || item.agente || 'Agente MindFlow';
-            const detalhes = item.detalhes || '-';
+            const rawAgent = item.agent_id || item.agente || 'Agente SDR';
+            const agente = rawAgent.replace(/_/g, ' ');
 
             tr.innerHTML = `
                 <td>
-                    <span class="cell-lead-name" style="font-weight:600;color:#fff;">${nome}</span>
-                    ${email}
+                    <div class="ag-lead-cell">
+                        <div class="ag-lead-avatar">${initials}</div>
+                        <div class="ag-lead-info">
+                            <span class="ag-lead-name">${nome}</span>
+                            ${email}
+                        </div>
+                    </div>
                 </td>
-                <td><span class="cell-phone">${numero}</span></td>
-                <td><span class="badge" style="${canalBadgeStyle}padding:3px 8px;border-radius:4px;font-size:11px;">${canal}</span></td>
-                <td style="color:#7B9AFF;font-weight:500;">${dateFmt}</td>
-                <td>${agente}</td>
-                <td><span class="badge" style="background:rgba(255,255,255,0.06);color:#fff;padding:3px 8px;border-radius:4px;font-size:11px;">${status}</span></td>
-                <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary);" title="${detalhes}">${detalhes}</td>
+                <td>
+                    <span style="font-family:'Space Grotesk',sans-serif;font-size:12px;color:#C3C4D4;">${numero}</span>
+                </td>
+                <td>
+                    <span class="ag-badge-channel ${canalClass}">
+                        <span class="material-symbols-outlined" style="font-size:13px;">${canalIcon}</span>
+                        ${canalLabel}
+                    </span>
+                </td>
+                <td>
+                    <span style="color:#7B9AFF;font-weight:600;font-size:12px;display:flex;align-items:center;gap:4px;">
+                        <span class="material-symbols-outlined" style="font-size:14px;color:rgba(123,154,255,0.7);">schedule</span>
+                        ${dateFmt}
+                    </span>
+                </td>
+                <td>
+                    <span style="font-size:12px;color:#fff;background:rgba(255,255,255,0.05);padding:3px 8px;border-radius:4px;border:1px solid rgba(255,255,255,0.08);">
+                        ${agente}
+                    </span>
+                </td>
+                <td>
+                    <span class="ag-status-badge ${status.toLowerCase()}">
+                        <span class="dot"></span>
+                        ${status}
+                    </span>
+                </td>
+                <td>
+                    <button class="ag-btn-details" data-idx="${idx}">
+                        <span class="material-symbols-outlined" style="font-size:15px;">visibility</span>
+                        Detalhes
+                    </button>
+                </td>
             `;
 
             tbody.appendChild(tr);
         });
+
+        // Event listener para botões de detalhes
+        tbody.querySelectorAll('.ag-btn-details').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(btn.getAttribute('data-idx'), 10);
+                const item = list[idx];
+                if (item) openAgendamentoModal(item);
+            });
+        });
+
     } catch (err) {
         console.error('Erro ao carregar lista de agendamentos:', err);
         tbody.innerHTML = '<tr><td colspan="7" class="loading-td" style="color:var(--error);">Erro ao carregar agendamentos.</td></tr>';
     }
 }
+
+// Modal de detalhes
+function openAgendamentoModal(item) {
+    const modal = document.getElementById('ag-modal-overlay');
+    if (!modal) return;
+
+    document.getElementById('ag-modal-lead').textContent = item.nome || 'Contato Sem Nome';
+    document.getElementById('ag-modal-phone').textContent = item.numero || '—';
+    document.getElementById('ag-modal-email').textContent = item.email || 'Não informado';
+    
+    const isWa = (item.canal || 'ligacao').toLowerCase().includes('whats');
+    document.getElementById('ag-modal-canal').textContent = isWa ? 'WhatsApp (Chat)' : 'Telefonia Retell (Voz)';
+    
+    let dateStr = '—';
+    if (item.data_agendamento || item.created_at) {
+        try {
+            dateStr = new Date(item.data_agendamento || item.created_at).toLocaleString('pt-BR');
+        } catch(e){}
+    }
+    document.getElementById('ag-modal-date').textContent = dateStr;
+    document.getElementById('ag-modal-agent').textContent = (item.agent_id || item.agente || 'Agente SDR').replace(/_/g, ' ');
+    document.getElementById('ag-modal-status').textContent = item.status ? item.status.toUpperCase() : 'AGENDADO';
+    document.getElementById('ag-modal-details').textContent = item.detalhes || 'Sem observações adicionais.';
+
+    const calRow = document.getElementById('ag-modal-cal-row');
+    const calEl = document.getElementById('ag-modal-cal');
+    if (item.google_event_id || item.calendar_id) {
+        calRow.style.display = 'flex';
+        calEl.textContent = `Event ID: ${item.google_event_id || '—'}\nCalendar ID: ${item.calendar_id || '—'}`;
+    } else {
+        calRow.style.display = 'none';
+    }
+
+    modal.classList.add('active');
+}
+
+// Fechamento do modal
+document.getElementById('ag-modal-close')?.addEventListener('click', () => {
+    document.getElementById('ag-modal-overlay')?.classList.remove('active');
+});
+document.getElementById('ag-modal-overlay')?.addEventListener('click', (e) => {
+    if (e.target.id === 'ag-modal-overlay') {
+        document.getElementById('ag-modal-overlay').classList.remove('active');
+    }
+});
+
+// Event listeners de filtros e busca rápida
+document.getElementById('ag-filter-pills')?.addEventListener('click', (e) => {
+    const pill = e.target.closest('.ag-pill');
+    if (!pill) return;
+
+    document.querySelectorAll('#ag-filter-pills .ag-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+
+    agState.canalFilter = pill.getAttribute('data-canal') || 'all';
+    agState.page = 1;
+    loadAgendamentosList();
+});
+
+let agSearchTimer = null;
+document.getElementById('ag-search-input')?.addEventListener('input', (e) => {
+    clearTimeout(agSearchTimer);
+    agSearchTimer = setTimeout(() => {
+        agState.searchQuery = e.target.value;
+        loadAgendamentosList();
+    }, 200);
+});
+
+document.getElementById('ag-btn-view-all')?.addEventListener('click', () => {
+    agState.ignoreDateFilter = !agState.ignoreDateFilter;
+    loadAgendamentos();
+});
 
 // Paginação dos Agendamentos
 document.getElementById('ag-btn-prev')?.addEventListener('click', () => {
@@ -2314,3 +2605,4 @@ document.getElementById('ag-btn-prev')?.addEventListener('click', () => {
 document.getElementById('ag-btn-next')?.addEventListener('click', () => {
     if (agState.page < agState.totalPages) { agState.page++; loadAgendamentosList(); }
 });
+

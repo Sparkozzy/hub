@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="mindflow-core.css?v=1.0.1" />
-  <link rel="stylesheet" href="dashboard-style.css?v=1.1.0">
+  <link rel="stylesheet" href="dashboard-style.css?v=1.2.0">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1007,16 +1007,17 @@
       </section>
 
       <section id="tab-agendamentos" class="tab-content">
-        <!-- KPI Cards Grid -->
-        <div class="kpi-grid">
+        <!-- KPI Cards Grid (4 colunas estritamente alinhadas) -->
+        <div class="kpi-grid kpi-grid-4">
           <div class="kpi-card">
             <div class="kpi-header">
               <span class="kpi-title">Total Agendados</span>
               <div class="kpi-icon icon-purple"><span class="material-symbols-outlined">event_available</span></div>
             </div>
             <div class="kpi-body">
-              <h3 id="ag-kpi-total">-</h3>
-              <span class="kpi-subtitle">Reuniões no período</span>
+              <h3 id="ag-kpi-total">0</h3>
+              <span class="kpi-subtitle">Reuniões identificadas</span>
+              <span class="kpi-badge-hint neutral" id="ag-badge-total">100% da base</span>
             </div>
           </div>
           <div class="kpi-card">
@@ -1025,8 +1026,9 @@
               <div class="kpi-icon icon-blue"><span class="material-symbols-outlined">phone_in_talk</span></div>
             </div>
             <div class="kpi-body">
-              <h3 id="ag-kpi-voice">-</h3>
+              <h3 id="ag-kpi-voice">0</h3>
               <span class="kpi-subtitle">Agendados por Ligação</span>
+              <span class="kpi-badge-hint voice" id="ag-badge-voice">0% do total</span>
             </div>
           </div>
           <div class="kpi-card">
@@ -1035,8 +1037,9 @@
               <div class="kpi-icon icon-green"><span class="material-symbols-outlined">chat</span></div>
             </div>
             <div class="kpi-body">
-              <h3 id="ag-kpi-wa">-</h3>
+              <h3 id="ag-kpi-wa">0</h3>
               <span class="kpi-subtitle">Agendados por Chat</span>
+              <span class="kpi-badge-hint wa" id="ag-badge-wa">0% do total</span>
             </div>
           </div>
           <div class="kpi-card">
@@ -1045,8 +1048,9 @@
               <div class="kpi-icon icon-teal"><span class="material-symbols-outlined">check_circle</span></div>
             </div>
             <div class="kpi-body">
-              <h3 id="ag-kpi-confirmed">-</h3>
-              <span class="kpi-subtitle">Status Agendado</span>
+              <h3 id="ag-kpi-confirmed">0</h3>
+              <span class="kpi-subtitle">Reuniões confirmadas</span>
+              <span class="kpi-badge-hint confirmed" id="ag-badge-confirmed">0% taxa</span>
             </div>
           </div>
         </div>
@@ -1056,27 +1060,66 @@
           <div class="chart-card span-6">
             <div class="chart-header">
               <h3><span class="material-symbols-outlined">pie_chart</span> Agendamentos por Canal</h3>
-              <span class="chart-desc">Distribuição entre Telefonia e WhatsApp</span>
+              <span class="chart-desc">Distribuição entre Telefonia Retell e WhatsApp</span>
             </div>
-            <div class="chart-container-funnel"><canvas id="chart-ag-channel"></canvas></div>
+            <div class="chart-container-funnel" style="position:relative;">
+              <canvas id="chart-ag-channel"></canvas>
+              <div id="chart-ag-channel-empty" class="chart-empty-placeholder" style="display:none;">
+                <span class="material-symbols-outlined">pie_chart</span>
+                <p>Nenhum agendamento registrado no período para desenhar o gráfico.</p>
+              </div>
+            </div>
           </div>
           <div class="chart-card span-6">
             <div class="chart-header">
               <h3><span class="material-symbols-outlined">bar_chart</span> Agendamentos por Agente</h3>
               <span class="chart-desc">Produtividade de reuniões por agente SDR</span>
             </div>
-            <div class="chart-container-hourly"><canvas id="chart-ag-agent"></canvas></div>
+            <div class="chart-container-hourly" style="position:relative;">
+              <canvas id="chart-ag-agent"></canvas>
+              <div id="chart-ag-agent-empty" class="chart-empty-placeholder" style="display:none;">
+                <span class="material-symbols-outlined">bar_chart</span>
+                <p>Nenhum agendamento registrado por agente neste período.</p>
+              </div>
+            </div>
           </div>
         </div>
 
         <!-- Tabela de Agendamentos -->
         <div class="chart-card">
-          <div class="chart-header" style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="chart-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
             <div>
               <h3><span class="material-symbols-outlined">calendar_month</span> Lista de Agendamentos</h3>
               <span class="chart-desc">Histórico completo de reuniões agendadas pelos agentes</span>
             </div>
+            <button id="ag-btn-view-all" class="btn-primary-sm" style="display:none; gap:6px;">
+              <span class="material-symbols-outlined" style="font-size:16px;">history</span>
+              Ver Todo o Histórico
+            </button>
           </div>
+
+          <!-- Toolbar com Pills de Filtro e Busca Rápida -->
+          <div class="ag-toolbar">
+            <div class="ag-filter-pills" id="ag-filter-pills">
+              <button class="ag-pill active" data-canal="all">
+                Todos <span class="ag-pill-count" id="ag-pill-all-count">0</span>
+              </button>
+              <button class="ag-pill" data-canal="ligacao">
+                <span class="material-symbols-outlined" style="font-size:14px;">call</span> Telefonia <span class="ag-pill-count" id="ag-pill-voice-count">0</span>
+              </button>
+              <button class="ag-pill" data-canal="whats">
+                <span class="material-symbols-outlined" style="font-size:14px;">chat</span> WhatsApp <span class="ag-pill-count" id="ag-pill-wa-count">0</span>
+              </button>
+              <button class="ag-pill" data-canal="confirmados">
+                <span class="material-symbols-outlined" style="font-size:14px;">verified</span> Confirmados <span class="ag-pill-count" id="ag-pill-conf-count">0</span>
+              </button>
+            </div>
+            <div class="ag-search-wrapper">
+              <span class="material-symbols-outlined">search</span>
+              <input type="text" id="ag-search-input" placeholder="Buscar por lead, telefone, agente...">
+            </div>
+          </div>
+
           <div class="table-responsive">
             <table class="audit-table">
               <thead>
@@ -1085,9 +1128,9 @@
                   <th>Contato</th>
                   <th>Canal</th>
                   <th>Data do Agendamento</th>
-                  <th>Agente</th>
+                  <th>Agente SDR</th>
                   <th>Status</th>
-                  <th>Detalhes</th>
+                  <th>Ações</th>
                 </tr>
               </thead>
               <tbody id="ag-table-body">
@@ -1106,11 +1149,65 @@
           </div>
         </div>
       </section>
+
+      <!-- Modal de Detalhes do Agendamento -->
+      <div id="ag-modal-overlay" class="ag-modal-overlay">
+        <div class="ag-modal-card">
+          <div class="ag-modal-header">
+            <h3><span class="material-symbols-outlined" style="color:#00B5A0;">event</span> Detalhes da Reunião</h3>
+            <button id="ag-modal-close" class="ag-modal-close"><span class="material-symbols-outlined">close</span></button>
+          </div>
+          <div class="ag-modal-body">
+            <div class="ag-modal-grid-2">
+              <div class="ag-modal-row">
+                <span class="ag-modal-label">Nome do Lead</span>
+                <span class="ag-modal-val" id="ag-modal-lead">-</span>
+              </div>
+              <div class="ag-modal-row">
+                <span class="ag-modal-label">Telefone / WhatsApp</span>
+                <span class="ag-modal-val" id="ag-modal-phone">-</span>
+              </div>
+            </div>
+            <div class="ag-modal-grid-2">
+              <div class="ag-modal-row">
+                <span class="ag-modal-label">E-mail</span>
+                <span class="ag-modal-val" id="ag-modal-email">-</span>
+              </div>
+              <div class="ag-modal-row">
+                <span class="ag-modal-label">Canal de Origem</span>
+                <span class="ag-modal-val" id="ag-modal-canal">-</span>
+              </div>
+            </div>
+            <div class="ag-modal-grid-2">
+              <div class="ag-modal-row">
+                <span class="ag-modal-label">Data Agendada</span>
+                <span class="ag-modal-val" id="ag-modal-date" style="color:#7B9AFF;font-weight:600;">-</span>
+              </div>
+              <div class="ag-modal-row">
+                <span class="ag-modal-label">Agente Responsável</span>
+                <span class="ag-modal-val" id="ag-modal-agent">-</span>
+              </div>
+            </div>
+            <div class="ag-modal-row">
+              <span class="ag-modal-label">Status do Agendamento</span>
+              <span class="ag-modal-val" id="ag-modal-status">-</span>
+            </div>
+            <div class="ag-modal-row">
+              <span class="ag-modal-label">Resumo / Detalhes / Objetivos</span>
+              <span class="ag-modal-val" id="ag-modal-details" style="white-space:pre-wrap; line-height:1.5;">-</span>
+            </div>
+            <div class="ag-modal-row" id="ag-modal-cal-row">
+              <span class="ag-modal-label">ID do Google Event / Calendário</span>
+              <span class="ag-modal-val" id="ag-modal-cal" style="font-family:monospace;font-size:11px;color:var(--text-muted);">-</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
 
   <!-- Scripts do dashboard nativo -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="dashboard-app.js?v=1.1.0"></script>
+  <script src="dashboard-app.js?v=1.2.0"></script>
 
   <!-- Session check & logout -->
   <script>
