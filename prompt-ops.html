@@ -669,8 +669,21 @@ select.field {
     function fillArenaSelects() {
       const opts = state.versions.map(v => `<option value="${v.id}">${esc(v.version_label)} — ${esc(v.status)}</option>`).join('');
       $('selA').innerHTML = opts; $('selB').innerHTML = opts;
+      
       const prod = state.versions.find(v => v.version_label.startsWith('prod-'));
-      if (prod) $('selA').value = prod.id;
+      const drafts = state.versions.filter(v => !v.version_label.startsWith('prod-'));
+      
+      if (prod) {
+        $('selA').value = prod.id;
+        if (drafts.length > 0) {
+          $('selB').value = drafts[0].id;
+        } else if (state.versions.length > 1) {
+          $('selB').value = state.versions[1].id;
+        }
+      } else if (state.versions.length >= 2) {
+        $('selA').value = state.versions[0].id;
+        $('selB').value = state.versions[1].id;
+      }
       updateArenaTitles();
     }
     function updateArenaTitles() {
@@ -678,7 +691,8 @@ select.field {
       $('titleA').textContent = 'Versão A · ' + name($('selA').value);
       $('titleB').textContent = 'Versão B · ' + name($('selB').value);
     }
-    $('selA').onchange = $('selB').onchange = updateArenaTitles;
+        $('selA').onchange = () => { updateArenaTitles(); state.history.A = []; $('chatA').innerHTML = '<div class="msg system">Versão alterada.</div>'; };
+    $('selB').onchange = () => { updateArenaTitles(); state.history.B = []; $('chatB').innerHTML = '<div class="msg system">Versão alterada.</div>'; };
 
     function addMsg(side, role, text, meta) {
       const c = $('chat' + side);
@@ -701,11 +715,21 @@ select.field {
       try {
         const r = await api('/arena/test-compare', {
           method: 'POST',
-          body: JSON.stringify({ version_a_id: a, version_b_id: b, user_message: text, variables: {}, chat_history: [] })
+          body: JSON.stringify({
+            version_a_id: a,
+            version_b_id: b,
+            user_message: text,
+            variables: {},
+            chat_history: state.history.A || []
+          })
         });
         const fill = (el, side, x) => {
           el.remove();
           addMsg(side, 'assistant', x.assistant_message, `${x.latency_ms} ms · ${x.tokens_input} → ${x.tokens_output} tokens`);
+          // Atualiza histórico conversacional
+          if (!state.history[side]) state.history[side] = [];
+          state.history[side].push({ role: 'user', content: text });
+          state.history[side].push({ role: 'assistant', content: x.assistant_message });
         };
         fill(ta, 'A', r.version_a); fill(tb, 'B', r.version_b);
       } catch (e) { ta.remove(); tb.remove(); toast('Arena: ' + e.message, 'err'); }
@@ -713,7 +737,10 @@ select.field {
     }
     $('btnSend').onclick = sendArena;
     $('arenaInput').onkeydown = e => { if (e.key === 'Enter') sendArena(); };
-    $('btnClear').onclick = () => ['A', 'B'].forEach(s => $('chat' + s).innerHTML = '<div class="msg system">Conversa limpa.</div>');
+    $('btnClear').onclick = () => {
+      state.history = { A: [], B: [] };
+      ['A', 'B'].forEach(s => $('chat' + s).innerHTML = '<div class="msg system">Conversa limpa.</div>');
+    };
 
     /* ── Editor / versões ── */
     function nextLabel() {
