@@ -94,7 +94,19 @@
     }
     .field:hover { border-color: rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.06); }
     .field:focus { border-color: rgba(46, 79, 255, 0.75); box-shadow: 0 0 0 3px rgba(46, 79, 255, 0.2); background: rgba(255, 255, 255, 0.06); }
-    select.field {
+        optgroup {
+      background: #0f172a;
+      color: #93c5fd;
+      font-weight: 700;
+      padding: 6px 4px;
+    }
+    optgroup option {
+      background: #0b0f19;
+      color: #f1f5f9;
+      font-weight: normal;
+      padding: 6px 12px;
+    }
+select.field {
       appearance: none;
       -webkit-appearance: none;
       -moz-appearance: none;
@@ -359,22 +371,9 @@
         <h2>PromptOps</h2>
         <p>Versione, teste e valide prompts antes de ir para produção.</p>
       </div>
-      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-        <div class="glass picker" style="padding:10px 16px;">
-          <span class="material-symbols-outlined" style="color:var(--blue2)">description</span>
-          <select id="selectPrompt" class="field"><option value="">Carregando prompts...</option></select>
-        </div>
-        <div class="glass" style="display:inline-flex;padding:4px;gap:4px;border-radius:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);" id="channelPills">
-          <button type="button" class="chan-btn active" data-chan="whatsapp" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:rgba(46,79,255,0.2);color:#93c5fd;transition:all 0.2s;">
-            <span class="material-symbols-outlined" style="font-size:16px;">chat</span> WhatsApp
-          </button>
-          <button type="button" class="chan-btn" data-chan="ligacao" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:transparent;color:rgba(255,255,255,0.6);transition:all 0.2s;">
-            <span class="material-symbols-outlined" style="font-size:16px;">call</span> Ligação / Voz
-          </button>
-          <button type="button" class="chan-btn" data-chan="fup" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:transparent;color:rgba(255,255,255,0.6);transition:all 0.2s;">
-            <span class="material-symbols-outlined" style="font-size:16px;">update</span> Follow-Up
-          </button>
-        </div>
+      <div class="glass picker" style="padding:10px 16px;min-width:380px;">
+        <span class="material-symbols-outlined" style="color:var(--blue2)">description</span>
+        <select id="selectPrompt" class="field" style="width:100%;"><option value="">Carregando prompts por canal...</option></select>
       </div>
     </header>
 
@@ -565,50 +564,44 @@
       b.classList.add('active'); $('pane-' + b.dataset.tab).classList.add('active');
     });
 
-    /* ── Canais & Prompts de Produção ── */
-    function updateChannelUI() {
-      document.querySelectorAll('.chan-btn').forEach(btn => {
-        const isAct = btn.dataset.chan === state.currentChannel;
-        btn.classList.toggle('active', isAct);
-        btn.style.background = isAct ? 'rgba(46,79,255,0.25)' : 'transparent';
-        btn.style.color = isAct ? '#93c5fd' : 'rgba(255,255,255,0.6)';
-      });
-    }
-
-    document.querySelectorAll('.chan-btn').forEach(btn => {
-      btn.onclick = async () => {
-        if (state.currentChannel === btn.dataset.chan) return;
-        state.currentChannel = btn.dataset.chan;
-        updateChannelUI();
-        if (state.prod?.id) {
-          try {
-            state.prod = await api(`/prompts/production/${state.prod.id}?channel=${state.currentChannel}`);
-            await ensureProdSnapshot();
-            await loadVersions();
-            await loadCases();
-          } catch (e) { toast('Falha ao alternar canal: ' + e.message, 'err'); }
-        }
-      };
-    });
+    /* ── Prompts de Produção Agrupados por Canal (Opção B) ── */
+    const CHANNEL_META = {
+      whatsapp: { label: 'WhatsApp', icon: '💬' },
+      ligacao: { label: 'Ligação / Voz', icon: '📞' },
+      fup: { label: 'Follow-Up', icon: '🔄' },
+      instagram: { label: 'Instagram', icon: '📸' }
+    };
 
     async function loadPrompts() {
       try {
         const list = await api('/prompts/production/list');
-        $('selectPrompt').innerHTML = '<option value="">Selecione um prompt de produção...</option>' +
-          list.map(p => {
-            const client = esc(p['Nome do cliente'] || 'Sem cliente');
-            const name = esc(p['Pormpt_Name'] || 'Prompt');
-            const chs = (p.channels || []).join(', ');
-            return `<option value="${p.id}">${client} — ${name} (#${p.id}) [${chs}]</option>`;
-          }).join('');
+        let htmlOptions = '<option value="">Selecione um prompt / canal...</option>';
+        
+        list.forEach(p => {
+          const client = esc(p['Nome do cliente'] || 'Sem cliente');
+          const name = esc(p['Pormpt_Name'] || 'Prompt');
+          const pId = p.id;
+          const channels = p.channels && p.channels.length ? p.channels : ['whatsapp'];
+          
+          htmlOptions += `<optgroup label="🏢 ${client} (#${pId})">`;
+          channels.forEach(ch => {
+            const meta = CHANNEL_META[ch] || { label: ch, icon: '⚡' };
+            htmlOptions += `<option value="${pId}::${ch}">${client} — ${meta.icon} ${meta.label}</option>`;
+          });
+          htmlOptions += `</optgroup>`;
+        });
+
+        $('selectPrompt').innerHTML = htmlOptions;
       } catch (e) { toast('Falha ao listar prompts: ' + e.message, 'err'); }
     }
 
     $('selectPrompt').onchange = async () => {
-      const id = $('selectPrompt').value;
-      if (!id) return;
+      const val = $('selectPrompt').value;
+      if (!val) return;
+      const [idStr, ch] = val.split('::');
+      state.currentChannel = ch || 'whatsapp';
       try {
-        state.prod = await api(`/prompts/production/${id}?channel=${state.currentChannel}`);
+        state.prod = await api(`/prompts/production/${idStr}?channel=${state.currentChannel}`);
         await ensureProdSnapshot();
         await loadVersions();
         await loadCases();
