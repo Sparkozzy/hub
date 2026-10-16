@@ -511,10 +511,11 @@ select.field {
     </div>
   </main>
 
-  <!-- Modal: novo caso -->
+  <!-- Modal: novo/editar caso -->
   <div class="modal-bg" id="caseModal">
     <div class="glass modal">
-      <h3 class="sec" style="margin-bottom:14px">Novo caso de teste</h3>
+      <h3 class="sec" style="margin-bottom:14px" id="cModalTitle">Novo caso de teste</h3>
+      <input type="hidden" id="cEditId" value="" />
       <span class="eyebrow label">Cenário</span>
       <input id="cName" class="field" placeholder="Ex.: Lead diz que está caro" style="margin-bottom:12px" />
       <span class="eyebrow label">Mensagem do usuário</span>
@@ -846,26 +847,110 @@ select.field {
       if (!state.prod) return;
       try {
         const cases = await api(`/evals/datasets?prompt_id=${state.prod.id}&channel=${state.currentChannel}`);
+        state.loadedCases = cases;
         $('caseList').innerHTML = cases.length ? cases.map(c => `
-          <div class="case"><div class="q"><span class="material-symbols-outlined" style="font-size:18px;color:var(--blue2)">quiz</span>${esc(c.scenario_name)}</div>
-          <div class="judge">“${esc(c.input_data?.user_message || '')}”</div>
-          <div class="judge" style="margin-top:4px">Critério: ${esc(c.expected_criteria)}</div></div>`).join('')
+          <div class="case" data-id="${c.id}">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px">
+              <div class="q" style="margin-bottom:0">
+                <span class="material-symbols-outlined" style="font-size:18px;color:var(--blue2)">quiz</span>
+                ${esc(c.scenario_name)}
+              </div>
+              <div style="display:flex;align-items:center;gap:6px">
+                <button class="mf-btn mf-btn-secondary btn-edit-case" data-id="${c.id}" title="Editar caso" style="padding:4px 8px;font-size:12px;height:28px">
+                  <span class="material-symbols-outlined" style="font-size:16px">edit</span>
+                </button>
+                <button class="mf-btn mf-btn-secondary btn-del-case" data-id="${c.id}" title="Excluir caso" style="padding:4px 8px;font-size:12px;height:28px;color:#F87171">
+                  <span class="material-symbols-outlined" style="font-size:16px">delete</span>
+                </button>
+              </div>
+            </div>
+            <div class="judge">“${esc(c.input_data?.user_message || '')}”</div>
+            <div class="judge" style="margin-top:4px">Critério: ${esc(c.expected_criteria)}</div>
+          </div>`).join('')
           : '<div class="empty"><span class="material-symbols-outlined">quiz</span>Nenhum caso cadastrado. Crie o primeiro para poder rodar evals.</div>';
+
+        // Event handlers para editar e excluir
+        document.querySelectorAll('.btn-edit-case').forEach(btn => {
+          btn.onclick = () => {
+            const cid = btn.dataset.id;
+            const targetCase = (state.loadedCases || []).find(x => String(x.id) === String(cid));
+            if (!targetCase) return;
+            $('cModalTitle').textContent = 'Editar caso de teste';
+            $('cEditId').value = targetCase.id;
+            $('cName').value = targetCase.scenario_name || '';
+            $('cMsg').value = targetCase.input_data?.user_message || '';
+            $('cRubric').value = targetCase.expected_criteria || '';
+            $('caseModal').classList.add('open');
+          };
+        });
+
+        document.querySelectorAll('.btn-del-case').forEach(btn => {
+          btn.onclick = async () => {
+            const cid = btn.dataset.id;
+            const targetCase = (state.loadedCases || []).find(x => String(x.id) === String(cid));
+            const cName = targetCase ? targetCase.scenario_name : 'este caso de teste';
+            if (!confirm(`Deseja realmente excluir o caso "${cName}"?`)) return;
+            try {
+              await api('/evals/datasets/' + cid, { method: 'DELETE' });
+              toast('Caso de teste excluído com sucesso.');
+              await loadCases();
+            } catch (e) {
+              toast('Falha ao excluir caso: ' + e.message, 'err');
+            }
+          };
+        });
+
       } catch (e) { /* silencioso */ }
     }
 
-    $('btnAddCase').onclick = () => { if (!state.prod) return toast('Selecione um prompt primeiro.', 'err'); $('caseModal').classList.add('open'); };
-    $('cCancel').onclick = () => $('caseModal').classList.remove('open');
+    $('btnAddCase').onclick = () => {
+      if (!state.prod) return toast('Selecione um prompt primeiro.', 'err');
+      $('cModalTitle').textContent = 'Novo caso de teste';
+      $('cEditId').value = '';
+      ['cName', 'cMsg', 'cRubric'].forEach(i => $(i).value = '');
+      $('caseModal').classList.add('open');
+    };
+
+    $('cCancel').onclick = () => {
+      $('caseModal').classList.remove('open');
+      $('cEditId').value = '';
+    };
+
     $('cSave').onclick = async () => {
+      const editId = $('cEditId').value;
       const name = $('cName').value.trim(), msg = $('cMsg').value.trim(), rub = $('cRubric').value.trim();
       if (!name || !msg || !rub) return toast('Preencha cenário, mensagem e critério.', 'err');
       try {
-        await api('/evals/datasets', {
-          method: 'POST',
-          body: JSON.stringify({ prompt_id: state.prod.id, client_id: String(state.prod.id), scenario_name: name, test_type: 'single_turn', input_data: { user_message: msg }, expected_criteria: rub })
-        });
+        if (editId) {
+          await api('/evals/datasets/' + editId, {
+            method: 'PUT',
+            body: JSON.stringify({
+              scenario_name: name,
+              channel: state.currentChannel,
+              input_data: { user_message: msg },
+              expected_criteria: rub
+            })
+          });
+          toast('Caso atualizado com sucesso.');
+        } else {
+          await api('/evals/datasets', {
+            method: 'POST',
+            body: JSON.stringify({
+              prompt_id: state.prod.id,
+              client_id: String(state.prod.id),
+              channel: state.currentChannel,
+              scenario_name: name,
+              test_type: 'single_turn',
+              input_data: { user_message: msg },
+              expected_criteria: rub
+            })
+          });
+          toast('Caso criado com sucesso.');
+        }
         ['cName', 'cMsg', 'cRubric'].forEach(i => $(i).value = '');
-        $('caseModal').classList.remove('open'); toast('Caso salvo.'); loadCases();
+        $('cEditId').value = '';
+        $('caseModal').classList.remove('open');
+        await loadCases();
       } catch (e) { toast(e.message, 'err'); }
     };
 
