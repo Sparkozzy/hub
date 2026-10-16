@@ -359,9 +359,22 @@
         <h2>PromptOps</h2>
         <p>Versione, teste e valide prompts antes de ir para produção.</p>
       </div>
-      <div class="glass picker" style="padding:14px 18px;">
-        <span class="material-symbols-outlined" style="color:var(--blue2)">description</span>
-        <select id="selectPrompt" class="field"><option value="">Carregando prompts...</option></select>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div class="glass picker" style="padding:10px 16px;">
+          <span class="material-symbols-outlined" style="color:var(--blue2)">description</span>
+          <select id="selectPrompt" class="field"><option value="">Carregando prompts...</option></select>
+        </div>
+        <div class="glass" style="display:inline-flex;padding:4px;gap:4px;border-radius:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);" id="channelPills">
+          <button type="button" class="chan-btn active" data-chan="whatsapp" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:rgba(46,79,255,0.2);color:#93c5fd;transition:all 0.2s;">
+            <span class="material-symbols-outlined" style="font-size:16px;">chat</span> WhatsApp
+          </button>
+          <button type="button" class="chan-btn" data-chan="ligacao" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:transparent;color:rgba(255,255,255,0.6);transition:all 0.2s;">
+            <span class="material-symbols-outlined" style="font-size:16px;">call</span> Ligação / Voz
+          </button>
+          <button type="button" class="chan-btn" data-chan="fup" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:transparent;color:rgba(255,255,255,0.6);transition:all 0.2s;">
+            <span class="material-symbols-outlined" style="font-size:16px;">update</span> Follow-Up
+          </button>
+        </div>
       </div>
     </header>
 
@@ -508,7 +521,7 @@
   <script>
     const API = 'https://prompt-ops-prompt-ops-api.bkpxmb.easypanel.host/api/v1';
     const $ = id => document.getElementById(id);
-    const state = { prod: null, versions: [], selected: null, suggested: null, userEmail: 'engenheiro@mindflow.com.br', history: { A: [], B: [] } };
+    const state = { prod: null, versions: [], selected: null, suggested: null, userEmail: 'engenheiro@mindflow.com.br', currentChannel: 'whatsapp', history: { A: [], B: [] } };
 
     const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -552,12 +565,42 @@
       b.classList.add('active'); $('pane-' + b.dataset.tab).classList.add('active');
     });
 
-    /* ── Prompts de produção ── */
+    /* ── Canais & Prompts de Produção ── */
+    function updateChannelUI() {
+      document.querySelectorAll('.chan-btn').forEach(btn => {
+        const isAct = btn.dataset.chan === state.currentChannel;
+        btn.classList.toggle('active', isAct);
+        btn.style.background = isAct ? 'rgba(46,79,255,0.25)' : 'transparent';
+        btn.style.color = isAct ? '#93c5fd' : 'rgba(255,255,255,0.6)';
+      });
+    }
+
+    document.querySelectorAll('.chan-btn').forEach(btn => {
+      btn.onclick = async () => {
+        if (state.currentChannel === btn.dataset.chan) return;
+        state.currentChannel = btn.dataset.chan;
+        updateChannelUI();
+        if (state.prod?.id) {
+          try {
+            state.prod = await api(`/prompts/production/${state.prod.id}?channel=${state.currentChannel}`);
+            await ensureProdSnapshot();
+            await loadVersions();
+            await loadCases();
+          } catch (e) { toast('Falha ao alternar canal: ' + e.message, 'err'); }
+        }
+      };
+    });
+
     async function loadPrompts() {
       try {
         const list = await api('/prompts/production/list');
         $('selectPrompt').innerHTML = '<option value="">Selecione um prompt de produção...</option>' +
-          list.map(p => `<option value="${p.id}">${esc(p['Nome do cliente'] || 'Sem cliente')} — ${esc(p['Pormpt_Name'] || 'Prompt')} (#${p.id})</option>`).join('');
+          list.map(p => {
+            const client = esc(p['Nome do cliente'] || 'Sem cliente');
+            const name = esc(p['Pormpt_Name'] || 'Prompt');
+            const chs = (p.channels || []).join(', ');
+            return `<option value="${p.id}">${client} — ${name} (#${p.id}) [${chs}]</option>`;
+          }).join('');
       } catch (e) { toast('Falha ao listar prompts: ' + e.message, 'err'); }
     }
 
@@ -565,17 +608,17 @@
       const id = $('selectPrompt').value;
       if (!id) return;
       try {
-        state.prod = await api('/prompts/production/' + id);
+        state.prod = await api(`/prompts/production/${id}?channel=${state.currentChannel}`);
         await ensureProdSnapshot();
         await loadVersions();
+        await loadCases();
       } catch (e) { toast(e.message, 'err'); }
     };
 
-    // Garante uma versão "produção" no banco dedicado para a Arena poder usar como Versão A.
-    // Se a produção mudou desde o último snapshot, cria um novo (sem tocar no Supabase).
+    // Garante uma versão "produção" no banco dedicado para a Arena poder usar como Versão A
     async function ensureProdSnapshot() {
       const p = state.prod, text = p.Prompt_Text || '';
-      const all = await api('/prompts/versions?prompt_id=' + p.id);
+      const all = await api(`/prompts/versions?prompt_id=${p.id}&channel=${state.currentChannel}`);
       const snap = all.find(v => v.version_label.startsWith('prod-') && v.prompt_text === text);
       if (snap) return;
       const n = all.filter(v => v.version_label.startsWith('prod-')).length + 1;
@@ -583,14 +626,15 @@
         method: 'POST',
         body: JSON.stringify({
           prompt_id: p.id, client_id: String(p.id), client_name: p['Nome do cliente'],
-          version_label: `prod-${n}`, prompt_text: text, model_name: 'gpt-4o', temperature: 0.7,
-          commit_message: 'Snapshot da produção (Supabase)', author_email: state.userEmail
+          channel: state.currentChannel,
+          version_label: `prod-${state.currentChannel}-${n}`, prompt_text: text, model_name: 'gpt-4o', temperature: 0.7,
+          commit_message: `Snapshot da produção (${state.currentChannel})`, author_email: state.userEmail
         })
       });
     }
 
     async function loadVersions(keepId) {
-      state.versions = await api('/prompts/versions?prompt_id=' + state.prod.id);
+      state.versions = await api(`/prompts/versions?prompt_id=${state.prod.id}&channel=${state.currentChannel}`);
       renderVersions();
       fillArenaSelects();
       const pick = state.versions.find(v => v.id === keepId) || state.versions.find(v => !v.version_label.startsWith('prod-')) || state.versions[0];
@@ -688,6 +732,7 @@
         method: 'POST',
         body: JSON.stringify({
           prompt_id: state.prod.id, client_id: String(state.prod.id), client_name: state.prod['Nome do cliente'],
+          channel: state.currentChannel,
           version_label: nextLabel(), prompt_text: text,
           model_name: $('edModel').value || 'gpt-4o', temperature: parseFloat($('edTemp').value) || 0.7,
           commit_message: commit || 'Sem descrição', author_email: state.userEmail
@@ -757,7 +802,7 @@
     async function loadCases() {
       if (!state.prod) return;
       try {
-        const cases = await api('/evals/datasets?prompt_id=' + state.prod.id);
+        const cases = await api(`/evals/datasets?prompt_id=${state.prod.id}&channel=${state.currentChannel}`);
         $('caseList').innerHTML = cases.length ? cases.map(c => `
           <div class="case"><div class="q"><span class="material-symbols-outlined" style="font-size:18px;color:var(--blue2)">quiz</span>${esc(c.scenario_name)}</div>
           <div class="judge">“${esc(c.input_data?.user_message || '')}”</div>
