@@ -3112,14 +3112,6 @@ const PLATFORMS = [
     internal: true,
   },
   {
-    id: 'prompt-ops',
-    name: 'PromptOps',
-    description: 'Engenharia, Arena A/B e Evals de Prompts',
-    url: '/prompt-ops',
-    icon: 'terminal',
-    internal: true,
-  },
-  {
     id: 'planilha',
     name: 'Planilha de Acessos',
     description: 'Senhas e logins das plataformas',
