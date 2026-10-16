@@ -2662,7 +2662,10 @@ async function fetchProcessedCalls(agent, startDate, endDate, clientSupabase) {
     // Processar (transform + dedup + fatigue)
     let calls = allData.map(c => ({
       ...c,
-      Duracao: (parseFloat(c.Duracao) || 0) / 1000,
+      Duracao: (() => {
+        const val = parseFloat(c.Duracao) || 0;
+        return val > 1000 ? val / 1000 : val;
+      })(),
       combined_cost: (parseFloat(c.combined_cost) || 0) / 100,
       created_at: new Date(c.created_at).getTime(),
     }));
