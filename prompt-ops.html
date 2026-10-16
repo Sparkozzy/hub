@@ -435,8 +435,21 @@ select.field {
           <div class="grid2" style="margin-bottom:12px">
             <div><span class="eyebrow label">Mensagem do commit</span><input id="edCommit" class="field" placeholder="O que mudou nesta versão?" /></div>
             <div class="grid2">
-              <div><span class="eyebrow label">Modelo</span><input id="edModel" class="field" value="gpt-4o" /></div>
-              <div><span class="eyebrow label">Temperatura</span><input id="edTemp" class="field" type="number" step="0.1" min="0" max="2" value="0.7" /></div>
+              <div>
+                <span class="eyebrow label">Modelo LLM</span>
+                <select id="edModel" class="field">
+                  <option value="gpt-4.1">gpt-4.1 (Padrão MindFlow)</option>
+                  <option value="gpt-4o">gpt-4o (Multimodal / Rápido)</option>
+                  <option value="gpt-4o-mini">gpt-4o-mini (Econômico / Triagem)</option>
+                </select>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span class="eyebrow label">Temperatura</span>
+                  <span id="tempVal" style="font-size:12px;color:#93c5fd;font-weight:600">0.7</span>
+                </div>
+                <input id="edTemp" class="field" type="range" step="0.05" min="0" max="1.5" value="0.7" style="height:38px;cursor:pointer;accent-color:var(--blue);" />
+              </div>
             </div>
           </div>
           <textarea id="edText" class="field" style="height:420px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px" placeholder="Texto do prompt..."></textarea>
@@ -620,7 +633,7 @@ select.field {
         body: JSON.stringify({
           prompt_id: p.id, client_id: String(p.id), client_name: p['Nome do cliente'],
           channel: state.currentChannel,
-          version_label: `prod-${state.currentChannel}-${n}`, prompt_text: text, model_name: 'gpt-4o', temperature: 0.7,
+          version_label: `prod-${state.currentChannel}-${n}`, prompt_text: text, model_name: 'gpt-4.1', temperature: 0.7,
           commit_message: `Snapshot da produção (${state.currentChannel})`, author_email: state.userEmail
         })
       });
@@ -656,7 +669,10 @@ select.field {
       if (!v) return;
       state.selected = v;
       renderVersions();
-      $('edText').value = v.prompt_text; $('edModel').value = v.model_name; $('edTemp').value = v.temperature;
+      $('edText').value = v.prompt_text;
+      $('edModel').value = v.model_name || 'gpt-4.1';
+      $('edTemp').value = v.temperature ?? 0.7;
+      $('tempVal').textContent = $('edTemp').value;
       $('edCommit').value = '';
       $('editorSub').textContent = `Editando a partir de ${v.version_label}. Salvar cria uma nova versão — a original não é alterada.`;
       $('selB').value = v.id;
@@ -687,12 +703,19 @@ select.field {
       updateArenaTitles();
     }
     function updateArenaTitles() {
-      const name = id => state.versions.find(v => v.id === id)?.version_label || '—';
-      $('titleA').textContent = 'Versão A · ' + name($('selA').value);
-      $('titleB').textContent = 'Versão B · ' + name($('selB').value);
+      const getMeta = id => {
+        const v = state.versions.find(x => x.id === id);
+        if (!v) return '—';
+        return `${v.version_label} <span style="font-size:11px;font-weight:normal;opacity:0.75">(${v.model_name || 'gpt-4o'} · temp ${v.temperature ?? 0.7})</span>`;
+      };
+      $('titleA').innerHTML = 'Versão A · ' + getMeta($('selA').value);
+      $('titleB').innerHTML = 'Versão B · ' + getMeta($('selB').value);
     }
-        $('selA').onchange = () => { updateArenaTitles(); state.history.A = []; $('chatA').innerHTML = '<div class="msg system">Versão alterada.</div>'; };
+    $('selA').onchange = () => { updateArenaTitles(); state.history.A = []; $('chatA').innerHTML = '<div class="msg system">Versão alterada.</div>'; };
     $('selB').onchange = () => { updateArenaTitles(); state.history.B = []; $('chatB').innerHTML = '<div class="msg system">Versão alterada.</div>'; };
+    
+    // Sincroniza slider de temperatura com indicador numérico
+    $('edTemp').oninput = () => { $('tempVal').textContent = $('edTemp').value; };
 
     function addMsg(side, role, text, meta) {
       const c = $('chat' + side);
