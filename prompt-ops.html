@@ -397,9 +397,14 @@ select.field {
         <h2>PromptOps</h2>
         <p>Versione, teste e valide prompts antes de ir para produção.</p>
       </div>
-      <div class="glass picker" style="padding:10px 16px;min-width:380px;">
-        <span class="material-symbols-outlined" style="color:var(--blue2)">description</span>
-        <select id="selectPrompt" class="field" style="width:100%;"><option value="">Carregando prompts por canal...</option></select>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="glass picker" style="padding:10px 16px;min-width:380px;">
+          <span class="material-symbols-outlined" style="color:var(--blue2)">description</span>
+          <select id="selectPrompt" class="field" style="width:100%;"><option value="">Carregando prompts por canal...</option></select>
+        </div>
+        <button class="mf-btn mf-btn-primary" id="btnOpenNewPrompt" style="padding:10px 16px;white-space:nowrap;font-size:13px;height:44px;" title="Criar nova linha de prompt para cliente no Supabase">
+          <span class="material-symbols-outlined" style="font-size:18px;">add_circle</span>Novo Prompt
+        </button>
       </div>
     </header>
 
@@ -562,6 +567,58 @@ select.field {
       <div style="display:flex;justify-content:flex-end;gap:10px">
         <button class="mf-btn mf-btn-secondary" id="cCancel">Cancelar</button>
         <button class="mf-btn mf-btn-primary" id="cSave">Salvar caso</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Criar Novo Prompt de Cliente no Supabase -->
+  <div class="modal-bg" id="promptModal">
+    <div class="glass modal" style="max-width:540px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="material-symbols-outlined" style="font-size:22px;color:var(--teal)">add_box</span>
+          <h3 class="sec" style="margin:0">Criar Novo Prompt de Cliente</h3>
+        </div>
+        <button type="button" class="mf-btn mf-btn-secondary" id="pCancelX" style="padding:4px 8px;font-size:12px;height:28px">✕</button>
+      </div>
+      <p class="sub" style="margin-bottom:16px;font-size:12px">Adiciona uma nova linha oficial na tabela <code style="color:var(--teal)">Prompts</code> do Supabase e inicia o versionamento controlado.</p>
+
+      <div style="margin-bottom:12px">
+        <span class="eyebrow label">Nome do Cliente *</span>
+        <input id="pClientName" class="field" placeholder="Ex: Clínica Odontológica Sorriso Real" />
+      </div>
+
+      <div class="grid2" style="gap:10px;margin-bottom:12px">
+        <div>
+          <span class="eyebrow label">Identificador / Prompt Name</span>
+          <input id="pPromptName" class="field" placeholder="Ex: atendimento_comercial" />
+        </div>
+        <div>
+          <span class="eyebrow label">Canal Inicial *</span>
+          <select id="pChannel" class="field">
+            <option value="whatsapp">💬 WhatsApp (Prompt_Text)</option>
+            <option value="ligacao">📞 Ligação / Voz (Ligação/txt)</option>
+            <option value="fup">🔄 Follow-Up (prompt_fup)</option>
+            <option value="instagram">📸 Instagram (Prompt Insta)</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px">
+        <div class="row-between" style="margin-bottom:4px">
+          <span class="eyebrow label">Texto Inicial do Prompt</span>
+          <button type="button" class="mf-btn mf-btn-secondary" id="btnFillTemplate" style="padding:2px 8px;font-size:11px;height:24px">
+            ✨ Inserir Blueprint Canônico
+          </button>
+        </div>
+        <textarea id="pInitialText" class="field" style="height:140px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:11px" placeholder="Cole o prompt inicial ou clique em 'Inserir Blueprint Canônico' para gerar a estrutura padrão da MindFlow..."></textarea>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px">
+        <button class="mf-btn mf-btn-secondary" id="pCancel">Cancelar</button>
+        <button class="mf-btn mf-btn-primary" id="pCreatePrompt">
+          <span class="material-symbols-outlined" style="font-size:16px">check</span>Criar no Supabase
+        </button>
       </div>
     </div>
   </div>
@@ -1098,6 +1155,97 @@ select.field {
         $('caseModal').classList.remove('open');
         await loadCases();
       } catch (e) { toast(e.message, 'err'); }
+    };
+
+    /* ── Modal: Criar Novo Prompt de Cliente no Supabase ── */
+    const CANONICAL_BLUEPRINT = `<SystemPrompt>
+<GlobalSettings>
+  <Language>pt-BR</Language>
+  <Tone>Consultivo, empático, resolutivo e profissional</Tone>
+  <MaxQuestionsPerTurn>1</MaxQuestionsPerTurn>
+  <Directives>
+    - NUNCA assuma informações não fornecidas pelo cliente.
+    - Conduza o diálogo com uma pergunta ou direcionamento claro por vez.
+  </Directives>
+</GlobalSettings>
+
+<variaveis>
+  <!-- Variáveis dinâmicas injetadas via n8n / Supabase -->
+  - nome_cliente: Nome do contato
+  - telefone: Telefone com DDD
+</variaveis>
+
+<persona>
+  <autoridade>
+    Você é o assistente virtual oficial de atendimento da MindFlow.
+    Seu papel é recepcionar, qualificar necessidades e conduzir o agendamento de forma fluida.
+  </autoridade>
+</persona>
+
+<instrucoes_atendimento>
+  1. Cumprimente o cliente cordialmente pelo nome.
+  2. Entenda o objetivo principal do contato.
+  3. Apresente os horários disponíveis e colete a confirmação.
+</instrucoes_atendimento>
+</SystemPrompt>`;
+
+    $('btnOpenNewPrompt').onclick = () => {
+      $('pClientName').value = '';
+      $('pPromptName').value = '';
+      $('pInitialText').value = '';
+      $('pChannel').value = 'whatsapp';
+      $('promptModal').classList.add('open');
+      $('pClientName').focus();
+    };
+
+    const closePromptModal = () => {
+      $('promptModal').classList.remove('open');
+    };
+    $('pCancel').onclick = closePromptModal;
+    $('pCancelX').onclick = closePromptModal;
+
+    $('btnFillTemplate').onclick = () => {
+      $('pInitialText').value = CANONICAL_BLUEPRINT;
+      toast('Blueprint canônico inserido.');
+    };
+
+    $('pCreatePrompt').onclick = async () => {
+      const clientName = $('pClientName').value.trim();
+      const promptName = $('pPromptName').value.trim() || 'atendimento_geral';
+      const channel = $('pChannel').value || 'whatsapp';
+      const promptText = $('pInitialText').value.trim();
+
+      if (!clientName) {
+        return toast('Informe o Nome do Cliente.', 'err');
+      }
+
+      busy($('pCreatePrompt'), true, 'Criando...');
+      try {
+        const created = await api('/prompts/production', {
+          method: 'POST',
+          body: JSON.stringify({
+            client_name: clientName,
+            prompt_name: promptName,
+            channel: channel,
+            prompt_text: promptText,
+            author_email: state.userEmail
+          })
+        });
+
+        toast(`Prompt #${created.id} criado com sucesso no Supabase!`, 'ok');
+        closePromptModal();
+
+        // Recarrega a lista de prompts e seleciona o novo prompt automaticamente
+        await loadPrompts();
+        const targetValue = `${created.id}::${channel}`;
+        $('selectPrompt').value = targetValue;
+        if ($('selectPrompt').value === targetValue) {
+          $('selectPrompt').dispatchEvent(new Event('change'));
+        }
+      } catch (e) {
+        toast('Erro ao criar prompt: ' + e.message, 'err');
+      }
+      busy($('pCreatePrompt'), false);
     };
 
     $('btnRunEvals').onclick = async () => {
