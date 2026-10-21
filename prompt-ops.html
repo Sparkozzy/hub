@@ -264,6 +264,50 @@ select.field {
     .copilot-details summary::-webkit-details-marker { display: none; }
     .copilot-details .diff { margin-top: 0; border: none; border-top: 1px solid var(--line); border-radius: 0; max-height: 220px; }
 
+    /* ── Inspeção Visual de Tools & Respostas em Tempo Real ── */
+    .tools-inspector {
+      margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px;
+    }
+    .tool-step-card {
+      background: rgba(13, 22, 44, 0.65); border: 1px solid rgba(46, 79, 255, 0.28);
+      border-radius: 8px; overflow: hidden; font-size: 11px; transition: border-color 0.2s;
+    }
+    .tool-step-card:hover {
+      border-color: rgba(0, 181, 160, 0.5);
+    }
+    .tool-step-header {
+      padding: 6px 10px; display: flex; align-items: center; justify-content: space-between;
+      cursor: pointer; user-select: none; font-family: 'Space Grotesk', sans-serif;
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .tool-step-header:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .tool-step-header .title {
+      display: flex; align-items: center; gap: 6px; font-weight: 600; color: #93c5fd;
+    }
+    .tool-step-header .summary-txt {
+      font-size: 10px; color: #94a3b8; font-weight: normal; margin-left: 6px;
+    }
+    .tool-step-body {
+      padding: 8px 10px; border-top: 1px solid rgba(255, 255, 255, 0.06);
+      background: #02040a; font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 11px; max-height: 180px; overflow: auto;
+    }
+    .tool-step-section {
+      margin-bottom: 6px;
+    }
+    .tool-step-section:last-child {
+      margin-bottom: 0;
+    }
+    .tool-step-label {
+      color: #64748b; font-size: 9px; text-transform: uppercase; font-family: 'Space Grotesk', sans-serif;
+      letter-spacing: 0.05em; margin-bottom: 2px;
+    }
+    .tool-step-json {
+      color: #cbd5e1; white-space: pre-wrap; word-break: break-all; margin: 0; line-height: 1.45;
+    }
+
     /* ── Evals ── */
     .score-ring {
       width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0;
@@ -1085,9 +1129,35 @@ select.field {
 
         let metaHtml = '';
         if (tools.length > 0) {
-          metaHtml += `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">` +
-            tools.map(t => `<span class="pill approved" style="font-size:10px;padding:3px 8px" title="${esc(t.summary)}">${esc(t.label)}</span>`).join('') +
-            `</div>`;
+          metaHtml += `<div class="tools-inspector">`;
+          tools.forEach((t, idx) => {
+            const hasPayload = t.arguments || t.output;
+            const argsStr = t.arguments ? JSON.stringify(t.arguments, null, 2) : '{}';
+            const outStr = typeof t.output === 'object' ? JSON.stringify(t.output, null, 2) : String(t.output || 'Sem retorno');
+            metaHtml += `
+              <div class="tool-step-card">
+                <div class="tool-step-header" onclick="const b = this.nextElementSibling; if (b) b.style.display = b.style.display === 'none' ? 'block' : 'none';">
+                  <div class="title">
+                    <span class="material-symbols-outlined" style="font-size:14px;color:var(--teal)">build_circle</span>
+                    <span>${esc(t.label || t.tool_name)}</span>
+                    <span class="summary-txt">${esc(t.summary || '')}</span>
+                  </div>
+                  <span class="material-symbols-outlined" style="font-size:14px;color:#64748b">expand_more</span>
+                </div>
+                <div class="tool-step-body" style="display:none">
+                  <div class="tool-step-section">
+                    <div class="tool-step-label">📥 Argumentos Enviados à Tool:</div>
+                    <pre class="tool-step-json">${esc(argsStr)}</pre>
+                  </div>
+                  <div class="tool-step-section" style="margin-top:6px">
+                    <div class="tool-step-label">📤 Resposta Retornada pela Tool:</div>
+                    <pre class="tool-step-json">${esc(outStr)}</pre>
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+          metaHtml += `</div>`;
         }
 
         if (modified) {
