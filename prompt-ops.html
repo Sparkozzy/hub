@@ -786,10 +786,16 @@ select.field {
     $('dockLogout').onclick = e => { e.preventDefault(); logout(); };
 
     /* ── Abas ── */
-    document.querySelectorAll('.tab').forEach(b => b.onclick = () => {
+    document.querySelectorAll('.tab').forEach(b => b.onclick = async () => {
       document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
       document.querySelectorAll('.pane').forEach(x => x.classList.remove('active'));
       b.classList.add('active'); $('pane-' + b.dataset.tab).classList.add('active');
+
+      // Se o usuário alternou para a aba de Evals & Deploy, sincroniza os casos e o score sem precisar de F5
+      if (b.dataset.tab === 'evals' && state.prod) {
+        renderGate();
+        await loadCases();
+      }
     });
 
     /* ── Prompts de Produção Agrupados por Canal (Opção B) ── */
