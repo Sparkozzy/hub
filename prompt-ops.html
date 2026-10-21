@@ -195,6 +195,32 @@ select.field {
     .diff .hdr { color: var(--blue2); }
     .diff .ctx { color: #64748B; }
 
+    /* ── Split-View: Copilot & Editor ── */
+    .editor-split { display: grid; grid-template-columns: 1fr 1.25fr; gap: 18px; align-items: stretch; }
+    @media (max-width: 1100px) { .editor-split { grid-template-columns: 1fr; } }
+    .copilot-col {
+      background: rgba(255, 255, 255, 0.02); border: 1px solid var(--line); border-top: 2px solid var(--teal);
+      border-radius: 14px; display: flex; flex-direction: column; overflow: hidden; height: 620px;
+    }
+    .copilot-col .chat { flex: 1; height: auto; }
+    .copilot-col .composer { margin: 0; padding: 12px 14px; border-top: 1px solid var(--line); background: rgba(2, 4, 10, 0.45); }
+    .editor-col {
+      background: rgba(255, 255, 255, 0.02); border: 1px solid var(--line); border-top: 2px solid var(--blue);
+      border-radius: 14px; padding: 16px; display: flex; flex-direction: column; height: 620px;
+    }
+    .editor-col #edText { flex: 1; height: auto !important; resize: none; transition: box-shadow 0.4s ease, border-color 0.4s ease; }
+    .editor-col #edText.prompt-flash {
+      border-color: var(--teal) !important;
+      box-shadow: 0 0 24px rgba(0, 181, 160, 0.45) !important;
+    }
+    .copilot-details { margin-top: 8px; border: 1px solid var(--line); border-radius: 10px; background: rgba(2, 4, 10, 0.6); overflow: hidden; }
+    .copilot-details summary {
+      padding: 7px 12px; font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 600;
+      color: var(--blue2); cursor: pointer; user-select: none; list-style: none; display: flex; align-items: center; gap: 6px;
+    }
+    .copilot-details summary::-webkit-details-marker { display: none; }
+    .copilot-details .diff { margin-top: 0; border: none; border-top: 1px solid var(--line); border-radius: 0; max-height: 220px; }
+
     /* ── Evals ── */
     .score-ring {
       width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0;
@@ -395,8 +421,7 @@ select.field {
       <section>
         <div class="tabs">
           <button class="tab active" data-tab="arena"><span class="material-symbols-outlined">compare_arrows</span>Arena A/B</button>
-          <button class="tab" data-tab="editor"><span class="material-symbols-outlined">edit_note</span>Editor</button>
-          <button class="tab" data-tab="generator"><span class="material-symbols-outlined">auto_fix_high</span>Gerador de Prompt</button>
+          <button class="tab" data-tab="editor"><span class="material-symbols-outlined">auto_fix_high</span>Editor &amp; Agente IA</button>
           <button class="tab" data-tab="evals"><span class="material-symbols-outlined">fact_check</span>Evals &amp; Deploy</button>
         </div>
 
@@ -423,56 +448,64 @@ select.field {
           </div>
         </div>
 
-        <!-- EDITOR -->
+        <!-- EDITOR & AGENTE IA (SPLIT-VIEW) -->
         <div class="pane glass" id="pane-editor">
-          <div class="row-between" style="margin-bottom:14px">
-            <div>
-              <h3 class="sec">Editor da versão</h3>
-              <p class="sub" id="editorSub">Selecione uma versão ou crie um novo draft.</p>
-            </div>
-            <button class="mf-btn mf-btn-primary" id="btnSaveVersion"><span class="material-symbols-outlined">save</span>Salvar como nova versão</button>
-          </div>
-          <div class="grid2" style="margin-bottom:12px">
-            <div><span class="eyebrow label">Mensagem do commit</span><input id="edCommit" class="field" placeholder="O que mudou nesta versão?" /></div>
-            <div class="grid2">
-              <div>
-                <span class="eyebrow label">Modelo LLM</span>
-                <select id="edModel" class="field">
-                  <option value="gpt-4.1">gpt-4.1 (Padrão MindFlow)</option>
-                  <option value="gpt-4o">gpt-4o (Multimodal / Rápido)</option>
-                  <option value="gpt-4o-mini">gpt-4o-mini (Econômico / Triagem)</option>
-                </select>
-              </div>
-              <div>
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                  <span class="eyebrow label">Temperatura</span>
-                  <span id="tempVal" style="font-size:12px;color:#93c5fd;font-weight:600">0.7</span>
+          <div class="editor-split">
+            <!-- Coluna Esquerda: Chat Conversacional com Agente Copilot & MCP -->
+            <div class="copilot-col">
+              <div class="col-head">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span class="material-symbols-outlined" style="font-size:18px;color:var(--teal)">auto_fix_high</span>
+                  <span>Agente Copilot &amp; MCP</span>
+                  <span class="pill approved">On-Demand</span>
                 </div>
-                <input id="edTemp" class="field" type="range" step="0.05" min="0" max="1.5" value="0.7" style="height:38px;cursor:pointer;accent-color:var(--blue);" />
+                <button class="mf-btn mf-btn-secondary" id="btnClearCopilot" style="padding:5px 10px;font-size:11px" title="Limpar conversa com o agente">
+                  <span class="material-symbols-outlined" style="font-size:15px">delete_sweep</span>Limpar
+                </button>
+              </div>
+              <div class="chat" id="copilotChat">
+                <div class="msg system">Converse com o Agente para consultar atendimentos no Supabase do cliente, exemplos no RAG, conversas da Arena A/B ou pedir alterações em tempo real no prompt ao lado.</div>
+              </div>
+              <div class="composer">
+                <input id="genInstruction" class="field" placeholder="Pergunte sobre atendimentos/MCP ou peça uma alteração no prompt..." />
+                <button class="mf-btn mf-btn-primary" id="btnSuggest"><span class="material-symbols-outlined">send</span>Enviar</button>
               </div>
             </div>
-          </div>
-          <textarea id="edText" class="field" style="height:420px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px" placeholder="Texto do prompt..."></textarea>
-        </div>
 
-        <!-- GERADOR -->
-        <div class="pane glass" id="pane-generator">
-          <h3 class="sec">Gerador de Prompt</h3>
-          <p class="sub">Descreva a mudança. O agente consulta sob demanda a conversa da Arena A/B, exemplos do RAG Parent-Child, atendimentos no Supabase do cliente e propõe uma nova versão.</p>
-          <div class="composer" style="margin:16px 0 4px">
-            <input id="genInstruction" class="field" placeholder="Ex.: Analise minha conversa na Arena A/B, consulte exemplos de agendamento no RAG ou o atendimento +5548..." />
-            <button class="mf-btn mf-btn-primary" id="btnSuggest"><span class="material-symbols-outlined">auto_fix_high</span>Gerar</button>
-          </div>
-          <div id="genOut" style="display:none">
-            <div class="divider"></div>
-            <div id="genToolsBox" style="display:none;margin-bottom:12px">
-              <span class="eyebrow" style="display:block;margin-bottom:6px">Ferramentas MCP consultadas pelo Agente (On-Demand)</span>
-              <div id="genToolsPills" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+            <!-- Coluna Direita: Editor do Prompt em Tempo Real -->
+            <div class="editor-col">
+              <div class="row-between" style="margin-bottom:12px">
+                <div>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <h3 class="sec">Prompt em Edição</h3>
+                    <span id="liveEditBadge" class="pill approved" style="display:none">✨ Atualizado pelo Agente</span>
+                  </div>
+                  <p class="sub" id="editorSub">Selecione uma versão ou crie um novo draft.</p>
+                </div>
+                <button class="mf-btn mf-btn-primary" id="btnSaveVersion"><span class="material-symbols-outlined">save</span>Salvar como nova versão</button>
+              </div>
+              <div class="grid2" style="margin-bottom:10px">
+                <div><span class="eyebrow label">Mensagem do commit</span><input id="edCommit" class="field" placeholder="O que mudou nesta versão?" /></div>
+                <div class="grid2">
+                  <div>
+                    <span class="eyebrow label">Modelo LLM</span>
+                    <select id="edModel" class="field">
+                      <option value="gpt-4.1">gpt-4.1 (Padrão MindFlow)</option>
+                      <option value="gpt-4o">gpt-4o (Multimodal / Rápido)</option>
+                      <option value="gpt-4o-mini">gpt-4o-mini (Econômico / Triagem)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                      <span class="eyebrow label">Temperatura</span>
+                      <span id="tempVal" style="font-size:12px;color:#93c5fd;font-weight:600">0.7</span>
+                    </div>
+                    <input id="edTemp" class="field" type="range" step="0.05" min="0" max="1.5" value="0.7" style="height:38px;cursor:pointer;accent-color:var(--blue);" />
+                  </div>
+                </div>
+              </div>
+              <textarea id="edText" class="field" style="font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px" placeholder="Texto do prompt... (você ou o Agente IA podem editar diretamente aqui)"></textarea>
             </div>
-            <span class="eyebrow">Alterações propostas</span>
-            <div class="diff" id="genDiff"></div>
-            <p class="sub" id="genExplain" style="margin:12px 0 14px"></p>
-            <button class="mf-btn mf-btn-primary" id="btnApplySuggestion"><span class="material-symbols-outlined">check</span>Aplicar como novo draft</button>
           </div>
         </div>
 
@@ -538,7 +571,7 @@ select.field {
   <script>
     const API = 'https://prompt-ops-prompt-ops-api.bkpxmb.easypanel.host/api/v1';
     const $ = id => document.getElementById(id);
-    const state = { prod: null, versions: [], selected: null, suggested: null, userEmail: 'engenheiro@mindflow.com.br', currentChannel: 'whatsapp', history: { A: [], B: [] } };
+    const state = { prod: null, versions: [], selected: null, suggested: null, userEmail: 'engenheiro@mindflow.com.br', currentChannel: 'whatsapp', history: { A: [], B: [] }, copilotHistory: [] };
 
     const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -618,6 +651,10 @@ select.field {
       if (!val) return;
       const [idStr, ch] = val.split('::');
       state.currentChannel = ch || 'whatsapp';
+      state.copilotHistory = [];
+      if ($('copilotChat')) {
+        $('copilotChat').innerHTML = '<div class="msg system">Converse com o Agente para consultar atendimentos no Supabase do cliente, exemplos no RAG, conversas da Arena A/B ou pedir alterações em tempo real no prompt ao lado.</div>';
+      }
       try {
         state.prod = await api(`/prompts/production/${idStr}?channel=${state.currentChannel}`);
         await ensureProdSnapshot();
@@ -679,6 +716,7 @@ select.field {
       $('edTemp').value = v.temperature ?? 0.7;
       $('tempVal').textContent = $('edTemp').value;
       $('edCommit').value = '';
+      if ($('liveEditBadge')) $('liveEditBadge').style.display = 'none';
       $('editorSub').textContent = `Editando a partir de ${v.version_label}. Salvar cria uma nova versão — a original não é alterada.`;
       $('selB').value = v.id;
       updateArenaTitles();
@@ -793,7 +831,11 @@ select.field {
       if (!state.prod) return toast('Selecione um prompt primeiro.', 'err');
       if (!$('edText').value.trim()) return toast('O prompt está vazio.', 'err');
       busy($('btnSaveVersion'), true);
-      try { const v = await saveVersion($('edText').value, $('edCommit').value); toast(`Versão ${v.version_label} salva.`); }
+      try {
+        const v = await saveVersion($('edText').value, $('edCommit').value);
+        if ($('liveEditBadge')) $('liveEditBadge').style.display = 'none';
+        toast(`Versão ${v.version_label} salva.`);
+      }
       catch (e) { toast(e.message, 'err'); }
       busy($('btnSaveVersion'), false);
     };
@@ -803,54 +845,122 @@ select.field {
       $('edCommit').focus();
     };
 
-    /* ── Gerador ── */
+    /* ── Agente Copilot & Editor em Tempo Real ── */
     function renderDiff(raw) {
-      return raw.split('\n').map(l => {
+      return String(raw || '').split('\n').map(l => {
         const cls = l.startsWith('+++') || l.startsWith('---') || l.startsWith('@@') ? 'hdr' : l.startsWith('+') ? 'add' : l.startsWith('-') ? 'del' : 'ctx';
         return `<span class="l ${cls}">${esc(l) || '&nbsp;'}</span>`;
       }).join('');
     }
-    $('btnSuggest').onclick = async () => {
-      if (!state.selected) return toast('Selecione uma versão primeiro.', 'err');
+
+    function addCopilotMsg(role, text, extraHtml = '') {
+      const c = $('copilotChat');
+      if (c.querySelector('.msg.system')) c.innerHTML = '';
+      const d = document.createElement('div');
+      d.className = 'msg ' + role;
+      const body = document.createElement('div');
+      body.textContent = text;
+      d.appendChild(body);
+      if (extraHtml) {
+        const extra = document.createElement('div');
+        extra.style.marginTop = '10px';
+        extra.innerHTML = extraHtml;
+        d.appendChild(extra);
+      }
+      c.appendChild(d);
+      c.scrollTop = c.scrollHeight;
+      return d;
+    }
+
+    async function sendCopilot() {
+      if (!state.selected) return toast('Selecione um prompt/versão primeiro.', 'err');
       const instruction = $('genInstruction').value.trim();
-      if (!instruction) return toast('Descreva a alteração desejada.', 'err');
-      busy($('btnSuggest'), true, 'Gerando...');
+      if (!instruction) return toast('Digite uma mensagem ou instrução para o Agente.', 'err');
+      $('genInstruction').value = '';
+
+      const livePromptBefore = $('edText').value || state.selected.prompt_text || '';
+      addCopilotMsg('user', instruction);
+      const typingEl = addCopilotMsg('assistant typing', 'Consultando MCP e analisando...');
+      busy($('btnSuggest'), true, '');
+
       try {
         const r = await api('/generator/suggest', {
           method: 'POST',
           body: JSON.stringify({
-            current_prompt: state.selected.prompt_text,
+            current_prompt: livePromptBefore,
             instruction,
             prompt_id: state.prod ? state.prod.id : state.selected.prompt_id,
             client_id: state.selected.client_id || (state.prod ? String(state.prod.id) : null),
             channel: state.currentChannel || state.selected.channel || 'whatsapp',
             version_id: state.selected.id,
-            arena_history: state.history
+            arena_history: state.history,
+            chat_history: state.copilotHistory || []
           })
         });
-        state.suggested = { text: r.suggested_prompt, instruction };
+
+        typingEl.remove();
         const tools = r.tools_consulted || [];
+        const modified = Boolean(r.prompt_modified && r.suggested_prompt && r.suggested_prompt.trim() !== livePromptBefore.trim());
+
+        let metaHtml = '';
         if (tools.length > 0) {
-          $('genToolsPills').innerHTML = tools.map(t =>
-            `<span class="pill approved" style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px;font-size:11px" title="${esc(t.summary)}">${esc(t.label)} <span style="opacity:0.75;font-weight:normal">· ${esc(t.summary)}</span></span>`
-          ).join('');
-          $('genToolsBox').style.display = 'block';
-        } else {
-          $('genToolsPills').innerHTML = '';
-          $('genToolsBox').style.display = 'none';
+          metaHtml += `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">` +
+            tools.map(t => `<span class="pill approved" style="font-size:10px;padding:3px 8px" title="${esc(t.summary)}">${esc(t.label)}</span>`).join('') +
+            `</div>`;
         }
-        $('genDiff').innerHTML = renderDiff(r.diff_unified);
-        $('genExplain').textContent = r.explanation;
-        $('genOut').style.display = 'block';
-      } catch (e) { toast(e.message, 'err'); }
+
+        if (modified) {
+          // Aplica alteração em tempo real no editor à direita
+          $('edText').value = r.suggested_prompt;
+          $('edText').classList.add('prompt-flash');
+          setTimeout(() => $('edText').classList.remove('prompt-flash'), 1600);
+          if ($('liveEditBadge')) $('liveEditBadge').style.display = 'inline-flex';
+          if (!$('edCommit').value.trim()) {
+            $('edCommit').value = instruction.length > 72 ? instruction.slice(0, 69) + '...' : instruction;
+          }
+
+          metaHtml += `
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:6px">
+              <span class="pill approved" style="font-size:10px">✨ Prompt atualizado em tempo real</span>
+              <button type="button" class="mf-btn mf-btn-secondary btn-undo-prompt" style="padding:4px 10px;font-size:11px">
+                <span class="material-symbols-outlined" style="font-size:14px">undo</span>Desfazer alteração
+              </button>
+            </div>
+            <details class="copilot-details">
+              <summary><span class="material-symbols-outlined" style="font-size:15px">difference</span>Ver Diff das alterações aplicadas</summary>
+              <div class="diff">${renderDiff(r.diff_unified)}</div>
+            </details>
+          `;
+        }
+
+        const msgEl = addCopilotMsg('assistant', r.explanation || 'Pronto!', metaHtml);
+        if (modified) {
+          const undoBtn = msgEl.querySelector('.btn-undo-prompt');
+          if (undoBtn) {
+            undoBtn.onclick = () => {
+              $('edText').value = livePromptBefore;
+              $('edText').classList.add('prompt-flash');
+              setTimeout(() => $('edText').classList.remove('prompt-flash'), 1200);
+              toast('Alteração desfeita — texto anterior restaurado no editor.');
+            };
+          }
+        }
+
+        // Atualiza histórico multi-turn do Copilot
+        state.copilotHistory.push({ role: 'user', content: instruction });
+        state.copilotHistory.push({ role: 'assistant', content: r.explanation || '' });
+      } catch (e) {
+        typingEl.remove();
+        toast(e.message, 'err');
+      }
       busy($('btnSuggest'), false);
-    };
-    $('btnApplySuggestion').onclick = async () => {
-      if (!state.suggested) return;
-      busy($('btnApplySuggestion'), true);
-      try { const v = await saveVersion(state.suggested.text, state.suggested.instruction); toast(`Draft ${v.version_label} criado.`); $('genOut').style.display = 'none'; }
-      catch (e) { toast(e.message, 'err'); }
-      busy($('btnApplySuggestion'), false);
+    }
+
+    $('btnSuggest').onclick = sendCopilot;
+    $('genInstruction').onkeydown = e => { if (e.key === 'Enter') sendCopilot(); };
+    $('btnClearCopilot').onclick = () => {
+      state.copilotHistory = [];
+      $('copilotChat').innerHTML = '<div class="msg system">Conversa com o Agente limpa. O texto no editor ao lado foi mantido.</div>';
     };
 
     /* ── Evals ── */
