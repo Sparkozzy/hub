@@ -207,7 +207,18 @@ select.field {
     .editor-col {
       background: rgba(255, 255, 255, 0.02); border: 1px solid var(--line); border-top: 2px solid var(--blue);
       border-radius: 14px; padding: 16px; display: flex; flex-direction: column; height: 620px;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
+    .editor-col.fullscreen {
+      position: fixed; inset: 24px; z-index: 1000; height: calc(100vh - 48px);
+      background: rgba(6, 10, 24, 0.98); backdrop-filter: blur(28px);
+      border: 1px solid rgba(46, 79, 255, 0.4); border-top: 3px solid var(--blue);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.85), 0 0 40px rgba(46, 79, 255, 0.2);
+    }
+    .editor-col.fullscreen #edText {
+      font-size: 13.5px !important; line-height: 1.65;
+    }
+    body.editor-maximized { overflow: hidden; }
     .editor-col #edText { flex: 1; height: auto !important; resize: none; transition: box-shadow 0.4s ease, border-color 0.4s ease; }
     .editor-col #edText.prompt-flash {
       border-color: var(--teal) !important;
@@ -464,7 +475,13 @@ select.field {
                   </div>
                   <p class="sub" id="editorSub">Selecione uma versão ou crie um novo draft.</p>
                 </div>
-                <button class="mf-btn mf-btn-primary" id="btnSaveVersion"><span class="material-symbols-outlined">save</span>Salvar como nova versão</button>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <button type="button" class="mf-btn mf-btn-secondary" id="btnToggleMaximize" style="padding:7px 12px;font-size:12px;display:flex;align-items:center;gap:6px" title="Maximizar / Restaurar tela de edição (Esc para fechar)">
+                    <span class="material-symbols-outlined" id="iconMaximize" style="font-size:18px">fullscreen</span>
+                    <span id="txtMaximize">Maximizar</span>
+                  </button>
+                  <button class="mf-btn mf-btn-primary" id="btnSaveVersion"><span class="material-symbols-outlined">save</span>Salvar como nova versão</button>
+                </div>
               </div>
               <div class="grid2" style="margin-bottom:10px">
                 <div><span class="eyebrow label">Mensagem do commit</span><input id="edCommit" class="field" placeholder="O que mudou nesta versão?" /></div>
@@ -816,6 +833,37 @@ select.field {
     
     // Sincroniza slider de temperatura com indicador numérico
     $('edTemp').oninput = () => { $('tempVal').textContent = $('edTemp').value; };
+
+    /* ── Maximizar / Restaurar tela de edição de prompt ── */
+    function toggleEditorMaximize(forceState) {
+      const editorCol = document.querySelector('.editor-col');
+      if (!editorCol) return;
+      const willMaximize = typeof forceState === 'boolean' ? forceState : !editorCol.classList.contains('fullscreen');
+
+      if (willMaximize) {
+        editorCol.classList.add('fullscreen');
+        document.body.classList.add('editor-maximized');
+        $('iconMaximize').textContent = 'close_fullscreen';
+        $('txtMaximize').textContent = 'Restaurar (Esc)';
+        toast('Modo Macro ativado. Pressione Esc ou clique em Restaurar para voltar.');
+      } else {
+        editorCol.classList.remove('fullscreen');
+        document.body.classList.remove('editor-maximized');
+        $('iconMaximize').textContent = 'fullscreen';
+        $('txtMaximize').textContent = 'Maximizar';
+      }
+    }
+
+    $('btnToggleMaximize').onclick = () => toggleEditorMaximize();
+
+    window.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        const editorCol = document.querySelector('.editor-col');
+        if (editorCol && editorCol.classList.contains('fullscreen')) {
+          toggleEditorMaximize(false);
+        }
+      }
+    });
 
     function addMsg(side, role, text, meta) {
       const c = $('chat' + side);
