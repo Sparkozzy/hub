@@ -207,22 +207,54 @@ select.field {
     .editor-col {
       background: rgba(255, 255, 255, 0.02); border: 1px solid var(--line); border-top: 2px solid var(--blue);
       border-radius: 14px; padding: 16px; display: flex; flex-direction: column; height: 620px;
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .editor-col.fullscreen {
-      position: fixed; inset: 24px; z-index: 1000; height: calc(100vh - 48px);
-      background: rgba(6, 10, 24, 0.98); backdrop-filter: blur(28px);
-      border: 1px solid rgba(46, 79, 255, 0.4); border-top: 3px solid var(--blue);
-      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.85), 0 0 40px rgba(46, 79, 255, 0.2);
+    .prompt-textarea-wrap {
+      position: relative; flex: 1; display: flex; flex-direction: column; min-height: 0;
     }
-    .editor-col.fullscreen #edText {
-      font-size: 13.5px !important; line-height: 1.65;
+    .prompt-textarea-wrap #edText {
+      flex: 1; width: 100%; height: 100% !important; resize: none;
+      transition: box-shadow 0.4s ease, border-color 0.4s ease;
+      padding-bottom: 38px;
     }
-    body.editor-maximized { overflow: hidden; }
-    .editor-col #edText { flex: 1; height: auto !important; resize: none; transition: box-shadow 0.4s ease, border-color 0.4s ease; }
-    .editor-col #edText.prompt-flash {
+    .prompt-textarea-wrap #edText.prompt-flash {
       border-color: var(--teal) !important;
       box-shadow: 0 0 24px rgba(0, 181, 160, 0.45) !important;
+    }
+    .btn-macro-float {
+      position: absolute; right: 14px; bottom: 14px; z-index: 10;
+      background: rgba(13, 22, 44, 0.72); border: 1px solid rgba(255, 255, 255, 0.14);
+      color: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border-radius: 8px; padding: 5px 10px; font-size: 11px; font-family: 'Space Grotesk', sans-serif;
+      display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+      opacity: 0.75; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .btn-macro-float:hover {
+      opacity: 1; color: #fff; background: rgba(46, 79, 255, 0.35); border-color: rgba(46, 79, 255, 0.6);
+      transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    }
+    .btn-macro-float .material-symbols-outlined { font-size: 16px; }
+
+    /* Modal / Janela Macro em Tela Cheia */
+    .editor-macro-modal {
+      display: none; position: fixed; inset: 0; z-index: 99999;
+      background: rgba(2, 4, 10, 0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      padding: 24px; flex-direction: column;
+    }
+    .editor-macro-modal.open { display: flex; }
+    .macro-box {
+      flex: 1; display: flex; flex-direction: column; max-width: 1560px; width: 100%; margin: 0 auto;
+      background: #080D1D; border: 1px solid rgba(46, 79, 255, 0.35); border-top: 3px solid var(--blue);
+      border-radius: 16px; padding: 20px 24px; box-shadow: 0 24px 80px rgba(0, 0, 0, 0.9);
+      min-height: 0;
+    }
+    .macro-box #edTextMacro {
+      flex: 1; width: 100%; resize: none; margin-top: 14px;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 14px; line-height: 1.7;
+      background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px;
+      color: #F8FAFC; padding: 16px 18px; outline: none; min-height: 0;
+    }
+    .macro-box #edTextMacro:focus {
+      border-color: rgba(46, 79, 255, 0.75); box-shadow: 0 0 0 3px rgba(46, 79, 255, 0.2);
     }
     .copilot-details { margin-top: 8px; border: 1px solid var(--line); border-radius: 10px; background: rgba(2, 4, 10, 0.6); overflow: hidden; }
     .copilot-details summary {
@@ -475,13 +507,7 @@ select.field {
                   </div>
                   <p class="sub" id="editorSub">Selecione uma versão ou crie um novo draft.</p>
                 </div>
-                <div style="display:flex;align-items:center;gap:8px">
-                  <button type="button" class="mf-btn mf-btn-secondary" id="btnToggleMaximize" style="padding:7px 12px;font-size:12px;display:flex;align-items:center;gap:6px" title="Maximizar / Restaurar tela de edição (Esc para fechar)">
-                    <span class="material-symbols-outlined" id="iconMaximize" style="font-size:18px">fullscreen</span>
-                    <span id="txtMaximize">Maximizar</span>
-                  </button>
-                  <button class="mf-btn mf-btn-primary" id="btnSaveVersion"><span class="material-symbols-outlined">save</span>Salvar como nova versão</button>
-                </div>
+                <button class="mf-btn mf-btn-primary" id="btnSaveVersion"><span class="material-symbols-outlined">save</span>Salvar como nova versão</button>
               </div>
               <div class="grid2" style="margin-bottom:10px">
                 <div><span class="eyebrow label">Mensagem do commit</span><input id="edCommit" class="field" placeholder="O que mudou nesta versão?" /></div>
@@ -503,7 +529,15 @@ select.field {
                   </div>
                 </div>
               </div>
-              <textarea id="edText" class="field" style="font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px" placeholder="Texto do prompt... (você ou o Agente IA podem editar diretamente aqui)"></textarea>
+
+              <!-- Container com textarea e botão translúcido flutuante no cantinho inferior direito -->
+              <div class="prompt-textarea-wrap">
+                <textarea id="edText" class="field" style="font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px" placeholder="Texto do prompt... (você ou o Agente IA podem editar diretamente aqui)"></textarea>
+                <button type="button" class="btn-macro-float" id="btnFloatMaximize" title="Maximizar visão macro do prompt (tela cheia)">
+                  <span class="material-symbols-outlined">open_in_full</span>
+                  <span>Maximizar</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -637,6 +671,31 @@ select.field {
           <span class="material-symbols-outlined" style="font-size:16px">check</span>Criar no Supabase
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- Janela Macro / Tela Cheia com Visão Ampla do Prompt -->
+  <div class="editor-macro-modal" id="macroModal">
+    <div class="macro-box">
+      <div class="row-between" style="padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.08)">
+        <div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="material-symbols-outlined" style="font-size:24px;color:var(--blue2)">zoom_out_map</span>
+            <h2 class="sec" style="font-size:18px;margin:0" id="macroTitle">Visão Macro do Prompt</h2>
+            <span class="pill approved" style="font-size:11px">Edição em Tela Cheia</span>
+          </div>
+          <p class="sub" style="font-size:12px;margin:4px 0 0" id="macroSub">Edite com visão panorâmica. Pressione Esc ou feche para sincronizar com o editor principal.</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <button type="button" class="mf-btn mf-btn-primary" id="btnMacroSave" style="padding:8px 16px;font-size:12px">
+            <span class="material-symbols-outlined" style="font-size:16px">save</span>Salvar nova versão
+          </button>
+          <button type="button" class="mf-btn mf-btn-secondary" id="btnCloseMacro" style="padding:8px 14px;font-size:12px" title="Fechar visão macro (Esc)">
+            <span class="material-symbols-outlined" style="font-size:18px">close</span>Fechar (Esc)
+          </button>
+        </div>
+      </div>
+      <textarea id="edTextMacro" placeholder="Texto do prompt completo..."></textarea>
     </div>
   </div>
 
@@ -834,33 +893,50 @@ select.field {
     // Sincroniza slider de temperatura com indicador numérico
     $('edTemp').oninput = () => { $('tempVal').textContent = $('edTemp').value; };
 
-    /* ── Maximizar / Restaurar tela de edição de prompt ── */
-    function toggleEditorMaximize(forceState) {
-      const editorCol = document.querySelector('.editor-col');
-      if (!editorCol) return;
-      const willMaximize = typeof forceState === 'boolean' ? forceState : !editorCol.classList.contains('fullscreen');
-
-      if (willMaximize) {
-        editorCol.classList.add('fullscreen');
-        document.body.classList.add('editor-maximized');
-        $('iconMaximize').textContent = 'close_fullscreen';
-        $('txtMaximize').textContent = 'Restaurar (Esc)';
-        toast('Modo Macro ativado. Pressione Esc ou clique em Restaurar para voltar.');
-      } else {
-        editorCol.classList.remove('fullscreen');
-        document.body.classList.remove('editor-maximized');
-        $('iconMaximize').textContent = 'fullscreen';
-        $('txtMaximize').textContent = 'Maximizar';
-      }
+    /* ── Visão Macro em Tela Cheia (Modal + Botão Translúcido no canto do prompt) ── */
+    function openMacroEditor() {
+      const liveText = $('edText').value || '';
+      $('edTextMacro').value = liveText;
+      const v = state.selected;
+      const clientName = state.prod ? state.prod['Nome do cliente'] : 'Cliente';
+      const label = v ? v.version_label : 'Draft';
+      $('macroTitle').textContent = `Prompt: ${clientName} (${label})`;
+      $('macroModal').classList.add('open');
+      document.body.style.overflow = 'hidden';
+      $('edTextMacro').focus();
     }
 
-    $('btnToggleMaximize').onclick = () => toggleEditorMaximize();
+    function closeMacroEditor() {
+      const macroText = $('edTextMacro').value;
+      if ($('edText').value !== macroText) {
+        $('edText').value = macroText;
+        $('edText').classList.add('prompt-flash');
+        setTimeout(() => $('edText').classList.remove('prompt-flash'), 1200);
+      }
+      $('macroModal').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    // Botão translúcido flutuante no cantinho inferior direito da textarea
+    $('btnFloatMaximize').onclick = openMacroEditor;
+    $('btnCloseMacro').onclick = closeMacroEditor;
+
+    // Salvar nova versão diretamente da visão macro
+    $('btnMacroSave').onclick = async () => {
+      $('edText').value = $('edTextMacro').value;
+      closeMacroEditor();
+      $('btnSaveVersion').click();
+    };
+
+    // Sincroniza em tempo real enquanto digita na tela cheia
+    $('edTextMacro').oninput = () => {
+      $('edText').value = $('edTextMacro').value;
+    };
 
     window.addEventListener('keydown', e => {
       if (e.key === 'Escape') {
-        const editorCol = document.querySelector('.editor-col');
-        if (editorCol && editorCol.classList.contains('fullscreen')) {
-          toggleEditorMaximize(false);
+        if ($('macroModal').classList.contains('open')) {
+          closeMacroEditor();
         }
       }
     });
