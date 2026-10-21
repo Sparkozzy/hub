@@ -420,36 +420,13 @@ select.field {
       <!-- Conteúdo -->
       <section>
         <div class="tabs">
-          <button class="tab active" data-tab="arena"><span class="material-symbols-outlined">compare_arrows</span>Arena A/B</button>
-          <button class="tab" data-tab="editor"><span class="material-symbols-outlined">auto_fix_high</span>Editor &amp; Agente IA</button>
+          <button class="tab active" data-tab="editor"><span class="material-symbols-outlined">auto_fix_high</span>Editor &amp; Agente IA</button>
+          <button class="tab" data-tab="arena"><span class="material-symbols-outlined">compare_arrows</span>Arena A/B</button>
           <button class="tab" data-tab="evals"><span class="material-symbols-outlined">fact_check</span>Evals &amp; Deploy</button>
         </div>
 
-        <!-- ARENA -->
-        <div class="pane active glass" id="pane-arena">
-          <div class="arena-controls">
-            <div><span class="eyebrow label">Versão A</span><select id="selA" class="field"></select></div>
-            <div><span class="eyebrow label">Versão B</span><select id="selB" class="field"></select></div>
-          </div>
-          <div class="arena-grid">
-            <div class="arena-col a">
-              <div class="col-head"><span id="titleA">Versão A</span><span class="pill prod">A</span></div>
-              <div class="chat" id="chatA"><div class="msg system">Escolha as versões e envie uma mensagem.</div></div>
-            </div>
-            <div class="arena-col b">
-              <div class="col-head"><span id="titleB">Versão B</span><span class="pill draft">B</span></div>
-              <div class="chat" id="chatB"><div class="msg system">Escolha as versões e envie uma mensagem.</div></div>
-            </div>
-          </div>
-          <div class="composer">
-            <input id="arenaInput" class="field" placeholder="Digite uma pergunta ou objeção — as duas versões respondem ao mesmo tempo..." />
-            <button class="mf-btn mf-btn-primary" id="btnSend"><span class="material-symbols-outlined">send</span>Enviar</button>
-            <button class="mf-btn mf-btn-secondary" id="btnClear" title="Limpar conversa"><span class="material-symbols-outlined">delete_sweep</span></button>
-          </div>
-        </div>
-
         <!-- EDITOR & AGENTE IA (SPLIT-VIEW) -->
-        <div class="pane glass" id="pane-editor">
+        <div class="pane active glass" id="pane-editor">
           <div class="editor-split">
             <!-- Coluna Esquerda: Chat Conversacional com Agente Copilot & MCP -->
             <div class="copilot-col">
@@ -506,6 +483,29 @@ select.field {
               </div>
               <textarea id="edText" class="field" style="font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px" placeholder="Texto do prompt... (você ou o Agente IA podem editar diretamente aqui)"></textarea>
             </div>
+          </div>
+        </div>
+
+        <!-- ARENA -->
+        <div class="pane glass" id="pane-arena">
+          <div class="arena-controls">
+            <div><span class="eyebrow label">Versão A</span><select id="selA" class="field"></select></div>
+            <div><span class="eyebrow label">Versão B</span><select id="selB" class="field"></select></div>
+          </div>
+          <div class="arena-grid">
+            <div class="arena-col a">
+              <div class="col-head"><span id="titleA">Versão A</span><span class="pill prod">A</span></div>
+              <div class="chat" id="chatA"><div class="msg system">Escolha as versões e envie uma mensagem.</div></div>
+            </div>
+            <div class="arena-col b">
+              <div class="col-head"><span id="titleB">Versão B</span><span class="pill draft">B</span></div>
+              <div class="chat" id="chatB"><div class="msg system">Escolha as versões e envie uma mensagem.</div></div>
+            </div>
+          </div>
+          <div class="composer">
+            <input id="arenaInput" class="field" placeholder="Digite uma pergunta ou objeção — as duas versões respondem ao mesmo tempo..." />
+            <button class="mf-btn mf-btn-primary" id="btnSend"><span class="material-symbols-outlined">send</span>Enviar</button>
+            <button class="mf-btn mf-btn-secondary" id="btnClear" title="Limpar conversa"><span class="material-symbols-outlined">delete_sweep</span></button>
           </div>
         </div>
 
