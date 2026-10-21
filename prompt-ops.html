@@ -947,7 +947,7 @@ select.field {
         }
 
         // Se o Agente criou/editou/excluiu casos de Eval ou rodou a suíte de Evals, sincroniza a UI automaticamente
-        const usedToolNames = tools.map(t => t.tool);
+        const usedToolNames = tools.map(t => t.tool_name || t.tool);
         if (usedToolNames.includes('manage_prompt_eval_case') || usedToolNames.includes('list_prompt_eval_datasets')) {
           await loadCases();
         }
