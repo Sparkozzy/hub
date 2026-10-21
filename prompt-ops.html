@@ -458,13 +458,17 @@ select.field {
         <!-- GERADOR -->
         <div class="pane glass" id="pane-generator">
           <h3 class="sec">Gerador de Prompt</h3>
-          <p class="sub">Descreva a mudança. O agente propõe uma nova versão e mostra exatamente o que mudou.</p>
+          <p class="sub">Descreva a mudança. O agente consulta sob demanda a conversa da Arena A/B, exemplos do RAG Parent-Child, atendimentos no Supabase do cliente e propõe uma nova versão.</p>
           <div class="composer" style="margin:16px 0 4px">
-            <input id="genInstruction" class="field" placeholder="Ex.: torne o tom mais empático e proíba desconto sem autorização." />
+            <input id="genInstruction" class="field" placeholder="Ex.: Analise minha conversa na Arena A/B, consulte exemplos de agendamento no RAG ou o atendimento +5548..." />
             <button class="mf-btn mf-btn-primary" id="btnSuggest"><span class="material-symbols-outlined">auto_fix_high</span>Gerar</button>
           </div>
           <div id="genOut" style="display:none">
             <div class="divider"></div>
+            <div id="genToolsBox" style="display:none;margin-bottom:12px">
+              <span class="eyebrow" style="display:block;margin-bottom:6px">Ferramentas MCP consultadas pelo Agente (On-Demand)</span>
+              <div id="genToolsPills" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+            </div>
             <span class="eyebrow">Alterações propostas</span>
             <div class="diff" id="genDiff"></div>
             <p class="sub" id="genExplain" style="margin:12px 0 14px"></p>
@@ -812,8 +816,29 @@ select.field {
       if (!instruction) return toast('Descreva a alteração desejada.', 'err');
       busy($('btnSuggest'), true, 'Gerando...');
       try {
-        const r = await api('/generator/suggest', { method: 'POST', body: JSON.stringify({ current_prompt: state.selected.prompt_text, instruction }) });
+        const r = await api('/generator/suggest', {
+          method: 'POST',
+          body: JSON.stringify({
+            current_prompt: state.selected.prompt_text,
+            instruction,
+            prompt_id: state.prod ? state.prod.id : state.selected.prompt_id,
+            client_id: state.selected.client_id || (state.prod ? String(state.prod.id) : null),
+            channel: state.currentChannel || state.selected.channel || 'whatsapp',
+            version_id: state.selected.id,
+            arena_history: state.history
+          })
+        });
         state.suggested = { text: r.suggested_prompt, instruction };
+        const tools = r.tools_consulted || [];
+        if (tools.length > 0) {
+          $('genToolsPills').innerHTML = tools.map(t =>
+            `<span class="pill approved" style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px;font-size:11px" title="${esc(t.summary)}">${esc(t.label)} <span style="opacity:0.75;font-weight:normal">· ${esc(t.summary)}</span></span>`
+          ).join('');
+          $('genToolsBox').style.display = 'block';
+        } else {
+          $('genToolsPills').innerHTML = '';
+          $('genToolsBox').style.display = 'none';
+        }
         $('genDiff').innerHTML = renderDiff(r.diff_unified);
         $('genExplain').textContent = r.explanation;
         $('genOut').style.display = 'block';
