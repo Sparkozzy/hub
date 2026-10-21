@@ -214,7 +214,7 @@ const loginLimiter = rateLimit({
 // ============================================================
 function requireAuth(req, res, next) {
   if (req.session?.user) return next();
-  const publicPaths = ['/', '/api/', '/redefinir-senha', '/dev-login', '/dev-client-login', '/hub', '/dashboard', '/disparo', '/checkup', '/projetos', '/cliente', '/dashboard-style.css', '/dashboard-app.js'];
+  const publicPaths = ['/', '/api/', '/redefinir-senha', '/dev-login', '/dev-client-login', '/hub', '/dashboard', '/disparo', '/checkup', '/projetos', '/cliente', '/dashboard-style.css', '/dashboard-app.js', '/mindflow-core.css'];
   if (publicPaths.some(p => req.path === p || req.path.startsWith('/api/'))) return next();
   if (/\.(html|css|js)$/.test(req.path)) return res.redirect('/');
   res.status(401).json({ error: 'Unauthorized' });
@@ -432,12 +432,30 @@ app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'dashboard.html'));
 });
 
+app.get('/prompt-ops', (req, res) => {
+  if (!req.session?.user) return res.redirect('/');
+  const isMindFlowMember = req.session.user.client_access?.some(c => String(c.client_id) === '2');
+  if (!isMindFlowMember) {
+    return res.status(403).send('<h1>403 Proibido: Acesso restrito aos engenheiros da MindFlow.</h1>');
+  }
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.sendFile(path.join(__dirname, 'prompt-ops.html'));
+});
+
 app.get('/dashboard-style.css', (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
   res.sendFile(path.join(__dirname, 'dashboard-style.css'));
+});
+
+app.get('/mindflow-core.css', (req, res) => {
+  res.setHeader('Content-Type', 'text/css');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.sendFile(path.join(__dirname, 'mindflow-core.css'));
 });
 
 app.get('/dashboard-app.js', (req, res) => {
@@ -2962,6 +2980,19 @@ app.get('/api/platforms', (req, res) => {
         });
       }
     }
+  }
+
+  // Se o usuário tem acesso à MindFlow (client_id === '2'), exibe a plataforma PromptOps
+  const isMindFlowMember = user.client_access?.some(c => String(c.client_id) === '2');
+  if (isMindFlowMember) {
+    platforms.push({
+      id: 'prompt-ops',
+      name: 'PromptOps',
+      description: 'Engenharia, Arena A/B e Evals de Prompts',
+      url: '/prompt-ops',
+      icon: 'terminal',
+      internal: true,
+    });
   }
 
   res.json(platforms);
