@@ -946,6 +946,16 @@ select.field {
           }
         }
 
+        // Se o Agente criou/editou/excluiu casos de Eval ou rodou a suíte de Evals, sincroniza a UI automaticamente
+        const usedToolNames = tools.map(t => t.tool);
+        if (usedToolNames.includes('manage_prompt_eval_case') || usedToolNames.includes('list_prompt_eval_datasets')) {
+          await loadCases();
+        }
+        if (usedToolNames.includes('run_prompt_eval_suite')) {
+          await loadCases();
+          if (state.selected?.id) await loadVersions(state.selected.id);
+        }
+
         // Atualiza histórico multi-turn do Copilot
         state.copilotHistory.push({ role: 'user', content: instruction });
         state.copilotHistory.push({ role: 'assistant', content: r.explanation || '' });
@@ -986,9 +996,10 @@ select.field {
         $('caseList').innerHTML = cases.length ? cases.map(c => `
           <div class="case" data-id="${c.id}">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px">
-              <div class="q" style="margin-bottom:0">
+              <div class="q" style="margin-bottom:0;flex-wrap:wrap">
                 <span class="material-symbols-outlined" style="font-size:18px;color:var(--blue2)">quiz</span>
                 ${esc(c.scenario_name)}
+                ${c.is_refutation_case ? '<span class="pill prod" style="font-size:10px;padding:2px 7px" title="Caso Adversarial de Refutação Popperiana">🧪 Refutação Popperiana</span>' : ''}
               </div>
               <div style="display:flex;align-items:center;gap:6px">
                 <button class="mf-btn mf-btn-secondary btn-edit-case" data-id="${c.id}" title="Editar caso" style="padding:4px 8px;font-size:12px;height:28px">
