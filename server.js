@@ -766,7 +766,7 @@ const HELENA_CONFIG = {
 // ============================================================
 // DASHBOARD ANALYTICS BACKEND (hub_backend — Python FastAPI)
 // ============================================================
-const DASHBOARD_API_URL = process.env.DASHBOARD_API_URL || (IS_PRODUCTION ? 'http://hub_hub-backend:8000' : 'http://localhost:8000');
+const DASHBOARD_API_URL = process.env.DASHBOARD_API_URL || 'https://hub-backend.bkpxmb.easypanel.host';
 
 /**
  * Proxy transparente para o hub_backend (analytics + WhatsApp).
