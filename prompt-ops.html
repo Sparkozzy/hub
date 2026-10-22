@@ -243,7 +243,35 @@ select.field {
     }
     .copilot-col .chat { flex: 1; height: auto; padding: 12px; min-height: 0; }
     .copilot-col .msg { max-width: 96%; }
-    .copilot-col .composer { margin: 0; padding: 10px 12px; border-top: 1px solid var(--line); background: rgba(2, 4, 10, 0.45); }
+    .copilot-col .composer { margin: 0; padding: 10px 12px; border-top: 1px solid var(--line); background: rgba(2, 4, 10, 0.45); display: flex; flex-direction: column; gap: 8px; }
+    .composer-input-row { display: flex; gap: 8px; align-items: center; width: 100%; }
+    .composer-input-row .field { flex: 1; }
+    .btn-attach {
+      background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #94a3b8; border-radius: 8px; padding: 0 10px; height: 38px; display: inline-flex;
+      align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-attach:hover { color: #fff; background: rgba(46, 79, 255, 0.2); border-color: rgba(46, 79, 255, 0.5); }
+    .attachments-preview-bar {
+      display: none; flex-wrap: wrap; gap: 6px; padding: 4px 0 2px 0;
+    }
+    .attachments-preview-bar.has-items { display: flex; }
+    .attach-chip {
+      background: rgba(13, 22, 44, 0.85); border: 1px solid rgba(46, 79, 255, 0.35); border-radius: 8px;
+      padding: 4px 8px; font-size: 11px; display: inline-flex; align-items: center; gap: 6px; color: #e2e8f0;
+      max-width: 220px;
+    }
+    .attach-chip img { width: 18px; height: 18px; object-fit: cover; border-radius: 4px; }
+    .attach-chip .fname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+    .attach-chip .btn-del {
+      cursor: pointer; color: #94a3b8; font-size: 13px; line-height: 1; padding: 2px;
+      border-radius: 4px; display: inline-flex; align-items: center;
+    }
+    .attach-chip .btn-del:hover { color: #f87171; background: rgba(239, 68, 68, 0.15); }
+    .msg-attachment-badge {
+      display: inline-flex; align-items: center; gap: 4px; font-size: 10px; padding: 2px 8px;
+      border-radius: 6px; background: rgba(255,255,255,0.08); margin-top: 4px; color: #93c5fd;
+    }
     .editor-col {
       background: rgba(255, 255, 255, 0.02); border: 1px solid var(--line); border-top: 2px solid var(--blue);
       border-radius: 14px; padding: 12px; display: flex; flex-direction: column; height: 100%; min-width: 0;
@@ -590,8 +618,15 @@ select.field {
                 <div class="msg system">Converse com o Agente para consultar atendimentos no Supabase do cliente, exemplos no RAG, conversas da Arena A/B ou pedir alterações em tempo real no prompt ao lado.</div>
               </div>
               <div class="composer">
-                <input id="genInstruction" class="field" placeholder="Pergunte sobre atendimentos/MCP ou peça uma alteração no prompt..." />
-                <button class="mf-btn mf-btn-primary" id="btnSuggest"><span class="material-symbols-outlined">send</span>Enviar</button>
+                <div class="attachments-preview-bar" id="copilotAttachPreview"></div>
+                <div class="composer-input-row">
+                  <input type="file" id="fileInputCopilot" multiple accept="image/*,.pdf,.txt,.docx,.csv,.json,.md" style="display:none" />
+                  <button type="button" class="btn-attach" id="btnAttachCopilot" title="Anexar print, foto ou documento (PDF, TXT, DOCX) — você também pode colar (Ctrl+V) direto">
+                    <span class="material-symbols-outlined" style="font-size:20px">attach_file</span>
+                  </button>
+                  <input id="genInstruction" class="field" placeholder="Instrução ou dúvida... Cole print com Ctrl+V ou anexe arquivos..." />
+                  <button class="mf-btn mf-btn-primary" id="btnSuggest"><span class="material-symbols-outlined">send</span>Enviar</button>
+                </div>
               </div>
             </div>
 
@@ -1181,15 +1216,118 @@ select.field {
       return d;
     }
 
+    /* ── Anexos do Copilot (Fotos, Prints, Documentos) ── */
+    state.copilotAttachments = [];
+
+    function renderAttachmentPreviews() {
+      const box = $('copilotAttachPreview');
+      if (!box) return;
+      if (!state.copilotAttachments.length) {
+        box.className = 'attachments-preview-bar';
+        box.innerHTML = '';
+        return;
+      }
+      box.className = 'attachments-preview-bar has-items';
+      box.innerHTML = state.copilotAttachments.map((att, idx) => `
+        <div class="attach-chip" title="${esc(att.name)}">
+          ${att.type === 'image' && att.data_url ? `<img src="${att.data_url}" alt="thumb" />` : `<span class="material-symbols-outlined" style="font-size:16px;color:var(--teal)">description</span>`}
+          <span class="fname">${esc(att.name)}</span>
+          <span class="btn-del" data-idx="${idx}" title="Remover">✕</span>
+        </div>
+      `).join('');
+
+      box.querySelectorAll('.btn-del').forEach(el => {
+        el.onclick = (e) => {
+          e.stopPropagation();
+          const i = parseInt(el.dataset.idx, 10);
+          state.copilotAttachments.splice(i, 1);
+          renderAttachmentPreviews();
+        };
+      });
+    }
+
+    async function processFileAttachment(file) {
+      if (!file) return;
+      if (file.size > 8 * 1024 * 1024) {
+        toast(`O arquivo "${file.name}" ultrapassa o limite de 8MB.`, 'err');
+        return;
+      }
+      const isImg = file.type.startsWith('image/');
+      if (isImg) {
+        const reader = new FileReader();
+        reader.onload = e => {
+          state.copilotAttachments.push({
+            name: file.name,
+            type: 'image',
+            mime_type: file.type,
+            data_url: e.target.result
+          });
+          renderAttachmentPreviews();
+        };
+        reader.readAsDataURL(file);
+      } else {
+        // Arquivo de texto / documento
+        const reader = new FileReader();
+        reader.onload = e => {
+          state.copilotAttachments.push({
+            name: file.name,
+            type: 'document',
+            mime_type: file.type || 'text/plain',
+            text_content: e.target.result
+          });
+          renderAttachmentPreviews();
+        };
+        reader.readAsText(file);
+      }
+    }
+
+    if ($('btnAttachCopilot')) {
+      $('btnAttachCopilot').onclick = () => $('fileInputCopilot').click();
+    }
+    if ($('fileInputCopilot')) {
+      $('fileInputCopilot').onchange = (e) => {
+        const files = Array.from(e.target.files || []);
+        files.forEach(f => processFileAttachment(f));
+        $('fileInputCopilot').value = '';
+      };
+    }
+
+    // Suporte a colar (Ctrl+V) print da área de transferência direto no input
+    if ($('genInstruction')) {
+      $('genInstruction').addEventListener('paste', (e) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].type.indexOf('image') !== -1) {
+            const blob = items[i].getAsFile();
+            if (blob) {
+              const file = new File([blob], `print_${Date.now()}.png`, { type: blob.type });
+              processFileAttachment(file);
+              toast('Print colado da área de transferência!', 'ok');
+            }
+          }
+        }
+      });
+    }
+
     async function sendCopilot() {
       if (!state.selected) return toast('Selecione um prompt/versão primeiro.', 'err');
       const instruction = $('genInstruction').value.trim();
-      if (!instruction) return toast('Digite uma mensagem ou instrução para o Agente.', 'err');
+      const currentAtts = [...(state.copilotAttachments || [])];
+      if (!instruction && !currentAtts.length) return toast('Digite uma mensagem ou anexe um arquivo para o Agente.', 'err');
       $('genInstruction').value = '';
+      state.copilotAttachments = [];
+      renderAttachmentPreviews();
 
       const livePromptBefore = $('edText').value || state.selected.prompt_text || '';
-      addCopilotMsg('user', instruction);
-      const typingEl = addCopilotMsg('assistant typing', 'Consultando MCP e analisando...');
+      let userMsgExtra = '';
+      if (currentAtts.length) {
+        userMsgExtra = `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">` + currentAtts.map(a => 
+          `<span class="msg-attachment-badge"><span class="material-symbols-outlined" style="font-size:12px">${a.type === 'image' ? 'image' : 'description'}</span>${esc(a.name)}</span>`
+        ).join('') + `</div>`;
+      }
+      addCopilotMsg('user', instruction || '(arquivos anexados)', userMsgExtra);
+      const typingEl = addCopilotMsg('assistant typing', 'Analisando anexos, MCP e avaliando...');
       busy($('btnSuggest'), true, '');
 
       try {
@@ -1197,7 +1335,8 @@ select.field {
           method: 'POST',
           body: JSON.stringify({
             current_prompt: livePromptBefore,
-            instruction,
+            instruction: instruction || 'Analise os anexos enviados e aplique as diretrizes no prompt.',
+            attachments: currentAtts,
             prompt_id: state.prod ? state.prod.id : state.selected.prompt_id,
             client_id: state.selected.client_id || (state.prod ? String(state.prod.id) : null),
             channel: state.currentChannel || state.selected.channel || 'whatsapp',
@@ -1282,7 +1421,7 @@ select.field {
         }
 
         // Atualiza histórico multi-turn do Copilot
-        state.copilotHistory.push({ role: 'user', content: instruction });
+        state.copilotHistory.push({ role: 'user', content: instruction || '(anexo enviado)' });
         state.copilotHistory.push({ role: 'assistant', content: r.explanation || '' });
       } catch (e) {
         typingEl.remove();
@@ -1295,6 +1434,8 @@ select.field {
     $('genInstruction').onkeydown = e => { if (e.key === 'Enter') sendCopilot(); };
     $('btnClearCopilot').onclick = () => {
       state.copilotHistory = [];
+      state.copilotAttachments = [];
+      renderAttachmentPreviews();
       $('copilotChat').innerHTML = '<div class="msg system">Conversa com o Agente limpa. O texto no editor ao lado foi mantido.</div>';
     };
 
