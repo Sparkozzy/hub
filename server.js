@@ -179,8 +179,8 @@ const handleRetellWebhook = async (req, res) => {
 app.use('/api/webhooks/retell', express.json({ limit: '50mb' }), handleRetellWebhook);
 app.use('/webhooks/retell', express.json({ limit: '50mb' }), handleRetellWebhook);
 
-// Trust proxy — necessário para Easypanel/Traefik
-app.set('trust proxy', true);
+// Trust proxy — 1 hop para Traefik no Easypanel
+app.set('trust proxy', 1);
 
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
@@ -207,6 +207,7 @@ const loginLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Muitas tentativas de login. Tente novamente em 15 minutos.' },
   skipSuccessfulRequests: true, // só conta as falhas
+  validate: { trustProxy: false },
 });
 
 // ============================================================
@@ -766,7 +767,33 @@ const HELENA_CONFIG = {
 // ============================================================
 // DASHBOARD ANALYTICS BACKEND (hub_backend — Python FastAPI)
 // ============================================================
-const DASHBOARD_API_URL = process.env.DASHBOARD_API_URL || 'https://hub-backend.bkpxmb.easypanel.host';
+let activeBackendUrl = process.env.DASHBOARD_API_URL || null;
+
+async function getBackendUrl() {
+  if (activeBackendUrl) return activeBackendUrl;
+  const candidates = [
+    process.env.DASHBOARD_API_URL,
+    'http://hub_hub-backend:8000',
+    'http://hub-backend:8000',
+    'http://localhost:8000',
+    'https://hub-backend.bkpxmb.easypanel.host',
+    'https://hub-backend-github.bkpxmb.easypanel.host',
+  ].filter(Boolean);
+
+  for (const base of candidates) {
+    try {
+      const res = await fetch(`${base}/health`, { signal: AbortSignal.timeout(2000) });
+      if (res.ok) {
+        console.log(`[Proxy] Backend analítico conectado em: ${base}`);
+        activeBackendUrl = base;
+        return activeBackendUrl;
+      }
+    } catch (_) {}
+  }
+  return candidates[0] || 'http://hub_hub-backend:8000';
+}
+
+const DASHBOARD_API_URL = process.env.DASHBOARD_API_URL || 'http://hub_hub-backend:8000';
 
 /**
  * Proxy transparente para o hub_backend (analytics + WhatsApp).
@@ -776,7 +803,8 @@ async function proxyToDashboardBackend(req, res, path, method = 'GET') {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
   const clientId = req.session.user.active_client || '2';
   const qs = new URLSearchParams(req.query).toString();
-  const url = `${DASHBOARD_API_URL}${path}${qs ? '?' + qs : ''}`;
+  const baseUrl = await getBackendUrl();
+  const url = `${baseUrl}${path}${qs ? '?' + qs : ''}`;
 
   try {
     const response = await fetch(url, {
@@ -787,7 +815,8 @@ async function proxyToDashboardBackend(req, res, path, method = 'GET') {
     const data = await response.json().catch(() => ({}));
     return res.status(response.status).json(data);
   } catch (err) {
-    console.error(`[Proxy] Erro ao consultar hub_backend (${path}):`, err.message);
+    console.error(`[Proxy] Erro ao consultar hub_backend (${url}):`, err.message);
+    activeBackendUrl = null;
     return res.status(502).json({ error: 'Falha ao consultar o backend analítico.' });
   }
 }
@@ -1481,6 +1510,7 @@ const submitLimiter = rateLimit({
   message: { error: "Muitas solicitações de disparo vindas deste IP. Tente novamente após 15 minutos." },
   standardHeaders: 'draft-7',
   legacyHeaders: false,
+  validate: { trustProxy: false },
 });
 
 app.post('/api/submit-lead', submitLimiter, async (req, res) => {
