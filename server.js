@@ -215,11 +215,13 @@ const loginLimiter = rateLimit({
 // ============================================================
 function requireAuth(req, res, next) {
   if (req.session?.user) return next();
-  const publicPaths = ['/', '/api/', '/redefinir-senha', '/dev-login', '/dev-client-login', '/hub', '/dashboard', '/disparo', '/checkup', '/projetos', '/cliente', '/prompt-ops', '/dashboard-style.css', '/dashboard-app.js', '/mindflow-core.css'];
+  const publicPaths = ['/', '/health', '/api/', '/redefinir-senha', '/dev-login', '/dev-client-login', '/hub', '/dashboard', '/disparo', '/checkup', '/projetos', '/cliente', '/prompt-ops', '/dashboard-style.css', '/dashboard-app.js', '/mindflow-core.css'];
   if (publicPaths.some(p => req.path === p || req.path.startsWith('/api/'))) return next();
   if (/\.(html|css|js)$/.test(req.path)) return res.redirect('/');
   res.status(401).json({ error: 'Unauthorized' });
 }
+
+app.get('/health', (req, res) => res.json({ status: 'ok', service: 'hub' }));
 
 app.use(requireAuth);
 
