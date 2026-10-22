@@ -939,12 +939,12 @@ select.field {
       });
     }
 
-    async function loadVersions(keepId) {
+    async function loadVersions(keepId, preserveEditorText = false) {
       state.versions = await api(`/prompts/versions?prompt_id=${state.prod.id}&channel=${state.currentChannel}`);
       renderVersions();
       fillArenaSelects();
       const pick = state.versions.find(v => v.id === keepId) || state.versions.find(v => !v.version_label.startsWith('prod-')) || state.versions[0];
-      if (pick) selectVersion(pick.id);
+      if (pick) selectVersion(pick.id, preserveEditorText);
     }
 
     function statusPill(v) {
@@ -964,18 +964,20 @@ select.field {
       box.querySelectorAll('.version-card').forEach(c => c.onclick = () => selectVersion(c.dataset.id));
     }
 
-    function selectVersion(id) {
+    function selectVersion(id, preserveEditorText = false) {
       const v = state.versions.find(x => x.id === id);
       if (!v) return;
       state.selected = v;
       $('tbVersionLabel').textContent = v.version_label;
       renderVersions();
-      $('edText').value = v.prompt_text;
+      if (!preserveEditorText) {
+        $('edText').value = v.prompt_text;
+        $('edCommit').value = '';
+        if ($('liveEditBadge')) $('liveEditBadge').style.display = 'none';
+      }
       $('edModel').value = v.model_name || 'gpt-4.1';
       $('edTemp').value = v.temperature ?? 0.7;
       $('tempVal').textContent = $('edTemp').value;
-      $('edCommit').value = '';
-      if ($('liveEditBadge')) $('liveEditBadge').style.display = 'none';
       $('editorSub').textContent = `Editando a partir de ${v.version_label}. Salvar cria uma nova versão — a original não é alterada.`;
       $('selB').value = v.id;
       updateArenaTitles();
@@ -1275,7 +1277,8 @@ select.field {
         }
         if (usedToolNames.includes('run_prompt_eval_suite')) {
           await loadCases();
-          if (state.selected?.id) await loadVersions(state.selected.id);
+          // Preserva o prompt que acabou de ser editado em tempo real pelo agente no editor
+          if (state.selected?.id) await loadVersions(state.selected.id, true);
         }
 
         // Atualiza histórico multi-turn do Copilot
