@@ -222,3 +222,84 @@ body {
   -webkit-backdrop-filter: blur(16px);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(0, 181, 160, 0.05);
 }
+
+/* --------------------------------------------------------------------------
+   6. Dock de Navegação Lateral Unificado (.dock) — Padrão MindFlow AI
+   -------------------------------------------------------------------------- */
+.dock {
+  position: fixed;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 999999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 8px;
+  background: rgba(13, 17, 32, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.dock-item {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8E8FA2;
+  text-decoration: none;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.dock-item:hover {
+  color: #ffffff;
+  background: rgba(46, 79, 255, 0.15);
+  transform: scale(1.08);
+}
+
+.dock-item.active {
+  color: #ffffff;
+  background: linear-gradient(135deg, #2E4FFF, #00B5A0);
+  box-shadow: 0 4px 16px rgba(46, 79, 255, 0.4);
+}
+
+.dock-item.active:hover {
+  transform: scale(1.05);
+}
+
+.dock-item .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.dock-sep {
+  width: 24px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 4px 0;
+}
+
+@media (max-width: 768px) {
+  .dock {
+    position: fixed;
+    bottom: 16px;
+    top: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    flex-direction: row;
+    border-radius: 24px;
+    padding: 8px 12px;
+  }
+  .dock-sep {
+    width: 1px;
+    height: 24px;
+    margin: 0 4px;
+  }
+}
+

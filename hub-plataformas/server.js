@@ -1,4 +1,18 @@
 require('dotenv').config();
+
+process.on('uncaughtException', (err) => {
+  console.error('[UNCAUGHT EXCEPTION]', err);
+});
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[UNHANDLED REJECTION]', reason);
+});
+process.on('SIGTERM', () => {
+  console.log('[PROCESS] Received SIGTERM signal.');
+});
+process.on('exit', (code) => {
+  console.log(`[PROCESS] Process exited with code: ${code}`);
+});
+
 const express = require('express');
 const session = require('express-session');
 const helmet = require('helmet');
@@ -179,8 +193,8 @@ const handleRetellWebhook = async (req, res) => {
 app.use('/api/webhooks/retell', express.json({ limit: '50mb' }), handleRetellWebhook);
 app.use('/webhooks/retell', express.json({ limit: '50mb' }), handleRetellWebhook);
 
-// Trust proxy — necessário para Easypanel/Traefik
-app.set('trust proxy', true);
+// Trust proxy — 1 hop para Traefik no Easypanel
+app.set('trust proxy', 1);
 
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
@@ -207,6 +221,7 @@ const loginLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Muitas tentativas de login. Tente novamente em 15 minutos.' },
   skipSuccessfulRequests: true, // só conta as falhas
+  validate: { trustProxy: false },
 });
 
 // ============================================================
@@ -214,11 +229,13 @@ const loginLimiter = rateLimit({
 // ============================================================
 function requireAuth(req, res, next) {
   if (req.session?.user) return next();
-  const publicPaths = ['/', '/api/', '/redefinir-senha', '/dev-login', '/dev-client-login', '/hub', '/dashboard', '/disparo', '/checkup', '/projetos', '/cliente', '/dashboard-style.css', '/dashboard-app.js'];
+  const publicPaths = ['/', '/health', '/api/', '/redefinir-senha', '/dev-login', '/dev-client-login', '/hub', '/dashboard', '/disparo', '/checkup', '/projetos', '/cliente', '/prompt-ops', '/dashboard-style.css', '/dashboard-app.js', '/mindflow-core.css'];
   if (publicPaths.some(p => req.path === p || req.path.startsWith('/api/'))) return next();
   if (/\.(html|css|js)$/.test(req.path)) return res.redirect('/');
   res.status(401).json({ error: 'Unauthorized' });
 }
+
+app.get('/health', (req, res) => res.json({ status: 'ok', service: 'hub' }));
 
 app.use(requireAuth);
 
@@ -432,12 +449,30 @@ app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'dashboard.html'));
 });
 
+app.get('/prompt-ops', (req, res) => {
+  if (!req.session?.user) return res.redirect('/');
+  const isMindFlowMember = req.session.user.client_access?.some(c => String(c.client_id) === '2');
+  if (!isMindFlowMember) {
+    return res.status(403).send('<h1>403 Proibido: Acesso restrito aos engenheiros da MindFlow.</h1>');
+  }
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.sendFile(path.join(__dirname, 'prompt-ops.html'));
+});
+
 app.get('/dashboard-style.css', (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
   res.sendFile(path.join(__dirname, 'dashboard-style.css'));
+});
+
+app.get('/mindflow-core.css', (req, res) => {
+  res.setHeader('Content-Type', 'text/css');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.sendFile(path.join(__dirname, 'mindflow-core.css'));
 });
 
 app.get('/dashboard-app.js', (req, res) => {
@@ -748,7 +783,33 @@ const HELENA_CONFIG = {
 // ============================================================
 // DASHBOARD ANALYTICS BACKEND (hub_backend — Python FastAPI)
 // ============================================================
-const DASHBOARD_API_URL = process.env.DASHBOARD_API_URL || 'https://hub-backend.bkpxmb.easypanel.host';
+let activeBackendUrl = process.env.DASHBOARD_API_URL || null;
+
+async function getBackendUrl() {
+  if (activeBackendUrl) return activeBackendUrl;
+  const candidates = [
+    process.env.DASHBOARD_API_URL,
+    'http://hub_hub-backend:8000',
+    'http://hub-backend:8000',
+    'http://localhost:8000',
+    'https://hub-backend.bkpxmb.easypanel.host',
+    'https://hub-backend-github.bkpxmb.easypanel.host',
+  ].filter(Boolean);
+
+  for (const base of candidates) {
+    try {
+      const res = await fetch(`${base}/health`, { signal: AbortSignal.timeout(2000) });
+      if (res.ok) {
+        console.log(`[Proxy] Backend analítico conectado em: ${base}`);
+        activeBackendUrl = base;
+        return activeBackendUrl;
+      }
+    } catch (_) {}
+  }
+  return candidates[0] || 'http://hub_hub-backend:8000';
+}
+
+const DASHBOARD_API_URL = process.env.DASHBOARD_API_URL || 'http://hub_hub-backend:8000';
 
 /**
  * Proxy transparente para o hub_backend (analytics + WhatsApp).
@@ -758,7 +819,8 @@ async function proxyToDashboardBackend(req, res, path, method = 'GET') {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
   const clientId = req.session.user.active_client || '2';
   const qs = new URLSearchParams(req.query).toString();
-  const url = `${DASHBOARD_API_URL}${path}${qs ? '?' + qs : ''}`;
+  const baseUrl = await getBackendUrl();
+  const url = `${baseUrl}${path}${qs ? '?' + qs : ''}`;
 
   try {
     const response = await fetch(url, {
@@ -769,7 +831,8 @@ async function proxyToDashboardBackend(req, res, path, method = 'GET') {
     const data = await response.json().catch(() => ({}));
     return res.status(response.status).json(data);
   } catch (err) {
-    console.error(`[Proxy] Erro ao consultar hub_backend (${path}):`, err.message);
+    console.error(`[Proxy] Erro ao consultar hub_backend (${url}):`, err.message);
+    activeBackendUrl = null;
     return res.status(502).json({ error: 'Falha ao consultar o backend analítico.' });
   }
 }
@@ -1463,6 +1526,7 @@ const submitLimiter = rateLimit({
   message: { error: "Muitas solicitações de disparo vindas deste IP. Tente novamente após 15 minutos." },
   standardHeaders: 'draft-7',
   legacyHeaders: false,
+  validate: { trustProxy: false },
 });
 
 app.post('/api/submit-lead', submitLimiter, async (req, res) => {
@@ -2962,6 +3026,19 @@ app.get('/api/platforms', (req, res) => {
         });
       }
     }
+  }
+
+  // Se o usuário tem acesso à MindFlow (client_id === '2'), exibe a plataforma PromptOps
+  const isMindFlowMember = user.client_access?.some(c => String(c.client_id) === '2');
+  if (isMindFlowMember) {
+    platforms.push({
+      id: 'prompt-ops',
+      name: 'PromptOps',
+      description: 'Engenharia, Arena A/B e Evals de Prompts',
+      url: '/prompt-ops',
+      icon: 'terminal',
+      internal: true,
+    });
   }
 
   res.json(platforms);
