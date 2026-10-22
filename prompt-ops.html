@@ -71,10 +71,10 @@
     .dock-sep { width: 24px; height: 1px; background: var(--line); margin: 4px 0; }
 
     /* ── Layout ── */
-    .page { position: relative; z-index: 1; max-width: 1480px; margin: 0 auto; padding: 88px 32px 48px; }
-    .top-header { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; margin-bottom: 28px; flex-wrap: wrap; }
-    .header-title h2 { font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 600; letter-spacing: -0.02em; }
-    .header-title p { color: var(--muted); font-size: 14px; margin-top: 4px; }
+    .page { position: relative; z-index: 1; max-width: 1760px; width: 96vw; margin: 0 auto; padding: 76px 24px 36px; }
+    .top-header { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
+    .header-title h2 { font-family: 'Space Grotesk', sans-serif; font-size: 26px; font-weight: 600; letter-spacing: -0.02em; }
+    .header-title p { color: var(--muted); font-size: 13px; margin-top: 4px; }
 
     .eyebrow {
       font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: .1em;
@@ -125,12 +125,83 @@ select.field {
     }
     textarea.field { resize: vertical; line-height: 1.55; }
 
-    .workspace { display: grid; grid-template-columns: 300px 1fr; gap: 20px; align-items: start; }
-    @media (max-width: 1024px) { .workspace { grid-template-columns: 1fr; } .picker { min-width: 0; width: 100%; } }
+    .workspace {
+      display: grid;
+      grid-template-columns: 290px minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+      transition: grid-template-columns 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .workspace.sidebar-collapsed {
+      grid-template-columns: 0px minmax(0, 1fr);
+      gap: 0;
+    }
+    .workspace.sidebar-collapsed aside {
+      display: none !important;
+    }
+    @media (max-width: 1024px) {
+      .workspace { grid-template-columns: 1fr; }
+      .workspace.sidebar-collapsed { grid-template-columns: 1fr; }
+      .picker { min-width: 0; width: 100%; }
+    }
+
+    /* Layout Mode Switcher */
+    .layout-switcher {
+      display: inline-flex;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 3px;
+      gap: 3px;
+    }
+    .layout-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 11px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 7px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s ease;
+    }
+    .layout-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.06);
+    }
+    .layout-btn.active {
+      color: #fff;
+      background: rgba(46, 79, 255, 0.35);
+      border: 1px solid rgba(46, 79, 255, 0.5);
+      box-shadow: 0 2px 8px rgba(46, 79, 255, 0.25);
+    }
+    .layout-btn .material-symbols-outlined { font-size: 14px; }
+
+    /* Compact Toolbar for Editor */
+    .editor-top-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: rgba(2, 4, 10, 0.55);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .editor-top-toolbar .field {
+      padding: 6px 10px;
+      font-size: 12px;
+      height: 34px;
+    }
 
     /* ── Versões ── */
     .side-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-    .version-list { display: flex; flex-direction: column; gap: 8px; max-height: 62vh; overflow-y: auto; padding-right: 2px; }
+    .version-list { display: flex; flex-direction: column; gap: 8px; max-height: calc(100vh - 240px); overflow-y: auto; padding-right: 2px; }
     .version-card {
       padding: 12px 14px; border-radius: 12px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--line);
       cursor: pointer; transition: all .2s cubic-bezier(.16, 1, .3, 1);
@@ -138,6 +209,36 @@ select.field {
     .version-card:hover { border-color: rgba(46, 79, 255, 0.45); transform: translateY(-1px); }
     .version-card.active { border-color: rgba(46, 79, 255, 0.8); background: rgba(46, 79, 255, 0.08); box-shadow: 0 0 18px rgba(46, 79, 255, 0.18); }
     .v-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+    /* ── Split-View: Copilot & Editor ── */
+    .editor-split {
+      display: grid;
+      grid-template-columns: 1fr 1.25fr;
+      gap: 16px;
+      align-items: stretch;
+      transition: grid-template-columns 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .editor-split.mode-agent {
+      grid-template-columns: 1.55fr 0.95fr;
+    }
+    .editor-split.mode-prompt {
+      grid-template-columns: 0.8fr 1.7fr;
+    }
+    @media (max-width: 1100px) {
+      .editor-split, .editor-split.mode-agent, .editor-split.mode-prompt { grid-template-columns: 1fr; }
+    }
+    .copilot-col {
+      background: rgba(255, 255, 255, 0.02); border: 1px solid var(--line); border-top: 2px solid var(--teal);
+      border-radius: 14px; display: flex; flex-direction: column; overflow: hidden;
+      height: calc(100vh - 215px); min-height: 700px;
+    }
+    .copilot-col .chat { flex: 1; height: auto; }
+    .copilot-col .composer { margin: 0; padding: 12px 14px; border-top: 1px solid var(--line); background: rgba(2, 4, 10, 0.45); }
+    .editor-col {
+      background: rgba(255, 255, 255, 0.02); border: 1px solid var(--line); border-top: 2px solid var(--blue);
+      border-radius: 14px; padding: 16px; display: flex; flex-direction: column;
+      height: calc(100vh - 215px); min-height: 700px;
+    }
     .v-label { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 13px; }
     .v-msg { font-size: 12px; color: var(--muted); margin: 4px 0 8px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
     .v-meta { display: flex; justify-content: space-between; font-size: 11px; color: #64748B; font-family: 'Space Grotesk', sans-serif; }
@@ -195,19 +296,7 @@ select.field {
     .diff .hdr { color: var(--blue2); }
     .diff .ctx { color: #64748B; }
 
-    /* ── Split-View: Copilot & Editor ── */
-    .editor-split { display: grid; grid-template-columns: 1fr 1.25fr; gap: 18px; align-items: stretch; }
-    @media (max-width: 1100px) { .editor-split { grid-template-columns: 1fr; } }
-    .copilot-col {
-      background: rgba(255, 255, 255, 0.02); border: 1px solid var(--line); border-top: 2px solid var(--teal);
-      border-radius: 14px; display: flex; flex-direction: column; overflow: hidden; height: 620px;
-    }
-    .copilot-col .chat { flex: 1; height: auto; }
-    .copilot-col .composer { margin: 0; padding: 12px 14px; border-top: 1px solid var(--line); background: rgba(2, 4, 10, 0.45); }
-    .editor-col {
-      background: rgba(255, 255, 255, 0.02); border: 1px solid var(--line); border-top: 2px solid var(--blue);
-      border-radius: 14px; padding: 16px; display: flex; flex-direction: column; height: 620px;
-    }
+    /* ── Split-View: Copilot & Editor (configured above) ── */
     .prompt-textarea-wrap {
       position: relative; flex: 1; display: flex; flex-direction: column; min-height: 0;
     }
@@ -511,15 +600,36 @@ select.field {
 
       <!-- Conteúdo -->
       <section>
-        <div class="tabs">
-          <button class="tab active" data-tab="editor"><span class="material-symbols-outlined">auto_fix_high</span>Editor &amp; Agente IA</button>
-          <button class="tab" data-tab="arena"><span class="material-symbols-outlined">compare_arrows</span>Arena A/B</button>
-          <button class="tab" data-tab="evals"><span class="material-symbols-outlined">fact_check</span>Evals &amp; Deploy</button>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button class="mf-btn mf-btn-secondary" id="btnToggleSidebar" style="padding:8px 12px;font-size:12px;display:inline-flex;align-items:center;gap:6px;" title="Ocultar/Exibir barra de versões laterais">
+              <span class="material-symbols-outlined" id="sidebarToggleIcon" style="font-size:16px;">view_sidebar</span>
+              <span id="sidebarToggleText">Ocultar Versões</span>
+            </button>
+            <div class="tabs" style="margin-bottom:0;">
+              <button class="tab active" data-tab="editor"><span class="material-symbols-outlined">auto_fix_high</span>Editor &amp; Agente IA</button>
+              <button class="tab" data-tab="arena"><span class="material-symbols-outlined">compare_arrows</span>Arena A/B</button>
+              <button class="tab" data-tab="evals"><span class="material-symbols-outlined">fact_check</span>Evals &amp; Deploy</button>
+            </div>
+          </div>
+
+          <!-- Modos de Layout Pro (Dividido, Foco Agente, Foco Prompt) -->
+          <div class="layout-switcher" id="layoutSwitcher" title="Ajustar distribuição de espaço na tela">
+            <button type="button" class="layout-btn active" data-mode="split" id="btnLayoutSplit" title="Divisão balanceada">
+              <span class="material-symbols-outlined">vertical_split</span>Dividido (50/50)
+            </button>
+            <button type="button" class="layout-btn" data-mode="agent" id="btnLayoutAgent" title="Foco na execução e respostas do agente">
+              <span class="material-symbols-outlined">space_dashboard</span>Foco Agente (65/35)
+            </button>
+            <button type="button" class="layout-btn" data-mode="prompt" id="btnLayoutPrompt" title="Foco no texto do prompt">
+              <span class="material-symbols-outlined">edit_note</span>Foco Prompt (35/65)
+            </button>
+          </div>
         </div>
 
         <!-- EDITOR & AGENTE IA (SPLIT-VIEW) -->
         <div class="pane active glass" id="pane-editor">
-          <div class="editor-split">
+          <div class="editor-split" id="editorSplit">
             <!-- Coluna Esquerda: Chat Conversacional com Agente Copilot & MCP -->
             <div class="copilot-col">
               <div class="col-head">
@@ -543,34 +653,35 @@ select.field {
 
             <!-- Coluna Direita: Editor do Prompt em Tempo Real -->
             <div class="editor-col">
-              <div class="row-between" style="margin-bottom:12px">
+              <div class="row-between" style="margin-bottom:8px">
                 <div>
                   <div style="display:flex;align-items:center;gap:8px">
-                    <h3 class="sec">Prompt em Edição</h3>
+                    <h3 class="sec" style="font-size:15px">Prompt em Edição</h3>
                     <span id="liveEditBadge" class="pill approved" style="display:none">✨ Atualizado pelo Agente</span>
                   </div>
-                  <p class="sub" id="editorSub">Selecione uma versão ou crie um novo draft.</p>
+                  <p class="sub" id="editorSub" style="font-size:12px;margin-top:2px">Selecione uma versão ou crie um novo draft.</p>
                 </div>
-                <button class="mf-btn mf-btn-primary" id="btnSaveVersion"><span class="material-symbols-outlined">save</span>Salvar como nova versão</button>
+                <button class="mf-btn mf-btn-primary" id="btnSaveVersion" style="padding:7px 14px;font-size:12px">
+                  <span class="material-symbols-outlined" style="font-size:16px">save</span>Salvar como nova versão
+                </button>
               </div>
-              <div class="grid2" style="margin-bottom:10px">
-                <div><span class="eyebrow label">Mensagem do commit</span><input id="edCommit" class="field" placeholder="O que mudou nesta versão?" /></div>
-                <div class="grid2">
-                  <div>
-                    <span class="eyebrow label">Modelo LLM</span>
-                    <select id="edModel" class="field">
-                      <option value="gpt-4.1">gpt-4.1 (Padrão MindFlow)</option>
-                      <option value="gpt-4o">gpt-4o (Multimodal / Rápido)</option>
-                      <option value="gpt-4o-mini">gpt-4o-mini (Econômico / Triagem)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                      <span class="eyebrow label">Temperatura</span>
-                      <span id="tempVal" style="font-size:12px;color:#93c5fd;font-weight:600">0.7</span>
-                    </div>
-                    <input id="edTemp" class="field" type="range" step="0.05" min="0" max="1.5" value="0.7" style="height:38px;cursor:pointer;accent-color:var(--blue);" />
-                  </div>
+
+              <!-- Toolbar Compacta Horizontal -->
+              <div class="editor-top-toolbar">
+                <div style="flex:1.4;min-width:180px;">
+                  <input id="edCommit" class="field" placeholder="Commit: O que mudou nesta versão?" />
+                </div>
+                <div style="flex:1;min-width:140px;">
+                  <select id="edModel" class="field">
+                    <option value="gpt-4.1">gpt-4.1 (Padrão MindFlow)</option>
+                    <option value="gpt-4o">gpt-4o (Multimodal)</option>
+                    <option value="gpt-4o-mini">gpt-4o-mini (Econômico)</option>
+                  </select>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;flex:0.9;min-width:130px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:2px 10px;height:34px;">
+                  <span class="eyebrow" style="font-size:9px;white-space:nowrap;">Temp</span>
+                  <input id="edTemp" class="field" type="range" step="0.05" min="0" max="1.5" value="0.7" style="height:20px;padding:0;cursor:pointer;accent-color:var(--blue);flex:1;" />
+                  <span id="tempVal" style="font-size:11px;color:#93c5fd;font-weight:600;min-width:24px;text-align:right;">0.7</span>
                 </div>
               </div>
 
@@ -942,6 +1053,48 @@ select.field {
     
     // Sincroniza slider de temperatura com indicador numérico
     $('edTemp').oninput = () => { $('tempVal').textContent = $('edTemp').value; };
+
+    /* ── Layout Switcher & Barra de Versões Colapsável ── */
+    const workspaceEl = document.querySelector('.workspace');
+    const editorSplitEl = $('editorSplit');
+    let isSidebarCollapsed = false;
+
+    $('btnToggleSidebar').onclick = () => {
+      isSidebarCollapsed = !isSidebarCollapsed;
+      if (isSidebarCollapsed) {
+        workspaceEl.classList.add('sidebar-collapsed');
+        $('sidebarToggleIcon').textContent = 'menu_open';
+        $('sidebarToggleText').textContent = 'Ver Versões';
+        $('btnToggleSidebar').title = 'Exibir histórico de versões';
+      } else {
+        workspaceEl.classList.remove('sidebar-collapsed');
+        $('sidebarToggleIcon').textContent = 'view_sidebar';
+        $('sidebarToggleText').textContent = 'Ocultar Versões';
+        $('btnToggleSidebar').title = 'Ocultar histórico de versões';
+      }
+    };
+
+    function setLayoutMode(mode) {
+      if (!editorSplitEl) return;
+      editorSplitEl.classList.remove('mode-agent', 'mode-prompt');
+      $('btnLayoutSplit').classList.remove('active');
+      $('btnLayoutAgent').classList.remove('active');
+      $('btnLayoutPrompt').classList.remove('active');
+
+      if (mode === 'agent') {
+        editorSplitEl.classList.add('mode-agent');
+        $('btnLayoutAgent').classList.add('active');
+      } else if (mode === 'prompt') {
+        editorSplitEl.classList.add('mode-prompt');
+        $('btnLayoutPrompt').classList.add('active');
+      } else {
+        $('btnLayoutSplit').classList.add('active');
+      }
+    }
+
+    $('btnLayoutSplit').onclick = () => setLayoutMode('split');
+    $('btnLayoutAgent').onclick = () => setLayoutMode('agent');
+    $('btnLayoutPrompt').onclick = () => setLayoutMode('prompt');
 
     /* ── Visão Macro em Tela Cheia (Modal + Botão Translúcido no canto do prompt) ── */
     function openMacroEditor() {
