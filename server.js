@@ -1,4 +1,18 @@
 require('dotenv').config();
+
+process.on('uncaughtException', (err) => {
+  console.error('[UNCAUGHT EXCEPTION]', err);
+});
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[UNHANDLED REJECTION]', reason);
+});
+process.on('SIGTERM', () => {
+  console.log('[PROCESS] Received SIGTERM signal.');
+});
+process.on('exit', (code) => {
+  console.log(`[PROCESS] Process exited with code: ${code}`);
+});
+
 const express = require('express');
 const session = require('express-session');
 const helmet = require('helmet');
