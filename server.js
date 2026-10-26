@@ -2952,53 +2952,209 @@ app.get('/api/agendamentos/metrics', handleAgendamentosMetrics);
 app.get('/agendamentos', handleAgendamentosList);
 app.get('/api/agendamentos', handleAgendamentosList);
 
-app.post('/api/disparo/schedule-batch', async (req, res) => {
+// ============================================================
+// ENGINE DE TELEFONIA / DISPARO EM LOTE (PRE_CALL_PROCESSING)
+// ============================================================
+const PRE_CALL_API_URL = process.env.PRE_CALL_API_URL || 'https://call-github.bkpxmb.easypanel.host';
+const PRE_CALL_API_KEY = process.env.PRE_CALL_API_KEY || 'mf_sk_2026_pre_call_xK9v3Qm7bR4wT1nZ';
+
+// Iniciar Lote de Ligações via Planilha/CSV
+app.post(['/api/disparo/iniciar-lote', '/api/disparo/schedule-batch'], async (req, res) => {
   try {
-    const { cadence, leads, agentId } = req.body;
+    const { 
+      leads, 
+      horario_inicio = '08:00', 
+      horario_fim = '20:00', 
+      frequencia = 60, 
+      agent_id, 
+      prompt_id, 
+      contexto = '' 
+    } = req.body;
+
     if (!leads || !Array.isArray(leads) || leads.length === 0) {
-      return res.status(400).json({ error: 'Nenhum lead fornecido para disparo.' });
+      return res.status(400).json({ error: 'Nenhum contato válido fornecido para o disparo.' });
     }
 
-    console.log(`[DISPARO LOTE] Processando ${leads.length} leads no modo ${cadence}`);
+    console.log(`[DISPARO EM LOTE] Processando ${leads.length} contatos. Horário: ${horario_inicio}-${horario_fim}, Intervalo: ${frequencia}s, Agente: ${agent_id || 'Padrão'}`);
 
-    const newAgendamentos = leads.map((l, i) => {
-      let scheduledTime = new Date();
-      if (cadence === 'staggered') {
-        // 5 chamadas a cada 10 minutos (intervalo de 2 minutos)
-        scheduledTime = new Date(Date.now() + i * 2 * 60 * 1000);
+    // Coleta colunas adicionais para passar no CSV (a engine anexa automaticamente ao contexto do lead)
+    const baseCols = ['numero', 'nome', 'email'];
+    const extraColsSet = new Set();
+    leads.forEach(l => {
+      Object.keys(l).forEach(k => {
+        const norm = k.toLowerCase().trim();
+        if (!['numero', 'phone', 'telefone', 'nome', 'name', 'email', 'id', 'isvalid', 'formattedphone', 'date', 'empresa', 'company'].includes(norm)) {
+          extraColsSet.add(norm);
+        }
+      });
+    });
+    // Garantir empresa/company se existir
+    const hasEmpresa = leads.some(l => l.empresa || l.company);
+    const extraCols = [];
+    if (hasEmpresa) extraCols.push('empresa');
+    extraCols.push(...Array.from(extraColsSet));
+
+    const allHeaders = [...baseCols, ...extraCols];
+
+    const escapeCsv = (val) => {
+      if (val === null || val === undefined) return '';
+      const s = String(val).replace(/"/g, '""');
+      return `"${s}"`;
+    };
+
+    let csvContent = allHeaders.join(',') + '\n';
+    leads.forEach(l => {
+      let num = l.numero || l.phone || l.telefone || '';
+      num = String(num).replace(/[^\d+]/g, '');
+      if (!num.startsWith('+')) {
+        num = num.replace(/\D/g, '');
+        if (num.length === 10 || num.length === 11) num = '55' + num;
+        num = '+' + num;
       }
 
-      return {
-        nome: l.name || 'Lead CSV ' + (i + 1),
-        numero: l.phone,
-        canal: 'ligacao',
-        data_agendamento: scheduledTime.toISOString(),
-        status: 'agendado',
-        detalhes: `Importado via CSV - Empresa: ${l.company || 'N/I'} - Modo: ${cadence}`,
-        agent_id: agentId || 'Agente_Gatekeeper_Mindflow'
-      };
+      const nome = l.nome || l.name || '';
+      const email = l.email || '';
+      const row = [escapeCsv(num), escapeCsv(nome), escapeCsv(email)];
+
+      extraCols.forEach(col => {
+        let val = '';
+        if (col === 'empresa') {
+          val = l.empresa || l.company || '';
+        } else {
+          const matchKey = Object.keys(l).find(k => k.toLowerCase().trim() === col);
+          val = matchKey ? l[matchKey] : '';
+        }
+        row.push(escapeCsv(val));
+      });
+      csvContent += row.join(',') + '\n';
     });
 
-    const clientDb = typeof getClientSupa === 'function' ? await getClientSupa(req) : supabase;
-    const { data, error } = await clientDb.from('agendamentos').insert(newAgendamentos).select();
+    // Montar FormData nativo do Node.js
+    const form = new FormData();
+    const csvBlob = new Blob([csvContent], { type: 'text/csv' });
+    form.append('file', csvBlob, 'disparos_lote.csv');
+    form.append('horario_inicio', String(horario_inicio));
+    form.append('horario_fim', String(horario_fim));
+    form.append('frequencia', String(frequencia));
+    if (agent_id) form.append('agent_id', String(agent_id));
+    if (prompt_id) form.append('prompt_id', String(prompt_id));
+    if (contexto) form.append('contexto', String(contexto));
 
-    if (error) {
-      console.error('[DISPARO LOTE] Erro Supabase:', error);
-      return res.status(500).json({ error: error.message });
+    const response = await fetch(`${PRE_CALL_API_URL}/webhook/csv`, {
+      method: 'POST',
+      headers: {
+        'X-API-Key': PRE_CALL_API_KEY
+      },
+      body: form
+    });
+
+    const result = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      console.error('[DISPARO EM LOTE] Erro na engine pre_call:', result);
+      return res.status(response.status || 500).json({
+        error: result.error || result.message || 'Falha ao iniciar lote na engine de telefonia.'
+      });
     }
+
+    console.log('[DISPARO EM LOTE] Lote registrado com sucesso:', result);
 
     res.json({
       success: true,
-      message: `${data.length} disparos/agendamentos criados em lote com sucesso!`,
-      count: data.length,
-      scheduled: data
+      batch_id: result.batch_id,
+      total_leads: result.total_leads || leads.length,
+      horario_inicio,
+      horario_fim,
+      frequencia,
+      message: `${result.total_leads || leads.length} ligações enviadas para a fila com sucesso!`
     });
   } catch (err) {
-    console.error('[DISPARO LOTE] Error:', err);
-    res.status(500).json({ error: 'Erro interno ao agendar lote.' });
+    console.error('[DISPARO EM LOTE] Erro inesperado:', err);
+    res.status(500).json({ error: 'Erro interno ao processar o disparo em lote.' });
   }
 });
 
+// Listar Lotes Ativos
+app.get(['/api/disparo/lotes-ativos', '/api/disparo/csv/active'], async (req, res) => {
+  try {
+    const response = await fetch(`${PRE_CALL_API_URL}/webhook/csv/active`, {
+      method: 'GET',
+      headers: {
+        'X-API-Key': PRE_CALL_API_KEY
+      }
+    });
+
+    if (!response.ok) {
+      return res.status(response.status).json({ error: 'Erro ao consultar fila na engine de telefonia.' });
+    }
+
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    console.error('[DISPARO EM LOTE] Erro ao buscar lotes ativos:', err);
+    res.status(500).json({ error: 'Erro ao buscar lotes ativos.' });
+  }
+});
+
+// Cancelar / Interromper Lote
+app.post(['/api/disparo/cancelar-lote', '/api/disparo/csv/cancel'], async (req, res) => {
+  try {
+    const { batch_id } = req.body;
+    if (!batch_id) {
+      return res.status(400).json({ error: 'Identificador do lote (batch_id) é obrigatório.' });
+    }
+
+    const form = new FormData();
+    form.append('batch_id', batch_id);
+
+    const response = await fetch(`${PRE_CALL_API_URL}/webhook/csv/cancel`, {
+      method: 'POST',
+      headers: {
+        'X-API-Key': PRE_CALL_API_KEY
+      },
+      body: form
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return res.status(response.status).json({ error: data.error || 'Erro ao cancelar lote.' });
+    }
+
+    res.json({ success: true, message: 'Disparos do lote interrompidos com sucesso.', data });
+  } catch (err) {
+    console.error('[DISPARO EM LOTE] Erro ao cancelar lote:', err);
+    res.status(500).json({ error: 'Erro interno ao cancelar lote.' });
+  }
+});
+
+// Atualizar Ritmo / Intervalo entre Ligações
+app.post(['/api/disparo/alterar-ritmo', '/api/disparo/csv/update-frequency'], async (req, res) => {
+  try {
+    const { batch_id, frequencia } = req.body;
+    if (!batch_id || !frequencia) {
+      return res.status(400).json({ error: 'Campos batch_id e frequencia são obrigatórios.' });
+    }
+
+    const response = await fetch(`${PRE_CALL_API_URL}/webhook/csv/update-frequency`, {
+      method: 'POST',
+      headers: {
+        'X-API-Key': PRE_CALL_API_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ batch_id, frequencia: Number(frequencia) })
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return res.status(response.status).json({ error: data.error || 'Erro ao atualizar ritmo.' });
+    }
+
+    res.json({ success: true, message: 'Ritmo de chamadas atualizado com sucesso.', data });
+  } catch (err) {
+    console.error('[DISPARO EM LOTE] Erro ao atualizar ritmo:', err);
+    res.status(500).json({ error: 'Erro interno ao atualizar ritmo.' });
+  }
+});
 
 // ============================================================
 // API: PLATAFORMAS (protegida)

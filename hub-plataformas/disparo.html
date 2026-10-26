@@ -12,6 +12,7 @@
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="mindflow-core.css?v=1.0.1" />
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     *,
     *::before,
@@ -3821,6 +3822,261 @@
       justify-content: center;
     }
   
+    
+    /* ── Modo Disparo em Lote & Fila de Chamadas ── */
+    .batch-mode {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+    .batch-mode.hidden {
+      display: none !important;
+    }
+
+    .batch-active-card {
+      background: linear-gradient(135deg, rgba(46, 79, 255, 0.12), rgba(0, 181, 160, 0.1));
+      border: 1px solid rgba(0, 181, 160, 0.35);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .batch-active-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .batch-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.4);
+      font-size: 12px;
+      font-weight: 700;
+      color: #4ADE80;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .batch-status-pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22C55E;
+      box-shadow: 0 0 10px #22C55E;
+      animation: pulse-batch 1.5s infinite;
+    }
+
+    @keyframes pulse-batch {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 14px #22C55E; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+
+    .batch-progress-wrap {
+      margin: 16px 0 12px 0;
+    }
+
+    .batch-progress-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #CBD5E1;
+      margin-bottom: 6px;
+    }
+
+    .batch-progress-bar-bg {
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+    }
+
+    .batch-progress-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #2E4FFF, #00B5A0);
+      transition: width 0.4s ease;
+      width: 0%;
+    }
+
+    .batch-details-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .batch-detail-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .batch-detail-title {
+      font-size: 10px;
+      color: #8E8FA2;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 600;
+    }
+
+    .batch-detail-val {
+      font-size: 13px;
+      font-weight: 600;
+      color: #FFFFFF;
+    }
+
+    .batch-actions-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .btn-batch-action {
+      flex: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      height: 38px;
+      padding: 0 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-batch-speed {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #E2E8F0;
+    }
+    .btn-batch-speed:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .btn-batch-stop {
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #F87171;
+    }
+    .btn-batch-stop:hover {
+      background: rgba(239, 68, 68, 0.22);
+      border-color: #EF4444;
+    }
+
+    /* Formulário de Configuração do Lote */
+    .batch-config-panel {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 14px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .batch-section-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      color: #00B5A0;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .batch-speed-selector {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .speed-card-option {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 12px 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .speed-card-option:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .speed-card-option.active {
+      background: rgba(46, 79, 255, 0.15);
+      border-color: #2E4FFF;
+      box-shadow: 0 0 16px rgba(46, 79, 255, 0.2);
+    }
+
+    .speed-card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+
+    .speed-card-sub {
+      font-size: 11px;
+      color: #8E8FA2;
+    }
+
+    .time-range-row {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .time-field-box {
+      flex: 1;
+    }
+
+    .time-field-box label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: #8E8FA2;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+
+    .time-input-field {
+      width: 100%;
+      height: 42px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: #FFFFFF;
+      padding: 0 12px;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+    }
+    .time-input-field:focus {
+      outline: none;
+      border-color: #00B5A0;
+    }
+  
     /* ── CSV Import & Cadence Styles ── */
     .csv-dropzone {
       border: 2px dashed rgba(0, 181, 160, 0.4);
@@ -4131,36 +4387,43 @@
     async function confirmBatchCsvDispatch() {
       const validLeads = parsedCsvLeads.filter(l => l.isValid);
       if (validLeads.length === 0) {
-        alert('Nenhum lead válido encontrado no CSV para agendar.');
+        alert('Nenhum lead válido encontrado na planilha para agendar.');
         return;
       }
 
-      const selectedCadence = document.querySelector('input[name="csvCadence"]:checked')?.value || 'immediate';
+      const agentId = document.getElementById('agent_id')?.value || 'agent_4f1dba5e5432cd193d324754bf';
+      const promptId = document.getElementById('prompt_id')?.value || '33';
+      const contexto = document.getElementById('contexto')?.value || '';
 
-      const confirmMsg = `Deseja confirmar o agendamento de ${validLeads.length} ligações no modo '${selectedCadence.toUpperCase()}'?`;
+      const confirmMsg = `Confirmar início do disparo em lote para ${validLeads.length} contatos?\n\nAs chamadas serão enfileiradas na central com intervalo inteligente.`;
       if (!confirm(confirmMsg)) return;
 
       try {
-        const res = await fetch('/api/disparo/schedule-batch', {
+        const res = await fetch('/api/disparo/iniciar-lote', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            cadence: selectedCadence,
             leads: validLeads,
-            agentId: 'Agente_Gatekeeper_Mindflow'
+            horario_inicio: '09:00',
+            horario_fim: '19:00',
+            frequencia: 90,
+            agent_id: agentId,
+            prompt_id: promptId,
+            contexto: contexto
           })
         });
 
         const data = await res.json();
         if (res.ok && data.success) {
-          alert(`🚀 Sucesso! ${data.count} disparos/agendamentos foram registrados com sucesso no banco e adicionados à fila do Hub!`);
+          alert(`🚀 Sucesso! ${data.total_leads} ligações foram enviadas para a fila com sucesso!`);
           closeGroupManagerModal();
+          window.switchMode('batch');
         } else {
-          alert('Erro ao agendar lote: ' + (data.error || 'Falha na requisição.'));
+          alert('Erro ao iniciar lote: ' + (data.error || 'Falha na requisição.'));
         }
       } catch (err) {
         console.error('Erro no disparo em lote:', err);
-        alert('Erro ao conectar com o servidor para agendar lote.');
+        alert('Erro ao conectar com o servidor para iniciar lote.');
       }
     }
   
@@ -4305,14 +4568,21 @@
           <div class="mode-card-icon"><span class="material-symbols-outlined">bolt</span></div>
           <div class="mode-card-info">
             <span class="mode-card-title">Disparo Rápido</span>
-            <span class="mode-card-desc">Ligar para você com 1 clique</span>
+            <span class="mode-card-desc">Ligar com 1 clique</span>
           </div>
         </div>
         <div class="mode-card" id="modeComplete" onclick="switchMode('complete')" role="button" tabindex="0">
-          <div class="mode-card-icon"><span class="material-symbols-outlined">draft</span></div>
+          <div class="mode-card-icon"><span class="material-symbols-outlined">person</span></div>
           <div class="mode-card-info">
-            <span class="mode-card-title">Disparo Completo</span>
-            <span class="mode-card-desc">Preencher dados manualmente</span>
+            <span class="mode-card-title">Disparo Individual</span>
+            <span class="mode-card-desc">Preencher contato único</span>
+          </div>
+        </div>
+        <div class="mode-card" id="modeBatch" onclick="switchMode('batch')" role="button" tabindex="0">
+          <div class="mode-card-icon" style="position: relative;"><span class="material-symbols-outlined">upload_file</span><span id="modeBatchDot" style="display:none; width:8px; height:8px; border-radius:50%; background:#22C55E; box-shadow:0 0 10px #22C55E; position:absolute; top:-2px; right:-2px;"></span></div>
+          <div class="mode-card-info">
+            <span class="mode-card-title">Disparo em Lote</span>
+            <span class="mode-card-desc">Importar lista e cadência</span>
           </div>
         </div>
       </div>
@@ -4528,6 +4798,154 @@
         </button>
 
       </form></div>
+
+      <!-- ── Batch Mode (Disparo em Lote) ── -->
+      <div class="batch-mode hidden" id="batchMode">
+
+        <!-- Card de Monitoramento da Fila Ativa (aparece se houver lote em andamento) -->
+        <div class="batch-active-card" id="batchActiveCard" style="display: none;">
+          <div class="batch-active-header">
+            <div class="batch-status-badge">
+              <span class="batch-status-pulse"></span>
+              <span>Lote em Andamento</span>
+            </div>
+            <span id="activeBatchIdLabel" style="font-size: 11px; color: #8E8FA2; font-family: monospace;"></span>
+          </div>
+
+          <div class="batch-progress-wrap">
+            <div class="batch-progress-labels">
+              <span id="activeBatchProgressText">Processando ligações...</span>
+              <span id="activeBatchPercentText" style="font-weight: 700; color: #00B5A0;">0%</span>
+            </div>
+            <div class="batch-progress-bar-bg">
+              <div class="batch-progress-bar-fill" id="activeBatchProgressBar"></div>
+            </div>
+          </div>
+
+          <div class="batch-details-grid">
+            <div class="batch-detail-item">
+              <span class="batch-detail-title">Total de Contatos</span>
+              <span class="batch-detail-val" id="activeBatchTotalCount">-</span>
+            </div>
+            <div class="batch-detail-item">
+              <span class="batch-detail-title">Restantes na Fila</span>
+              <span class="batch-detail-val" id="activeBatchRemainingCount" style="color: #FACC15;">-</span>
+            </div>
+            <div class="batch-detail-item">
+              <span class="batch-detail-title">Intervalo Atual</span>
+              <span class="batch-detail-val" id="activeBatchFreqVal">-</span>
+            </div>
+          </div>
+
+          <div class="batch-actions-row">
+            <button type="button" class="btn-batch-action btn-batch-speed" onclick="solicitarAlteracaoRitmo()">
+              <span class="material-symbols-outlined" style="font-size: 16px;">speed</span>
+              <span>Ajustar Ritmo</span>
+            </button>
+            <button type="button" class="btn-batch-action btn-batch-stop" onclick="solicitarCancelamentoLote()">
+              <span class="material-symbols-outlined" style="font-size: 16px;">stop_circle</span>
+              <span>Interromper Disparos</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Painel de Configuração e Envio de Novo Lote -->
+        <div class="batch-config-panel" id="batchFormPanel">
+          <div class="batch-section-title">
+            <span class="material-symbols-outlined">table_chart</span>
+            <span>1. Selecionar Planilha de Contatos</span>
+          </div>
+
+          <div id="batchDropzone" class="csv-dropzone" onclick="document.getElementById('batchFileInput').click()" ondragover="handleBatchDragOver(event)" ondragleave="handleBatchDragLeave(event)" ondrop="handleBatchDrop(event)">
+            <input type="file" id="batchFileInput" accept=".csv,.xlsx,.xls,.txt" style="display:none;" onchange="handleBatchFileSelected(event)">
+            <span class="material-symbols-outlined csv-icon">cloud_upload</span>
+            <div class="csv-dropzone-title">Arraste sua planilha aqui ou <span class="highlight">clique para buscar</span></div>
+            <div class="csv-dropzone-sub">Suporta arquivos CSV e Excel (.xlsx / .xls)</div>
+          </div>
+
+          <!-- Prévia e Estatísticas dos Contatos -->
+          <div id="batchPreviewWrap" style="display:none;">
+            <div class="csv-stats-chips">
+              <div class="csv-chip valid"><span class="material-symbols-outlined" style="font-size:14px;">check_circle</span> <span id="batchValidCount">0</span> Válidos</div>
+              <div class="csv-chip fixed"><span class="material-symbols-outlined" style="font-size:14px;">build</span> <span id="batchFixedCount">0</span> DDD Corrigido</div>
+              <div class="csv-chip invalid"><span class="material-symbols-outlined" style="font-size:14px;">warning</span> <span id="batchInvalidCount">0</span> Inválidos</div>
+            </div>
+
+            <div style="font-size:10px; font-weight:700; color:#8E8FA2; letter-spacing:0.05em; text-transform:uppercase; margin: 8px 0 4px 0;">Prévia dos Contatos Identificados</div>
+            <div class="csv-preview-table-wrap">
+              <table class="csv-preview-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Nome</th>
+                    <th>Telefone</th>
+                    <th>Empresa</th>
+                    <th>E-mail</th>
+                  </tr>
+                </thead>
+                <tbody id="batchPreviewTbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="batch-section-title" style="margin-top: 8px;">
+            <span class="material-symbols-outlined">schedule</span>
+            <span>2. Janela de Horário Permitida</span>
+          </div>
+
+          <div class="time-range-row">
+            <div class="time-field-box">
+              <label for="batchHorarioInicio">Horário de Início</label>
+              <input type="time" id="batchHorarioInicio" value="09:00" class="time-input-field" />
+            </div>
+            <div class="time-field-box">
+              <label for="batchHorarioFim">Horário de Término</label>
+              <input type="time" id="batchHorarioFim" value="19:00" class="time-input-field" />
+            </div>
+          </div>
+          <div style="font-size: 11px; color: #8E8FA2; margin-top: -10px;">
+            <span class="material-symbols-outlined" style="font-size: 13px; vertical-align: middle; color: #00B5A0;">info</span>
+            As ligações só serão realizadas dentro dessa faixa de horário para respeitar os clientes.
+          </div>
+
+          <div class="batch-section-title" style="margin-top: 8px;">
+            <span class="material-symbols-outlined">timer</span>
+            <span>3. Ritmo de Envio (Intervalo entre Ligações)</span>
+          </div>
+
+          <div class="batch-speed-selector">
+            <div class="speed-card-option" id="speedOpt60" onclick="setBatchInterval(60)">
+              <span class="speed-card-title">60 seg</span>
+              <span class="speed-card-sub">Rápido (1/min)</span>
+            </div>
+            <div class="speed-card-option active" id="speedOpt90" onclick="setBatchInterval(90)">
+              <span class="speed-card-title">90 seg</span>
+              <span class="speed-card-sub">Recomendado</span>
+            </div>
+            <div class="speed-card-option" id="speedOpt120" onclick="setBatchInterval(120)">
+              <span class="speed-card-title">120 seg</span>
+              <span class="speed-card-sub">Seguro (2 min)</span>
+            </div>
+          </div>
+          <input type="hidden" id="batchIntervalVal" value="90" />
+
+          <div class="batch-section-title" style="margin-top: 8px;">
+            <span class="material-symbols-outlined">chat</span>
+            <span>4. Objetivo da Ligação da IA</span>
+          </div>
+
+          <div class="field" style="margin-bottom: 0;">
+            <textarea id="batchContexto" placeholder="Ex: Entrar em contato com o responsável para apresentar a solução de inteligência artificial..." style="width: 100%; min-height: 75px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; padding: 10px 12px; font-family: 'Inter', sans-serif; font-size: 13px; resize: vertical;"></textarea>
+          </div>
+
+          <button type="button" class="group-btn-primary" id="btnIniciarDisparoLote" onclick="iniciarDisparoEmLote()" style="margin-top: 10px; background: linear-gradient(135deg, #2E4FFF, #00B5A0); font-weight: 700; height: 46px; font-size: 14px; border-radius: 10px;">
+            <span class="material-symbols-outlined">rocket_launch</span>
+            <span id="btnIniciarDisparoLoteText">Iniciar Disparo em Lote</span>
+          </button>
+        </div>
+
+      </div>
+  
 
       <div class="status">
         <div class="pill" id="pill">
@@ -5366,20 +5784,36 @@
 
     window.switchMode = function(mode) {
       const isQuick = mode === 'quick';
+      const isBatch = mode === 'batch';
+      const isComplete = mode === 'complete';
+
       const mq = document.getElementById('modeQuick');
       const mc = document.getElementById('modeComplete');
+      const mb = document.getElementById('modeBatch');
+
       if (mq) mq.classList.toggle('active', isQuick);
-      if (mc) mc.classList.toggle('active', !isQuick);
+      if (mc) mc.classList.toggle('active', isComplete);
+      if (mb) mb.classList.toggle('active', isBatch);
+
       const qm = document.getElementById('quickMode');
       const cm = document.getElementById('completeMode');
+      const bm = document.getElementById('batchMode');
+
       if (qm) qm.classList.toggle('visible', isQuick);
-      if (cm) cm.classList.toggle('hidden', isQuick);
+      if (cm) cm.classList.toggle('hidden', !isComplete);
+      if (bm) bm.classList.toggle('hidden', !isBatch);
+
       const statusPill = document.querySelector('.status');
-      if (statusPill) statusPill.style.display = isQuick ? 'none' : 'flex';
+      if (statusPill) statusPill.style.display = isComplete ? 'flex' : 'none';
+
+      if (isBatch) {
+        atualizarFilaLotesAtivos();
+      }
     };
 
     // Esconde a pill por padrão no disparo rápido inicial
     window.switchMode('quick');
+    atualizarFilaLotesAtivos(); // Check inicial de lotes ativos
 
     // Inicialização síncrona imediata ao parse do JS
     initCustomSelect('csQuickAgent', DEFAULT_PRESETS, applyQuickPresetSelection, 'agent_f95ee856fb3d220f42171318dc');
@@ -5459,8 +5893,9 @@
     const modeCards = document.querySelectorAll('.mode-card');
     modeCards.forEach(card => {
       card.addEventListener('click', function () {
-        const isQuick = this.id === 'modeQuick';
-        window.switchMode(isQuick ? 'quick' : 'complete');
+        if (this.id === 'modeQuick') window.switchMode('quick');
+        else if (this.id === 'modeBatch') window.switchMode('batch');
+        else window.switchMode('complete');
       });
     });
 
