@@ -177,19 +177,26 @@ function initFilters() {
         if (state.filters.startDate && state.filters.endDate) {
             const s = state.filters.startDate.split('-').reverse().join('/');
             const e = state.filters.endDate.split('-').reverse().join('/');
-            text.textContent = s + ' — ' + e;
+            text.textContent = (s === e) ? s : (s + ' — ' + e);
             text.classList.add('active');
-        } else { text.textContent = 'Período'; text.classList.remove('active'); }
+        } else if (state.filters.startDate) {
+            const s = state.filters.startDate.split('-').reverse().join('/');
+            text.textContent = s;
+            text.classList.add('active');
+        } else {
+            text.textContent = 'Período';
+            text.classList.remove('active');
+        }
     }
 
     function updateFields() {
         startDisplay.textContent = fmtBr(selStart);
         startDisplay.classList.toggle('hint', !selStart);
-        endDisplay.textContent = fmtBr(selEnd);
-        endDisplay.classList.toggle('hint', !selEnd);
+        endDisplay.textContent = fmtBr(selEnd || selStart);
+        endDisplay.classList.toggle('hint', !selEnd && !selStart);
         startDisplay.closest('.period-field').classList.toggle('highlight', !!selStart && !selEnd);
-        endDisplay.closest('.period-field').classList.toggle('highlight', !!selEnd);
-        applyBtn.disabled = !selStart || !selEnd;
+        endDisplay.closest('.period-field').classList.toggle('highlight', !!selEnd || (!!selStart && !selEnd));
+        applyBtn.disabled = !selStart;
     }
 
     function renderCalendar() {
@@ -205,15 +212,16 @@ function initFilters() {
 
         for (let d = 1; d <= daysInMonth; d++) {
             const date = new Date(year, month, d);
-            const isPast = date < todayNorm;
+            const isFuture = date > todayNorm;
             const isToday = sameDay(date, today);
             const isStart = sameDay(date, selStart);
             const isEnd = sameDay(date, selEnd);
             const inRange = selStart && selEnd && date >= selStart && date <= selEnd;
             let cls = 'period-cal-day';
-            if (isPast) cls += ' past';
+            if (isFuture) cls += ' future';
             if (isToday) cls += ' today';
             if (isStart && isEnd && sameDay(selStart, selEnd)) cls += ' selected';
+            else if (isStart && !selEnd) cls += ' selected';
             else if (isStart) cls += ' range-start';
             else if (isEnd) cls += ' range-end';
             else if (inRange) cls += ' in-range';
@@ -221,20 +229,24 @@ function initFilters() {
         }
         calGrid.innerHTML = html;
 
-        calGrid.querySelectorAll('.period-cal-day:not(.empty):not(.past)').forEach(el => {
+        calGrid.querySelectorAll('.period-cal-day:not(.empty):not(.future)').forEach(el => {
             el.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const [y, m, day] = el.dataset.date.split('-').map(Number);
                 const clicked = new Date(y, m - 1, day);
 
-                // Se clicou no mesmo que já tá selecionado como início, desmarca
-                if (sameDay(clicked, selStart) && !selEnd) { selStart = null; updateFields(); renderCalendar(); return; }
-
                 if (!selStart || (selStart && selEnd)) {
-                    selStart = clicked; selEnd = null;
+                    selStart = clicked;
+                    selEnd = null;
                 } else {
-                    if (clicked < selStart) { selEnd = selStart; selStart = clicked; }
-                    else { selEnd = clicked; }
+                    if (sameDay(clicked, selStart)) {
+                        selEnd = clicked;
+                    } else if (clicked < selStart) {
+                        selEnd = selStart;
+                        selStart = clicked;
+                    } else {
+                        selEnd = clicked;
+                    }
                 }
                 updateFields();
                 renderCalendar();
@@ -245,36 +257,57 @@ function initFilters() {
     // Apply
     applyBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (!selStart || !selEnd) return;
+        if (!selStart) return;
+        const finalEnd = selEnd || selStart;
         state.filters.startDate = toStr(selStart);
-        state.filters.endDate = toStr(selEnd);
+        state.filters.endDate = toStr(finalEnd);
         updateToggle();
-        panel.classList.remove('open'); toggle.classList.remove('open');
+        panel.classList.remove('open');
+        toggle.classList.remove('open');
         refreshDashboard();
     });
 
     // Clear (dentro do painel)
-    clearPeriodBtn.addEventListener('click', (e) => { e.stopPropagation(); selStart = null; selEnd = null; updateFields(); renderCalendar(); });
+    clearPeriodBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selStart = null;
+        selEnd = null;
+        updateFields();
+        renderCalendar();
+    });
 
-    document.getElementById('periodCalPrev').addEventListener('click', (e) => { e.stopPropagation(); calDate.setMonth(calDate.getMonth() - 1); renderCalendar(); });
-    document.getElementById('periodCalNext').addEventListener('click', (e) => { e.stopPropagation(); calDate.setMonth(calDate.getMonth() + 1); renderCalendar(); });
+    document.getElementById('periodCalPrev').addEventListener('click', (e) => {
+        e.stopPropagation();
+        calDate.setMonth(calDate.getMonth() - 1);
+        renderCalendar();
+    });
+    document.getElementById('periodCalNext').addEventListener('click', (e) => {
+        e.stopPropagation();
+        calDate.setMonth(calDate.getMonth() + 1);
+        renderCalendar();
+    });
 
     toggle.addEventListener('click', () => {
-        console.log('[Period] toggle click');
-        if (!panel) { console.error('[Period] panel is null'); return; }
+        if (!panel) return;
         const willOpen = !panel.classList.contains('open');
         panel.classList.toggle('open');
         toggle.classList.toggle('open');
         if (willOpen) {
-            console.log('[Period] opening panel');
             const sd = state.filters.startDate ? new Date(state.filters.startDate + 'T12:00:00') : null;
             const ed = state.filters.endDate ? new Date(state.filters.endDate + 'T12:00:00') : null;
-            selStart = sd; selEnd = ed;
-            try { updateFields(); renderCalendar(); } catch (e) { console.error('[Period] render error:', e); }
+            selStart = sd;
+            selEnd = ed;
+            if (sd) {
+                calDate = new Date(sd.getFullYear(), sd.getMonth(), 1);
+            }
+            try { updateFields(); renderCalendar(); } catch (err) { console.error('[Period] render error:', err); }
         }
     });
     document.addEventListener('click', (e) => {
-        if (!toggle.contains(e.target) && !panel.contains(e.target)) { panel.classList.remove('open'); toggle.classList.remove('open'); }
+        if (!toggle.contains(e.target) && !panel.contains(e.target)) {
+            panel.classList.remove('open');
+            toggle.classList.remove('open');
+        }
     });
 
     // Presets
@@ -282,20 +315,61 @@ function initFilters() {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
             const now = new Date();
+            const todayNorm = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             let d1, d2;
-            if (btn.dataset.range === 'today') { d1 = now; d2 = now; }
-            else if (btn.dataset.range === '7d') { d1 = new Date(); d1.setDate(now.getDate() - 6); d2 = now; }
-            else if (btn.dataset.range === '30d') { d1 = new Date(); d1.setDate(now.getDate() - 29); d2 = now; }
-            else if (btn.dataset.range === 'all') {
-                state.filters.startDate = ''; state.filters.endDate = '';
-                selStart = null; selEnd = null; updateToggle();
-                panel.classList.remove('open'); toggle.classList.remove('open');
-                refreshDashboard(); return;
+            const r = btn.dataset.range;
+
+            if (r === 'today') {
+                d1 = todayNorm;
+                d2 = todayNorm;
+            } else if (r === 'yesterday') {
+                d1 = new Date(todayNorm);
+                d1.setDate(d1.getDate() - 1);
+                d2 = new Date(d1);
+            } else if (r === '7d') {
+                d1 = new Date(todayNorm);
+                d1.setDate(d1.getDate() - 6);
+                d2 = todayNorm;
+            } else if (r === '30d') {
+                d1 = new Date(todayNorm);
+                d1.setDate(d1.getDate() - 29);
+                d2 = todayNorm;
+            } else if (r === 'this_week') {
+                d1 = new Date(todayNorm);
+                const day = d1.getDay();
+                const diff = (day === 0 ? -6 : 1) - day;
+                d1.setDate(d1.getDate() + diff);
+                d2 = todayNorm;
+            } else if (r === 'last_week') {
+                d1 = new Date(todayNorm);
+                const day = d1.getDay();
+                const diff = (day === 0 ? -6 : 1) - day - 7;
+                d1.setDate(d1.getDate() + diff);
+                d2 = new Date(d1);
+                d2.setDate(d2.getDate() + 6);
+            } else if (r === 'last_month') {
+                d1 = new Date(todayNorm.getFullYear(), todayNorm.getMonth() - 1, 1);
+                d2 = new Date(todayNorm.getFullYear(), todayNorm.getMonth(), 0);
+            } else if (r === 'all') {
+                state.filters.startDate = '';
+                state.filters.endDate = '';
+                selStart = null;
+                selEnd = null;
+                updateToggle();
+                panel.classList.remove('open');
+                toggle.classList.remove('open');
+                refreshDashboard();
+                return;
             }
-            selStart = d1; selEnd = d2;
-            state.filters.startDate = toStr(d1); state.filters.endDate = toStr(d2);
+
+            selStart = d1;
+            selEnd = d2;
+            calDate = new Date(d1.getFullYear(), d1.getMonth(), 1);
+            state.filters.startDate = toStr(d1);
+            state.filters.endDate = toStr(d2);
             updateToggle();
-            panel.classList.remove('open'); toggle.classList.remove('open');
+            panel.classList.remove('open');
+            toggle.classList.remove('open');
             refreshDashboard();
         });
     });
