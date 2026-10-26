@@ -28,8 +28,9 @@ const ExcelJS = require('exceljs');
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) {
-  console.error('[FATAL] Variáveis SUPABASE_URL e SUPABASE_KEY são obrigatórias.');
-  process.exit(1);
+  console.warn('[AVISO] SUPABASE_URL ou SUPABASE_KEY não informados via env. Utilizando credenciais padrão do projeto.');
+  process.env.SUPABASE_URL = process.env.SUPABASE_URL || 'https://ghayhpwthdbmnpsptcnb.supabase.co';
+  process.env.SUPABASE_KEY = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdoYXlocHd0aGRibW5wc3B0Y25iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3MTI3MTMsImV4cCI6MjA2MjI4ODcxM30.S2eyQXNn222n7eHMAXIzfAub8dBiWYlOSyXGFo1LIpA';
 }
 
 if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.includes('troque-isso')) {
