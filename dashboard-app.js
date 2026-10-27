@@ -1237,7 +1237,11 @@ async function executeExport(format) {
 
     if (triggerBtn) {
         triggerBtn.disabled = true;
-        if (labelEl) labelEl.textContent = format === 'pdf' ? 'Gerando PDF...' : 'Gerando CSV...';
+        if (labelEl) {
+            if (format === 'pdf') labelEl.textContent = 'Gerando PDF...';
+            else if (format === 'excel') labelEl.textContent = 'Gerando Excel...';
+            else labelEl.textContent = 'Gerando CSV...';
+        }
     }
 
     try {
@@ -1261,7 +1265,7 @@ async function executeExport(format) {
             periodText = `A partir de ${filters.startDate.split('-').reverse().join('/')}`;
         }
 
-        if (format === 'csv' || format === 'excel') {
+        if (format === 'excel') {
             const params = new URLSearchParams();
             if (isWhatsApp) params.append('tab', 'whatsapp');
             if (filters.agent) params.append('agent', filters.agent);
@@ -1274,6 +1278,19 @@ async function executeExport(format) {
                 params.append('endDate', filters.endDate);
             }
             window.location.href = `/api/export-excel?${params.toString()}`;
+        } else if (format === 'csv') {
+            const params = new URLSearchParams();
+            if (isWhatsApp) params.append('tab', 'whatsapp');
+            if (filters.agent) params.append('agent', filters.agent);
+            if (filters.startDate) {
+                params.append('start_date', filters.startDate);
+                params.append('startDate', filters.startDate);
+            }
+            if (filters.endDate) {
+                params.append('end_date', filters.endDate);
+                params.append('endDate', filters.endDate);
+            }
+            window.location.href = `/api/export-csv?${params.toString()}`;
         } else if (format === 'pdf') {
             await exportPdfReport(isWhatsApp, filters, periodText);
         }

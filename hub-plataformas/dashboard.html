@@ -623,11 +623,18 @@
             </button>
             <div class="export-menu-dropdown" id="exportMenuDropdown">
               <div class="export-menu-header">OPÇÕES DE EXPORTAÇÃO</div>
-              <button type="button" class="export-option-item" onclick="executeExport('csv')">
+              <button type="button" class="export-option-item" onclick="executeExport('excel')">
                 <div class="export-opt-icon csv"><span class="material-symbols-outlined">table_view</span></div>
                 <div class="export-opt-text">
-                  <span class="opt-title">Planilha Excel / CSV</span>
-                  <span class="opt-desc">Dados estruturados compatíveis com Excel e Sheets</span>
+                  <span class="opt-title">Planilha Executiva Excel (.xlsx)</span>
+                  <span class="opt-desc">Painel de KPIs, motivos em português e base detalhada</span>
+                </div>
+              </button>
+              <button type="button" class="export-option-item" onclick="executeExport('csv')">
+                <div class="export-opt-icon csv"><span class="material-symbols-outlined">description</span></div>
+                <div class="export-opt-text">
+                  <span class="opt-title">Arquivo Tabular CSV (.csv)</span>
+                  <span class="opt-desc">Base estruturada para CRM, Google Sheets e BI</span>
                 </div>
               </button>
               <button type="button" class="export-option-item" onclick="executeExport('pdf')">
