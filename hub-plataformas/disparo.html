@@ -4415,6 +4415,19 @@
 
         const data = await res.json();
         if (res.ok && data.success) {
+          if (Array.isArray(validLeads)) {
+            validLeads.forEach(lead => {
+              addDispatchToHistory({
+                execution_id: 'batch_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+                nome: lead.nome || 'Contato',
+                telefone: lead.telefone || '',
+                contexto: contexto || 'Disparo em lote',
+                agent_name: 'Disparo em Lote',
+                status: 'scheduled',
+                created_at: new Date().toISOString()
+              });
+            });
+          }
           alert(`🚀 Sucesso! ${data.total_leads} ligações foram enviadas para a fila com sucesso!`);
           closeGroupManagerModal();
           window.switchMode('batch');
@@ -5015,7 +5028,7 @@
         <div class="user-history-list" id="userHistoryList">
           <div class="user-history-empty">
             <span class="material-symbols-outlined" style="font-size:32px; color:rgba(255,255,255,0.2);">phone_disabled</span>
-            <p style="margin-top:8px; font-size:13px; color:#8E8FA2;">Nenhum disparo realizado nesta sessão.</p>
+            <p style="margin-top:8px; font-size:13px; color:#8E8FA2;">Nenhum disparo realizado por você nesta conta.</p>
           </div>
         </div>
       </div>
@@ -6648,7 +6661,7 @@
     // ── Gestão do Histórico de Disparos do Usuário (Isolado por Usuário & Cliente) ──
     function getUserHistoryStorageKey() {
       const user = window.currentUserSession;
-      const email = (user && user.email) ? user.email.replace(/[^a-zA-Z0-9_]/g, '_') : 'guest';
+      const email = (user && user.email) ? user.email.toLowerCase().replace(/[^a-z0-9_]/g, '_') : 'guest';
       const clientId = (user && user.active_client) ? user.active_client : 'default';
       return `mindflow_user_dispatch_history_${email}_${clientId}`;
     }
@@ -6657,7 +6670,26 @@
       try {
         const key = getUserHistoryStorageKey();
         const raw = localStorage.getItem(key);
-        return raw ? JSON.parse(raw) : [];
+        if (!raw) return [];
+        const list = JSON.parse(raw);
+        if (!Array.isArray(list)) return [];
+
+        // Filtro estrito: apenas disparos que o próprio usuário realizou no Hub
+        // Descarta qualquer chamada de terceiros injetada indevidamente no passado
+        const userOnly = list.filter(item => {
+          if (!item) return false;
+          if (item.initiated_by_user === true) return true;
+          if (item.execution_id && (String(item.execution_id).startsWith('temp_') || String(item.execution_id).startsWith('batch_') || String(item.execution_id).includes('-'))) {
+            return true;
+          }
+          return false;
+        });
+
+        // Limpa chamadas de terceiros do localStorage imediatamente
+        if (userOnly.length !== list.length) {
+          saveUserLocalHistory(userOnly);
+        }
+        return userOnly;
       } catch (e) {
         return [];
       }
@@ -6673,10 +6705,16 @@
     function addDispatchToHistory(item) {
       const list = getUserLocalHistory();
       const existingIdx = list.findIndex(x => (x.execution_id && item.execution_id && x.execution_id === item.execution_id) || (x.id && item.id && x.id === item.id));
+      const userEmail = (window.currentUserSession && window.currentUserSession.email) || '';
+      const newItem = {
+        ...item,
+        initiated_by_user: true,
+        user_email: userEmail
+      };
       if (existingIdx >= 0) {
-        list[existingIdx] = { ...list[existingIdx], ...item };
+        list[existingIdx] = { ...list[existingIdx], ...newItem };
       } else {
-        list.unshift(item);
+        list.unshift(newItem);
       }
       saveUserLocalHistory(list);
       renderUserDispatchHistoryList(list);
@@ -7118,48 +7156,61 @@
       const local = getUserLocalHistory();
       renderUserDispatchHistoryList(local);
 
+      // Se o usuário logado não realizou nenhum disparo pelo hub nesta conta, NÃO busca chamadas da empresa!
+      if (!local || local.length === 0) {
+        return;
+      }
+
+      // Se o usuário TEM disparos próprios no histórico local, consulta o servidor
+      // ESTRITAMENTE para atualizar o status (atendida/encerrada, duração, gravação de áudio) DAS LIGAÇÕES DELE!
       try {
-        const res = await fetch('/api/calls?limit=20');
+        const res = await fetch('/api/calls?limit=50');
         if (res.ok) {
           const data = await res.json();
           const serverCalls = data.calls || data.data || [];
-          if (Array.isArray(serverCalls)) {
-            if (serverCalls.length === 0) {
-              // Se o cliente ativo não possui chamadas no servidor, limpa o histórico renderizado
-              saveUserLocalHistory([]);
-              renderUserDispatchHistoryList([]);
-              return;
-            }
+          if (Array.isArray(serverCalls) && serverCalls.length > 0) {
+            let hasChanges = false;
+            const updatedList = local.map(userItem => {
+              // Procura se a ligação que ESTE USUÁRIO fez já tem retorno no servidor
+              const match = serverCalls.find(sc => {
+                if (userItem.call_id && sc.call_id === userItem.call_id) return true;
+                if (userItem.id && sc.id === userItem.id) return true;
+                if (userItem.execution_id && sc.call_id === userItem.execution_id) return true;
+                if (userItem.telefone && sc.Numero) {
+                  const uTel = userItem.telefone.replace(/\D/g, '').slice(-8);
+                  const sTel = sc.Numero.replace(/\D/g, '').slice(-8);
+                  if (uTel && sTel && uTel === sTel) {
+                    const uTime = new Date(userItem.created_at || 0).getTime();
+                    const sTime = new Date(sc.created_at || 0).getTime();
+                    if (Math.abs(uTime - sTime) < 3600000) return true;
+                  }
+                }
+                return false;
+              });
 
-            const mergedMap = new Map();
-            local.forEach(item => {
-              const key = item.execution_id || item.id || item.call_id;
-              if (key) mergedMap.set(key, item);
-            });
-            serverCalls.forEach(item => {
-              const key = item.call_id || item.id;
-              if (key) {
-                mergedMap.set(key, {
-                  id: item.id,
-                  call_id: item.call_id,
-                  nome: item.Nome,
-                  telefone: item.Numero || item.to_number,
-                  status: item.status || 'completed',
-                  duration: item.Duracao,
-                  recording_url: item.recording_url,
-                  disconnection_reason: item.disconnection_reason,
-                  created_at: item.created_at,
-                  agent_name: item.agent_name
-                });
+              if (match) {
+                hasChanges = true;
+                return {
+                  ...userItem,
+                  call_id: match.call_id || userItem.call_id,
+                  id: match.id || userItem.id,
+                  status: match.status || userItem.status || 'completed',
+                  duration: match.Duracao || userItem.duration,
+                  recording_url: match.recording_url || userItem.recording_url,
+                  disconnection_reason: match.disconnection_reason || userItem.disconnection_reason
+                };
               }
+              return userItem;
             });
-            const mergedList = Array.from(mergedMap.values());
-            saveUserLocalHistory(mergedList);
-            renderUserDispatchHistoryList(mergedList);
+
+            if (hasChanges) {
+              saveUserLocalHistory(updatedList);
+              renderUserDispatchHistoryList(updatedList);
+            }
           }
         }
       } catch (e) {
-        console.error('Erro ao buscar histórico do servidor:', e);
+        console.warn('Erro ao sincronizar status dos disparos do usuário:', e);
       }
     }
 
