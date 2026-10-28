@@ -2087,10 +2087,10 @@ async function fetchExportDataset(req) {
     throw error;
   }
 
-  const clientId = req.session.user.active_client || '2';
+  const clientId = String(req.session.user.active_client || '2');
   let clientName = 'MINDFLOW';
   if (req.session.user.client_access && Array.isArray(req.session.user.client_access)) {
-    const acc = req.session.user.client_access.find(c => String(c.client_id) === String(clientId));
+    const acc = req.session.user.client_access.find(c => String(c.client_id) === clientId);
     if (acc && acc.client_name) clientName = acc.client_name;
   }
 
@@ -2113,25 +2113,8 @@ async function fetchExportDataset(req) {
   const safeLimit = isFiltered ? 5000 : 2500;
   let items = [];
 
-  const endpointPath = isWhatsApp ? '/whatsapp/chats' : '/calls';
-  const qs = new URLSearchParams(req.query).toString();
-
-  // 1. Tenta buscar do hub_backend analítico (FastAPI)
-  try {
-    const response = await fetch(`${DASHBOARD_API_URL}${endpointPath}?page=1&limit=${safeLimit}${qs ? '&' + qs : ''}`, {
-      headers: { 'X-Client-ID': String(clientId) },
-      signal: AbortSignal.timeout(15000),
-    });
-    if (response.ok) {
-      const result = await response.json();
-      items = result.data || result.calls || result.chats || (Array.isArray(result) ? result : []);
-    }
-  } catch (errBackend) {
-    console.warn(`[Export Engine] hub_backend indisponível (${errBackend.message}), acionando Supabase do cliente...`);
-  }
-
-  // 2. Fallback Supabase isolado por cliente
-  if (!items.length && !isWhatsApp) {
+  // 1. Chamadas telefônicas: Supabase direto do cliente (fonte primária com gravações e transcrições completas)
+  if (!isWhatsApp) {
     try {
       const clientDb = getActiveClientDb(req);
       const cols = 'id, created_at, Nome, Numero, status, call_id, agent_id, agent_name, transcript, recording_url, disconnection_reason, from_number, to_number, Duracao, Marcada, call_summary';
@@ -2141,15 +2124,45 @@ async function fetchExportDataset(req) {
         .order('id', { ascending: false })
         .limit(safeLimit);
 
-      if (startDate) query = query.gte('created_at', startDate);
-      if (endDate) query = query.lte('created_at', endDate + (endDate.includes('T') ? '' : 'T23:59:59'));
-      if (agent && agent !== 'all' && agent !== 'Todos os Agentes') query = query.eq('agent_id', agent);
+      if (startDate) query = query.gte('created_at', startDate.includes('T') ? startDate : startDate + 'T00:00:00');
+      if (endDate) query = query.lte('created_at', endDate.includes('T') ? endDate : endDate + 'T23:59:59');
+      if (agent && agent !== 'all' && agent !== 'Todos os Agentes') {
+        query = query.or(`agent_id.eq.${agent},agent_name.ilike.%${agent}%`);
+      }
 
       const { data, error } = await query;
-      if (error) console.error('[Export Supabase Error]:', error);
+      if (error) console.error('[Export Supabase Error]:', error.message);
       if (data && data.length) items = data;
     } catch (e) {
-      console.error('[Export Supabase Catch]:', e);
+      console.error('[Export Supabase Catch]:', e.message);
+    }
+  }
+
+  // 2. WhatsApp ou fallback de chamadas: consulta o hub_backend analítico usando getBackendUrl dinâmico
+  if (!items.length) {
+    try {
+      const baseUrl = await getBackendUrl();
+      const endpointPath = isWhatsApp ? '/whatsapp/chats' : '/calls';
+
+      // Parâmetros compatíveis com FastAPI (le=100 por página)
+      const apiParams = new URLSearchParams();
+      apiParams.set('page', '1');
+      apiParams.set('limit', '100');
+      if (startDate) apiParams.set('start_date', startDate);
+      if (endDate) apiParams.set('end_date', endDate);
+      if (agent && agent !== 'all' && agent !== 'Todos os Agentes') apiParams.set('agent', agent);
+
+      const response = await fetch(`${baseUrl}${endpointPath}?${apiParams.toString()}`, {
+        headers: { 'X-Client-ID': clientId },
+        signal: AbortSignal.timeout(10000),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        items = result.data || result.calls || result.chats || (Array.isArray(result) ? result : []);
+      }
+    } catch (errBackend) {
+      console.warn(`[Export Engine] hub_backend fallback falhou (${errBackend.message})`);
     }
   }
 
@@ -2168,10 +2181,7 @@ app.get('/api/export-excel', async (req, res) => {
   try {
     const { items, isWhatsApp, clientName, periodText, isLimited, agentFilterText } = await fetchExportDataset(req);
 
-    if (!items.length) {
-      return res.status(404).send('Nenhum registro encontrado para o período ou filtros selecionados.');
-    }
-
+    // Gera o documento Excel oficial perfeitamente estruturado mesmo para períodos com 0 chamadas
     const buffer = await generateMindFlowExcelBuffer(items, isWhatsApp, clientName, periodText, isLimited, agentFilterText);
 
     const clientSlug = clientName.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') || 'mindflow';
@@ -2192,10 +2202,6 @@ app.get('/api/export-excel', async (req, res) => {
 app.get('/api/export-csv', async (req, res) => {
   try {
     const { items, isWhatsApp, clientName, periodText, isLimited, agentFilterText } = await fetchExportDataset(req);
-
-    if (!items.length) {
-      return res.status(404).send('Nenhum registro encontrado para o período ou filtros selecionados.');
-    }
 
     const buffer = generateMindFlowCsvBuffer(items, isWhatsApp, clientName, periodText, isLimited, agentFilterText);
 

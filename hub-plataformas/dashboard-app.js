@@ -1265,7 +1265,7 @@ async function executeExport(format) {
             periodText = `A partir de ${filters.startDate.split('-').reverse().join('/')}`;
         }
 
-        if (format === 'excel') {
+        if (format === 'excel' || format === 'csv') {
             const params = new URLSearchParams();
             if (isWhatsApp) params.append('tab', 'whatsapp');
             if (filters.agent) params.append('agent', filters.agent);
@@ -1277,20 +1277,18 @@ async function executeExport(format) {
                 params.append('end_date', filters.endDate);
                 params.append('endDate', filters.endDate);
             }
-            window.location.href = `/api/export-excel?${params.toString()}`;
-        } else if (format === 'csv') {
-            const params = new URLSearchParams();
-            if (isWhatsApp) params.append('tab', 'whatsapp');
-            if (filters.agent) params.append('agent', filters.agent);
-            if (filters.startDate) {
-                params.append('start_date', filters.startDate);
-                params.append('startDate', filters.startDate);
-            }
-            if (filters.endDate) {
-                params.append('end_date', filters.endDate);
-                params.append('endDate', filters.endDate);
-            }
-            window.location.href = `/api/export-csv?${params.toString()}`;
+            const endpoint = format === 'excel' ? '/api/export-excel' : '/api/export-csv';
+            const downloadUrl = `${endpoint}?${params.toString()}`;
+
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = downloadUrl;
+            a.setAttribute('download', '');
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                try { document.body.removeChild(a); } catch (_) {}
+            }, 1500);
         } else if (format === 'pdf') {
             await exportPdfReport(isWhatsApp, filters, periodText);
         }
