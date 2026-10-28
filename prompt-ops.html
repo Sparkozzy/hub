@@ -1473,7 +1473,36 @@ select.field {
           `;
         }
 
+        const proposals = r.action_proposals || [];
+        if (proposals.length > 0) {
+          metaHtml += `
+            <div class="action-proposals-wrap" style="margin-top:10px;display:flex;flex-direction:column;gap:6px">
+              <span class="eyebrow" style="font-size:10px;color:var(--teal);letter-spacing:0.06em">Ações Recomendadas (1 Clique):</span>
+              <div style="display:flex;flex-wrap:wrap;gap:6px">
+                ${proposals.map((p, pIdx) => `
+                  <button type="button" class="mf-btn mf-btn-primary btn-copilot-action" data-idx="${pIdx}" style="padding:6px 12px;font-size:12px;box-shadow:none;background:linear-gradient(135deg,rgba(46,79,255,0.8),rgba(0,181,160,0.8))">
+                    ${esc(p.label)}
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        }
+
         const msgEl = addCopilotMsg('assistant', r.explanation || 'Pronto!', metaHtml);
+        
+        // Ativa handlers de clique para os botões de ação recomendada (Pills de Decisão)
+        if (proposals.length > 0) {
+          msgEl.querySelectorAll('.btn-copilot-action').forEach(btn => {
+            btn.onclick = () => {
+              const idx = parseInt(btn.dataset.idx, 10);
+              const p = proposals[idx];
+              if (!p) return;
+              $('genInstruction').value = p.instruction || p.label;
+              sendCopilot();
+            };
+          });
+        }
         if (modified) {
           const undoBtn = msgEl.querySelector('.btn-undo-prompt');
           if (undoBtn) {
