@@ -394,6 +394,29 @@ select.field {
     .case .q { font-family: 'Space Grotesk', sans-serif; font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
     .case .ok { color: var(--teal); } .case .no { color: #F87171; }
     .case .judge { color: var(--muted); }
+    .case-history-box {
+      margin: 8px 0; padding: 10px 12px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px; display: flex; flex-direction: column; gap: 6px;
+    }
+    .history-turn {
+      display: flex; gap: 8px; font-size: 12px; line-height: 1.45;
+    }
+    .history-turn .ht-role {
+      font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 10px; text-transform: uppercase;
+      padding: 2px 6px; border-radius: 5px; height: fit-content; white-space: nowrap;
+    }
+    .history-turn.user .ht-role { background: rgba(46, 79, 255, 0.2); color: #93C5FD; border: 1px solid rgba(46, 79, 255, 0.4); }
+    .history-turn.assistant .ht-role { background: rgba(0, 181, 160, 0.2); color: #5EEAD4; border: 1px solid rgba(0, 181, 160, 0.4); }
+    .history-turn .ht-content { color: #CBD5E1; word-break: break-word; }
+    .history-turn .ht-tool { color: #FBBF24; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+    .current-user-msg-wrap {
+      display: flex; align-items: flex-start; gap: 8px; background: rgba(46, 79, 255, 0.08);
+      border: 1px solid rgba(46, 79, 255, 0.25); border-radius: 8px; padding: 8px 10px; margin: 6px 0;
+    }
+    .current-user-msg-wrap .curr-tag {
+      font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 700; text-transform: uppercase;
+      background: var(--blue); color: #fff; padding: 2px 6px; border-radius: 4px; white-space: nowrap; margin-top: 1px;
+    }
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     @media (max-width: 700px) { .grid2 { grid-template-columns: 1fr; } }
     .label { display: block; margin-bottom: 6px; }
@@ -758,15 +781,43 @@ select.field {
 
   <!-- Modal: novo/editar caso -->
   <div class="modal-bg" id="caseModal">
-    <div class="glass modal">
-      <h3 class="sec" style="margin-bottom:14px" id="cModalTitle">Novo caso de teste</h3>
+    <div class="glass modal" style="max-width:640px;width:95%">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <h3 class="sec" style="margin:0" id="cModalTitle">Novo caso de teste</h3>
+        <button type="button" class="mf-btn mf-btn-secondary" id="cCancelX" style="padding:4px 8px;font-size:12px;height:28px">✕</button>
+      </div>
       <input type="hidden" id="cEditId" value="" />
-      <span class="eyebrow label">Cenário</span>
-      <input id="cName" class="field" placeholder="Ex.: Lead diz que está caro" style="margin-bottom:12px" />
-      <span class="eyebrow label">Mensagem do usuário</span>
-      <textarea id="cMsg" class="field" style="height:80px;margin-bottom:12px" placeholder="O que o lead diz..."></textarea>
-      <span class="eyebrow label">Critério de aprovação (rubrica)</span>
-      <textarea id="cRubric" class="field" style="height:90px;margin-bottom:16px" placeholder="O que a resposta DEVE (ou NÃO PODE) fazer..."></textarea>
+      
+      <div style="margin-bottom:12px">
+        <span class="eyebrow label">Nome do Cenário</span>
+        <input id="cName" class="field" placeholder="Ex.: REF-04: Desambiguação de condomínio em múltiplos cadastros" />
+      </div>
+
+      <!-- Memória Prévia da Conversa (Multi-turn) -->
+      <div style="margin-bottom:12px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <span class="eyebrow label" style="margin:0;display:flex;align-items:center;gap:6px">
+            <span class="material-symbols-outlined" style="font-size:16px;color:var(--teal)">history</span>
+            Memória Recente da Conversa (Contexto Prévio / Multi-Turn)
+          </span>
+          <span class="pill draft" style="font-size:9px">Opcional</span>
+        </div>
+        <p style="font-size:11px;color:var(--muted);margin:0 0 8px 0;line-height:1.4">
+          Insira as mensagens anteriores da conversa para testar turnos intermediários (ex: <i>Usuário: Olá | Assistente: Qual seu e-mail?</i>). Aceita formato de texto linha-a-linha ou JSON array.
+        </p>
+        <textarea id="cHistory" class="field" style="height:90px;font-family:'JetBrains Mono', monospace;font-size:11px" placeholder="[USER]: Olá, boa tarde&#10;[ASSISTANT]: Olá! Poderia me confirmar seu e-mail?&#10;[USER]: igor@gmail.com&#10;[ASSISTANT]: Localizei mais de um condomínio: 1 | PW56, 2 | Kravi"></textarea>
+      </div>
+
+      <div style="margin-bottom:12px">
+        <span class="eyebrow label">Mensagem Atual do Usuário / Lead (Turno a ser avaliado) *</span>
+        <textarea id="cMsg" class="field" style="height:70px" placeholder="Mensagem enviada no turno atual (ex: 1 ou Quero agendar a churrasqueira)..."></textarea>
+      </div>
+
+      <div style="margin-bottom:16px">
+        <span class="eyebrow label">Critério de Aprovação (Rubrica do LLM Juiz) *</span>
+        <textarea id="cRubric" class="field" style="height:85px" placeholder="O que a resposta DEVE fazer, se deve acionar tool específica ou se é proibido acionar tools (anti-caso)..."></textarea>
+      </div>
+
       <div style="display:flex;justify-content:flex-end;gap:10px">
         <button class="mf-btn mf-btn-secondary" id="cCancel">Cancelar</button>
         <button class="mf-btn mf-btn-primary" id="cSave">Salvar caso</button>
@@ -1480,32 +1531,111 @@ select.field {
       $('btnPublish').disabled = !(ok && !isProd && v.status !== 'published');
     }
 
+    function formatChatHistoryToText(history) {
+      if (!Array.isArray(history) || !history.length) return '';
+      return history.map(h => {
+        const role = (h.role || 'user').toUpperCase();
+        const content = h.content || '';
+        const toolCalls = h.tool_calls ? ' [TOOLS: ' + h.tool_calls.map(tc => tc.function?.name || tc.name).join(', ') + ']' : '';
+        return `[${role}]: ${content}${toolCalls}`.trim();
+      }).join('\n');
+    }
+
+    function parseTextToChatHistory(text) {
+      if (!text || !text.trim()) return [];
+      const trimmed = text.trim();
+      if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) return parsed;
+        } catch { }
+      }
+      const lines = trimmed.split('\n');
+      const history = [];
+      lines.forEach(line => {
+        const l = line.trim();
+        if (!l) return;
+        const match = l.match(/^\[(USER|ASSISTANT|SYSTEM)\]:\s*(.*)$/i);
+        if (match) {
+          history.push({
+            role: match[1].toLowerCase(),
+            content: match[2].trim()
+          });
+        } else {
+          // Se não tiver prefixo explícito, atribui ao último turno ou assume user
+          if (history.length) {
+            history[history.length - 1].content += '\n' + l;
+          } else {
+            history.push({ role: 'user', content: l });
+          }
+        }
+      });
+      return history;
+    }
+
     async function loadCases() {
       if (!state.prod) return;
       try {
         const cases = await api(`/evals/datasets?prompt_id=${state.prod.id}&channel=${state.currentChannel}`);
         state.loadedCases = cases;
-        $('caseList').innerHTML = cases.length ? cases.map(c => `
-          <div class="case" data-id="${c.id}">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px">
-              <div class="q" style="margin-bottom:0;flex-wrap:wrap">
-                <span class="material-symbols-outlined" style="font-size:18px;color:var(--blue2)">quiz</span>
-                ${esc(c.scenario_name)}
-                ${c.is_refutation_case ? '<span class="pill prod" style="font-size:10px;padding:2px 7px" title="Caso Adversarial de Refutação Popperiana">🧪 Refutação Popperiana</span>' : ''}
+        $('caseList').innerHTML = cases.length ? cases.map(c => {
+          const hist = c.input_data?.chat_history || [];
+          const hasHist = Array.isArray(hist) && hist.length > 0;
+          const userMsg = c.input_data?.user_message || '';
+          
+          let histHtml = '';
+          if (hasHist) {
+            histHtml = `
+              <div class="case-history-box">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:2px">
+                  <span style="display:inline-flex;align-items:center;gap:4px">
+                    <span class="material-symbols-outlined" style="font-size:13px;color:var(--teal)">history</span>
+                    Memória Recente da Conversa (${hist.length} turno${hist.length > 1 ? 's' : ''} prévio${hist.length > 1 ? 's' : ''})
+                  </span>
+                  <span class="pill draft" style="font-size:9px;padding:1px 6px">Multi-Turn</span>
+                </div>
+                ${hist.map(h => {
+                  const r = (h.role || 'user').toLowerCase();
+                  const tc = h.tool_calls ? `<span class="ht-tool">⚙ ${esc(h.tool_calls.map(x => x.function?.name || x.name).join(', '))}</span>` : '';
+                  return `
+                    <div class="history-turn ${r}">
+                      <span class="ht-role">${r === 'user' ? 'Morador' : r === 'assistant' ? 'Bot' : r}</span>
+                      <span class="ht-content">${esc(h.content || '')} ${tc}</span>
+                    </div>
+                  `;
+                }).join('')}
               </div>
-              <div style="display:flex;align-items:center;gap:6px">
-                <button class="mf-btn mf-btn-secondary btn-edit-case" data-id="${c.id}" title="Editar caso" style="padding:4px 8px;font-size:12px;height:28px">
-                  <span class="material-symbols-outlined" style="font-size:16px">edit</span>
-                </button>
-                <button class="mf-btn mf-btn-secondary btn-del-case" data-id="${c.id}" title="Excluir caso" style="padding:4px 8px;font-size:12px;height:28px;color:#F87171">
-                  <span class="material-symbols-outlined" style="font-size:16px">delete</span>
-                </button>
+            `;
+          }
+
+          return `
+            <div class="case" data-id="${c.id}">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px">
+                <div class="q" style="margin-bottom:0;flex-wrap:wrap">
+                  <span class="material-symbols-outlined" style="font-size:18px;color:var(--blue2)">quiz</span>
+                  ${esc(c.scenario_name)}
+                  ${c.is_refutation_case ? '<span class="pill prod" style="font-size:10px;padding:2px 7px" title="Caso Adversarial de Refutação Popperiana">🧪 Refutação</span>' : ''}
+                  ${c.is_anti_case ? '<span class="pill published" style="font-size:10px;padding:2px 7px" title="Anti-Caso S5: Proibido disparar tools">🛡 Anti-Caso S5</span>' : ''}
+                  ${hasHist ? '<span class="pill approved" style="font-size:10px;padding:2px 7px">🧠 Memória Ativa</span>' : '<span class="pill draft" style="font-size:10px;padding:2px 7px">Cold Start</span>'}
+                </div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <button class="mf-btn mf-btn-secondary btn-edit-case" data-id="${c.id}" title="Editar caso" style="padding:4px 8px;font-size:12px;height:28px">
+                    <span class="material-symbols-outlined" style="font-size:16px">edit</span>
+                  </button>
+                  <button class="mf-btn mf-btn-secondary btn-del-case" data-id="${c.id}" title="Excluir caso" style="padding:4px 8px;font-size:12px;height:28px;color:#F87171">
+                    <span class="material-symbols-outlined" style="font-size:16px">delete</span>
+                  </button>
+                </div>
               </div>
-            </div>
-            <div class="judge">“${esc(c.input_data?.user_message || '')}”</div>
-            <div class="judge" style="margin-top:4px">Critério: ${esc(c.expected_criteria)}</div>
-          </div>`).join('')
-          : '<div class="empty"><span class="material-symbols-outlined">quiz</span>Nenhum caso cadastrado. Crie o primeiro para poder rodar evals.</div>';
+              ${histHtml}
+              <div class="current-user-msg-wrap">
+                <span class="curr-tag">Turno Atual</span>
+                <span style="font-size:13px;color:#F8FAFC;font-weight:500">“${esc(userMsg)}”</span>
+              </div>
+              <div class="judge" style="margin-top:6px;font-size:12px"><strong style="color:#94a3b8">Critério do Juiz:</strong> ${esc(c.expected_criteria)}</div>
+            </div>`;
+        }).join('')
+        : '<div class="empty"><span class="material-symbols-outlined">quiz</span>Nenhum caso cadastrado. Crie o primeiro para poder rodar evals.</div>';
 
         // Event handlers para editar e excluir
         document.querySelectorAll('.btn-edit-case').forEach(btn => {
@@ -1516,6 +1646,7 @@ select.field {
             $('cModalTitle').textContent = 'Editar caso de teste';
             $('cEditId').value = targetCase.id;
             $('cName').value = targetCase.scenario_name || '';
+            $('cHistory').value = formatChatHistoryToText(targetCase.input_data?.chat_history || []);
             $('cMsg').value = targetCase.input_data?.user_message || '';
             $('cRubric').value = targetCase.expected_criteria || '';
             $('caseModal').classList.add('open');
@@ -1545,19 +1676,32 @@ select.field {
       if (!state.prod) return toast('Selecione um prompt primeiro.', 'err');
       $('cModalTitle').textContent = 'Novo caso de teste';
       $('cEditId').value = '';
-      ['cName', 'cMsg', 'cRubric'].forEach(i => $(i).value = '');
+      ['cName', 'cHistory', 'cMsg', 'cRubric'].forEach(i => { if ($(i)) $(i).value = ''; });
       $('caseModal').classList.add('open');
     };
 
-    $('cCancel').onclick = () => {
+    const closeCaseModal = () => {
       $('caseModal').classList.remove('open');
       $('cEditId').value = '';
     };
+    $('cCancel').onclick = closeCaseModal;
+    if ($('cCancelX')) $('cCancelX').onclick = closeCaseModal;
 
     $('cSave').onclick = async () => {
       const editId = $('cEditId').value;
-      const name = $('cName').value.trim(), msg = $('cMsg').value.trim(), rub = $('cRubric').value.trim();
+      const name = $('cName').value.trim();
+      const histText = $('cHistory').value.trim();
+      const msg = $('cMsg').value.trim();
+      const rub = $('cRubric').value.trim();
+      
       if (!name || !msg || !rub) return toast('Preencha cenário, mensagem e critério.', 'err');
+      
+      const parsedHistory = parseTextToChatHistory(histText);
+      const inputPayload = {
+        user_message: msg,
+        chat_history: parsedHistory
+      };
+
       try {
         if (editId) {
           await api('/evals/datasets/' + editId, {
@@ -1565,7 +1709,7 @@ select.field {
             body: JSON.stringify({
               scenario_name: name,
               channel: state.currentChannel,
-              input_data: { user_message: msg },
+              input_data: inputPayload,
               expected_criteria: rub
             })
           });
@@ -1578,14 +1722,14 @@ select.field {
               client_id: String(state.prod.id),
               channel: state.currentChannel,
               scenario_name: name,
-              test_type: 'single_turn',
-              input_data: { user_message: msg },
+              test_type: parsedHistory.length ? 'multi_turn' : 'single_turn',
+              input_data: inputPayload,
               expected_criteria: rub
             })
           });
           toast('Caso criado com sucesso.');
         }
-        ['cName', 'cMsg', 'cRubric'].forEach(i => $(i).value = '');
+        ['cName', 'cHistory', 'cMsg', 'cRubric'].forEach(i => { if ($(i)) $(i).value = ''; });
         $('cEditId').value = '';
         $('caseModal').classList.remove('open');
         await loadCases();
@@ -1691,9 +1835,21 @@ select.field {
         const names = {};
         try { (await api('/evals/datasets?prompt_id=' + state.prod.id)).forEach(c => names[c.id] = c.scenario_name); } catch { }
         $('runResults').style.display = 'block';
-        $('runList').innerHTML = run.cases.map(c => `
-          <div class="case"><div class="q ${c.passed ? 'ok' : 'no'}"><span class="material-symbols-outlined" style="font-size:18px">${c.passed ? 'check_circle' : 'cancel'}</span>${esc(names[c.dataset_id] || 'Caso')}</div>
-          <div>${esc(c.generated_response)}</div><div class="judge" style="margin-top:6px">Juiz: ${esc(c.judge_reasoning)}</div></div>`).join('');
+        $('runList').innerHTML = run.cases.map(c => {
+          const toolBadge = c.tool_called ? `<span class="pill prod" style="font-size:10px;padding:2px 7px;font-family:'JetBrains Mono',monospace">Tool: ${esc(c.tool_called)} ${c.tool_call_valid === false ? '❌' : '✓'}</span>` : '';
+          return `
+            <div class="case">
+              <div class="q ${c.passed ? 'ok' : 'no'}" style="justify-content:space-between;flex-wrap:wrap">
+                <span style="display:inline-flex;align-items:center;gap:6px">
+                  <span class="material-symbols-outlined" style="font-size:18px">${c.passed ? 'check_circle' : 'cancel'}</span>
+                  ${esc(names[c.dataset_id] || 'Caso')}
+                </span>
+                ${toolBadge}
+              </div>
+              <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:8px 10px;margin:6px 0;font-size:13px;color:#F1F5F9">${esc(c.generated_response || '—')}</div>
+              <div class="judge" style="margin-top:6px;font-size:12px"><strong style="color:#94a3b8">Avaliação do Juiz:</strong> ${esc(c.judge_reasoning)}</div>
+            </div>`;
+        }).join('');
         toast(`Evals: ${run.passed_cases}/${run.total_cases} aprovados (${Math.round(run.approval_rate * 100)}%).`, run.approval_rate >= .9 ? 'ok' : 'err');
         await loadVersions(state.selected.id);
       } catch (e) { toast(e.message, 'err'); }
