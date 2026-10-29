@@ -296,15 +296,105 @@ select.field {
     .prompt-textarea-wrap {
       position: relative; flex: 1; display: flex; flex-direction: column; min-height: 0;
     }
-    .prompt-textarea-wrap #edText {
-      flex: 1; width: 100%; height: 100% !important; resize: none;
-      transition: box-shadow 0.4s ease, border-color 0.4s ease;
-      padding-bottom: 38px;
+    
+    /* ── Editor de Código com Destaque de Sintaxe XML (Ordem de Cores Canônica) ── */
+    .code-editor-wrap {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      min-height: 0;
+      display: flex;
+      overflow: hidden;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: #040714;
+      box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.6);
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
     }
-    .prompt-textarea-wrap #edText.prompt-flash {
+    .code-editor-wrap pre,
+    .code-editor-wrap textarea {
+      position: absolute !important;
+      inset: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      margin: 0 !important;
+      box-sizing: border-box !important;
+      font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace !important;
+      font-size: 12px !important;
+      line-height: 1.65 !important;
+      letter-spacing: 0px !important;
+      word-spacing: 0px !important;
+      tab-size: 2 !important;
+      -moz-tab-size: 2 !important;
+      white-space: pre-wrap !important;
+      word-break: break-word !important;
+      word-wrap: break-word !important;
+      border: none !important;
+      outline: none !important;
+    }
+    .code-editor-wrap.editor-main pre,
+    .code-editor-wrap.editor-main textarea {
+      padding: 14px 16px 44px 16px !important;
+    }
+    .code-editor-wrap.editor-macro pre,
+    .code-editor-wrap.editor-macro textarea {
+      font-size: 14px !important;
+      line-height: 1.7 !important;
+      padding: 18px 20px 20px 20px !important;
+    }
+    .code-editor-wrap pre {
+      pointer-events: none !important;
+      z-index: 1 !important;
+      overflow: hidden !important;
+      background: transparent !important;
+      color: #F1F5F9 !important;
+    }
+    .code-editor-wrap pre code {
+      font-family: inherit !important;
+      font-size: inherit !important;
+      line-height: inherit !important;
+      white-space: inherit !important;
+      word-break: inherit !important;
+      word-wrap: inherit !important;
+    }
+    .code-editor-wrap textarea {
+      z-index: 2 !important;
+      background: transparent !important;
+      color: transparent !important;
+      -webkit-text-fill-color: transparent !important;
+      caret-color: #38BDF8 !important;
+      resize: none !important;
+      overflow-y: scroll !important;
+    }
+    .code-editor-wrap textarea::selection {
+      background: rgba(46, 79, 255, 0.45) !important;
+      color: transparent !important;
+      -webkit-text-fill-color: transparent !important;
+    }
+    .code-editor-wrap textarea::placeholder {
+      color: #64748B !important;
+      -webkit-text-fill-color: #64748B !important;
+    }
+    .code-editor-wrap:focus-within {
+      border-color: rgba(46, 79, 255, 0.75) !important;
+      box-shadow: 0 0 0 3px rgba(46, 79, 255, 0.2), inset 0 2px 10px rgba(0, 0, 0, 0.6) !important;
+    }
+    .code-editor-wrap.prompt-flash,
+    #edText.prompt-flash {
       border-color: var(--teal) !important;
-      box-shadow: 0 0 24px rgba(0, 181, 160, 0.45) !important;
+      box-shadow: 0 0 28px rgba(0, 181, 160, 0.55) !important;
     }
+
+    /* ── Paleta de Cores do Arquivo XML (Tema IDE Dark) ── */
+    .xml-punct { color: #64748B; font-weight: 400; }
+    .xml-tag-name { color: #38BDF8; font-weight: 600; }
+    .xml-attr-name { color: #FBBF24; font-weight: 500; }
+    .xml-attr-value { color: #4ADE80; }
+    .xml-comment { color: #64748B; font-style: italic; opacity: 0.85; }
+    .xml-cdata { color: #C084FC; font-weight: 500; }
+    .xml-prolog { color: #F472B6; font-weight: 500; }
+    .xml-variable { color: #FB7185; background: rgba(244, 63, 94, 0.14); padding: 0 4px; border-radius: 4px; font-weight: 600; border: 1px solid rgba(244, 63, 94, 0.3); }
+
     .btn-macro-float {
       position: absolute; right: 14px; bottom: 14px; z-index: 10;
       background: rgba(13, 22, 44, 0.72); border: 1px solid rgba(255, 255, 255, 0.14);
@@ -331,15 +421,6 @@ select.field {
       background: #080D1D; border: 1px solid rgba(46, 79, 255, 0.35); border-top: 3px solid var(--blue);
       border-radius: 16px; padding: 20px 24px; box-shadow: 0 24px 80px rgba(0, 0, 0, 0.9);
       min-height: 0;
-    }
-    .macro-box #edTextMacro {
-      flex: 1; width: 100%; resize: none; margin-top: 14px;
-      font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 14px; line-height: 1.7;
-      background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px;
-      color: #F8FAFC; padding: 16px 18px; outline: none; min-height: 0;
-    }
-    .macro-box #edTextMacro:focus {
-      border-color: rgba(46, 79, 255, 0.75); box-shadow: 0 0 0 3px rgba(46, 79, 255, 0.2);
     }
     .copilot-details { margin-top: 8px; border: 1px solid var(--line); border-radius: 10px; background: rgba(2, 4, 10, 0.6); overflow: hidden; }
     .copilot-details summary {
@@ -684,8 +765,16 @@ select.field {
               <div class="editor-toolbar">
                 <div class="et-row">
                   <div class="et-title">
-                    <h3 class="sec">Prompt em Edição</h3>
-                    <span id="liveEditBadge" class="pill approved" style="display:none">✨ Atualizado pelo Agente</span>
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                      <h3 class="sec" style="margin:0">Prompt em Edição</h3>
+                      <span id="liveEditBadge" class="pill approved" style="display:none">✨ Atualizado pelo Agente</span>
+                      <span class="pill" style="background:rgba(56,189,248,0.12);color:#38BDF8;border:1px solid rgba(56,189,248,0.25);font-size:10px;font-family:'Space Grotesk',sans-serif;display:inline-flex;align-items:center;gap:4px" title="Realce de sintaxe XML nativo de IDE">
+                        <span class="material-symbols-outlined" style="font-size:13px">data_object</span>XML Color
+                      </span>
+                      <span class="pill" style="background:rgba(16,185,129,0.12);color:#34D399;border:1px solid rgba(16,185,129,0.25);font-size:10px;font-family:'Space Grotesk',sans-serif;display:inline-flex;align-items:center;gap:4px" title="Variáveis temporais injetadas em todas as execuções ({data_atual}, {hora_atual}, {data_atual_iso}, {now})">
+                        <span class="material-symbols-outlined" style="font-size:13px">schedule</span>Data/Hora Dinâmica
+                      </span>
+                    </div>
                     <span class="et-sub" id="editorSub">Selecione uma versão ou crie um novo draft.</span>
                   </div>
                   <button class="mf-btn mf-btn-primary et-save" id="btnSaveVersion" title="Salvar como nova versão (a original não é alterada)"><span class="material-symbols-outlined">save</span>Salvar versão</button>
@@ -705,9 +794,10 @@ select.field {
                 </div>
               </div>
 
-              <!-- Container com textarea e botão translúcido flutuante no cantinho inferior direito -->
-              <div class="prompt-textarea-wrap">
-                <textarea id="edText" class="field" style="font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px" placeholder="Texto do prompt... (você ou o Agente IA podem editar diretamente aqui)"></textarea>
+              <!-- Container com editor de código com realce de sintaxe XML e botão translúcido flutuante -->
+              <div class="prompt-textarea-wrap code-editor-wrap editor-main" id="wrapEdText">
+                <pre class="code-editor-pre" id="edTextPre" aria-hidden="true"><code id="edTextCode"></code></pre>
+                <textarea id="edText" class="field code-editor-textarea" spellcheck="false" placeholder="Texto do prompt... (você ou o Agente IA podem editar diretamente aqui)"></textarea>
                 <button type="button" class="btn-macro-float" id="btnFloatMaximize" title="Maximizar visão macro do prompt (tela cheia)">
                   <span class="material-symbols-outlined">open_in_full</span>
                   <span>Maximizar</span>
@@ -719,6 +809,15 @@ select.field {
 
         <!-- ARENA -->
         <div class="pane glass" id="pane-arena">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding:8px 14px;background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:10px">
+            <span class="eyebrow" style="margin:0;display:flex;align-items:center;gap:6px;color:#cbd5e1;font-size:11px">
+              <span class="material-symbols-outlined" style="font-size:16px;color:var(--blue2)">compare_arrows</span>
+              Playground A/B com Ferramentas Reais MCP
+            </span>
+            <span class="pill" style="background:rgba(16,185,129,0.12);color:#34D399;border:1px solid rgba(16,185,129,0.25);font-size:10px;font-family:'Space Grotesk',sans-serif;display:inline-flex;align-items:center;gap:4px" title="Data e horário atual de Brasília (UTC-3) injetados automaticamente em todas as execuções dos agentes">
+              <span class="material-symbols-outlined" style="font-size:13px">schedule</span>Data &amp; Horário Dinâmico Ativos
+            </span>
+          </div>
           <div class="arena-controls">
             <div><span class="eyebrow label">Versão A</span><select id="selA" class="field"></select></div>
             <div><span class="eyebrow label">Versão B</span><select id="selB" class="field"></select></div>
@@ -898,7 +997,10 @@ select.field {
           </button>
         </div>
       </div>
-      <textarea id="edTextMacro" placeholder="Texto do prompt completo..."></textarea>
+      <div class="code-editor-wrap editor-macro" id="wrapEdTextMacro" style="flex:1;margin-top:14px;position:relative">
+        <pre class="code-editor-pre" id="edTextMacroPre" aria-hidden="true"><code id="edTextMacroCode"></code></pre>
+        <textarea id="edTextMacro" class="code-editor-textarea" spellcheck="false" placeholder="Texto do prompt completo..."></textarea>
+      </div>
     </div>
   </div>
 
@@ -915,6 +1017,125 @@ select.field {
       const t = document.createElement('div');
       t.className = `toast ${type}`; t.textContent = msg;
       $('toasts').appendChild(t); setTimeout(() => t.remove(), 4500);
+    }
+
+    /* ── Realce de Sintaxe XML (Cores de Arquivo XML) ── */
+    function highlightXML(src) {
+      if (!src) return '';
+      const escHtml = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const tokenRegex = /(<!--[\s\S]*?-->)|(<!\[CDATA\[[\s\S]*?\]\]>)|(<\?[xX][mM][lL][\s\S]*?\?>)|(<\/?)([a-zA-Z0-9_\-:.]+)([\s\S]*?)(\/?>)|(\{\{[^{}\n]+\}\}|\{[a-zA-Z0-9_\-]+\})/g;
+
+      let lastIndex = 0;
+      let html = '';
+      let match;
+
+      while ((match = tokenRegex.exec(src)) !== null) {
+        if (match.index > lastIndex) {
+          html += escHtml(src.slice(lastIndex, match.index));
+        }
+        lastIndex = tokenRegex.lastIndex;
+
+        if (match[1]) {
+          // Comentários XML (<!-- ... -->)
+          html += `<span class="xml-comment">${escHtml(match[1])}</span>`;
+        } else if (match[2]) {
+          // CDATA
+          html += `<span class="xml-cdata">${escHtml(match[2])}</span>`;
+        } else if (match[3]) {
+          // Prólogo XML (<?xml ... ?>)
+          html += `<span class="xml-prolog">${escHtml(match[3])}</span>`;
+        } else if (match[4]) {
+          // Tags XML (<tag_name ...> ou </tag_name>)
+          const openPunct = match[4];
+          const tagName = match[5];
+          const rawAttrs = match[6];
+          const closePunct = match[7];
+
+          let attrsHtml = '';
+          if (rawAttrs) {
+            const attrRegex = /([a-zA-Z0-9_\-:.]+)(\s*=\s*)("[^"]*"|'[^']*'|[^\s"'=<>`]+)?|(\s+)|([^a-zA-Z0-9_\-:.\s"'=<>`]+)/g;
+            let aMatch;
+            let aLast = 0;
+            while ((aMatch = attrRegex.exec(rawAttrs)) !== null) {
+              if (aMatch.index > aLast) attrsHtml += escHtml(rawAttrs.slice(aLast, aMatch.index));
+              aLast = attrRegex.lastIndex;
+              if (aMatch[1]) {
+                attrsHtml += `<span class="xml-attr-name">${escHtml(aMatch[1])}</span>`;
+                if (aMatch[2]) attrsHtml += `<span class="xml-punct">${escHtml(aMatch[2])}</span>`;
+                if (aMatch[3]) attrsHtml += `<span class="xml-attr-value">${escHtml(aMatch[3])}</span>`;
+              } else if (aMatch[4]) {
+                attrsHtml += aMatch[4];
+              } else if (aMatch[5]) {
+                attrsHtml += escHtml(aMatch[5]);
+              }
+            }
+            if (aLast < rawAttrs.length) attrsHtml += escHtml(rawAttrs.slice(aLast));
+          }
+
+          html += `<span class="xml-tag"><span class="xml-punct">${escHtml(openPunct)}</span><span class="xml-tag-name">${escHtml(tagName)}</span>${attrsHtml}<span class="xml-punct">${escHtml(closePunct)}</span></span>`;
+        } else if (match[8]) {
+          // Variáveis dinâmicas / template placeholders ({data_atual_iso}, {{now}})
+          html += `<span class="xml-variable">${escHtml(match[8])}</span>`;
+        }
+      }
+
+      if (lastIndex < src.length) {
+        html += escHtml(src.slice(lastIndex));
+      }
+      return html;
+    }
+
+    function updateEditorHighlight(textareaId) {
+      const ta = $(textareaId);
+      const codeId = textareaId === 'edText' ? 'edTextCode' : 'edTextMacroCode';
+      const preId = textareaId === 'edText' ? 'edTextPre' : 'edTextMacroPre';
+      const code = $(codeId);
+      const pre = $(preId);
+      if (!ta || !code || !pre) return;
+      const val = ta.value || '';
+      code.innerHTML = highlightXML(val) + (val.endsWith('\n') ? '\n ' : '');
+      pre.scrollTop = ta.scrollTop;
+      pre.scrollLeft = ta.scrollLeft;
+    }
+
+    function setupCodeEditor(textareaId) {
+      const ta = $(textareaId);
+      const preId = textareaId === 'edText' ? 'edTextPre' : 'edTextMacroPre';
+      const pre = $(preId);
+      if (!ta || !pre) return;
+
+      ta.addEventListener('scroll', () => {
+        pre.scrollTop = ta.scrollTop;
+        pre.scrollLeft = ta.scrollLeft;
+      });
+
+      ta.addEventListener('input', () => {
+        updateEditorHighlight(textareaId);
+      });
+
+      ta.addEventListener('keydown', function(e) {
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          const start = this.selectionStart;
+          const end = this.selectionEnd;
+          this.value = this.value.substring(0, start) + '  ' + this.value.substring(end);
+          this.selectionStart = this.selectionEnd = start + 2;
+          this.dispatchEvent(new Event('input'));
+        }
+      });
+
+      const desc = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value');
+      try {
+        Object.defineProperty(ta, 'value', {
+          get() { return desc.get.call(this); },
+          set(v) {
+            desc.set.call(this, v);
+            updateEditorHighlight(textareaId);
+          }
+        });
+      } catch (err) {}
+
+      updateEditorHighlight(textareaId);
     }
 
     async function api(path, opts = {}) {
@@ -1084,6 +1305,7 @@ select.field {
       renderVersions();
       if (!preserveEditorText) {
         $('edText').value = v.prompt_text;
+        updateEditorHighlight('edText');
         $('edCommit').value = '';
         if ($('liveEditBadge')) $('liveEditBadge').style.display = 'none';
       }
@@ -1137,6 +1359,7 @@ select.field {
     function openMacroEditor() {
       const liveText = $('edText').value || '';
       $('edTextMacro').value = liveText;
+      updateEditorHighlight('edTextMacro');
       const v = state.selected;
       const clientName = state.prod ? state.prod['Nome do cliente'] : 'Cliente';
       const label = v ? v.version_label : 'Draft';
@@ -1150,8 +1373,9 @@ select.field {
       const macroText = $('edTextMacro').value;
       if ($('edText').value !== macroText) {
         $('edText').value = macroText;
-        $('edText').classList.add('prompt-flash');
-        setTimeout(() => $('edText').classList.remove('prompt-flash'), 1200);
+        updateEditorHighlight('edText');
+        $('wrapEdText').classList.add('prompt-flash');
+        setTimeout(() => $('wrapEdText').classList.remove('prompt-flash'), 1200);
       }
       $('macroModal').classList.remove('open');
       document.body.style.overflow = '';
@@ -1164,6 +1388,7 @@ select.field {
     // Salvar nova versão diretamente da visão macro
     $('btnMacroSave').onclick = async () => {
       $('edText').value = $('edTextMacro').value;
+      updateEditorHighlight('edText');
       closeMacroEditor();
       $('btnSaveVersion').click();
     };
@@ -1171,6 +1396,8 @@ select.field {
     // Sincroniza em tempo real enquanto digita na tela cheia
     $('edTextMacro').oninput = () => {
       $('edText').value = $('edTextMacro').value;
+      updateEditorHighlight('edText');
+      updateEditorHighlight('edTextMacro');
     };
 
     window.addEventListener('keydown', e => {
@@ -1452,8 +1679,11 @@ select.field {
         if (modified) {
           // Aplica alteração em tempo real no editor à direita
           $('edText').value = r.suggested_prompt;
-          $('edText').classList.add('prompt-flash');
-          setTimeout(() => $('edText').classList.remove('prompt-flash'), 1600);
+          updateEditorHighlight('edText');
+          if ($('wrapEdText')) {
+            $('wrapEdText').classList.add('prompt-flash');
+            setTimeout(() => $('wrapEdText').classList.remove('prompt-flash'), 1600);
+          }
           if ($('liveEditBadge')) $('liveEditBadge').style.display = 'inline-flex';
           if (!$('edCommit').value.trim()) {
             $('edCommit').value = instruction.length > 72 ? instruction.slice(0, 69) + '...' : instruction;
@@ -1508,8 +1738,11 @@ select.field {
           if (undoBtn) {
             undoBtn.onclick = () => {
               $('edText').value = livePromptBefore;
-              $('edText').classList.add('prompt-flash');
-              setTimeout(() => $('edText').classList.remove('prompt-flash'), 1200);
+              updateEditorHighlight('edText');
+              if ($('wrapEdText')) {
+                $('wrapEdText').classList.add('prompt-flash');
+                setTimeout(() => $('wrapEdText').classList.remove('prompt-flash'), 1200);
+              }
               toast('Alteração desfeita — texto anterior restaurado no editor.');
             };
           }
@@ -1898,6 +2131,8 @@ select.field {
       busy($('btnPublish'), false);
     };
 
+    setupCodeEditor('edText');
+    setupCodeEditor('edTextMacro');
     checkSession();
   </script>
 
