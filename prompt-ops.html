@@ -411,9 +411,9 @@ select.field {
 
     /* Modal / Janela Macro em Tela Cheia */
     .editor-macro-modal {
-      display: none; position: fixed; inset: 0; z-index: 99999;
+      display: none; position: fixed; inset: 0; z-index: 10000000;
       background: rgba(2, 4, 10, 0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      padding: 24px; flex-direction: column;
+      padding: 24px 24px 24px 96px; flex-direction: column;
     }
     .editor-macro-modal.open { display: flex; }
     .macro-box {
