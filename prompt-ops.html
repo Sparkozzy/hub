@@ -1109,18 +1109,92 @@ select.field {
         pre.scrollLeft = ta.scrollLeft;
       });
 
+      // Histórico robusto de Undo (Ctrl+Z) e Redo (Ctrl+Y / Ctrl+Shift+Z)
+      const historyStack = [{
+        val: ta.value || '',
+        start: ta.selectionStart || 0,
+        end: ta.selectionEnd || 0
+      }];
+      let historyIndex = 0;
+      let recordTimer = null;
+      let isRestoringHistory = false;
+
+      function pushHistory(force = false) {
+        if (isRestoringHistory) return;
+        const currentText = ta.value || '';
+        const lastEntry = historyStack[historyIndex];
+        if (!force && lastEntry && lastEntry.val === currentText) return;
+
+        // Se está no meio do histórico e digitou algo novo, descarta os redos futuros
+        if (historyIndex < historyStack.length - 1) {
+          historyStack.splice(historyIndex + 1);
+        }
+
+        historyStack.push({
+          val: currentText,
+          start: ta.selectionStart || 0,
+          end: ta.selectionEnd || 0
+        });
+
+        // Limita a pilha a 150 snapshots
+        if (historyStack.length > 150) historyStack.shift();
+        historyIndex = historyStack.length - 1;
+      }
+
+      function applyHistory(idx) {
+        const item = historyStack[idx];
+        if (!item) return;
+        isRestoringHistory = true;
+        ta.value = item.val;
+        updateEditorHighlight(textareaId);
+        try {
+          ta.setSelectionRange(item.start, item.end);
+        } catch (e) {}
+        isRestoringHistory = false;
+      }
+
       ta.addEventListener('input', () => {
         updateEditorHighlight(textareaId);
+        clearTimeout(recordTimer);
+        recordTimer = setTimeout(() => {
+          pushHistory(false);
+        }, 300);
       });
 
       ta.addEventListener('keydown', function(e) {
+        const isCtrl = e.ctrlKey || e.metaKey;
+
+        // Desfazer (Ctrl + Z)
+        if (isCtrl && (e.key === 'z' || e.key === 'Z') && !e.shiftKey) {
+          e.preventDefault();
+          // Garante snapshot do estado atual antes de voltar se houver digitação recente
+          pushHistory(false);
+          if (historyIndex > 0) {
+            historyIndex--;
+            applyHistory(historyIndex);
+          }
+          return;
+        }
+
+        // Refazer (Ctrl + Y ou Ctrl + Shift + Z)
+        if ((isCtrl && (e.key === 'y' || e.key === 'Y')) || (isCtrl && e.shiftKey && (e.key === 'z' || e.key === 'Z'))) {
+          e.preventDefault();
+          if (historyIndex < historyStack.length - 1) {
+            historyIndex++;
+            applyHistory(historyIndex);
+          }
+          return;
+        }
+
         if (e.key === 'Tab') {
           e.preventDefault();
+          pushHistory(true);
           const start = this.selectionStart;
           const end = this.selectionEnd;
           this.value = this.value.substring(0, start) + '  ' + this.value.substring(end);
           this.selectionStart = this.selectionEnd = start + 2;
-          this.dispatchEvent(new Event('input'));
+          pushHistory(true);
+          updateEditorHighlight(textareaId);
         }
       });
 
@@ -1131,6 +1205,9 @@ select.field {
           set(v) {
             desc.set.call(this, v);
             updateEditorHighlight(textareaId);
+            if (!isRestoringHistory) {
+              pushHistory(true);
+            }
           }
         });
       } catch (err) {}
