@@ -207,6 +207,16 @@ select.field {
     .col-head { padding: 9px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 13px; }
     .chat { height: 380px; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
     .msg { padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 1.55; max-width: 88%; white-space: pre-wrap; word-break: break-word; }
+    .msg.has-tools { max-width: 96%; width: 100%; }
+    .msg-content { white-space: pre-wrap; word-break: break-word; }
+    .arena-tools { margin-bottom: 8px; width: 100%; white-space: normal; }
+    .arena-tools-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-family: 'Space Grotesk', sans-serif; }
+    .arena-tools-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: #93c5fd; }
+    .arena-tools-toggle-btn {
+      background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px;
+      color: #94a3b8; font-size: 10px; padding: 2px 8px; cursor: pointer; transition: all .15s; font-family: 'Space Grotesk', sans-serif;
+    }
+    .arena-tools-toggle-btn:hover { color: #fff; background: rgba(0, 181, 160, 0.12); border-color: rgba(0, 181, 160, 0.4); }
     .msg.user { align-self: flex-end; background: linear-gradient(135deg, #2563EB, #1D4ED8); }
     .msg.assistant { align-self: flex-start; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line); }
     .msg.system { align-self: center; color: var(--muted); font-size: 12px; background: none; }
@@ -1485,14 +1495,137 @@ select.field {
       }
     });
 
-    function addMsg(side, role, text, meta) {
+    function addMsg(side, role, text, meta, toolCalls) {
       const c = $('chat' + side);
       if (c.querySelector('.msg.system')) c.innerHTML = '';
-      const d = document.createElement('div'); d.className = 'msg ' + role;
-      d.textContent = text;
-      if (meta) { const m = document.createElement('div'); m.className = 'msg-meta'; m.textContent = meta; d.appendChild(m); }
-      c.appendChild(d); c.scrollTop = c.scrollHeight; return d;
+      const d = document.createElement('div');
+      d.className = 'msg ' + role;
+      if (toolCalls && toolCalls.length > 0) {
+        d.classList.add('has-tools');
+      }
+
+      // Se houver tools acionadas pelo agente neste turno da Arena
+      if (toolCalls && toolCalls.length > 0) {
+        const inspector = document.createElement('div');
+        inspector.className = 'tools-inspector arena-tools';
+
+        const bar = document.createElement('div');
+        bar.className = 'arena-tools-bar';
+        bar.innerHTML = `
+          <span class="arena-tools-badge">
+            <span class="material-symbols-outlined" style="font-size:14px;color:var(--teal)">build_circle</span>
+            <span>${toolCalls.length} tool(s) executada(s)</span>
+          </span>
+          <button type="button" class="arena-tools-toggle-btn" onclick="toggleArenaTools(this)">Expandir detalhes</button>
+        `;
+        inspector.appendChild(bar);
+
+        toolCalls.forEach(t => {
+          const isErr = t.status === 'error';
+          const toolName = t.tool_name || 'ferramenta';
+          const argsStr = t.input_payload ? JSON.stringify(t.input_payload, null, 2) : '{}';
+
+          let rawOut = t.output_payload;
+          if (rawOut && typeof rawOut === 'object' && rawOut.result !== undefined) {
+            rawOut = rawOut.result;
+          }
+          let outStr = '';
+          if (typeof rawOut === 'string') {
+            try {
+              const parsed = JSON.parse(rawOut);
+              outStr = JSON.stringify(parsed, null, 2);
+            } catch (e) {
+              outStr = rawOut;
+            }
+          } else if (rawOut != null) {
+            outStr = JSON.stringify(rawOut, null, 2);
+          } else {
+            outStr = 'Sem retorno';
+          }
+          if (outStr.length > 6000) outStr = outStr.slice(0, 6000) + '\n… (saída truncada — ' + outStr.length + ' caracteres)';
+
+          // Resumo legível dos argumentos principais para o cabeçalho
+          let argSummary = '';
+          try {
+            if (t.input_payload && typeof t.input_payload === 'object') {
+              const entries = Object.entries(t.input_payload);
+              if (entries.length > 0) {
+                argSummary = entries.map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : v}`).join(', ');
+              }
+            }
+          } catch (e) {}
+
+          const card = document.createElement('div');
+          card.className = 'tool-step-card' + (isErr ? ' err' : '');
+          card.innerHTML = `
+            <div class="tool-step-header" onclick="this.parentElement.classList.toggle('open')">
+              <span class="material-symbols-outlined" style="font-size:14px;color:${isErr ? '#F87171' : 'var(--teal)'}">
+                ${isErr ? 'error' : 'build_circle'}
+              </span>
+              <span class="title">${esc(toolName)}</span>
+              ${argSummary ? `<span class="summary-txt" title="${esc(argSummary)}">${esc(argSummary)}</span>` : ''}
+              <span class="pill" style="font-size:9px;padding:1px 6px;margin-left:auto;background:${isErr ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.12)'};color:${isErr ? '#F87171' : '#34D399'};border:1px solid ${isErr ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.25)'}">
+                ${isErr ? 'falha' : '✓'} ${t.latency_ms != null ? t.latency_ms + 'ms' : ''}
+              </span>
+              <span class="material-symbols-outlined chev">expand_more</span>
+            </div>
+            <div class="tool-step-body">
+              <div class="tool-step-section">
+                <div class="tool-step-label">📥 Argumentos (Payload de Entrada)</div>
+                <pre class="tool-step-json">${esc(argsStr)}</pre>
+              </div>
+              <div class="tool-step-section">
+                <div class="tool-step-label">📤 Resposta da Tool (Payload de Saída)</div>
+                <pre class="tool-step-json">${esc(outStr)}</pre>
+              </div>
+            </div>
+          `;
+          inspector.appendChild(card);
+        });
+
+        d.appendChild(inspector);
+      }
+
+      if (text) {
+        const textNode = document.createElement('div');
+        textNode.className = 'msg-content';
+        textNode.textContent = text;
+        d.appendChild(textNode);
+      } else if (!toolCalls || toolCalls.length === 0) {
+        const textNode = document.createElement('div');
+        textNode.className = 'msg-content';
+        textNode.textContent = text || '';
+        d.appendChild(textNode);
+      } else {
+        const textNode = document.createElement('div');
+        textNode.className = 'msg-content';
+        textNode.innerHTML = '<em style="color:var(--muted)">[Apenas execução de ferramenta sem mensagem de texto]</em>';
+        d.appendChild(textNode);
+      }
+
+      if (meta) {
+        const m = document.createElement('div');
+        m.className = 'msg-meta';
+        m.textContent = meta;
+        d.appendChild(m);
+      }
+
+      c.appendChild(d);
+      c.scrollTop = c.scrollHeight;
+      return d;
     }
+
+    window.toggleArenaTools = function(btn) {
+      const container = btn.closest('.arena-tools');
+      if (!container) return;
+      const cards = container.querySelectorAll('.tool-step-card');
+      const anyClosed = Array.from(cards).some(c => !c.classList.contains('open'));
+      cards.forEach(c => {
+        if (anyClosed) c.classList.add('open');
+        else c.classList.remove('open');
+      });
+      btn.textContent = anyClosed ? 'Recolher detalhes' : 'Expandir detalhes';
+    };
 
     async function sendArena() {
       const text = $('arenaInput').value.trim();
@@ -1511,12 +1644,22 @@ select.field {
             version_b_id: b,
             user_message: text,
             variables: {},
-            chat_history: state.history.A || []
+            chat_history: state.history.A || [],
+            chat_history_a: state.history.A || [],
+            chat_history_b: state.history.B || []
           })
         });
         const fill = (el, side, x) => {
           el.remove();
-          addMsg(side, 'assistant', x.assistant_message, `${x.latency_ms} ms · ${x.tokens_input} → ${x.tokens_output} tokens`);
+          const toolCount = (x.tool_calls && x.tool_calls.length) || 0;
+          let metaStr = `${x.latency_ms} ms · ${x.tokens_input} → ${x.tokens_output} tokens`;
+          if (toolCount > 0) {
+            const toolNames = x.tool_calls.map(tc => tc.tool_name).join(', ');
+            metaStr += ` · ⚙️ ${toolCount} tool(s) [${toolNames}]`;
+          } else {
+            metaStr += ` · ⚪ 0 tools`;
+          }
+          addMsg(side, 'assistant', x.assistant_message, metaStr, x.tool_calls);
           // Atualiza histórico conversacional
           if (!state.history[side]) state.history[side] = [];
           state.history[side].push({ role: 'user', content: text });
