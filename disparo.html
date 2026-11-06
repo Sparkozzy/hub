@@ -250,7 +250,7 @@
       flex-direction: column;
       gap: 10px;
       user-select: none;
-      overflow: hidden;
+      overflow: visible;
     }
     /* ── Minimalist Group Selector & Carousel Header ── */
     .ps3-carousel-header {
@@ -263,6 +263,10 @@
 
     .group-select-wrapper {
       position: relative;
+      z-index: 101;
+    }
+    .group-select-wrapper.open {
+      z-index: 999999;
     }
 
     .group-select-trigger {
@@ -7616,20 +7620,18 @@
     function switchGroupTab(tab) {
       const btnC = document.getElementById('tabBtnContacts');
       const btnG = document.getElementById('tabBtnGroups');
+      const btnCsv = document.getElementById('tabBtnCsv');
       const cntC = document.getElementById('tabContentContacts');
       const cntG = document.getElementById('tabContentGroups');
+      const cntCsv = document.getElementById('tabContentCsv');
 
-      if (tab === 'contacts') {
-        btnC.classList.add('active');
-        btnG.classList.remove('active');
-        cntC.classList.add('active');
-        cntG.classList.remove('active');
-      } else {
-        btnG.classList.add('active');
-        btnC.classList.remove('active');
-        cntG.classList.add('active');
-        cntC.classList.remove('active');
-      }
+      if (btnC) btnC.classList.toggle('active', tab === 'contacts');
+      if (btnG) btnG.classList.toggle('active', tab === 'groups');
+      if (btnCsv) btnCsv.classList.toggle('active', tab === 'csv');
+
+      if (cntC) cntC.classList.toggle('active', tab === 'contacts');
+      if (cntG) cntG.classList.toggle('active', tab === 'groups');
+      if (cntCsv) cntCsv.classList.toggle('active', tab === 'csv');
     }
 
     function renderGroupSelectInModal() {
@@ -7755,10 +7757,14 @@
 
     // Fechar dropdown de grupo se clicar fora
     document.addEventListener('click', (e) => {
+      const wrapper = document.getElementById('groupSelectWrapper');
       const dd = document.getElementById('groupDropdownMenu');
-      const btn = document.getElementById('activeGroupBtn');
-      if (dd && dd.classList.contains('open') && !dd.contains(e.target) && (!btn || !btn.contains(e.target))) {
-        dd.classList.remove('open');
+      const trigger = document.querySelector('.group-select-trigger');
+      if (dd && (dd.classList.contains('open') || wrapper?.classList.contains('open'))) {
+        if (!dd.contains(e.target) && (!trigger || !trigger.contains(e.target))) {
+          dd.classList.remove('open');
+          if (wrapper) wrapper.classList.remove('open');
+        }
       }
     });
 
@@ -8170,8 +8176,6 @@
           <!-- Dynamic groups list -->
         </div>
       </div>
-    </div>
-  </div>
   
       <!-- Aba 3: Importar CSV / Agendar em Lote -->
       <div class="group-tab-content" id="tabContentCsv">
@@ -8242,6 +8246,8 @@
           </button>
         </div>
       </div>
+    </div>
+  </div>
   
 <script src="/mindflow-dock.js"></script>
 </body>
