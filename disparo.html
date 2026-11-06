@@ -800,6 +800,8 @@
     }
     .custom-select.open { z-index: 99999; position: relative; isolation: isolate; }
     .custom-select-trigger {
+      cursor: pointer;
+      pointer-events: auto !important;
       width: 100%; height: 46px;
       display: flex; align-items: center; justify-content: center; gap: 8px;
       padding: 0 36px;
@@ -5692,7 +5694,11 @@
         }
       }
 
-      function toggleDropdown() {
+      function toggleDropdown(e) {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
         if (isOpen) closeDropdown(); else openDropdown();
       }
 
@@ -5703,7 +5709,8 @@
       function handleTriggerKeydown(e) {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          toggleDropdown();
+          e.stopPropagation();
+          toggleDropdown(e);
         }
         if (e.key === 'Escape') closeDropdown();
       }
