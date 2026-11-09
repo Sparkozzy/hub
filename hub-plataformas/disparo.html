@@ -5822,6 +5822,7 @@
     // Presets padrão inicializados IMEDIATAMENTE (Síncrono)
     const DEFAULT_PRESETS = [
       { value: 'agent_f95ee856fb3d220f42171318dc', label: 'MindFlow Outbound Frio', prompt_id: '20' },
+      { value: 'agent_26e72f69f89b4974ab616bfea4', label: 'Versa (Prompt 41)', prompt_id: '41' },
       { value: 'agent_4f1dba5e5432cd193d324754bf', label: 'ATS Tecnologia', prompt_id: '33' },
       { value: 'agent_f1603ca4baa2d88297d1ae9c40', label: 'MyGain', prompt_id: '34' },
       { value: 'agent_7b9e7d53c933c83f73155662b9', label: 'Kravi', prompt_id: '30' }
@@ -5832,7 +5833,7 @@
       if (qv) qv.value = val || '';
       const av = document.getElementById('agent_id');
       if (av) av.value = val || '';
-      const found = DEFAULT_PRESETS.find(p => p.value === val);
+      const found = (window._allPresets || DEFAULT_PRESETS).find(p => p.value === val);
       const pId = found ? found.prompt_id : '20';
       const qp = document.getElementById('quickPromptVal');
       if (qp) qp.value = pId;
@@ -6261,6 +6262,7 @@
           });
         }
 
+        window._allPresets = presets;
         const activeVal = (dispatchCfg && dispatchCfg.agent_id) || 'agent_f95ee856fb3d220f42171318dc';
         initCustomSelect('csQuickAgent', presets, applyQuickPresetSelection, activeVal);
 
