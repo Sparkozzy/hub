@@ -429,13 +429,18 @@
       justify-content: center;
       padding: 16px;
       opacity: 0;
+      visibility: hidden;
       pointer-events: none;
       transition: opacity 0.3s ease;
     }
     .group-modal-overlay.active,
     .group-modal-overlay.open {
       opacity: 1;
+      visibility: visible;
       pointer-events: auto;
+    }
+    .group-modal-overlay:not(.active):not(.open) * {
+      pointer-events: none !important;
     }
     .group-modal-card {
       width: 100%;
@@ -801,7 +806,7 @@
     .custom-select.open { z-index: 99999; position: relative; isolation: isolate; }
     .custom-select-trigger {
       cursor: pointer;
-      pointer-events: auto !important;
+      pointer-events: auto;
       width: 100%; height: 46px;
       display: flex; align-items: center; justify-content: center; gap: 8px;
       padding: 0 36px;
@@ -819,6 +824,12 @@
       box-sizing: border-box;
       min-width: 0;
       overflow: hidden;
+    }
+    .custom-select-trigger * {
+      pointer-events: none;
+    }
+    .cs-option * {
+      pointer-events: none;
     }
     .custom-select-trigger .cs-ico {
       font-size: 20px; color: #7B9AFF; flex-shrink: 0; line-height: 1;
@@ -859,6 +870,7 @@
       max-height: 240px;
       overflow-y: auto;
       opacity: 0;
+      visibility: hidden;
       pointer-events: none;
       transform: translateY(-6px) translateZ(0);
       will-change: transform, opacity;
@@ -867,6 +879,7 @@
     }
     .custom-select.open .custom-select-dropdown {
       opacity: 1;
+      visibility: visible;
       pointer-events: auto;
       transform: translateY(0) translateZ(0);
     }
@@ -1447,6 +1460,7 @@
       border-radius: 12px;
       max-height: 0;
       opacity: 0;
+      visibility: hidden;
       overflow: hidden;
       pointer-events: none;
       transform: translateY(-12px) scale(0.97);
@@ -1458,9 +1472,13 @@
         padding var(--motion-close-dur) var(--motion-close-ease);
     }
 
+    .scheduler-panel:not(.open) * {
+      pointer-events: none !important;
+    }
     .scheduler-panel.open {
       max-height: 800px;
       opacity: 1;
+      visibility: visible;
       padding: 20px 20px 32px 20px;
       pointer-events: all;
       transform: translateY(0) scale(1);
@@ -2178,6 +2196,8 @@
       -webkit-backdrop-filter: blur(10px);
       max-height: 0;
       opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
       overflow: hidden;
       margin-top: 0;
       position: relative;
@@ -2191,9 +2211,14 @@
         margin-bottom var(--motion-close-dur) var(--motion-close-ease);
     }
 
+    .advanced-panel:not(.open) * {
+      pointer-events: none !important;
+    }
     .advanced-panel.open {
       max-height: 400px;
       opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
       padding: 16px 20px;
       overflow: visible;
       margin-top: 10px;
@@ -3013,12 +3038,17 @@
         justify-content: center;
         padding: 16px;
         opacity: 0;
+        visibility: hidden;
         pointer-events: none;
         transition: opacity 0.3s ease;
       }
       .live-modal-overlay.active {
         opacity: 1;
+        visibility: visible;
         pointer-events: auto;
+      }
+      .live-modal-overlay:not(.active) * {
+        pointer-events: none !important;
       }
       .live-modal-card {
         width: 100%;
@@ -5754,19 +5784,24 @@
       document.addEventListener('click', handleOutsideClick);
 
       // Listener global para calcular overflow e acionar a animação de texto deslizante (marquee) no hover
-      document.addEventListener('mouseover', (e) => {
-        const target = e.target.closest('.cs-value, .cs-opt-label');
-        if (!target) return;
-        const inner = target.querySelector('.cs-text-inner');
-        if (!inner) return;
-        const diff = inner.scrollWidth - target.clientWidth;
-        if (diff > 4) {
-          target.style.setProperty('--marquee-dist', `-${diff + 14}px`);
-          target.classList.add('is-overflowing');
-        } else {
-          target.classList.remove('is-overflowing');
-        }
-      });
+      if (!window._csMarqueeBound) {
+        window._csMarqueeBound = true;
+        document.addEventListener('mouseover', (e) => {
+          const triggerOrOpt = e.target.closest('.custom-select-trigger, .cs-option');
+          if (!triggerOrOpt) return;
+          const target = triggerOrOpt.querySelector('.cs-value, .cs-opt-label');
+          if (!target) return;
+          const inner = target.querySelector('.cs-text-inner');
+          if (!inner) return;
+          const diff = inner.scrollWidth - target.clientWidth;
+          if (diff > 4) {
+            target.style.setProperty('--marquee-dist', `-${diff + 14}px`);
+            target.classList.add('is-overflowing');
+          } else {
+            target.classList.remove('is-overflowing');
+          }
+        });
+      }
 
       renderOptions();
 
@@ -6174,6 +6209,22 @@
 
     // Inicialização síncrona imediata ao parse do JS
     initCustomSelect('csQuickAgent', DEFAULT_PRESETS, applyQuickPresetSelection, 'agent_f95ee856fb3d220f42171318dc');
+    initCustomSelect('csProvider', [{ value: 'auto', label: 'Automático (IA / Roteamento por DDD)' }], (val) => {
+      if (document.getElementById('from_number')) document.getElementById('from_number').value = val;
+    }, 'auto');
+    initCustomSelect('csAgent', DEFAULT_PRESETS.map(p => ({ value: p.value, label: p.label })), (val) => {
+      if (document.getElementById('agent_id')) document.getElementById('agent_id').value = val;
+      if (typeof checkFormReady === 'function') checkFormReady();
+    }, 'agent_f95ee856fb3d220f42171318dc');
+    initCustomSelect('csPrompt', [
+      { value: '20', label: 'Prompt 20' },
+      { value: '33', label: 'Prompt 33' },
+      { value: '34', label: 'Prompt 34' },
+      { value: '30', label: 'Prompt 30' }
+    ], (val) => {
+      if (document.getElementById('prompt_id')) document.getElementById('prompt_id').value = val;
+      if (typeof checkFormReady === 'function') checkFormReady();
+    }, '20');
 
     // Carregar presets adicionais do servidor assincronamente
     (async function loadSelections() {
