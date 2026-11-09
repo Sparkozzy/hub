@@ -5806,6 +5806,339 @@
       if (typeof checkFormReady === 'function') checkFormReady();
     }
 
+    
+    /* ── LÓGICA DE DISPARO EM LOTE & FILA EM TEMPO REAL ── */
+    let batchParsedLeads = [];
+    let currentActiveBatchId = null;
+    let batchPollingTimer = null;
+
+    function setBatchInterval(sec) {
+      const elVal = document.getElementById('batchIntervalVal');
+      if (elVal) elVal.value = sec;
+      ['60', '90', '120'].forEach(s => {
+        const el = document.getElementById('speedOpt' + s);
+        if (el) el.classList.toggle('active', String(s) === String(sec));
+      });
+    }
+
+    function handleBatchDragOver(e) {
+      e.preventDefault();
+      const dropzone = document.getElementById('batchDropzone');
+      if (dropzone) dropzone.classList.add('dragover');
+    }
+
+    function handleBatchDragLeave(e) {
+      e.preventDefault();
+      const dropzone = document.getElementById('batchDropzone');
+      if (dropzone) dropzone.classList.remove('dragover');
+    }
+
+    function handleBatchDrop(e) {
+      e.preventDefault();
+      const dropzone = document.getElementById('batchDropzone');
+      if (dropzone) dropzone.classList.remove('dragover');
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+        processIncomingBatchFile(e.dataTransfer.files[0]);
+      }
+    }
+
+    function handleBatchFileSelected(e) {
+      if (e.target && e.target.files && e.target.files[0]) {
+        processIncomingBatchFile(e.target.files[0]);
+      }
+    }
+
+    function processIncomingBatchFile(file) {
+      const fileName = file.name.toLowerCase();
+      if ((fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) && window.XLSX) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          try {
+            const data = new Uint8Array(evt.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheet = workbook.SheetNames[0];
+            const csvText = XLSX.utils.sheet_to_csv(workbook.Sheets[firstSheet]);
+            parseBatchCsvText(csvText, file.name);
+          } catch (err) {
+            console.error('Erro ao ler Excel:', err);
+            alert('Não foi possível processar a planilha Excel. Verifique o arquivo.');
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          parseBatchCsvText(evt.target.result, file.name);
+        };
+        reader.readAsText(file, 'UTF-8');
+      }
+    }
+
+    function parseBatchCsvText(text, filename) {
+      const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+      if (lines.length === 0) {
+        alert('A planilha selecionada está vazia.');
+        return;
+      }
+
+      const firstLine = lines[0];
+      const delimiter = firstLine.includes(';') ? ';' : ',';
+      const headers = firstLine.split(delimiter).map(h => h.replace(/["']/g, '').trim());
+
+      let nameIdx = headers.findIndex(h => /nome|lead|cliente|person|contato/i.test(h));
+      let phoneIdx = headers.findIndex(h => /telefone|whatsapp|celular|phone|numero|fone/i.test(h));
+      let companyIdx = headers.findIndex(h => /empresa|company/i.test(h));
+      let emailIdx = headers.findIndex(h => /email|e-mail|mail/i.test(h));
+
+      if (nameIdx === -1) nameIdx = 0;
+      if (phoneIdx === -1) phoneIdx = Math.min(1, headers.length - 1);
+
+      batchParsedLeads = [];
+      let validCount = 0;
+      let fixedCount = 0;
+      let invalidCount = 0;
+
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(delimiter).map(c => c.replace(/^["=']+|["=']+$/g, '').trim());
+        if (cols.length <= 1 && !cols[0]) continue;
+
+        let rawName = cols[nameIdx] || 'Contato ' + i;
+        let rawPhone = cols[phoneIdx] || '';
+        let company = companyIdx !== -1 ? cols[companyIdx] || '-' : '-';
+        let email = emailIdx !== -1 ? cols[emailIdx] || '' : '';
+
+        let cleanPhone = rawPhone.replace(/\D/g, '');
+        let isFixed = false;
+        let isValid = true;
+
+        if (cleanPhone.length === 10 || cleanPhone.length === 11) {
+          cleanPhone = '55' + cleanPhone;
+          isFixed = true;
+        }
+
+        if (cleanPhone.length < 12 || cleanPhone.length > 14) {
+          isValid = false;
+        }
+
+        if (isValid) {
+          validCount++;
+          if (isFixed) fixedCount++;
+        } else {
+          invalidCount++;
+        }
+
+        batchParsedLeads.push({
+          id: i,
+          nome: rawName,
+          name: rawName,
+          numero: cleanPhone,
+          phone: cleanPhone,
+          formattedPhone: cleanPhone.length >= 12 ? '+' + cleanPhone.slice(0,2) + ' (' + cleanPhone.slice(2,4) + ') ' + cleanPhone.slice(4) : rawPhone,
+          empresa: company,
+          company: company,
+          email: email,
+          isValid: isValid
+        });
+      }
+
+      document.getElementById('batchValidCount').innerText = validCount;
+      document.getElementById('batchFixedCount').innerText = fixedCount;
+      document.getElementById('batchInvalidCount').innerText = invalidCount;
+
+      const tbody = document.getElementById('batchPreviewTbody');
+      tbody.innerHTML = batchParsedLeads.slice(0, 15).map((l, idx) => `
+        <tr style="${!l.isValid ? 'opacity:0.5; background:rgba(239,68,68,0.05);' : ''}">
+          <td>${idx + 1}</td>
+          <td><b>${l.nome}</b></td>
+          <td>${l.formattedPhone}</td>
+          <td>${l.empresa}</td>
+          <td>${l.email || '-'}</td>
+        </tr>
+      `).join('');
+
+      document.getElementById('batchPreviewWrap').style.display = 'block';
+
+      const mainCtx = document.getElementById('contexto')?.value || '';
+      const batchCtx = document.getElementById('batchContexto');
+      if (batchCtx && !batchCtx.value && mainCtx) {
+        batchCtx.value = mainCtx;
+      }
+
+      const btnText = document.getElementById('btnIniciarDisparoLoteText');
+      if (btnText) {
+        btnText.innerText = `Iniciar Disparo em Lote (${validCount} contatos)`;
+      }
+    }
+
+    async function iniciarDisparoEmLote() {
+      const validLeads = batchParsedLeads.filter(l => l.isValid);
+      if (validLeads.length === 0) {
+        alert('Nenhum contato válido encontrado na planilha para iniciar o lote.');
+        return;
+      }
+
+      const horarioInicio = document.getElementById('batchHorarioInicio')?.value || '09:00';
+      const horarioFim = document.getElementById('batchHorarioFim')?.value || '19:00';
+      const frequencia = Number(document.getElementById('batchIntervalVal')?.value) || 90;
+      const agentId = document.getElementById('agent_id')?.value || document.getElementById('quickAgentVal')?.value || 'agent_4f1dba5e5432cd193d324754bf';
+      const promptId = document.getElementById('prompt_id')?.value || document.getElementById('quickPromptVal')?.value || '33';
+      const contexto = document.getElementById('batchContexto')?.value || document.getElementById('contexto')?.value || '';
+
+      const confirmMsg = `Confirmar início de disparo em lote?\n\n• Contatos válidos: ${validLeads.length}\n• Intervalo: 1 ligação a cada ${frequencia} segundos\n• Horário permitido: ${horarioInicio} às ${horarioFim}\n\nAs chamadas serão enfileiradas imediatamente na central.`;
+      if (!confirm(confirmMsg)) return;
+
+      const btn = document.getElementById('btnIniciarDisparoLote');
+      if (btn) btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/disparo/iniciar-lote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            leads: validLeads,
+            horario_inicio: horarioInicio,
+            horario_fim: horarioFim,
+            frequencia: frequencia,
+            agent_id: agentId,
+            prompt_id: promptId,
+            contexto: contexto
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          currentActiveBatchId = data.batch_id;
+          if (data.total_leads) localStorage.setItem('batch_total_' + data.batch_id, data.total_leads);
+          alert(`🚀 Sucesso! ${data.total_leads} ligações foram adicionadas à fila de disparos!`);
+          atualizarFilaLotesAtivos();
+        } else {
+          alert('Erro ao iniciar lote: ' + (data.error || 'Falha na comunicação com a engine de telefonia.'));
+        }
+      } catch (err) {
+        console.error('Erro ao iniciar lote:', err);
+        alert('Erro ao conectar com o servidor para iniciar o lote.');
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    async function atualizarFilaLotesAtivos() {
+      try {
+        const res = await fetch('/api/disparo/lotes-ativos');
+        if (!res.ok) return;
+        const data = await res.json();
+        const batches = data.active_batches || [];
+
+        const activeCard = document.getElementById('batchActiveCard');
+        const modeDot = document.getElementById('modeBatchDot');
+
+        if (batches.length === 0) {
+          if (activeCard) activeCard.style.display = 'none';
+          if (modeDot) modeDot.style.display = 'none';
+          currentActiveBatchId = null;
+          if (batchPollingTimer) {
+            clearInterval(batchPollingTimer);
+            batchPollingTimer = null;
+          }
+          return;
+        }
+
+        if (modeDot) modeDot.style.display = 'block';
+        const b = batches[0];
+        currentActiveBatchId = b.batch_id;
+        if (activeCard) activeCard.style.display = 'block';
+
+        const idLabel = document.getElementById('activeBatchIdLabel');
+        if (idLabel) idLabel.textContent = 'Lote: #' + b.batch_id.slice(0, 8);
+
+        const remaining = b.leads_pendentes_fila !== undefined ? b.leads_pendentes_fila : (b.remaining !== undefined ? b.remaining : 0);
+        const storedTotal = Number(localStorage.getItem('batch_total_' + b.batch_id)) || b.total || (remaining + 1);
+        const processed = Math.max(0, storedTotal - remaining);
+        const percent = storedTotal > 0 ? Math.min(100, Math.round((processed / storedTotal) * 100)) : 0;
+
+        const progressText = document.getElementById('activeBatchProgressText');
+        if (progressText) {
+          progressText.textContent = remaining > 0 
+            ? `${processed} de ${storedTotal} contatos processados (${remaining} restantes na fila)`
+            : `Todos os contatos foram discados com sucesso!`;
+        }
+
+        const percentText = document.getElementById('activeBatchPercentText');
+        if (percentText) percentText.textContent = percent + '%';
+
+        const barFill = document.getElementById('activeBatchProgressBar');
+        if (barFill) barFill.style.width = percent + '%';
+
+        const totalEl = document.getElementById('activeBatchTotalCount');
+        if (totalEl) totalEl.textContent = storedTotal;
+
+        const remEl = document.getElementById('activeBatchRemainingCount');
+        if (remEl) remEl.textContent = remaining;
+
+        const cfg = b.config || {};
+        const freq = cfg.frequencia_segundos || cfg.frequencia || b.frequencia || 60;
+        const hIni = cfg.horario_inicio || b.horario_inicio || '08:00';
+        const hFim = cfg.horario_fim || b.horario_fim || '20:00';
+
+        const freqEl = document.getElementById('activeBatchFreqVal');
+        if (freqEl) freqEl.textContent = freq + 's (' + hIni + ' às ' + hFim + ')';
+
+        if (!batchPollingTimer) {
+          batchPollingTimer = setInterval(atualizarFilaLotesAtivos, 5000);
+        }
+      } catch (err) {
+        console.warn('Erro ao atualizar fila de lotes:', err);
+      }
+    }
+
+    async function solicitarAlteracaoRitmo() {
+      if (!currentActiveBatchId) return;
+      const novoRitmo = prompt('Informe o novo intervalo entre ligações em segundos (ex: 60, 90, 120):', '90');
+      if (!novoRitmo || isNaN(Number(novoRitmo)) || Number(novoRitmo) <= 0) return;
+
+      try {
+        const res = await fetch('/api/disparo/alterar-ritmo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            batch_id: currentActiveBatchId,
+            frequencia: Number(novoRitmo)
+          })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          alert('Ritmo de ligações atualizado com sucesso para ' + novoRitmo + ' segundos!');
+          atualizarFilaLotesAtivos();
+        } else {
+          alert('Erro ao atualizar ritmo: ' + (data.error || 'Falha na requisição.'));
+        }
+      } catch (e) {
+        alert('Erro ao conectar com o servidor.');
+      }
+    }
+
+    async function solicitarCancelamentoLote() {
+      if (!currentActiveBatchId) return;
+      if (!confirm('Deseja realmente interromper os disparos deste lote? As chamadas restantes na fila serão canceladas.')) return;
+
+      try {
+        const res = await fetch('/api/disparo/cancelar-lote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ batch_id: currentActiveBatchId })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          alert('Lote de disparos interrompido com sucesso.');
+          atualizarFilaLotesAtivos();
+        } else {
+          alert('Erro ao cancelar lote: ' + (data.error || 'Falha na requisição.'));
+        }
+      } catch (e) {
+        alert('Erro ao conectar com o servidor.');
+      }
+    }
+
     window.switchMode = function(mode) {
       const isQuick = mode === 'quick';
       const isBatch = mode === 'batch';
