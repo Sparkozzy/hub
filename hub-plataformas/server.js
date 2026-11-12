@@ -367,8 +367,8 @@ if (!IS_PRODUCTION) {
       if (cfg) {
         const adminClient = createClient(process.env.SUPABASE_URL, cfg.supabase_service_key);
         const { data: authData } = await adminClient.auth.admin.listUsers();
-        // Tenta achar o Pedro primeiro (dev principal), senao pega o primeiro
-        const targetEmail = 'pedroernestozimmermann@gmail.com';
+        // Tenta achar o Ryan primeiro (dev principal), senao pega o primeiro
+        const targetEmail = 'ryanferrari@iatize-ia.com';
         const targetUser = authData?.users?.find(u => u.email === targetEmail)
           || authData?.users?.[0];
         if (targetUser) {
@@ -1380,13 +1380,10 @@ app.get('/api/prompts', async (req, res) => {
 
 // Mapeamento automático de telefone dos membros da equipe
 const TEAM_MEMBER_PHONES = [
-  { keywords: ['pedro'], phone: '5547991089099' },
   { keywords: ['renato'], phone: '554196852463' },
   { keywords: ['ryan'], phone: '554896027108' },
-  { keywords: ['mariah'], phone: '554896112406' },
   { keywords: ['ivan'], phone: '554797804224' },
   { keywords: ['wandrey'], phone: '557988768794' },
-  { keywords: ['hay', 'haylan'], phone: '5511989118774' },
 ];
 
 function getTeamPhone(email, name, existingPhone) {
@@ -1442,10 +1439,10 @@ app.get('/api/check', (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
   const user = req.session.user;
   const activeClient = user.client_access?.find(c => c.client_id === user.active_client);
-  const phone = getTeamPhone(user.email, user.name, user.phone) || '5547991089099';
+  const phone = getTeamPhone(user.email, user.name, user.phone) || '';
   res.json({
-    name: user.name || 'Pedro Ernesto',
-    email: user.email || 'pedroernestozimmermann@gmail.com',
+    name: user.name || 'MindFlow Admin',
+    email: user.email || 'admin@mindflow-ia.com',
     phone: phone,
     client_access: (user.client_access || []).map(c => ({
       client_id: c.client_id,
