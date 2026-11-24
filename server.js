@@ -503,6 +503,14 @@ app.get(['/projetos', '/projetos.html'], (req, res) => {
   res.sendFile(path.join(__dirname, 'projetos.html'));
 });
 
+app.get(['/feedback', '/feedback.html'], (req, res) => {
+  if (!req.session?.user) return res.redirect('/');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.sendFile(path.join(__dirname, 'feedback.html'));
+});
+
 app.get(['/zapi-connect', '/zapi-connect.html'], (req, res) => {
   if (!req.session?.user && (!req.query.instanceId || !req.query.token)) {
     return res.redirect('/');
@@ -2818,6 +2826,220 @@ app.post(['/api/disparo/alterar-ritmo', '/api/disparo/csv/update-frequency'], as
 });
 
 // ============================================================
+// API: FEEDBACKS DE COMPORTAMENTO DA IA (Validador gpt-4.1-nano)
+// ============================================================
+const feedbackValidateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Muitas validações em sequência. Aguarde um minuto e tente novamente.' },
+});
+
+const FEEDBACK_VALIDATOR_SYSTEM_PROMPT = `Você é um Avaliador de Qualidade de Feedbacks de IA da MindFlow.
+Sua única função é avaliar se o feedback enviado por um cliente sobre o comportamento da IA está suficientemente concreto, observável e testável para que um engenheiro de prompts consiga ajustar o sistema sem ambiguidade.
+
+Regras estritas de avaliação:
+1. O campo "Como deve ser (expected_behavior)" NÃO pode ser apenas um adjetivo vago ou subjetivo sem exemplo ou regra concreta. Exemplos que DEVEM ser REPROVADOS (approved: false):
+   - "Não precisa ser tão rígido"
+   - "O comportamento é muito comercial"
+   - "Seja mais humano / mais natural / mais simpático"
+   - "Melhore a abordagem"
+   - "Responda melhor"
+2. Para ser APROVADO (approved: true, score >= 75), "Como deve ser" precisa conter pelo menos UM destes elementos claros:
+   - Um exemplo literal de frase/resposta que um atendente humano enviaria nessa situação; OU
+   - Uma regra de ação objetiva e observável (ex: "Primeiro responder a dúvida sobre preço e só depois perguntar se quer agendar", "Não usar expressões como 'garanta já' ou 'últimas vagas'", "Aceitar quando o cliente disser 'de manhã' sem exigir horário exato").
+3. Se houver múltiplas solicitações desconexas misturadas em um único feedback, oriente a focar em 1 situação por envio.
+4. Seja cordial, direto e didático em português (pt-BR). Sempre gere um "rewritten_example" concreto e realista baseado no que o cliente tentou dizer, para que ele possa aplicar com 1 clique ou adaptar.
+
+Responda EXCLUSIVAMENTE em JSON válido com exatamente estas chaves:
+{
+  "approved": boolean,
+  "score": number,
+  "summary": "string curta de 1 frase",
+  "issues": ["string"],
+  "suggestions": ["string"],
+  "rewritten_example": "string"
+}`;
+
+app.post('/api/feedback/validate', feedbackValidateLimiter, async (req, res) => {
+  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
+
+  const {
+    channel = 'whatsapp',
+    phone_numbers = '',
+    current_behavior = '',
+    forbidden_behavior = '',
+    expected_behavior = '',
+    exception_rule = '',
+  } = req.body || {};
+
+  if (!String(expected_behavior).trim() || !String(current_behavior).trim()) {
+    return res.status(400).json({
+      error: 'Preencha o comportamento atual e como deve ser antes de validar.',
+    });
+  }
+
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    return res.status(503).json({
+      error: 'Validador de IA indisponível no momento (OPENAI_API_KEY não configurada).',
+    });
+  }
+
+  const model = process.env.FEEDBACK_VALIDATOR_MODEL || 'gpt-5.4-nano';
+  const userPayload = [
+    `Canal: ${channel}`,
+    `Telefones/Casos: ${String(phone_numbers).trim() || '(não informado)'}`,
+    `Comportamento atual (o que a IA fez de errado): ${String(current_behavior).trim()}`,
+    `O que NÃO deveria ter feito: ${String(forbidden_behavior).trim() || '(não informado)'}`,
+    `Como deve ser (alvo da avaliação): ${String(expected_behavior).trim()}`,
+    `Exceção / Quando manter como antes: ${String(exception_rule).trim() || '(não informado)'}`,
+  ].join('\n');
+
+  try {
+    const aiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        max_completion_tokens: 450,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: FEEDBACK_VALIDATOR_SYSTEM_PROMPT },
+          { role: 'user', content: userPayload },
+        ],
+      }),
+      signal: AbortSignal.timeout(15000),
+    });
+
+    if (!aiRes.ok) {
+      const errTxt = await aiRes.text().catch(() => '');
+      console.error('[Feedback Validate] OpenAI erro:', aiRes.status, errTxt.slice(0, 300));
+      return res.status(502).json({ error: 'Falha ao consultar o agente validador.' });
+    }
+
+    const aiJson = await aiRes.json();
+    const rawContent = aiJson?.choices?.[0]?.message?.content || '{}';
+    let parsed;
+    try {
+      parsed = JSON.parse(rawContent);
+    } catch {
+      parsed = {
+        approved: false,
+        score: 40,
+        summary: 'Não foi possível estruturar a avaliação. Detalhe melhor como a IA deve responder.',
+        issues: ['Descreva um exemplo concreto de resposta ideal no lugar da fala atual.'],
+        suggestions: ['Escreva exatamente a frase que um atendente humano enviaria nessa situação.'],
+        rewritten_example: '',
+      };
+    }
+
+    return res.json({
+      approved: Boolean(parsed.approved),
+      score: Number.isFinite(Number(parsed.score)) ? Number(parsed.score) : 0,
+      summary: String(parsed.summary || ''),
+      issues: Array.isArray(parsed.issues) ? parsed.issues.map(String) : [],
+      suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions.map(String) : [],
+      rewritten_example: String(parsed.rewritten_example || ''),
+      model,
+    });
+  } catch (err) {
+    console.error('[Feedback Validate] Erro:', err.message);
+    return res.status(500).json({ error: 'Erro interno ao validar feedback.' });
+  }
+});
+
+app.post('/api/feedback/submit', async (req, res) => {
+  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
+
+  const user = req.session.user;
+  const activeClientId = String(user.active_client || user.client_access?.[0]?.client_id || '2');
+  const activeClientName =
+    user.client_access?.find((c) => String(c.client_id) === activeClientId)?.client_name || activeClientId;
+
+  const {
+    channel = 'whatsapp',
+    phone_numbers = '',
+    current_behavior = '',
+    forbidden_behavior = '',
+    expected_behavior = '',
+    exception_rule = '',
+    ai_validation_score = null,
+    ai_validation_feedback = {},
+  } = req.body || {};
+
+  if (!String(phone_numbers).trim() || !String(current_behavior).trim() || !String(expected_behavior).trim()) {
+    return res.status(400).json({
+      error: 'Campos obrigatórios: número(s) do(s) cliente(s), comportamento atual e como deve ser.',
+    });
+  }
+
+  const allowedChannels = new Set(['whatsapp', 'voz', 'instagram', 'fup']);
+  const safeChannel = allowedChannels.has(channel) ? channel : 'whatsapp';
+
+  try {
+    const { data, error } = await supabase
+      .from('client_feedbacks')
+      .insert({
+        client_id: activeClientId,
+        client_name: activeClientName,
+        user_email: user.email,
+        channel: safeChannel,
+        phone_numbers: String(phone_numbers).trim(),
+        current_behavior: String(current_behavior).trim(),
+        forbidden_behavior: String(forbidden_behavior || '').trim() || null,
+        expected_behavior: String(expected_behavior).trim(),
+        exception_rule: String(exception_rule || '').trim() || null,
+        ai_validation_score: ai_validation_score !== null ? Number(ai_validation_score) : null,
+        ai_validation_feedback: ai_validation_feedback || {},
+        status: 'pendente',
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[Feedback Submit] Supabase erro:', error.message);
+      return res.status(500).json({ error: 'Erro ao salvar feedback no banco de dados.' });
+    }
+
+    return res.json({ ok: true, feedback: data });
+  } catch (err) {
+    console.error('[Feedback Submit] Erro:', err.message);
+    return res.status(500).json({ error: 'Erro interno ao salvar feedback.' });
+  }
+});
+
+app.get('/api/feedback', async (req, res) => {
+  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
+
+  const user = req.session.user;
+  const activeClientId = String(user.active_client || user.client_access?.[0]?.client_id || '2');
+
+  try {
+    const { data, error } = await supabase
+      .from('client_feedbacks')
+      .select('id, client_id, client_name, user_email, channel, phone_numbers, current_behavior, forbidden_behavior, expected_behavior, exception_rule, ai_validation_score, status, created_at')
+      .eq('client_id', activeClientId)
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (error) {
+      console.error('[Feedback List] Supabase erro:', error.message);
+      return res.status(500).json({ error: 'Erro ao carregar feedbacks.' });
+    }
+
+    return res.json({ feedbacks: data || [] });
+  } catch (err) {
+    console.error('[Feedback List] Erro:', err.message);
+    return res.status(500).json({ error: 'Erro interno ao listar feedbacks.' });
+  }
+});
+
+// ============================================================
 // API: PLATAFORMAS (protegida)
 // ============================================================
 app.get('/api/platforms', (req, res) => {
@@ -2963,6 +3185,14 @@ const PLATFORMS = [
     description: 'Formulário de chamadas MindFlow',
     url: '/disparo',
     icon: 'smart_toy',
+    internal: true,
+  },
+  {
+    id: 'feedback',
+    name: 'Feedbacks da IA',
+    description: 'Envie ajustes de comportamento com validação guiada',
+    url: '/feedback',
+    icon: 'rate_review',
     internal: true,
   },
   {

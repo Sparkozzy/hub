@@ -463,6 +463,9 @@
     <a href="/dashboard" class="dock-item active" title="Dashboard Métricas">
       <span class="material-symbols-outlined">bar_chart</span>
     </a>
+    <a href="/feedback" class="dock-item" title="Feedbacks da IA">
+      <span class="material-symbols-outlined">rate_review</span>
+    </a>
     <a href="/prompt-ops" class="dock-item" id="dockPromptOps" title="PromptOps — Engenharia de Prompts">
       <span class="material-symbols-outlined">terminal</span>
     </a>
@@ -502,12 +505,14 @@
 
         var dash = dock.querySelector('a[href="/dashboard"], a[href="/cliente"]');
         var disp = dock.querySelector('a[href="/disparo"]');
+        var fb = dock.querySelector('a[href="/feedback"]');
         var logout = dock.querySelector('a[onclick*="logout"]');
         var sep = dock.querySelector('.dock-sep');
 
         while (dock.firstChild) dock.removeChild(dock.firstChild);
         if (dash) dock.appendChild(dash);
         if (disp) dock.appendChild(disp);
+        if (fb) dock.appendChild(fb);
         if (headset) dock.appendChild(headset);
         if (sep) dock.appendChild(sep);
         if (logout) dock.appendChild(logout);

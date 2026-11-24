@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feedbacks da IA — MindFlow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="mindflow-core.css?v=1.0.1" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue: #2E4FFF;
+      --teal: #00B5A0;
+      --amber: #F59E0B;
+      --error: #EF4444;
+      --bg: #04060E;
+      --card: rgba(11, 15, 29, 0.82);
+      --border: rgba(255, 255, 255, 0.08);
+      --muted: #8E8FA2;
+    }
+
+    body {
+      background: var(--bg);
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .bg-glow {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(600px circle at 15% 20%, rgba(46, 79, 255, 0.12), transparent 60%),
+        radial-gradient(500px circle at 85% 80%, rgba(0, 181, 160, 0.09), transparent 60%);
+    }
+
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 50;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      background: rgba(4, 6, 14, 0.72);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .nav-user {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.55);
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    .nav-user strong { color: #fff; font-weight: 600; }
+
+    .btn-logout {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      color: #FCA5A5;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s;
+    }
+    .btn-logout:hover { background: rgba(239, 68, 68, 0.2); color: #fff; }
+    .btn-logout .material-symbols-outlined { font-size: 16px; }
+
+    main {
+      position: relative;
+      z-index: 1;
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 84px 28px 48px 92px;
+    }
+
+    .page-header {
+      margin-bottom: 24px;
+    }
+    .page-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(0, 181, 160, 0.12);
+      border: 1px solid rgba(0, 181, 160, 0.28);
+      color: #5EEAD4;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: 'Space Grotesk', sans-serif;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .page-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .page-sub {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 6px;
+      max-width: 720px;
+      line-height: 1.5;
+    }
+
+    .layout-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 22px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .panel-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .panel-title .material-symbols-outlined { color: var(--teal); font-size: 20px; }
+
+    .form-row-2 {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 14px;
+    }
+
+    .field { margin-bottom: 16px; }
+    .field label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 600;
+      color: #E2E8F0;
+      margin-bottom: 6px;
+    }
+    .field label .opt {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--muted);
+    }
+    .field-hint {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+
+    input[type="text"], select, textarea {
+      width: 100%;
+      background: rgba(4, 6, 14, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 13.5px;
+      padding: 10px 12px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    textarea { resize: vertical; min-height: 84px; line-height: 1.5; }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(0, 181, 160, 0.15);
+    }
+
+    .quick-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .chip-btn {
+      background: rgba(46, 79, 255, 0.12);
+      border: 1px solid rgba(46, 79, 255, 0.3);
+      color: #A5B4FC;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 11.5px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .chip-btn:hover {
+      background: rgba(46, 79, 255, 0.25);
+      color: #fff;
+    }
+
+    .btn-submit {
+      width: 100%;
+      border: none;
+      border-radius: 11px;
+      padding: 12px 18px;
+      background: linear-gradient(135deg, var(--blue), var(--teal));
+      color: #fff;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .btn-submit:hover:not(:disabled) { opacity: 0.94; transform: translateY(-1px); }
+    .btn-submit:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    /* ── Validator Card ── */
+    .validator-box {
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(4, 6, 14, 0.6);
+      margin-bottom: 18px;
+    }
+    .validator-box.status-rejected {
+      border-color: rgba(245, 158, 11, 0.45);
+      background: rgba(245, 158, 11, 0.07);
+    }
+    .validator-box.status-approved {
+      border-color: rgba(0, 181, 160, 0.45);
+      background: rgba(0, 181, 160, 0.08);
+    }
+
+    .val-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .val-pill {
+      font-size: 11px;
+      font-weight: 700;
+      font-family: 'Space Grotesk', sans-serif;
+      padding: 3px 9px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .pill-idle { background: rgba(255,255,255,0.08); color: var(--muted); }
+    .pill-warn { background: rgba(245, 158, 11, 0.2); color: #FCD34D; }
+    .pill-ok { background: rgba(0, 181, 160, 0.2); color: #5EEAD4; }
+
+    .val-summary { font-size: 13.5px; line-height: 1.5; color: #E2E8F0; margin-bottom: 10px; }
+    .val-list-title { font-size: 12px; font-weight: 700; color: #CBD5E1; margin: 10px 0 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .val-list { padding-left: 18px; font-size: 13px; color: #CBD5E1; line-height: 1.5; }
+    .val-list li { margin-bottom: 4px; }
+
+    .rewrite-box {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 10px;
+      background: rgba(46, 79, 255, 0.1);
+      border: 1px solid rgba(46, 79, 255, 0.3);
+    }
+    .rewrite-text {
+      font-size: 13px;
+      color: #E2E8F0;
+      line-height: 1.5;
+      margin: 6px 0 10px;
+      white-space: pre-wrap;
+    }
+    .btn-apply {
+      background: rgba(46, 79, 255, 0.25);
+      border: 1px solid rgba(123, 154, 255, 0.45);
+      color: #fff;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-apply:hover { background: rgba(46, 79, 255, 0.45); }
+
+    /* ── History List ── */
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 430px;
+      overflow-y: auto;
+    }
+    .hist-item {
+      padding: 12px;
+      border-radius: 10px;
+      background: rgba(4, 6, 14, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    .hist-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+      font-size: 11.5px;
+      color: var(--muted);
+    }
+    .hist-status {
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 10.5px;
+      text-transform: uppercase;
+    }
+    .st-pendente { background: rgba(245, 158, 11, 0.18); color: #FCD34D; }
+    .st-em_analise { background: rgba(46, 79, 255, 0.2); color: #93C5FD; }
+    .st-aplicado { background: rgba(0, 181, 160, 0.2); color: #5EEAD4; }
+    .st-rejeitado { background: rgba(239, 68, 68, 0.2); color: #FCA5A5; }
+    .hist-body { font-size: 12.5px; color: #E2E8F0; line-height: 1.45; }
+    .hist-body strong { color: #94A3B8; font-weight: 600; }
+
+    .spin { animation: spin 0.9s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 980px) {
+      main { padding: 80px 16px 36px 16px; }
+      .layout-grid { grid-template-columns: 1fr; }
+      .form-row-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bg-glow"></div>
+
+  <!-- ── Dock lateral ── -->
+  <nav class="dock">
+    <a href="/hub" class="dock-item" id="dockHub" title="Hub de Plataformas">
+      <span class="material-symbols-outlined">grid_view</span>
+    </a>
+    <a href="/disparo" class="dock-item" title="Disparo de Ligações">
+      <span class="material-symbols-outlined">smart_toy</span>
+    </a>
+    <a href="/dashboard" class="dock-item" id="dockDash" title="Dashboard Métricas">
+      <span class="material-symbols-outlined">bar_chart</span>
+    </a>
+    <a href="/feedback" class="dock-item active" id="dockFeedback" title="Feedbacks da IA">
+      <span class="material-symbols-outlined">rate_review</span>
+    </a>
+    <a href="/prompt-ops" class="dock-item" id="dockPromptOps" title="PromptOps — Engenharia de Prompts">
+      <span class="material-symbols-outlined">terminal</span>
+    </a>
+    <a href="/zapi-connect" class="dock-item" title="Conexão WhatsApp Z-API">
+      <span class="material-symbols-outlined">qr_code_scanner</span>
+    </a>
+    <a href="https://mindflow.wts.chat/auth/sign-in" class="dock-item" id="dockAtendimento" target="_blank" rel="noopener" title="Atendimento WhatsApp">
+      <span class="material-symbols-outlined">headset_mic</span>
+    </a>
+    <a href="/checkup" class="dock-item" title="Checkup do Sistema">
+      <span class="material-symbols-outlined">fact_check</span>
+    </a>
+    <a href="/projetos" class="dock-item" title="Gestão de Projetos">
+      <span class="material-symbols-outlined">view_kanban</span>
+    </a>
+    <div class="dock-sep"></div>
+    <a href="#" onclick="logout(); return false;" class="dock-item" style="color:rgba(255,77,77,0.5)" title="Sair">
+      <span class="material-symbols-outlined">logout</span>
+    </a>
+  </nav>
+
+  <!-- ── Navbar ── -->
+  <nav class="navbar">
+    <a class="nav-left" id="navLogoLink" href="/hub">
+      <svg width="26" height="26" viewBox="1255 225 485 450" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path fill="white" transform="translate(0 -1604)"
+          d="M1273.39 1843.81L1479.89 1843.8L1479.96 2020.86L1519.99 2021.08L1519.9 1843.92L1726.14 1843.94L1726.39 2259.94L1591.01 2259.86L1590.99 2189.94L1656.73 2190.08L1656.65 2030.85L1656.4 1913.62L1590.24 1913.46L1590.39 2090.8C1530.05 2090 1469.71 2089.78 1409.36 2090.13L1409.33 1914.44L1343.81 1914.31C1342.74 2003.67 1343.78 2099.69 1343.81 2189.58L1409.13 2189.73L1409.18 2259.87L1273.37 2259.7L1273.39 1843.81Z" />
+      </svg>
+      <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;">MindFlow</span>
+    </a>
+    <div class="nav-right">
+      <span class="nav-user">Olá, <strong id="userName">—</strong></span>
+      <button class="btn-logout" id="btnLogout">
+        <span class="material-symbols-outlined">logout</span>
+        Sair
+      </button>
+    </div>
+  </nav>
+
+  <main>
+    <div class="page-header">
+      <div class="page-badge">
+        <span class="material-symbols-outlined" style="font-size:14px">auto_awesome</span>
+        Validação Guiada em Tempo Real
+      </div>
+      <h1 class="page-title">Enviar Feedback de Comportamento da IA</h1>
+      <p class="page-sub">
+        Descreva <strong>uma situação por envio</strong>. Antes de registrar, nosso agente avaliador verifica em tempo real se a instrução de <em>"como deve ser"</em> está clara e testável para agilizar o ajuste do prompt.
+      </p>
+    </div>
+
+    <div class="layout-grid">
+      <!-- ── Formulário ── -->
+      <section class="panel">
+        <h2 class="panel-title">
+          <span class="material-symbols-outlined">edit_note</span>
+          Novo Feedback Atômico
+        </h2>
+
+        <form id="feedbackForm">
+          <div class="form-row-2">
+            <div class="field">
+              <label for="channel">Canal</label>
+              <select id="channel" required>
+                <option value="whatsapp">WhatsApp</option>
+                <option value="voz">Ligação (Voz)</option>
+                <option value="instagram">Instagram</option>
+                <option value="fup">Follow-Up</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="phone_numbers">Número(s) do(s) cliente(s)</label>
+              <input type="text" id="phone_numbers" required placeholder="Ex: 11999998888, 11988887777" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="current_behavior">1. O que a IA fez de errado nessa conversa?</label>
+            <div class="field-hint">Copie a mensagem exata da IA ou descreva a ação que aconteceu no atendimento acima.</div>
+            <textarea id="current_behavior" required placeholder="Ex: O lead perguntou o valor da consulta e a IA já mandou link de agendamento sem responder a dúvida."></textarea>
+          </div>
+
+          <div class="field">
+            <label for="forbidden_behavior">
+              2. O que ela NÃO deveria ter feito/dito?
+              <span class="opt">Opcional, mas recomendado</span>
+            </label>
+            <textarea id="forbidden_behavior" style="min-height:66px" placeholder="Ex: Não deveria tentar agendar antes de responder a dúvida do cliente."></textarea>
+          </div>
+
+          <div class="field">
+            <label for="expected_behavior">3. Como deve ser? (Resposta Ideal)</label>
+            <div class="field-hint">Evite adjetivos vagos como <em>"menos rígido"</em> ou <em>"muito comercial"</em>. Escreva exatamente como o seu melhor atendente responderia:</div>
+            <div class="quick-chips">
+              <button type="button" class="chip-btn" data-snippet='Responder primeiro a dúvida de forma direta e só ao final perguntar: "Faz sentido agendarmos uma conversa rápida para eu te mostrar como funciona?"'>+ Responder dúvida antes de agendar</button>
+              <button type="button" class="chip-btn" data-snippet='Usar tom consultivo e direto, sem expressões de urgência como "últimas vagas" ou "garanta já".'>+ Remover tom vendedor/urgência</button>
+              <button type="button" class="chip-btn" data-snippet='Aceitar a informação mesmo se o cliente responder de forma informal (ex: "de manhã"), sem exigir o horário exato na hora.'>+ Aceitar resposta flexível</button>
+            </div>
+            <textarea id="expected_behavior" required placeholder='Ex: "Claro! O valor da avaliação inicial é R$ X e inclui Y. Se fizer sentido para você, posso verificar os horários disponíveis para esta semana?"'></textarea>
+          </div>
+
+          <div class="field">
+            <label for="exception_rule">
+              4. Quando ela DEVE continuar agindo como antes?
+              <span class="opt">Exceção / Anti-caso (opcional)</span>
+            </label>
+            <textarea id="exception_rule" style="min-height:66px" placeholder="Ex: Se o cliente já pedir diretamente para agendar logo na primeira mensagem, pode ir direto para o agendamento."></textarea>
+          </div>
+
+          <button type="submit" class="btn-submit" id="btnSubmit">
+            <span class="material-symbols-outlined">verified</span>
+            Validar e Enviar Feedback
+          </button>
+        </form>
+      </section>
+
+      <!-- ── Painel Direito: Avaliador IA + Histórico ── -->
+      <div style="display:flex;flex-direction:column;gap:20px;">
+        <section class="panel">
+          <h2 class="panel-title">
+            <span class="material-symbols-outlined">psychology</span>
+            Avaliador de Estrutura (IA)
+          </h2>
+
+          <div class="validator-box" id="validatorBox">
+            <div class="val-header">
+              <strong style="font-size:13px;font-family:'Space Grotesk',sans-serif;">Status da Validação</strong>
+              <span class="val-pill pill-idle" id="valPill">Aguardando envio</span>
+            </div>
+            <p class="val-summary" id="valSummary" style="color:var(--muted);">
+              Ao clicar em <strong>Validar e Enviar Feedback</strong>, nosso agente avalia em segundos se o campo <em>"Como deve ser"</em> está claro e pronto para ajuste de prompt.
+            </p>
+            <div id="valDetails" style="display:none;"></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2 class="panel-title">
+            <span class="material-symbols-outlined">history</span>
+            Feedbacks Enviados
+          </h2>
+          <div class="history-list" id="historyList">
+            <p style="font-size:13px;color:var(--muted);">Carregando histórico...</p>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const form = document.getElementById('feedbackForm');
+    const btnSubmit = document.getElementById('btnSubmit');
+    const validatorBox = document.getElementById('validatorBox');
+    const valPill = document.getElementById('valPill');
+    const valSummary = document.getElementById('valSummary');
+    const valDetails = document.getElementById('valDetails');
+    const historyList = document.getElementById('historyList');
+    const expectedField = document.getElementById('expected_behavior');
+
+    function esc(s) {
+      const d = document.createElement('div');
+      d.textContent = s == null ? '' : String(s);
+      return d.innerHTML;
+    }
+
+    function adaptDockForClient() {
+      const isClient = sessionStorage.getItem('isClient') === '1';
+      if (!isClient) return;
+      const dock = document.querySelector('.dock');
+      const hub = document.getElementById('dockHub');
+      if (hub && hub.parentNode) hub.parentNode.removeChild(hub);
+
+      const dash = document.getElementById('dockDash');
+      if (dash) dash.href = '/cliente';
+      const logo = document.getElementById('navLogoLink');
+      if (logo) logo.href = '/cliente';
+
+      const disp = dock.querySelector('a[href="/disparo"]');
+      const fb = document.getElementById('dockFeedback');
+      const headset = document.getElementById('dockAtendimento');
+      const sep = dock.querySelector('.dock-sep');
+      const logoutEl = dock.querySelector('a[onclick*="logout"]');
+
+      while (dock.firstChild) dock.removeChild(dock.firstChild);
+      if (dash) dock.appendChild(dash);
+      if (disp) dock.appendChild(disp);
+      if (fb) dock.appendChild(fb);
+      if (headset) dock.appendChild(headset);
+      if (sep) dock.appendChild(sep);
+      if (logoutEl) dock.appendChild(logoutEl);
+    }
+
+    async function checkSession() {
+      try {
+        const res = await fetch('/api/check');
+        if (!res.ok) throw new Error('unauthorized');
+        const data = await res.json();
+        document.getElementById('userName').textContent = data.name || data.email || 'Usuário';
+        if (data.is_client) sessionStorage.setItem('isClient', '1');
+        adaptDockForClient();
+        loadHistory();
+      } catch {
+        window.location.href = '/';
+      }
+    }
+
+    async function logout() {
+      sessionStorage.clear();
+      await fetch('/api/logout', { method: 'POST' });
+      window.location.href = '/';
+    }
+    document.getElementById('btnLogout').addEventListener('click', logout);
+
+    // Quick-fill chips for expected_behavior
+    document.querySelectorAll('.chip-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const snippet = btn.getAttribute('data-snippet') || '';
+        const current = expectedField.value.trim();
+        expectedField.value = current ? `${current}\n${snippet}` : snippet;
+        expectedField.focus();
+      });
+    });
+
+    function setValidatingState(loading) {
+      btnSubmit.disabled = loading;
+      btnSubmit.innerHTML = loading
+        ? '<span class="material-symbols-outlined spin">progress_activity</span> Avaliando estrutura...'
+        : '<span class="material-symbols-outlined">verified</span> Validar e Enviar Feedback';
+    }
+
+    function renderValidationResult(v) {
+      validatorBox.classList.remove('status-rejected', 'status-approved');
+      valDetails.style.display = 'block';
+
+      if (v.approved) {
+        validatorBox.classList.add('status-approved');
+        valPill.className = 'val-pill pill-ok';
+        valPill.textContent = `Aprovado • ${v.score}/100`;
+        valSummary.style.color = '#E2E8F0';
+        valSummary.textContent = v.summary || 'Feedback bem estruturado e enviado com sucesso!';
+        valDetails.innerHTML = '';
+        return;
+      }
+
+      validatorBox.classList.add('status-rejected');
+      valPill.className = 'val-pill pill-warn';
+      valPill.textContent = `Precisa de ajuste • ${v.score}/100`;
+      valSummary.style.color = '#FDE68A';
+      valSummary.textContent = v.summary || 'O campo "Como deve ser" ainda está vago para ajuste de prompt.';
+
+      let html = '';
+      if (v.issues && v.issues.length) {
+        html += '<div class="val-list-title">Por que não passou</div><ul class="val-list">';
+        html += v.issues.map(i => `<li>${esc(i)}</li>`).join('');
+        html += '</ul>';
+      }
+      if (v.suggestions && v.suggestions.length) {
+        html += '<div class="val-list-title">Como melhorar</div><ul class="val-list">';
+        html += v.suggestions.map(s => `<li>${esc(s)}</li>`).join('');
+        html += '</ul>';
+      }
+      if (v.rewritten_example) {
+        html += `
+          <div class="rewrite-box">
+            <div class="val-list-title" style="margin-top:0;color:#93C5FD;">Sugestão pronta para "Como deve ser"</div>
+            <div class="rewrite-text" id="rewrittenText">${esc(v.rewritten_example)}</div>
+            <button type="button" class="btn-apply" id="btnApplySuggestion">
+              <span class="material-symbols-outlined" style="font-size:15px">auto_fix_high</span>
+              Aplicar sugestão no campo
+            </button>
+          </div>
+        `;
+      }
+      valDetails.innerHTML = html;
+
+      const applyBtn = document.getElementById('btnApplySuggestion');
+      if (applyBtn) {
+        applyBtn.addEventListener('click', () => {
+          expectedField.value = v.rewritten_example;
+          expectedField.focus();
+        });
+      }
+    }
+
+    async function loadHistory() {
+      try {
+        const res = await fetch('/api/feedback');
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        const items = data.feedbacks || [];
+        if (!items.length) {
+          historyList.innerHTML = '<p style="font-size:13px;color:var(--muted);">Nenhum feedback enviado ainda para este cliente.</p>';
+          return;
+        }
+        historyList.innerHTML = items.map(item => {
+          const dt = new Date(item.created_at).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+          const stClass = `st-${item.status || 'pendente'}`;
+          return `
+            <div class="hist-item">
+              <div class="hist-top">
+                <span>${esc(item.channel?.toUpperCase())} • ${esc(item.phone_numbers)} • ${esc(dt)}</span>
+                <span class="hist-status ${stClass}">${esc(item.status)}</span>
+              </div>
+              <div class="hist-body">
+                <div><strong>Atual:</strong> ${esc(item.current_behavior)}</div>
+                <div style="margin-top:4px;"><strong>Como deve ser:</strong> ${esc(item.expected_behavior)}</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch {
+        historyList.innerHTML = '<p style="font-size:13px;color:#FCA5A5;">Erro ao carregar histórico de feedbacks.</p>';
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        channel: document.getElementById('channel').value,
+        phone_numbers: document.getElementById('phone_numbers').value.trim(),
+        current_behavior: document.getElementById('current_behavior').value.trim(),
+        forbidden_behavior: document.getElementById('forbidden_behavior').value.trim(),
+        expected_behavior: expectedField.value.trim(),
+        exception_rule: document.getElementById('exception_rule').value.trim(),
+      };
+
+      setValidatingState(true);
+      try {
+        const valRes = await fetch('/api/feedback/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const valData = await valRes.json();
+        if (!valRes.ok) {
+          throw new Error(valData.error || 'Falha na validação.');
+        }
+
+        renderValidationResult(valData);
+
+        if (!valData.approved) {
+          setValidatingState(false);
+          return;
+        }
+
+        // Se aprovado, salva automaticamente no banco
+        btnSubmit.innerHTML = '<span class="material-symbols-outlined spin">progress_activity</span> Salvando feedback...';
+        const subRes = await fetch('/api/feedback/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...payload,
+            ai_validation_score: valData.score,
+            ai_validation_feedback: valData,
+          }),
+        });
+        const subData = await subRes.json();
+        if (!subRes.ok) {
+          throw new Error(subData.error || 'Erro ao salvar feedback.');
+        }
+
+        form.reset();
+        loadHistory();
+      } catch (err) {
+        validatorBox.classList.remove('status-approved');
+        validatorBox.classList.add('status-rejected');
+        valPill.className = 'val-pill pill-warn';
+        valPill.textContent = 'Erro';
+        valSummary.textContent = err.message || 'Erro inesperado.';
+        valDetails.style.display = 'none';
+      } finally {
+        setValidatingState(false);
+      }
+    });
+
+    checkSession();
+  </script>
+</body>
+
+</html>
