@@ -465,8 +465,17 @@
 
           <div class="field">
             <label for="current_behavior">1. O que a IA fez de errado nessa conversa?</label>
-            <div class="field-hint">Copie a mensagem exata da IA ou descreva a ação que aconteceu no atendimento acima.</div>
+            <div class="field-hint">Copie a mensagem exata da IA ou descreva a ação. Você também pode colar prints (`Ctrl+V`) ou anexar imagens/arquivos.</div>
             <textarea id="current_behavior" required placeholder="Ex: O lead perguntou o valor da consulta e a IA já mandou link de agendamento sem responder a dúvida."></textarea>
+            <div style="margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <label for="behaviorFiles" style="margin:0;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px dashed rgba(255,255,255,0.22);font-size:12px;font-weight:500;color:#CBD5E1;">
+                <span class="material-symbols-outlined" style="font-size:16px;color:var(--teal);">attach_file</span>
+                Anexar imagem ou arquivo (máx. 5)
+              </label>
+              <input type="file" id="behaviorFiles" multiple accept="image/*,.pdf,.txt,.csv,.json,.doc,.docx" style="display:none;" />
+              <span style="font-size:11.5px;color:var(--muted);">Prints, PDFs ou logs (até 4MB cada)</span>
+            </div>
+            <div id="attachmentsPreview" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;"></div>
           </div>
 
           <div class="field">
@@ -612,16 +621,84 @@
       expectedField.focus();
     });
 
+    // ── Upload / Paste de Imagens e Arquivos no Campo 1 ──
+    const behaviorFilesInput = document.getElementById('behaviorFiles');
+    const attachmentsPreview = document.getElementById('attachmentsPreview');
+    const currentBehaviorEl = document.getElementById('current_behavior');
+    let attachedFiles = [];
+
+    function renderAttachments() {
+      attachmentsPreview.innerHTML = attachedFiles.map((f, idx) => {
+        const isImg = f.type.startsWith('image/');
+        const thumb = isImg
+          ? `<img src="${f.dataUrl}" alt="${esc(f.name)}" style="width:32px;height:32px;object-fit:cover;border-radius:5px;" />`
+          : `<span class="material-symbols-outlined" style="font-size:20px;color:#93C5FD;">description</span>`;
+        return `
+          <div style="display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:8px;background:rgba(4,6,14,0.8);border:1px solid rgba(255,255,255,0.12);font-size:12px;">
+            ${thumb}
+            <span style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(f.name)}</span>
+            <button type="button" onclick="removeAttachment(${idx})" style="background:none;border:none;color:#FCA5A5;cursor:pointer;font-size:14px;line-height:1;">&times;</button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.removeAttachment = function(idx) {
+      attachedFiles.splice(idx, 1);
+      renderAttachments();
+      refreshContextualChips();
+    };
+
+    function addFiles(fileList) {
+      Array.from(fileList || []).forEach(file => {
+        if (attachedFiles.length >= 5) return;
+        if (file.size > 4 * 1024 * 1024) {
+          alert(`O arquivo "${file.name}" excede o limite de 4MB.`);
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+          attachedFiles.push({
+            name: file.name || 'imagem.png',
+            type: file.type || 'application/octet-stream',
+            size: file.size,
+            dataUrl: reader.result,
+          });
+          renderAttachments();
+          refreshContextualChips();
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    behaviorFilesInput.addEventListener('change', (e) => {
+      addFiles(e.target.files);
+      behaviorFilesInput.value = '';
+    });
+
+    currentBehaviorEl.addEventListener('paste', (e) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      const files = [];
+      for (const item of items) {
+        if (item.kind === 'file') {
+          const f = item.getAsFile();
+          if (f) files.push(f);
+        }
+      }
+      if (files.length) addFiles(files);
+    });
+
     // Agente separado: atualiza os chips automaticamente conforme o contexto preenchido nos campos 1 e 2
     let chipsTimer = null;
     let lastChipsKey = '';
     async function refreshContextualChips() {
-      const curr = document.getElementById('current_behavior').value.trim();
+      const curr = currentBehaviorEl.value.trim();
       const forb = document.getElementById('forbidden_behavior').value.trim();
       const chan = document.getElementById('channel').value;
-      if (curr.length < 15) return;
+      if (curr.length < 15 && attachedFiles.length === 0) return;
 
-      const key = `${chan}|${curr}|${forb}`;
+      const key = `${chan}|${curr}|${forb}|${attachedFiles.length}`;
       if (key === lastChipsKey) return;
       lastChipsKey = key;
 
@@ -629,7 +706,12 @@
         const res = await fetch('/api/feedback/suggest-chips', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ channel: chan, current_behavior: curr, forbidden_behavior: forb }),
+          body: JSON.stringify({
+            channel: chan,
+            current_behavior: curr,
+            forbidden_behavior: forb,
+            attachments: attachedFiles,
+          }),
         });
         if (!res.ok) return;
         const data = await res.json();
@@ -758,6 +840,7 @@
         forbidden_behavior: document.getElementById('forbidden_behavior').value.trim(),
         expected_behavior: expectedField.value.trim(),
         exception_rule: document.getElementById('exception_rule').value.trim(),
+        attachments: attachedFiles,
       };
 
       setValidatingState(true);
@@ -796,6 +879,8 @@
         }
 
         form.reset();
+        attachedFiles = [];
+        renderAttachments();
         loadHistory();
       } catch (err) {
         validatorBox.classList.remove('status-approved');

@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS public.client_feedbacks (
     exception_rule TEXT,
     ai_validation_score INT,
     ai_validation_feedback JSONB DEFAULT '{}'::jsonb,
+    attachments JSONB DEFAULT '[]'::jsonb,
     status TEXT NOT NULL DEFAULT 'pendente'
         CHECK (status IN ('pendente', 'em_analise', 'aplicado', 'rejeitado')),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

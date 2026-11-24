@@ -199,6 +199,7 @@ app.set('trust proxy', 1);
 
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
+app.use('/api/feedback', express.json({ limit: '15mb' }));
 app.use(express.json({ limit: '10kb' }));
 
 // Sessão segura
@@ -2866,6 +2867,27 @@ Responda EXCLUSIVAMENTE em JSON válido com exatamente estas chaves:
   "rewritten_example": "string"
 }`;
 
+function buildFeedbackUserContent(textPayload, attachments = []) {
+  const safeAtts = Array.isArray(attachments) ? attachments.slice(0, 5) : [];
+  const imageParts = [];
+  const docNames = [];
+  for (const att of safeAtts) {
+    if (!att || !att.dataUrl) continue;
+    const mime = String(att.type || '');
+    if (mime.startsWith('image/') && String(att.dataUrl).startsWith('data:image/')) {
+      imageParts.push({ type: 'image_url', image_url: { url: att.dataUrl, detail: 'low' } });
+    } else {
+      docNames.push(`${att.name || 'arquivo'} (${mime || 'desconhecido'})`);
+    }
+  }
+  const fullText = docNames.length
+    ? `${textPayload}\nArquivos anexados: ${docNames.join(', ')}`
+    : textPayload;
+
+  if (imageParts.length === 0) return fullText;
+  return [{ type: 'text', text: fullText }, ...imageParts];
+}
+
 app.post('/api/feedback/validate', feedbackValidateLimiter, async (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
 
@@ -2876,6 +2898,7 @@ app.post('/api/feedback/validate', feedbackValidateLimiter, async (req, res) => 
     forbidden_behavior = '',
     expected_behavior = '',
     exception_rule = '',
+    attachments = [],
   } = req.body || {};
 
   if (!String(expected_behavior).trim() || !String(current_behavior).trim()) {
@@ -2914,7 +2937,7 @@ app.post('/api/feedback/validate', feedbackValidateLimiter, async (req, res) => 
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: FEEDBACK_VALIDATOR_SYSTEM_PROMPT },
-          { role: 'user', content: userPayload },
+          { role: 'user', content: buildFeedbackUserContent(userPayload, attachments) },
         ],
       }),
       signal: AbortSignal.timeout(15000),
@@ -2981,10 +3004,11 @@ app.post('/api/feedback/suggest-chips', feedbackValidateLimiter, async (req, res
     channel = 'whatsapp',
     current_behavior = '',
     forbidden_behavior = '',
+    attachments = [],
   } = req.body || {};
 
-  if (String(current_behavior).trim().length < 10) {
-    return res.status(400).json({ error: 'Descreva o comportamento atual para gerar sugestões.' });
+  if (String(current_behavior).trim().length < 10 && (!Array.isArray(attachments) || attachments.length === 0)) {
+    return res.status(400).json({ error: 'Descreva o comportamento atual ou anexe um arquivo para gerar sugestões.' });
   }
 
   const apiKey = process.env.OPENAI_API_KEY;
@@ -2995,7 +3019,7 @@ app.post('/api/feedback/suggest-chips', feedbackValidateLimiter, async (req, res
   const model = process.env.FEEDBACK_VALIDATOR_MODEL || 'gpt-5.4-nano';
   const userPayload = [
     `Canal: ${channel}`,
-    `O que a IA fez de errado: ${String(current_behavior).trim()}`,
+    `O que a IA fez de errado: ${String(current_behavior).trim() || '(ver anexo)'}`,
     `O que NÃO deveria ter feito: ${String(forbidden_behavior).trim() || '(não informado)'}`,
   ].join('\n');
 
@@ -3012,7 +3036,7 @@ app.post('/api/feedback/suggest-chips', feedbackValidateLimiter, async (req, res
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: FEEDBACK_CHIPS_SYSTEM_PROMPT },
-          { role: 'user', content: userPayload },
+          { role: 'user', content: buildFeedbackUserContent(userPayload, attachments) },
         ],
       }),
       signal: AbortSignal.timeout(12000),
@@ -3050,6 +3074,7 @@ app.post('/api/feedback/submit', async (req, res) => {
     exception_rule = '',
     ai_validation_score = null,
     ai_validation_feedback = {},
+    attachments = [],
   } = req.body || {};
 
   if (!String(phone_numbers).trim() || !String(current_behavior).trim() || !String(expected_behavior).trim()) {
@@ -3060,6 +3085,14 @@ app.post('/api/feedback/submit', async (req, res) => {
 
   const allowedChannels = new Set(['whatsapp', 'voz', 'instagram', 'fup']);
   const safeChannel = allowedChannels.has(channel) ? channel : 'whatsapp';
+  const safeAttachments = Array.isArray(attachments)
+    ? attachments.slice(0, 5).map(a => ({
+        name: String(a?.name || 'arquivo').slice(0, 120),
+        type: String(a?.type || 'application/octet-stream').slice(0, 80),
+        size: Number(a?.size || 0),
+        dataUrl: String(a?.dataUrl || ''),
+      }))
+    : [];
 
   try {
     const { data, error } = await supabase
@@ -3076,6 +3109,7 @@ app.post('/api/feedback/submit', async (req, res) => {
         exception_rule: String(exception_rule || '').trim() || null,
         ai_validation_score: ai_validation_score !== null ? Number(ai_validation_score) : null,
         ai_validation_feedback: ai_validation_feedback || {},
+        attachments: safeAttachments,
         status: 'pendente',
       })
       .select()
