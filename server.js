@@ -2957,6 +2957,82 @@ app.post('/api/feedback/validate', feedbackValidateLimiter, async (req, res) => 
   }
 });
 
+const FEEDBACK_CHIPS_SYSTEM_PROMPT = `Você é um Assistente de Sugestões Rápidas da MindFlow.
+Com base no "Comportamento atual" (o que a IA fez de errado) e no "O que NÃO deveria ter feito", gere exatamente 3 sugestões curtas e práticas para ajudar o cliente a preencher o campo "Como deve ser (Resposta Ideal)".
+
+Regras:
+1. Cada sugestão deve ter:
+   - "label": título curto de até 45 caracteres começando com "+ " (ex: "+ Instruir o síndico em texto")
+   - "snippet": uma frase concreta e testável (ou exemplo literal de resposta) pronta para inserir no campo "Como deve ser".
+2. Adapte 100% ao contexto informado (canal, assunto, público). Não use respostas genéricas se o contexto for específico.
+3. Responda EXCLUSIVAMENTE em JSON válido:
+{
+  "chips": [
+    { "label": "+ ...", "snippet": "..." },
+    { "label": "+ ...", "snippet": "..." },
+    { "label": "+ ...", "snippet": "..." }
+  ]
+}`;
+
+app.post('/api/feedback/suggest-chips', feedbackValidateLimiter, async (req, res) => {
+  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
+
+  const {
+    channel = 'whatsapp',
+    current_behavior = '',
+    forbidden_behavior = '',
+  } = req.body || {};
+
+  if (String(current_behavior).trim().length < 10) {
+    return res.status(400).json({ error: 'Descreva o comportamento atual para gerar sugestões.' });
+  }
+
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    return res.status(503).json({ error: 'OPENAI_API_KEY não configurada.' });
+  }
+
+  const model = process.env.FEEDBACK_VALIDATOR_MODEL || 'gpt-5.4-nano';
+  const userPayload = [
+    `Canal: ${channel}`,
+    `O que a IA fez de errado: ${String(current_behavior).trim()}`,
+    `O que NÃO deveria ter feito: ${String(forbidden_behavior).trim() || '(não informado)'}`,
+  ].join('\n');
+
+  try {
+    const aiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        max_completion_tokens: 260,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: FEEDBACK_CHIPS_SYSTEM_PROMPT },
+          { role: 'user', content: userPayload },
+        ],
+      }),
+      signal: AbortSignal.timeout(12000),
+    });
+
+    if (!aiRes.ok) {
+      return res.status(502).json({ error: 'Falha ao gerar sugestões.' });
+    }
+
+    const aiJson = await aiRes.json();
+    const raw = aiJson?.choices?.[0]?.message?.content || '{}';
+    const parsed = JSON.parse(raw);
+    const chips = Array.isArray(parsed.chips) ? parsed.chips.slice(0, 3) : [];
+    return res.json({ chips, model });
+  } catch (err) {
+    console.error('[Feedback Suggest Chips] Erro:', err.message);
+    return res.status(500).json({ error: 'Erro ao gerar sugestões.' });
+  }
+});
+
 app.post('/api/feedback/submit', async (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
 
