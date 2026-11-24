@@ -536,10 +536,22 @@
         </section>
 
         <section class="panel">
-          <h2 class="panel-title">
-            <span class="material-symbols-outlined">history</span>
-            Feedbacks Enviados
+          <h2 class="panel-title" style="justify-content:space-between;">
+            <span style="display:inline-flex;align-items:center;gap:8px;">
+              <span class="material-symbols-outlined">history</span>
+              Feedbacks Enviados
+            </span>
+            <span id="adminBadge" style="display:none;font-size:10.5px;padding:2px 8px;border-radius:999px;background:rgba(46,79,255,0.2);color:#93C5FD;border:1px solid rgba(46,79,255,0.35);">Admin • Todos os Clientes</span>
           </h2>
+          <div id="adminFilterBar" style="display:none;margin-bottom:12px;gap:8px;">
+            <select id="filterStatus" style="padding:6px 10px;font-size:12px;">
+              <option value="all">Todos os status</option>
+              <option value="pendente">Pendente</option>
+              <option value="em_analise">Em análise</option>
+              <option value="aplicado">Aplicado</option>
+              <option value="rejeitado">Rejeitado</option>
+            </select>
+          </div>
           <div class="history-list" id="historyList">
             <p style="font-size:13px;color:var(--muted);">Carregando histórico...</p>
           </div>
@@ -802,28 +814,71 @@
       }
     }
 
+    const filterStatusEl = document.getElementById('filterStatus');
+    if (filterStatusEl) {
+      filterStatusEl.addEventListener('change', () => loadHistory());
+    }
+
+    window.updateFeedbackStatus = async function(id, status) {
+      try {
+        const res = await fetch(`/api/feedback/${encodeURIComponent(id)}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status }),
+        });
+        if (!res.ok) throw new Error();
+        loadHistory();
+      } catch {
+        alert('Erro ao atualizar status do feedback.');
+      }
+    };
+
     async function loadHistory() {
       try {
-        const res = await fetch('/api/feedback');
+        const st = filterStatusEl ? filterStatusEl.value : 'all';
+        const res = await fetch(`/api/feedback?status=${encodeURIComponent(st)}`);
         if (!res.ok) throw new Error();
         const data = await res.json();
         const items = data.feedbacks || [];
+        const isAdmin = Boolean(data.is_admin);
+
+        const adminBadge = document.getElementById('adminBadge');
+        const adminFilterBar = document.getElementById('adminFilterBar');
+        if (isAdmin) {
+          if (adminBadge) adminBadge.style.display = 'inline-block';
+          if (adminFilterBar) adminFilterBar.style.display = 'flex';
+        }
+
         if (!items.length) {
-          historyList.innerHTML = '<p style="font-size:13px;color:var(--muted);">Nenhum feedback enviado ainda para este cliente.</p>';
+          historyList.innerHTML = '<p style="font-size:13px;color:var(--muted);">Nenhum feedback encontrado.</p>';
           return;
         }
         historyList.innerHTML = items.map(item => {
           const dt = new Date(item.created_at).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
           const stClass = `st-${item.status || 'pendente'}`;
+          const clientTag = isAdmin
+            ? `<strong style="color:#93C5FD;">${esc(item.client_name || item.client_id)}</strong> • `
+            : '';
+          const statusControl = isAdmin
+            ? `<select onchange="updateFeedbackStatus('${esc(item.id)}', this.value)" style="width:auto;padding:2px 6px;font-size:11px;border-radius:999px;">
+                <option value="pendente" ${item.status === 'pendente' ? 'selected' : ''}>Pendente</option>
+                <option value="em_analise" ${item.status === 'em_analise' ? 'selected' : ''}>Em análise</option>
+                <option value="aplicado" ${item.status === 'aplicado' ? 'selected' : ''}>Aplicado</option>
+                <option value="rejeitado" ${item.status === 'rejeitado' ? 'selected' : ''}>Rejeitado</option>
+              </select>`
+            : `<span class="hist-status ${stClass}">${esc(item.status)}</span>`;
+          const attCount = Array.isArray(item.attachments) ? item.attachments.length : 0;
+          const attNote = attCount > 0 ? `<div style="margin-top:4px;font-size:11.5px;color:#5EEAD4;">📎 ${attCount} anexo(s)</div>` : '';
           return `
             <div class="hist-item">
               <div class="hist-top">
-                <span>${esc(item.channel?.toUpperCase())} • ${esc(item.phone_numbers)} • ${esc(dt)}</span>
-                <span class="hist-status ${stClass}">${esc(item.status)}</span>
+                <span>${clientTag}${esc(item.channel?.toUpperCase())} • ${esc(item.phone_numbers)} • ${esc(dt)}</span>
+                ${statusControl}
               </div>
               <div class="hist-body">
                 <div><strong>Atual:</strong> ${esc(item.current_behavior)}</div>
                 <div style="margin-top:4px;"><strong>Como deve ser:</strong> ${esc(item.expected_behavior)}</div>
+                ${attNote}
               </div>
             </div>
           `;

@@ -3131,25 +3131,70 @@ app.get('/api/feedback', async (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
 
   const user = req.session.user;
+  const isMindFlowMember = user.client_access?.some(c => String(c.client_id) === '2');
   const activeClientId = String(user.active_client || user.client_access?.[0]?.client_id || '2');
+  const filterClientId = req.query.client_id ? String(req.query.client_id) : null;
+  const filterStatus = req.query.status ? String(req.query.status) : null;
 
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('client_feedbacks')
-      .select('id, client_id, client_name, user_email, channel, phone_numbers, current_behavior, forbidden_behavior, expected_behavior, exception_rule, ai_validation_score, status, created_at')
-      .eq('client_id', activeClientId)
+      .select('id, client_id, client_name, user_email, channel, phone_numbers, current_behavior, forbidden_behavior, expected_behavior, exception_rule, ai_validation_score, attachments, status, created_at')
       .order('created_at', { ascending: false })
-      .limit(50);
+      .limit(isMindFlowMember ? 100 : 50);
+
+    if (!isMindFlowMember) {
+      query = query.eq('client_id', activeClientId);
+    } else if (filterClientId && filterClientId !== 'all') {
+      query = query.eq('client_id', filterClientId);
+    }
+
+    if (filterStatus && filterStatus !== 'all') {
+      query = query.eq('status', filterStatus);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error('[Feedback List] Supabase erro:', error.message);
       return res.status(500).json({ error: 'Erro ao carregar feedbacks.' });
     }
 
-    return res.json({ feedbacks: data || [] });
+    return res.json({ feedbacks: data || [], is_admin: Boolean(isMindFlowMember) });
   } catch (err) {
     console.error('[Feedback List] Erro:', err.message);
     return res.status(500).json({ error: 'Erro interno ao listar feedbacks.' });
+  }
+});
+
+app.patch('/api/feedback/:id/status', async (req, res) => {
+  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
+  const isMindFlowMember = req.session.user.client_access?.some(c => String(c.client_id) === '2');
+  if (!isMindFlowMember) return res.status(403).json({ error: 'Acesso restrito a administradores MindFlow.' });
+
+  const { id } = req.params;
+  const { status } = req.body || {};
+  const allowed = new Set(['pendente', 'em_analise', 'aplicado', 'rejeitado']);
+  if (!allowed.has(status)) {
+    return res.status(400).json({ error: 'Status inválido.' });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('client_feedbacks')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[Feedback Status] Supabase erro:', error.message);
+      return res.status(500).json({ error: 'Erro ao atualizar status.' });
+    }
+    return res.json({ ok: true, feedback: data });
+  } catch (err) {
+    console.error('[Feedback Status] Erro:', err.message);
+    return res.status(500).json({ error: 'Erro interno ao atualizar status.' });
   }
 });
 
