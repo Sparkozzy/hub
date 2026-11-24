@@ -486,6 +486,7 @@
               <button type="button" class="chip-btn" data-snippet='Aceitar a informação mesmo se o cliente responder de forma informal (ex: "de manhã"), sem exigir o horário exato na hora.'>+ Aceitar resposta flexível</button>
             </div>
             <textarea id="expected_behavior" required placeholder='Ex: "Claro! O valor da avaliação inicial é R$ X e inclui Y. Se fizer sentido para você, posso verificar os horários disponíveis para esta semana?"'></textarea>
+            <div id="expectedSuggestionsBox" style="display:none;margin-top:10px;padding:12px;border-radius:10px;background:rgba(46,79,255,0.09);border:1px solid rgba(46,79,255,0.3);"></div>
           </div>
 
           <div class="field">
@@ -618,10 +619,12 @@
     }
 
     function renderValidationResult(v) {
+      const expBox = document.getElementById('expectedSuggestionsBox');
       validatorBox.classList.remove('status-rejected', 'status-approved');
       valDetails.style.display = 'block';
 
       if (v.approved) {
+        if (expBox) { expBox.style.display = 'none'; expBox.innerHTML = ''; }
         validatorBox.classList.add('status-approved');
         valPill.className = 'val-pill pill-ok';
         valPill.textContent = `Aprovado • ${v.score}/100`;
@@ -633,41 +636,43 @@
 
       validatorBox.classList.add('status-rejected');
       valPill.className = 'val-pill pill-warn';
-      valPill.textContent = `Precisa de ajuste • ${v.score}/100`;
+      valPill.textContent = `Bloqueado • ${v.score}/100`;
       valSummary.style.color = '#FDE68A';
       valSummary.textContent = v.summary || 'O campo "Como deve ser" ainda está vago para ajuste de prompt.';
 
       let html = '';
       if (v.issues && v.issues.length) {
-        html += '<div class="val-list-title">Por que não passou</div><ul class="val-list">';
+        html += '<div class="val-list-title">Motivo do bloqueio</div><ul class="val-list">';
         html += v.issues.map(i => `<li>${esc(i)}</li>`).join('');
         html += '</ul>';
       }
-      if (v.suggestions && v.suggestions.length) {
-        html += '<div class="val-list-title">Como melhorar</div><ul class="val-list">';
-        html += v.suggestions.map(s => `<li>${esc(s)}</li>`).join('');
-        html += '</ul>';
-      }
-      if (v.rewritten_example) {
-        html += `
-          <div class="rewrite-box">
-            <div class="val-list-title" style="margin-top:0;color:#93C5FD;">Sugestão pronta para "Como deve ser"</div>
-            <div class="rewrite-text" id="rewrittenText">${esc(v.rewritten_example)}</div>
+      valDetails.innerHTML = html;
+
+      // Renderizar sugestões contextuais diretamente na caixa de "Como deve ser"
+      if (expBox) {
+        let expHtml = '<div class="val-list-title" style="margin-top:0;color:#93C5FD;">Sugestões para este contexto</div>';
+        if (v.suggestions && v.suggestions.length) {
+          expHtml += '<ul class="val-list" style="margin-bottom:8px;">' + v.suggestions.map(s => `<li>${esc(s)}</li>`).join('') + '</ul>';
+        }
+        if (v.rewritten_example) {
+          expHtml += `
+            <div class="rewrite-text" style="background:rgba(4,6,14,0.6);padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);">${esc(v.rewritten_example)}</div>
             <button type="button" class="btn-apply" id="btnApplySuggestion">
               <span class="material-symbols-outlined" style="font-size:15px">auto_fix_high</span>
               Aplicar sugestão no campo
             </button>
-          </div>
-        `;
-      }
-      valDetails.innerHTML = html;
+          `;
+        }
+        expBox.innerHTML = expHtml;
+        expBox.style.display = 'block';
 
-      const applyBtn = document.getElementById('btnApplySuggestion');
-      if (applyBtn) {
-        applyBtn.addEventListener('click', () => {
-          expectedField.value = v.rewritten_example;
-          expectedField.focus();
-        });
+        const applyBtn = document.getElementById('btnApplySuggestion');
+        if (applyBtn) {
+          applyBtn.addEventListener('click', () => {
+            expectedField.value = v.rewritten_example;
+            expectedField.focus();
+          });
+        }
       }
     }
 

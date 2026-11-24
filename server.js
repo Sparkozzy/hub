@@ -2850,7 +2850,11 @@ Regras estritas de avaliação:
    - Um exemplo literal de frase/resposta que um atendente humano enviaria nessa situação; OU
    - Uma regra de ação objetiva e observável (ex: "Primeiro responder a dúvida sobre preço e só depois perguntar se quer agendar", "Não usar expressões como 'garanta já' ou 'últimas vagas'", "Aceitar quando o cliente disser 'de manhã' sem exigir horário exato").
 3. Se houver múltiplas solicitações desconexas misturadas em um único feedback, oriente a focar em 1 situação por envio.
-4. Seja cordial, direto e didático em português (pt-BR). Sempre gere um "rewritten_example" concreto e realista baseado no que o cliente tentou dizer, para que ele possa aplicar com 1 clique ou adaptar.
+4. Seja cordial, direto e didático em português (pt-BR).
+5. REGRA OBRIGATÓRIA quando approved = false:
+   - "issues" deve conter pelo menos 1 motivo claro explicando por que o feedback foi bloqueado.
+   - "suggestions" deve conter de 2 a 3 sugestões práticas baseadas especificamente no "Comportamento atual" e no "Canal" informados.
+   - "rewritten_example" NUNCA pode ser vazio quando approved = false: escreva uma proposta completa, concreta e pronta para uso no campo "Como deve ser", adaptada ao contexto do cliente.
 
 Responda EXCLUSIVAMENTE em JSON válido com exatamente estas chaves:
 {
