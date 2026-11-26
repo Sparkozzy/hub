@@ -547,6 +547,9 @@
     <a href="/prompt-ops" class="dock-item" id="dockPromptOps" title="PromptOps — Engenharia de Prompts">
       <span class="material-symbols-outlined">terminal</span>
     </a>
+    <a href="/db-explorer" class="dock-item" id="dockDbExplorer" title="Database / Tabelas (Super Admin)" style="display:none;">
+      <span class="material-symbols-outlined">database</span>
+    </a>
     <a href="/zapi-connect" class="dock-item" title="Conexão WhatsApp Z-API">
       <span class="material-symbols-outlined">qr_code_scanner</span>
     </a>
@@ -572,6 +575,12 @@
         headset.setAttribute('target', '_blank');
         headset.setAttribute('rel', 'noopener');
       }
+      fetch('/api/admin/db/clients').then(function(r) {
+        if (r.ok) {
+          var dbDock = document.getElementById('dockDbExplorer');
+          if (dbDock) dbDock.style.display = '';
+        }
+      }).catch(function() {});
     })();
   </script>
 

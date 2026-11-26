@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Database / Tabelas — MindFlow Hub (Super Admin)</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <style>
+    :root {
+      --bg: #0b0d12;
+      --surface: #131722;
+      --surface-2: #1a2030;
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #e6edf7;
+      --muted: #8b95a7;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --success: #22c55e;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand a {
+      color: var(--muted);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+    }
+    .brand a:hover { color: var(--text); border-color: var(--accent); }
+    .brand h1 {
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge-super {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(99, 102, 241, 0.18);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.35);
+    }
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 24px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .control-group label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    select, input[type="text"] {
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+      outline: none;
+      min-width: 180px;
+    }
+    select:focus, input[type="text"]:focus {
+      border-color: var(--accent);
+    }
+    button {
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    button:hover:not(:disabled) { border-color: var(--accent); color: #fff; }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    button.primary:hover:not(:disabled) { background: var(--accent-hover); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 24px;
+      font-size: 12px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      background: rgba(19, 23, 34, 0.5);
+    }
+    .live-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+      margin-right: 6px;
+    }
+    .live-dot.active {
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+    main {
+      flex: 1;
+      overflow: auto;
+      padding: 16px 24px;
+    }
+    .table-wrap {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: auto;
+      background: var(--surface);
+      max-height: calc(100vh - 250px);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+    }
+    th, td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+      max-width: 320px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    th {
+      position: sticky;
+      top: 0;
+      background: var(--surface-2);
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 11.5px;
+      z-index: 2;
+      cursor: pointer;
+    }
+    th:hover { color: var(--text); }
+    tr:hover td { background: rgba(255, 255, 255, 0.025); }
+    .json-cell {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      color: #93c5fd;
+      cursor: pointer;
+      text-decoration: underline dotted rgba(147, 197, 253, 0.45);
+    }
+    .json-cell:hover { color: #bfdbfe; }
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .empty-state {
+      padding: 48px;
+      text-align: center;
+      color: var(--muted);
+    }
+    .error-banner {
+      margin: 12px 24px 0;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: rgba(239, 68, 68, 0.14);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: #fca5a5;
+      font-size: 13px;
+      display: none;
+    }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.72);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 24px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 820px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-2);
+    }
+    .modal-body {
+      padding: 16px 18px;
+      overflow: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: #e2e8f0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <a href="/hub"><span class="material-symbols-outlined" style="font-size:18px;">arrow_back</span> Hub</a>
+      <h1>
+        <span class="material-symbols-outlined" style="color:var(--accent);">database</span>
+        Database / Tabelas
+        <span class="badge-super">Super Admin</span>
+      </h1>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="control-group">
+        <select id="autoRefreshSelect" title="Auto-Refresh / Tempo Real">
+          <option value="0">Auto-Refresh: Manual</option>
+          <option value="5000">Tempo Real: 5s</option>
+          <option value="10000">Tempo Real: 10s</option>
+          <option value="30000">Tempo Real: 30s</option>
+        </select>
+      </div>
+      <button id="refreshBtn" class="primary">
+        <span class="material-symbols-outlined" style="font-size:17px;">refresh</span>
+        Atualizar
+      </button>
+    </div>
+  </header>
+
+  <section class="controls">
+    <div class="control-group">
+      <label for="clientSelect">Cliente (Tenant)</label>
+      <select id="clientSelect"></select>
+    </div>
+    <div class="control-group">
+      <label for="tableSelect">Tabela</label>
+      <select id="tableSelect"></select>
+    </div>
+    <div class="control-group" style="flex:1;min-width:220px;">
+      <label for="searchInput">Busca rápida</label>
+      <input id="searchInput" type="text" placeholder="Filtrar por qualquer campo (Enter para buscar)..." />
+    </div>
+    <div class="control-group">
+      <label for="orderByInput">Ordenar por</label>
+      <input id="orderByInput" type="text" value="created_at" style="min-width:140px;" />
+    </div>
+    <div class="control-group" style="justify-content:flex-end;">
+      <label>&nbsp;</label>
+      <button id="descToggleBtn" data-desc="true">DESC ↓</button>
+    </div>
+  </section>
+
+  <div class="status-bar">
+    <div>
+      <span class="live-dot" id="liveDot"></span>
+      <span id="statusText">Carregando clientes...</span>
+    </div>
+    <div id="lastUpdatedText"></div>
+  </div>
+
+  <div id="errorBanner" class="error-banner"></div>
+
+  <main>
+    <div class="table-wrap">
+      <table id="dataTable">
+        <thead id="tableHead"></thead>
+        <tbody id="tableBody">
+          <tr><td class="empty-state">Selecione um cliente e uma tabela para inspecionar os dados.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <footer class="pagination">
+    <div id="pageInfo">0 registros</div>
+    <div style="display:flex;gap:8px;">
+      <button id="prevBtn" disabled>← Anterior</button>
+      <button id="nextBtn" disabled>Próxima →</button>
+    </div>
+  </footer>
+
+  <div id="jsonModal" class="modal-backdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <strong id="jsonModalTitle">Visualizar JSON</strong>
+        <div style="display:flex;gap:8px;">
+          <button id="copyJsonBtn">Copiar</button>
+          <button id="closeJsonBtn">Fechar</button>
+        </div>
+      </div>
+      <pre id="jsonModalBody" class="modal-body"></pre>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      clientId: '',
+      table: '',
+      limit: 50,
+      offset: 0,
+      total: 0,
+      orderBy: 'created_at',
+      desc: true,
+      search: '',
+      timer: null,
+    };
+
+    const el = {
+      clientSelect: document.getElementById('clientSelect'),
+      tableSelect: document.getElementById('tableSelect'),
+      searchInput: document.getElementById('searchInput'),
+      orderByInput: document.getElementById('orderByInput'),
+      descToggleBtn: document.getElementById('descToggleBtn'),
+      autoRefreshSelect: document.getElementById('autoRefreshSelect'),
+      refreshBtn: document.getElementById('refreshBtn'),
+      liveDot: document.getElementById('liveDot'),
+      statusText: document.getElementById('statusText'),
+      lastUpdatedText: document.getElementById('lastUpdatedText'),
+      errorBanner: document.getElementById('errorBanner'),
+      tableHead: document.getElementById('tableHead'),
+      tableBody: document.getElementById('tableBody'),
+      pageInfo: document.getElementById('pageInfo'),
+      prevBtn: document.getElementById('prevBtn'),
+      nextBtn: document.getElementById('nextBtn'),
+      jsonModal: document.getElementById('jsonModal'),
+      jsonModalTitle: document.getElementById('jsonModalTitle'),
+      jsonModalBody: document.getElementById('jsonModalBody'),
+      copyJsonBtn: document.getElementById('copyJsonBtn'),
+      closeJsonBtn: document.getElementById('closeJsonBtn'),
+    };
+
+    function showError(msg) {
+      if (!msg) {
+        el.errorBanner.style.display = 'none';
+        el.errorBanner.textContent = '';
+        return;
+      }
+      el.errorBanner.textContent = msg;
+      el.errorBanner.style.display = 'block';
+    }
+
+    async function loadClients() {
+      try {
+        const res = await fetch('/api/admin/db/clients');
+        if (!res.ok) throw new Error(`Erro ${res.status} ao carregar clientes.`);
+        const data = await res.json();
+        const clients = data.clients || [];
+        el.clientSelect.innerHTML = clients
+          .map(c => `<option value="${c.client_id}">${c.client_id} — ${c.client_name || 'Sem nome'}</option>`)
+          .join('');
+        if (clients.length > 0) {
+          state.clientId = String(clients[0].client_id);
+          await loadTables();
+        }
+      } catch (err) {
+        showError(err.message);
+      }
+    }
+
+    async function loadTables() {
+      if (!state.clientId) return;
+      try {
+        const res = await fetch(`/api/admin/db/tables?client_id=${encodeURIComponent(state.clientId)}`);
+        if (!res.ok) throw new Error(`Erro ${res.status} ao listar tabelas.`);
+        const data = await res.json();
+        const tables = data.tables || [];
+        el.tableSelect.innerHTML = tables.map(t => `<option value="${t}">${t}</option>`).join('');
+        if (tables.length > 0 && !tables.includes(state.table)) {
+          state.table = tables[0];
+        }
+        el.tableSelect.value = state.table;
+        state.offset = 0;
+        await loadRows();
+      } catch (err) {
+        showError(err.message);
+      }
+    }
+
+    function isJsonLike(val) {
+      if (val && typeof val === 'object') return true;
+      if (typeof val === 'string') {
+        const s = val.trim();
+        return (s.startsWith('{') && s.endsWith('}')) || (s.startsWith('[') && s.endsWith(']'));
+      }
+      return false;
+    }
+
+    function formatJson(val) {
+      if (typeof val === 'object') return JSON.stringify(val, null, 2);
+      try {
+        return JSON.stringify(JSON.parse(val), null, 2);
+      } catch {
+        return String(val);
+      }
+    }
+
+    function openJsonModal(colName, val) {
+      el.jsonModalTitle.textContent = `Campo: ${colName}`;
+      el.jsonModalBody.textContent = formatJson(val);
+      el.jsonModal.classList.add('open');
+    }
+
+    async function loadRows() {
+      if (!state.clientId || !state.table) return;
+      showError('');
+      el.statusText.textContent = `Consultando ${state.table} (cliente ${state.clientId})...`;
+      try {
+        const params = new URLSearchParams({
+          client_id: state.clientId,
+          limit: String(state.limit),
+          offset: String(state.offset),
+          desc: String(state.desc),
+        });
+        if (state.orderBy) params.set('order_by', state.orderBy);
+        if (state.search) params.set('search', state.search);
+
+        const res = await fetch(`/api/admin/db/tables/${encodeURIComponent(state.table)}?${params.toString()}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || data.error || `Erro ${res.status}`);
+
+        state.total = data.total || 0;
+        renderTable(data.columns || [], data.rows || []);
+        updatePagination();
+        el.statusText.textContent = `Tabela ${state.table} • Cliente ${state.clientId} • ${state.total} registros`;
+        el.lastUpdatedText.textContent = `Atualizado às ${new Date().toLocaleTimeString('pt-BR')}`;
+      } catch (err) {
+        showError(err.message);
+        el.statusText.textContent = 'Erro na consulta';
+      }
+    }
+
+    function renderTable(columns, rows) {
+      if (!rows.length) {
+        el.tableHead.innerHTML = '';
+        el.tableBody.innerHTML = '<tr><td class="empty-state">Nenhum registro encontrado.</td></tr>';
+        return;
+      }
+      el.tableHead.innerHTML = `<tr>${columns.map(c => `<th data-col="${c}">${c}</th>`).join('')}</tr>`;
+      el.tableHead.querySelectorAll('th').forEach(th => {
+        th.addEventListener('click', () => {
+          const col = th.getAttribute('data-col');
+          if (state.orderBy === col) {
+            state.desc = !state.desc;
+          } else {
+            state.orderBy = col;
+            state.desc = true;
+          }
+          el.orderByInput.value = state.orderBy;
+          el.descToggleBtn.textContent = state.desc ? 'DESC ↓' : 'ASC ↑';
+          state.offset = 0;
+          loadRows();
+        });
+      });
+
+      el.tableBody.innerHTML = '';
+      rows.forEach(row => {
+        const tr = document.createElement('tr');
+        columns.forEach(col => {
+          const td = document.createElement('td');
+          const val = row[col];
+          if (val === null || val === undefined) {
+            td.textContent = '—';
+            td.style.color = '#475569';
+          } else if (isJsonLike(val)) {
+            const rawStr = typeof val === 'object' ? JSON.stringify(val) : String(val);
+            td.textContent = rawStr.length > 80 ? rawStr.slice(0, 80) + '…' : rawStr;
+            td.className = 'json-cell';
+            td.title = 'Clique para expandir JSON';
+            td.addEventListener('click', () => openJsonModal(col, val));
+          } else {
+            td.textContent = String(val);
+            td.title = String(val);
+          }
+          tr.appendChild(td);
+        });
+        el.tableBody.appendChild(tr);
+      });
+    }
+
+    function updatePagination() {
+      const start = state.total === 0 ? 0 : state.offset + 1;
+      const end = Math.min(state.offset + state.limit, state.total);
+      el.pageInfo.textContent = `Mostrando ${start}–${end} de ${state.total}`;
+      el.prevBtn.disabled = state.offset <= 0;
+      el.nextBtn.disabled = state.offset + state.limit >= state.total;
+    }
+
+    el.clientSelect.addEventListener('change', () => {
+      state.clientId = el.clientSelect.value;
+      state.offset = 0;
+      loadTables();
+    });
+    el.tableSelect.addEventListener('change', () => {
+      state.table = el.tableSelect.value;
+      state.offset = 0;
+      loadRows();
+    });
+    el.searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        state.search = el.searchInput.value.trim();
+        state.offset = 0;
+        loadRows();
+      }
+    });
+    el.orderByInput.addEventListener('change', () => {
+      state.orderBy = el.orderByInput.value.trim();
+      state.offset = 0;
+      loadRows();
+    });
+    el.descToggleBtn.addEventListener('click', () => {
+      state.desc = !state.desc;
+      el.descToggleBtn.textContent = state.desc ? 'DESC ↓' : 'ASC ↑';
+      state.offset = 0;
+      loadRows();
+    });
+    el.refreshBtn.addEventListener('click', () => {
+      state.search = el.searchInput.value.trim();
+      loadRows();
+    });
+    el.prevBtn.addEventListener('click', () => {
+      state.offset = Math.max(0, state.offset - state.limit);
+      loadRows();
+    });
+    el.nextBtn.addEventListener('click', () => {
+      state.offset += state.limit;
+      loadRows();
+    });
+    el.autoRefreshSelect.addEventListener('change', () => {
+      if (state.timer) clearInterval(state.timer);
+      state.timer = null;
+      const ms = Number(el.autoRefreshSelect.value);
+      if (ms > 0) {
+        el.liveDot.classList.add('active');
+        state.timer = setInterval(loadRows, ms);
+      } else {
+        el.liveDot.classList.remove('active');
+      }
+    });
+    el.closeJsonBtn.addEventListener('click', () => el.jsonModal.classList.remove('open'));
+    el.jsonModal.addEventListener('click', (e) => {
+      if (e.target === el.jsonModal) el.jsonModal.classList.remove('open');
+    });
+    el.copyJsonBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(el.jsonModalBody.textContent || '');
+      el.copyJsonBtn.textContent = 'Copiado!';
+      setTimeout(() => { el.copyJsonBtn.textContent = 'Copiar'; }, 1500);
+    });
+
+    loadClients();
+  </script>
+</body>
+</html>

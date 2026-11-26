@@ -461,6 +461,29 @@ app.get('/prompt-ops', (req, res) => {
   res.sendFile(path.join(__dirname, 'prompt-ops.html'));
 });
 
+const SUPER_ADMIN_EMAILS = (process.env.SUPER_ADMIN_EMAILS || 'ryanferrari@iatize-ia.com,dev@mindflow.ia')
+  .split(',')
+  .map(e => e.trim().toLowerCase())
+  .filter(Boolean);
+
+function isSuperAdmin(user) {
+  if (!user) return false;
+  const emailMatch = user.email && SUPER_ADMIN_EMAILS.includes(String(user.email).trim().toLowerCase());
+  const mindflowAdmin = Array.isArray(user.client_access) && user.client_access.some(
+    c => String(c.client_id) === '2' && c.role === 'admin'
+  );
+  return Boolean(emailMatch || mindflowAdmin);
+}
+
+app.get('/db-explorer', (req, res) => {
+  if (!req.session?.user) return res.redirect('/');
+  if (!isSuperAdmin(req.session.user)) {
+    return res.status(403).send('<h1>403 Proibido: Acesso restrito a Super Admin.</h1>');
+  }
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.sendFile(path.join(__dirname, 'db-explorer.html'));
+});
+
 app.get('/dashboard-style.css', (req, res) => {
   if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
@@ -820,6 +843,40 @@ async function getBackendUrl() {
 }
 
 const DASHBOARD_API_URL = process.env.DASHBOARD_API_URL || 'http://hub_hub-backend:8000';
+const INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET || 'mindflow-hub-internal-2026';
+
+async function proxyToAdminDbBackend(req, res, backendPath) {
+  if (!req.session?.user) return res.status(401).json({ error: 'Unauthorized' });
+  if (!isSuperAdmin(req.session.user)) {
+    return res.status(403).json({ error: 'Acesso restrito a Super Admin.' });
+  }
+  try {
+    const baseUrl = await getBackendUrl();
+    const qs = new URLSearchParams(req.query).toString();
+    const url = `${baseUrl}${backendPath}${qs ? `?${qs}` : ''}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Email': req.session.user.email || '',
+        'X-Internal-Secret': INTERNAL_API_SECRET,
+      },
+      signal: AbortSignal.timeout(15000),
+    });
+    const data = await response.json();
+    return res.status(response.status).json(data);
+  } catch (err) {
+    console.error(`[AdminDB Proxy] Erro ao consultar hub_backend (${backendPath}):`, err.message);
+    return res.status(502).json({ error: 'Falha ao conectar com o hub_backend.' });
+  }
+}
+
+app.get('/api/admin/db/clients', (req, res) => proxyToAdminDbBackend(req, res, '/api/admin/db/clients'));
+app.get('/api/admin/db/tables', (req, res) => proxyToAdminDbBackend(req, res, '/api/admin/db/tables'));
+app.get('/api/admin/db/tables/:tableName', (req, res) => {
+  const tableName = encodeURIComponent(req.params.tableName);
+  return proxyToAdminDbBackend(req, res, `/api/admin/db/tables/${tableName}`);
+});
 
 /**
  * Proxy transparente para o hub_backend (analytics + WhatsApp).
