@@ -21,6 +21,7 @@ const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 const { rateLimit } = require('express-rate-limit');
 const ExcelJS = require('exceljs');
+const nodemailer = require('nodemailer');
 
 // ============================================================
 // VALIDAÇÃO DE AMBIENTE
@@ -238,8 +239,18 @@ function requireAuth(req, res, next) {
 }
 
 app.get('/health', (req, res) => res.json({ status: 'ok', service: 'hub' }));
-app.get('/favicon.svg', (req, res) => res.sendFile(path.join(__dirname, 'favicon.svg')));
-app.get('/favicon.ico', (req, res) => res.type('image/svg+xml').sendFile(path.join(__dirname, 'favicon.svg')));
+app.get('/favicon.svg', (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.sendFile(path.join(__dirname, 'favicon.svg'));
+});
+app.get('/favicon.ico', (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.type('image/svg+xml').sendFile(path.join(__dirname, 'favicon.svg'));
+});
 
 app.use(requireAuth);
 
@@ -1228,6 +1239,191 @@ app.post('/api/login', loginLimiter, async (req, res) => {
     const isClient = clientAccess.length === 1 && clientAccess[0].client_id !== '2';
     return res.json({ ok: true, name: displayName, active_client: activeClient, is_client: isClient });
   });
+});
+
+// ============================================================
+// API: RECUPERAÇÃO DE SENHA (Supabase Admin generateLink + SMTP/Resend ou fallback)
+// ============================================================
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 8,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { error: 'Muitas solicitações de redefinição. Aguarde alguns minutos e tente novamente.' },
+  validate: { trustProxy: false },
+});
+
+async function getSupabaseAdminClient() {
+  const url = process.env.MASTER_SUPABASE_URL || process.env.SUPABASE_URL;
+  let serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.MASTER_SUPABASE_SERVICE_KEY;
+  if (!serviceKey) {
+    try {
+      const { data } = await supabase
+        .from('client_configurations')
+        .select('supabase_service_key')
+        .eq('client_id', '2')
+        .maybeSingle();
+      serviceKey = data?.supabase_service_key || null;
+    } catch (err) {
+      console.warn('[ForgotPassword] Falha ao buscar service_key em client_configurations:', err.message);
+    }
+  }
+  if (!url || !serviceKey) return null;
+  return createClient(url, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } });
+}
+
+function buildRecoveryEmailHtml(actionLink) {
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<body style="margin:0;padding:32px 16px;background:#04060E;font-family:Inter,Arial,sans-serif;color:#ffffff;">
+  <div style="max-width:480px;margin:0 auto;background:#0B1020;border:1px solid rgba(46,79,255,0.28);border-radius:14px;padding:32px;">
+    <h2 style="margin:0 0 12px;font-size:22px;color:#ffffff;">Redefinir sua senha — MindFlow</h2>
+    <p style="margin:0 0 24px;font-size:14px;line-height:1.6;color:#9BA0B0;">
+      Recebemos uma solicitação para redefinir a senha da sua conta no Hub MindFlow. Clique no botão abaixo para escolher uma nova senha:
+    </p>
+    <p style="margin:0 0 24px;text-align:center;">
+      <a href="${actionLink}" style="display:inline-block;padding:14px 28px;background:linear-gradient(135deg,#2E4FFF,#00B5A0);color:#ffffff;text-decoration:none;border-radius:10px;font-weight:600;font-size:14px;">
+        Redefinir minha senha
+      </a>
+    </p>
+    <p style="margin:0;font-size:12px;line-height:1.5;color:#6E7387;">
+      Se você não solicitou essa alteração, ignore este e-mail. O link expira automaticamente por segurança.
+    </p>
+  </div>
+</body>
+</html>`;
+}
+
+async function sendRecoveryEmail({ to, actionLink }) {
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER || 'MindFlow <noreply@mindflow-ia.com>';
+  const subject = 'Redefinir sua senha — MindFlow Hub';
+  const html = buildRecoveryEmailHtml(actionLink);
+  const text = `Redefina sua senha do MindFlow Hub acessando o link: ${actionLink}`;
+
+  if (process.env.RESEND_API_KEY) {
+    const resp = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ from, to: [to], subject, html, text }),
+    });
+    if (!resp.ok) {
+      const errBody = await resp.text().catch(() => '');
+      throw new Error(`Resend HTTP ${resp.status}: ${errBody}`);
+    }
+    return 'resend';
+  }
+
+  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+    const port = Number(process.env.SMTP_PORT || 465);
+    const secure = process.env.SMTP_SECURE !== undefined
+      ? String(process.env.SMTP_SECURE).toLowerCase() === 'true'
+      : port === 465;
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port,
+      secure,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+    await transporter.sendMail({ from, to, subject, text, html });
+    return 'smtp';
+  }
+
+  return null;
+}
+
+app.post('/api/auth/forgot-password', forgotPasswordLimiter, async (req, res) => {
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ error: 'Informe um endereço de e-mail válido.' });
+  }
+
+  const defaultBase = (process.env.APP_URL && !process.env.APP_URL.includes('localhost'))
+    ? process.env.APP_URL.replace(/\/+$/, '')
+    : 'https://hub.mindflow-ia.com';
+  const reqOrigin = typeof req.headers.origin === 'string' && /^https?:\/\/[^/]+$/.test(req.headers.origin)
+    ? req.headers.origin
+    : defaultBase;
+  const redirectTo = `${reqOrigin}/redefinir-senha`;
+
+  const hasCustomMailer = Boolean(
+    process.env.RESEND_API_KEY || (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS)
+  );
+
+  // Caminho 1: Provedor próprio (Resend ou SMTP) + Supabase Admin generateLink (sem limite de 2 e-mails/hora)
+  if (hasCustomMailer) {
+    try {
+      const supabaseAdmin = await getSupabaseAdminClient();
+      if (!supabaseAdmin) {
+        console.error('[ForgotPassword] Supabase Admin indisponível (service_role key ausente).');
+        return res.status(500).json({ error: 'Serviço de recuperação indisponível no momento.' });
+      }
+
+      const { data, error } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'recovery',
+        email,
+        options: { redirectTo },
+      });
+
+      if (error) {
+        const msg = String(error.message || '').toLowerCase();
+        if (msg.includes('user not found') || error.code === 'user_not_found') {
+          // Resposta genérica para não expor se o e-mail existe
+          return res.json({ ok: true, message: 'E-mail enviado! Verifique sua caixa de entrada.' });
+        }
+        console.error('[ForgotPassword] Erro generateLink:', error.message);
+        return res.status(error.status || 400).json({ error: error.message || 'Erro ao gerar link de recuperação.' });
+      }
+
+      const actionLink = data?.properties?.action_link;
+      if (!actionLink) {
+        console.error('[ForgotPassword] generateLink retornou sem action_link.');
+        return res.status(500).json({ error: 'Não foi possível gerar o link de recuperação.' });
+      }
+
+      const provider = await sendRecoveryEmail({ to: email, actionLink });
+      console.log(`[ForgotPassword] E-mail de recuperação enviado via ${provider} para ${email}`);
+      return res.json({ ok: true, provider, message: 'E-mail enviado! Verifique sua caixa de entrada.' });
+    } catch (err) {
+      console.error('[ForgotPassword] Erro no envio via provedor próprio:', err.message);
+      return res.status(502).json({ error: `Erro ao enviar e-mail de recuperação: ${err.message}` });
+    }
+  }
+
+  // Caminho 2: Fallback para SMTP padrão do Supabase (com tratamento claro de rate limit 429)
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+    if (error) {
+      const errCode = error.code || '';
+      const errMsg = String(error.message || '');
+      const isRateLimit = error.status === 429
+        || errCode === 'over_email_send_rate_limit'
+        || /rate limit/i.test(errMsg);
+
+      console.warn(`[ForgotPassword] Supabase resetPasswordForEmail falhou (${error.status || 'err'} / ${errCode}): ${errMsg}`);
+
+      if (isRateLimit) {
+        return res.status(429).json({
+          error: 'Limite de envio de e-mails atingido no servidor de autenticação (máx. 2 e-mails/hora no provedor padrão). Aguarde alguns minutos e tente novamente.',
+          code: 'over_email_send_rate_limit',
+        });
+      }
+      return res.status(error.status || 400).json({
+        error: errMsg || 'Erro ao enviar e-mail de recuperação.',
+        code: errCode || 'recovery_error',
+      });
+    }
+
+    return res.json({ ok: true, provider: 'supabase', message: 'E-mail enviado! Verifique sua caixa de entrada.' });
+  } catch (err) {
+    console.error('[ForgotPassword] Erro inesperado:', err.message);
+    return res.status(500).json({ error: err.message || 'Erro interno ao processar recuperação de senha.' });
+  }
 });
 
 // ============================================================

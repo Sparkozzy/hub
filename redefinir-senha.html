@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MindFlow — Redefinir Senha</title>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0&display=swap" rel="stylesheet">
@@ -173,13 +173,35 @@
     const APP_URL = window.location.origin;
     const supabase = createClient(cfg.supabaseUrl, cfg.supabaseKey);
 
-    // Detecta token de recovery no hash da URL
+    // Detecta token de recovery no hash (#access_token=...&type=recovery) ou query (?token_hash=...&type=recovery)
     const hash = Object.fromEntries(new URLSearchParams(location.hash.slice(1)));
+    const query = Object.fromEntries(new URLSearchParams(location.search));
     if (hash.type === 'recovery' && hash.access_token) {
-      await supabase.auth.setSession({ access_token: hash.access_token, refresh_token: hash.refresh_token });
-      document.getElementById('stateRequest').style.display = 'none';
-      document.getElementById('stateReset').style.display = 'block';
-      history.replaceState(null, '', location.pathname);
+      const { error: sessErr } = await supabase.auth.setSession({
+        access_token: hash.access_token,
+        refresh_token: hash.refresh_token,
+      });
+      if (!sessErr) {
+        document.getElementById('stateRequest').style.display = 'none';
+        document.getElementById('stateReset').style.display = 'block';
+        history.replaceState(null, '', location.pathname);
+      } else {
+        showErr('reqAlert', 'reqAlertMsg', 'Link de recuperação inválido ou expirado. Solicite um novo link.');
+      }
+    } else if (query.type === 'recovery' && query.token_hash) {
+      const { error: otpErr } = await supabase.auth.verifyOtp({
+        token_hash: query.token_hash,
+        type: 'recovery',
+      });
+      if (!otpErr) {
+        document.getElementById('stateRequest').style.display = 'none';
+        document.getElementById('stateReset').style.display = 'block';
+        history.replaceState(null, '', location.pathname);
+      } else {
+        showErr('reqAlert', 'reqAlertMsg', 'Link de recuperação inválido ou expirado. Solicite um novo link.');
+      }
+    } else if (hash.error_description || query.error_description) {
+      showErr('reqAlert', 'reqAlertMsg', hash.error_description || query.error_description);
     }
 
     function showErr(alertId, msgId, msg) {
@@ -214,7 +236,7 @@
       label.style.color = lv.c;
     });
 
-    // FORM 1 — solicitar e-mail
+    // FORM 1 — solicitar e-mail via backend (/api/auth/forgot-password)
     document.getElementById('requestForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       hide('reqAlert'); hide('reqSuccess');
@@ -222,14 +244,24 @@
       if (!email) return showErr('reqAlert', 'reqAlertMsg', 'Informe seu e-mail.');
       const btn = document.getElementById('reqBtn');
       loading(btn, true);
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${APP_URL}/redefinir-senha`,
-      });
-      loading(btn, false);
-      if (error) return showErr('reqAlert', 'reqAlertMsg', 'Erro ao enviar. Verifique o e-mail informado.');
-      document.getElementById('reqSuccess').classList.add('show');
-      document.getElementById('resetEmail').disabled = true;
-      btn.disabled = true;
+      try {
+        const resp = await fetch('/api/auth/forgot-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, redirectTo: `${APP_URL}/redefinir-senha` }),
+        });
+        const data = await resp.json().catch(() => ({}));
+        loading(btn, false);
+        if (!resp.ok) {
+          return showErr('reqAlert', 'reqAlertMsg', data.error || `Erro ao enviar (${resp.status}). Tente novamente.`);
+        }
+        document.getElementById('reqSuccess').classList.add('show');
+        document.getElementById('resetEmail').disabled = true;
+        btn.disabled = true;
+      } catch (err) {
+        loading(btn, false);
+        showErr('reqAlert', 'reqAlertMsg', err?.message || 'Erro de conexão ao enviar solicitação.');
+      }
     });
 
     // FORM 2 — definir nova senha
